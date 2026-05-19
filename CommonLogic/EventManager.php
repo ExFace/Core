@@ -18,7 +18,6 @@ use exface\Core\Interfaces\AppInterface;
  */
 class EventManager implements EventManagerInterface
 {
-    public const FILE_STATIC_LISTENERS_TEMPLATE = 'EventListenersTemplate.template.json';
     public const FILE_STATIC_LISTENERS = 'EventListeners.config.json';
     public const CFG_STATIC_LISTENERS = 'STATIC_LISTENERS';
     
@@ -39,12 +38,17 @@ class EventManager implements EventManagerInterface
         $this->exface = $exface;
         $this->dispatcher = new EventDispatcher();
         
-        // Load events config
+        // Load events config from installation config folder
         $configFile = $exface->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS;
         $config = new Configuration($exface);
         $config->loadConfigFile($configFile, AppInterface::CONFIG_SCOPE_SYSTEM);
+        // Just in case something went wrong with the installation configs, load the template config file from the core
         if ($config->isEmpty()) {
-            $config->loadConfigFile($exface->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS_TEMPLATE);
+            $config->loadConfigFile(
+                $exface->getCoreApp()->getDirectoryAbsolutePath() 
+                . DIRECTORY_SEPARATOR . 'Config' 
+                . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS
+            );
         }
         $this->config = $config;
         
