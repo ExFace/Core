@@ -382,6 +382,22 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iHaveSid
         
         return $result;
     }
+
+    /**
+     * Returns the first direct child of this widget, that matches the given filter callback
+     * 
+     * @param callable $filterCallback
+     * @return WidgetInterface|null
+     */
+    public function findChild(callable $filterCallback) : ?WidgetInterface
+    {
+        foreach ($this->getChildren() as $child) {
+            if (call_user_func($filterCallback, $child) === true) {
+                return $child;
+            }
+        }
+        return null;
+    }
     
     /**
      *
