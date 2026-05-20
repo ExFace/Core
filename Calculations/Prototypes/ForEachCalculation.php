@@ -4,7 +4,10 @@ namespace exface\Core\Calculations\Prototypes;
 
 use exface\Core\Calculations\AbstractCalculation;
 use exface\Core\Calculations\CalculationInstruction;
+use exface\Core\Calculations\VariableDefinitions;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 
 /**
  * Applies calculation instructions row-by-row on a subject data sheet.
@@ -83,26 +86,102 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  */
 class ForEachCalculation extends AbstractCalculation
 {
+    protected const PH_FOREACH = '~foreach:';
+    protected ?array $pureForEachInstructions = null;
+    
+    protected function init() : void
+    {
+        $this->pureForEachInstructions = null;
+    }
+
     /**
      * @inheritdocs 
      */
-    public function perform(DataSheetInterface $inputData): DataSheetInterface
+    public function performInternal(
+        DataSheetInterface $inputData,
+        int $inputRow,
+        array $resolvedVariables,
+        array $resolvedInstructions,
+        array $currentDependencies
+    ): DataSheetInterface
     {
         $subjectTemplate = $this->getSubjectDataTemplate();
         $subjectSheet = $subjectTemplate !== null ? $subjectTemplate->copy() : $inputData->copy();
+        $subjectObject = $subjectSheet->getMetaObject();
+        $workbench = $this->getWorkbench();
 
         if ($subjectTemplate !== null) {
             $subjectSheet->dataRead();
         }
 
+        $this->logBook?->addLine('Performing `ForEach` on input row #' . $inputRow . ' for ' . $subjectSheet->countRows() . ' subject rows.');
+        $this->logBook?->addIndent(1);
+        
         $calcSheet = $subjectSheet->copy();
-        foreach ($this->resolveVariableDefinitions() as $variable => $value) {
+        foreach ($resolvedVariables as $variable => $value) {
             $calcSheet->setColumnValues($variable, $value);
         }
+        
+        // We only need to evaluate pure ~foreach placeholders once per subject row.
+        $dependencies = [self::PH_FOREACH];
+        if($this->pureForEachInstructions === null) {
+            $this->logBook?->addLine('Rendering components that only depend on "'. self::PH_FOREACH . '"...');
+            $this->logBook?->addIndent(1);
+            $this->pureForEachInstructions = [];
 
-        $forObject = $subjectSheet->getMetaObject();
+            $forEachVariables = $this->getTemplatesForDependencies(self::CMP_VARIABLE_DEFINITIONS, $dependencies);
+            $forEachInstructions = $this->getTemplatesForDependencies(self::CMP_INSTRUCTIONS, $dependencies);
+            foreach ($subjectSheet->getRowIndexes() as $rowNumber) {
+                $renderer = new BracketHashStringTemplateRenderer($workbench);
+                $renderer->addPlaceholder(new DataRowPlaceholders($subjectSheet, $rowNumber, self::PH_FOREACH));
+
+                if(!empty($forEachVariables)) {
+                    $variables = $this->renderVariables($renderer, $forEachVariables);
+                    $variables = $this->resolveVariableDefinitions($variables);
+
+                    $this->logBook?->addLine('Resolved ' . self::CMP_VARIABLE_DEFINITIONS . ' for subject row #' . $rowNumber . ': ' . $this->printArray($variables) . '.');
+
+                    foreach ($variables as $variable => $value) {
+                        $calcSheet->setColumnValues($variable, $value);
+                    }
+                }
+
+                if(!empty($forEachInstructions)) {
+                    $this->pureForEachInstructions[$rowNumber] = $this->renderInstructions($renderer, $forEachInstructions, $subjectObject);
+                    $this->logBook?->addLine('Resolved ' . self::CMP_INSTRUCTIONS . ' for subject row #' . $rowNumber . '.');
+                }
+            }
+
+            $this->logBook?->addIndent(-1);
+        }
+
+        $currentDependencies = array_merge($currentDependencies, $dependencies);
+        $forEachVariables = $this->getTemplatesForDependencies(self::CMP_VARIABLE_DEFINITIONS, $currentDependencies);
+        $forEachInstructions = $this->getTemplatesForDependencies(self::CMP_INSTRUCTIONS, $currentDependencies);
         foreach ($subjectSheet->getRowIndexes() as $rowNumber) {
-            foreach ($this->getInstructions($forObject) as $instruction) {
+            $renderer = new BracketHashStringTemplateRenderer($workbench);
+            $renderer->addPlaceholder(new DataRowPlaceholders($inputData, $inputRow, self::PHS_INPUT));
+            $renderer->addPlaceholder(new DataRowPlaceholders($subjectSheet, $rowNumber, self::PH_FOREACH));
+            
+            if(!empty($forEachVariables)) {
+                $variables = $this->renderVariables($renderer, $forEachVariables);
+                $variables = $this->resolveVariableDefinitions($variables);
+
+                $this->logBook?->addLine('Resolved ' . self::CMP_VARIABLE_DEFINITIONS . ' for subject row #' . $rowNumber . ': ' . $this->printArray($variables) . '.');
+
+                foreach ($variables as $variable => $value) {
+                    $calcSheet->setColumnValues($variable, $value);
+                }
+            }
+
+            $instructions = [];
+            if(!empty($forEachInstructions)) {
+                $instructions = $this->renderInstructions($renderer, $forEachInstructions, $subjectObject);
+                $this->logBook?->addLine('Resolved ' . self::CMP_INSTRUCTIONS . ' for subject row #' . $rowNumber . '.');
+            }
+            
+            $instructions = array_merge($resolvedInstructions, $instructions, $this->pureForEachInstructions[$rowNumber] ?? []);
+            foreach ($instructions as $instruction) {
                 if (! $instruction instanceof CalculationInstruction) {
                     continue;
                 }
@@ -119,7 +198,15 @@ class ForEachCalculation extends AbstractCalculation
                 );
             }
         }
-
+        
+        $this->logBook?->addIndent(-1);
         return $subjectSheet;
+    }
+    
+    protected function getDependencies() : array
+    {
+        $deps = parent::getDependencies();
+        $deps[self::PH_FOREACH] = self::PH_FOREACH;
+        return $deps;
     }
 }

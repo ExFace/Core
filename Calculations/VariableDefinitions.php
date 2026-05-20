@@ -22,6 +22,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  *  ```
  *  [
  *    {
+ *      "name": "Taxes",
  *      "variables": {
  *        "taxRate": "TAX_RATE",
  *        "discount": "DISCOUNT_RATE"
@@ -42,6 +43,7 @@ class VariableDefinitions implements WorkbenchDependantInterface
     use ImportUxonObjectTrait;
 
     private WorkbenchInterface $workbench;
+    private string $name = 'Untitled';
     private ?UxonObject $sourceSheetUxon = null;
     private ?DataSheetInterface $sourceSheet = null;
     private array $variables = [];
@@ -125,6 +127,30 @@ class VariableDefinitions implements WorkbenchDependantInterface
     public function setVariables(UxonObject $variableMapping): VariableDefinitions
     {
         $this->variables = $variableMapping->toArray();
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set a human-readable name for this definition, used to identify it in
+     * debug logs and error messages.
+     * 
+     * @uxon-property name
+     * @uxon-type string
+     * 
+     * @param string $name
+     * @return VariableDefinitions
+     */
+    public function setName(string $name): VariableDefinitions
+    {
+        $this->name = $name;
         return $this;
     }
 }

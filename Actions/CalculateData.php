@@ -37,7 +37,7 @@ class CalculateData extends AbstractAction implements iReadData
         
         $calculation = $this->getCalculation();
         if($calculation !== null) {
-            $data_sheet = $calculation->perform($data_sheet);
+            $data_sheet = $calculation->perform($data_sheet, $this->getLogBook($task));
         }
         
         $result = ResultFactory::createDataResult($task, $data_sheet);
