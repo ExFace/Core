@@ -822,11 +822,13 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getHiddenIf() : ?ConditionalProperty
     {
-        // If there is a 'normal' disabled_if already, get it
+        // If there is a 'normal' hidden_if already, get it
         $ownProperty = parent::getHiddenIf();
 
         // Otherwise see if we can generate one from the action
-        if (! $this->hasAction()) {
+        if (! $this->hasAction() && $ownProperty === null) {
+            // only return null here if there is no 'normal' hidden_if 
+            // otherwise hidden_ifs on buttons without actions (for example MenuButtons) do not work anymore
             return null;
         }
 
