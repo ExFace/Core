@@ -283,6 +283,27 @@
             "TARGET_ACTION_PROTOTYPE": "",
             "TARGET_FACADE": "exface/core/Facades/PermalinkFacade.php",
             "TARGET_APP": null
+        },
+        {
+            "_EXPORT_SUMMARY": "HealthCheck for everyone",
+            "CREATED_ON": "2026-05-22 10:56:56",
+            "MODIFIED_ON": "2026-05-22 10:56:56",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f1be782f76b450be78d7dc280b768e",
+            "NAME": "HealthCheck for everyone",
+            "DESCRIPTION": "",
+            "EFFECT": "P",
+            "APP": "0x31000000000000000000000000000000",
+            "AUTHORIZATION_POINT": "0x11ea8e12097517b8801f025041000001",
+            "TARGET_PAGE_GROUP": null,
+            "TARGET_USER_ROLE": null,
+            "TARGET_OBJECT": null,
+            "CONDITION_UXON": null,
+            "TARGET_ACTION_MODEL": null,
+            "TARGET_ACTION_PROTOTYPE": "",
+            "TARGET_FACADE": "exface/core/Facades/HealthCheckFacade.php",
+            "TARGET_APP": null
         }
     ],
     "totals_rows": [],
