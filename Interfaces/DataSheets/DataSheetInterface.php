@@ -697,6 +697,30 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function isPaged() : bool;
 
+    /**
+     * Returns TRUE if the data of this sheet can/should be cached.
+     * 
+     * By default, a data sheet is considered cacheable, if:
+     * 
+     * - It is explicitly marked as cacheable via `setCacheable(true)`
+     * - OR is not explicitly marked as uncacheable via `setCacheable(false)`
+     *  - AND it has no columns with binary data
+     * 
+     * @return bool
+     */
+    public function isCacheable() : bool;
+
+    /**
+     * Mark the sheet as cacheable or not explicitly
+     *
+     * Marking a DataSheet as not-cacheable will make sure it is NEVER cached, so any `dataRead()` will always query
+     * the data source.
+     *
+     * @param bool $trueOrFalse
+     * @return DataSheetInterface
+     */
+    public function setCacheable(bool $trueOrFalse) : DataSheetInterface;
+
     public function getRowsLimit() : ?int;
 
     public function setRowsLimit($value) : DataSheetInterface;

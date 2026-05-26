@@ -250,7 +250,9 @@ class StaticEventListenerInstaller extends AbstractAppInstaller
      */
     protected function getTemplatePath() : string
     {
-        return $this->getPathToConfigFolder() . EventManager::FILE_STATIC_LISTENERS_TEMPLATE;
+        return $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath()
+            . DIRECTORY_SEPARATOR . 'Config' 
+            . DIRECTORY_SEPARATOR . EventManager::FILE_STATIC_LISTENERS;
     }
 
     /**
