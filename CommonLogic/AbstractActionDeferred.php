@@ -80,11 +80,13 @@ abstract class AbstractActionDeferred extends AbstractAction
         $result = new ResultMessageStream($task);
         $result->setMessageStreamGenerator(
             function($callbackArgs) use ($result, $transaction) {
-                
-                yield from call_user_func_array([$this, 'performDeferred'], $callbackArgs);
+                yield from call_user_func_array([$this, 'performDeferred'], $callbackArgs); //TODO SR: Alt
+                //$returnValue = yield from call_user_func_array([$this, 'performDeferred'], $callbackArgs); //TODO SR: Neu
                 
                 // IMPORTANT: don't forget to trigger the postprocessing!!!
                 $this->performAfterDeferred($result, $transaction);
+
+                //return $returnValue; //TODO SR: Neu
                 
             }, 
             [

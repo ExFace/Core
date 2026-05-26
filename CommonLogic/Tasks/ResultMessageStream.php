@@ -33,8 +33,12 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
     private $generatorArgs = [];
     
     private $generatorWasRun = false;
+
+    private $generator = null;
     
     private $generatorResult = null;
+
+    private $generatorReturn = null;
     
     /**
      * 
@@ -52,8 +56,32 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
         }
         
         $this->generatorWasRun = true;
-        return call_user_func_array($this->generatorCallable, $this->generatorArgs);
+/*        $this->generator = call_user_func_array($this->generatorCallable, $this->generatorArgs);
+        return $this->generator;*/
+
+        return call_user_func_array($this->generatorCallable, $this->generatorArgs); //TODO SR: Alt
     }
+
+    /**
+     * Returns the stream generator return value after the stream has finished.
+     * 
+     * Calling this method before the stream has been consumed will consume and buffer the stream.
+     * If the underlying traversable is not a generator, NULL is returned.
+     * 
+     * @return mixed
+     */
+/*    public function getReturn() : mixed
+    {
+        if ($this->generatorWasRun === false) {
+            $this->runGenerator();
+        }
+        //TODO SR: Das generatorReturn wird bereits bei runGenerator() gesetzt. Sollte man hier nicht vorher prüfen, ob es bereits gesetzt ist?
+        if ($this->generator instanceof \Generator) {
+            $this->generatorReturn = $this->generator->getReturn();
+        }
+
+        return $this->generatorReturn;
+    }*/
     
     /**
      * 
@@ -100,6 +128,9 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
                 $output .= $line . "\n";
             }
             $this->generatorResult = $output;
+/*            if ($this->generator instanceof \Generator) {
+                $this->generatorReturn = $this->generator->getReturn();
+            }*/
         }
         return $this->generatorResult;
     }
