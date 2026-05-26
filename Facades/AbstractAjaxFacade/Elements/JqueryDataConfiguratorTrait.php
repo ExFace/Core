@@ -63,11 +63,22 @@ trait JqueryDataConfiguratorTrait
                     preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsCustomConditionGroup())
                 );
             } else {
-                $filters[] = preg_replace(
-                    '/\}\s*$/',
-                    ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
-                    preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsConditionGetter(null, $widget->getMetaObject()))
-                );
+                $conditionJsRaw = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
+                if ($filter instanceof \exface\Core\Widgets\RangeFilter) {
+                    // range filters return both from and to conditions, so we need to add the hidden flag to both of them. 
+                    $conditionJs = preg_replace('/,\s*\}\s*(?=,|$)/', '}', $conditionJsRaw);
+                    $filters[] = preg_replace(
+                        '/\}\s*(?=,|$)/',
+                        ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                        $conditionJs
+                    );
+                } else {
+                    $filters[] = preg_replace(
+                        '/\}\s*$/',
+                        ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                        preg_replace('/,\s*\}\s*$/', '}', $conditionJsRaw)
+                    );
+                }
             }
         }
 
