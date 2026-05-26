@@ -5,8 +5,8 @@ use exface\Core\Contexts\DebugContext;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Interfaces\Widgets\iUseData;
 use exface\Core\Widgets\Button;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\Widgets\Dialog;
@@ -52,7 +52,7 @@ class WidgetDebugger implements iCanGenerateDebugWidgets
                 // Widgets like Chart or Map need to be in the crumbs because otherwise they cannot be distinguished
                 // from tables. And very often they are located next to tables, so it is difficult to see, which one
                 // of them is in the path.
-                case $widget instanceof iShowData:
+                case $widget instanceof iUseData:
                 // Filters need to be in the crumbs because otherwise people keep looking for inputs, but do not realize,
                 // that the input is actually a filter. However, this is only important for detailed crumbs. Compact
                 // crumbs are fine without this information
