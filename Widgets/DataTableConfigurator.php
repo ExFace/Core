@@ -612,6 +612,14 @@ class DataTableConfigurator extends DataConfigurator
             "input_rows_max" => 1,
             "input_object_alias" => "exface.Core.WIDGET_SETUP",
             "alias" => "exface.Core.ActionChain",
+            "confirmation_for_action" => [
+                "caption" => $this->translate('ACTION.DELETEOBJECT.CONFIRMATION_TITLE'),
+                "widget_type" => "ConfirmationMessage",
+                "text" => $this->translate('ACTION.DELETEOBJECT.CONFIRMATION_TEXT'),
+                "button_continue" => [
+                    "caption" => "Ok"
+                ]
+            ],
             "actions" => [
                 [
                     "alias" => "exface.Core.CallWidgetFunction",
