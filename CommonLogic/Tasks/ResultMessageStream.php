@@ -56,10 +56,8 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
         }
         
         $this->generatorWasRun = true;
-/*        $this->generator = call_user_func_array($this->generatorCallable, $this->generatorArgs);
-        return $this->generator;*/
-
-        return call_user_func_array($this->generatorCallable, $this->generatorArgs); //TODO SR: Alt
+        $this->generator = call_user_func_array($this->generatorCallable, $this->generatorArgs);
+        return $this->generator;
     }
 
     /**
@@ -70,18 +68,17 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
      * 
      * @return mixed
      */
-/*    public function getReturn() : mixed
+    public function getReturn() : mixed
     {
         if ($this->generatorWasRun === false) {
             $this->runGenerator();
         }
-        //TODO SR: Das generatorReturn wird bereits bei runGenerator() gesetzt. Sollte man hier nicht vorher prüfen, ob es bereits gesetzt ist?
+
         if ($this->generator instanceof \Generator) {
             $this->generatorReturn = $this->generator->getReturn();
         }
-
         return $this->generatorReturn;
-    }*/
+    }
     
     /**
      * 
@@ -128,9 +125,6 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
                 $output .= $line . "\n";
             }
             $this->generatorResult = $output;
-/*            if ($this->generator instanceof \Generator) {
-                $this->generatorReturn = $this->generator->getReturn();
-            }*/
         }
         return $this->generatorResult;
     }

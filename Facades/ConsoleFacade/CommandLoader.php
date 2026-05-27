@@ -56,12 +56,11 @@ class CommandLoader implements FacadeCommandLoaderInterface
         $commands = $this->getCommandActionMap();
         $found = null;
         
-        //TODO SR: das $command = axenox.Deployer:Build ist gleich den $name aus $commands
-/*        foreach ($commands as $name => $alias) { //TODO SR: Neu, prüfe es.
+        foreach ($commands as $name => $alias) {
             if (strcasecmp($name, $command) === 0) {
                 return $alias;
             }
-        }*/
+        }
         
         list ($cspace, $cname) = explode(':', $command);
         foreach ($commands as $name => $alias) {
@@ -70,8 +69,7 @@ class CommandLoader implements FacadeCommandLoaderInterface
                 if ($found === null) {
                     $found = $alias;
                 } else {
-                    //TODO SR: Die stelle hat geknallt, weil in "BuildAndDeploy" ein "Build" vorkommt.
-                    var_dump('non-unique', $command); //TODO SR: Prüfe, wieso das hier geschmissen wird!
+                    var_dump('non-unique', $command);
                     throw new FacadeRoutingError('Ambiguous command "' . $command . "!'");
                 }
             }
