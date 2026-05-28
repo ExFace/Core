@@ -1149,11 +1149,25 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                     break;
                 // Non-static (data driven) formulas
                 case $expr->isFormula():
+                    //if the container already has a input widget that is representing a required attribute of the formula, dont add a widget for the formula
+                    //as we guess the formula should be live calculated with the NEW input data of the required attributes widgets
+                    $reqAttrAlias = $expr->getRequiredAttributes();
+                    foreach ($reqAttrAlias as $attrAlias) {
+                        $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
+                            return ($child instanceof Value)
+                                && $child->isBoundToAttribute() === true
+                                && $child->getAttributeAlias() === $attrAlias;
+                        });
+                        if (!empty($matches)) {
+                            return null;
+                        }
+                    }
                     $matches = $containerWidget->findChildrenRecursive(function($child) use ($expr, $containerWidget) {
                         return ($child instanceof Value)
                             && $child->getCalculationExpression() !== null
                             && $child->getCalculationExpression()->__toString() === $expr->__toString();
                     });
+                    
                     if (null === $w = ($matches[0] ?? null)) {
                         // Try to add an InputHidden for the missing attribute
                         // Only do this for containers, that all InputHidden widgets
