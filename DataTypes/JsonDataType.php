@@ -327,4 +327,13 @@ class JsonDataType extends CodeDataType
         }
         return $enc;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see CodeDataType::getLanguage()
+     */
+    public function getLanguage(): ?string
+    {
+        return parent::getLanguage() ?? 'json';
+    }
 }
