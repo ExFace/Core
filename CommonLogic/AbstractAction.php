@@ -1957,7 +1957,7 @@ abstract class AbstractAction implements ActionInterface
      * @param TaskInterface $task
      * @return ActionLogBook
      */
-    protected function getLogBook(TaskInterface $task) : ActionLogBook
+    public function getLogBook(TaskInterface $task) : ActionLogBook
     {
         foreach ($this->logBooks as $lb) {
             if ($lb->getTask() === $task) {
