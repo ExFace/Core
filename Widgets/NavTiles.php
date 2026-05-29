@@ -61,6 +61,8 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     private $showNavbar = null;
 
     private $showParentPath = false;
+
+    private $showOverviewGroup = false;
     
     /**
      * Specifies the alias of the root page of the menu (i.e. tiles for it's children will be generated).
@@ -369,6 +371,35 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     public function setShowParentPath(bool $value) : NavTiles
     {
         $this->showParentPath = $value;
+        return $this;
+    }
+
+    /**
+     * Returns whether the first (overview) tile group should be shown.
+     * 
+     * @return bool
+     */
+    public function getShowOverviewGroup() : bool
+    {
+        return $this->showOverviewGroup;
+    }
+
+    /**
+     * Set to TRUE to show the first overview tile group alongside the other groups.
+     * 
+     * By default the overview group is hidden because its tiles are already visible
+     * within the individual groups below it.
+     * 
+     * @uxon-property show_overview_group
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setShowOverviewGroup(bool $value) : NavTiles
+    {
+        $this->showOverviewGroup = $value;
         return $this;
     }
 
