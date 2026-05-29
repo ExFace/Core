@@ -59,6 +59,10 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     private $hiddenIfEmpty = false;
 
     private $showNavbar = null;
+
+    private $showParentPath = false;
+
+    private $showOverviewGroup = false;
     
     /**
      * Specifies the alias of the root page of the menu (i.e. tiles for it's children will be generated).
@@ -162,7 +166,13 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
                 $this->parentTileIds[$tile->getId()] = $upperLevelTile;
             }
             if ($node->hasChildNodes()) {
-                $this->createTileGroupFromNodes($node->getChildNodes(), $caption . ' > ' . $node->getName(), $tile);
+                if ($this->getShowParentPath()) {
+                    $groupCaption = $caption . ' > ' . $node->getName();
+                } else {
+                    $groupCaption = $node->getName();
+                }
+
+                $this->createTileGroupFromNodes($node->getChildNodes(), $groupCaption, $tile);
             }
         }
         
@@ -334,6 +344,63 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     public function hasNavBar(bool $default = true) : bool
     {
         return $this->showNavbar ?? $default;
+    }
+
+    /**
+     * Whether or not the parent path should be included in the tile panels (parent > child)
+     * 
+     * @return bool
+     */
+    public function getShowParentPath() : bool
+    {
+        return $this->showParentPath;
+    }
+
+    /**
+     * Set to TRUE to include the parent path in the tile panels (parent > child).
+     * 
+     * If FALSE, each group caption contains only the current panel name.
+     * 
+     * @uxon-property show_parent_path
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setShowParentPath(bool $value) : NavTiles
+    {
+        $this->showParentPath = $value;
+        return $this;
+    }
+
+    /**
+     * Returns whether the first (overview) tile group should be shown.
+     * 
+     * @return bool
+     */
+    public function getShowOverviewGroup() : bool
+    {
+        return $this->showOverviewGroup;
+    }
+
+    /**
+     * Set to TRUE to show the first overview tile group alongside the other groups.
+     * 
+     * By default the overview group is hidden because its tiles are already visible
+     * within the individual groups below it.
+     * 
+     * @uxon-property show_overview_group
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setShowOverviewGroup(bool $value) : NavTiles
+    {
+        $this->showOverviewGroup = $value;
+        return $this;
     }
 
     /**
