@@ -103,6 +103,14 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
                 $dataSheet->getColumns()->addFromSystemAttributes();
                 $dataSheet->dataRead();
             }
+            
+            // Save the logbook if there is one
+            if ($result->getTask()->hasAction()) {
+                $logbook = $result->getTask()->getAction()->getLogBook($task);
+            } else {
+                $logbook = null;
+            }
+            
             $dataSheet->setCellValue('RESULT_CODE', 0, $result->getResponseCode());
             $dataSheet->setCellValue('RESULT', 0, $result->getMessage());
             $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
