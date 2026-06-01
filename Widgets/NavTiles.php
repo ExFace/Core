@@ -330,14 +330,18 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     }
 
     /**
-     * Set to TRUE to display a navigation bar on top of the tile groups and FALSE to hide it
+     * Set to TRUE to display a navigation bar on top of the tile groups and FALSE to hide it.
      * 
+     * @uxon-property show_navbar
+     * @uxon-type boolean
+     * @uxon-default true
      * 
+     * @param bool $value
      * @return \exface\Core\Widgets\NavTiles
      */
-    public function setShowNavbar() : NavTiles
+    public function setShowNavbar(bool $value) : NavTiles
     {
-        $this->showNavbar = true;
+        $this->showNavbar = $value;
         return $this;
     }
 
