@@ -2,11 +2,12 @@
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 
 /**
  * 
  */
-abstract class AbstractMarkdownPrinter
+abstract class AbstractMarkdownPrinter implements MarkdownPrinterInterface
 {
     protected function escapeMarkdownText(string $value): string
     {
