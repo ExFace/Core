@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
-use axenox\GenAI\Interfaces\MarkdownPrinterInterface;
 use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Debugger\WidgetDebugger;
 use exface\Core\DataTypes\MarkdownDataType;
@@ -16,7 +15,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * 
  * @author Andrej Kabachnik
  */
-class UiWidgetMarkdownPrinter implements MarkdownPrinterInterface
+class UiWidgetMarkdownPrinter
 {
     protected WorkbenchInterface $workbench;
     
