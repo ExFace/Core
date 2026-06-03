@@ -2,6 +2,8 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Data type for Hexadecimal numbers.
@@ -81,9 +83,21 @@ class HexadecimalNumberDataType extends NumberDataType
      * {@inheritDoc}
      * @see NumberDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, bool $silent = true) : string
     {
-        $val = $value !== null ? $this->parse($value) : $this->getValue();
+        try {
+            $val = $value !== null ? $this->parse($value) : $this->getValue();
+        } catch (DataTypeExceptionInterface $e) {
+            $val = $value ?? $this->getValue();
+            $e = $this->createFormatterError($val, $e);
+            // When formatting, casting/parsing/validation errors should not break the operation
+            if ($silent === true) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+                return $val;
+            } else {
+                throw $e;
+            }
+        }
         if ($val === null || $val === '' || $val === EXF_LOGICAL_NULL) {
             return $this->getEmptyFormat();
         }

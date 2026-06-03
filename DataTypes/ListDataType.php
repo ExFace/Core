@@ -6,6 +6,8 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * Data type for delimited lists.
@@ -51,9 +53,19 @@ class ListDataType extends StringDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
      */
-    public function format($list = null) : string
+    public function format($list = null, bool $silent = true) : string
     {
-        return $this::formatAsList($list, $this->getListDelimiter(), $this->getValuesDataType());
+        try {
+            return $this::formatAsList($list, $this->getListDelimiter(), $this->getValuesDataType());
+        } catch (DataTypeExceptionInterface $e) {
+            $e = $this->createFormatterError($list, $e);
+            if ($silent) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+                return $list;
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**

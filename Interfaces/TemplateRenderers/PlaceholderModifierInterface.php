@@ -13,7 +13,7 @@ namespace exface\Core\Interfaces\TemplateRenderers;
  * 
  * The exact syntax depends on the template renderer. Many templating engines offer simplified ways to handle
  * placeholder values: e.g. filters in twig. The logic of the modifier is independent of exact syntax. Modifiers
- * aim to provide common functionality to different template renderes.
+ * aim to provide common functionality to different template renderers.
  * 
  * Bracket-hash templates used by the workbench by default will use a pipe symbol to apply modifiers: e.g.
  * `[#FIELD|htmlentitites#]` or `[#FIELD|??default_value#]`.

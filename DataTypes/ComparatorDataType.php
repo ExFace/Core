@@ -15,10 +15,10 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * ## Scalar (single value) comparators
  * 
  * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
- * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+ * data types. If the left value is a string, becomes TRUE if it contains the right value. Case-
  * insensitive for strings
  * - `!=` - yields TRUE if `IS` would result in FALSE
- * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+ * - `==` - compares two single values of the same type. Case-sensitive for stings. Normalizes the 
  * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
  * - `!==` - the inverse of `EQUALS`
  * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
@@ -488,6 +488,20 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
     {
+        /**
+         * TODO geb 2026-04-03
+         * - Currently only atomizes the right value (nested loop required)
+         * - Needs to be added to Condition::compare() around the end of the switch()
+         * - Extract atomizeComparison() for better performance
+         * - LIST_EACH works by "accident"
+         * - ][ does not work
+         * - [[ does not work
+         * - LIST_ANY does not work
+         * - exfTools.data.compareValues is also missing the double loop for LIST_EACH and LIST_ANY
+         * - IF we decide to fix this, we need to monitor the effects on all usages of these comparators, since they
+         * might have unintentionally "worked" in practice (even though they would not have met expectations).
+         */
+        
         // IDEA also support ConditionGroups atomizing their inner conditions and nested groups recursively
         $rightSideValues = $condition->getValue();
         if(!is_array($rightSideValues)) {

@@ -5,7 +5,7 @@ use exface\Core\Widgets\DebugMessage;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\Exceptions\HttpServerRequestExceptionInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
-use exface\Core\CommonLogic\Debugger\HttpMessageDebugWidgetRenderer;
+use exface\Core\CommonLogic\Debugger\HttpMessageDebugger;
 
 /**
  * Exception thrown if the facade fails to read data from the current HTTP request.
@@ -51,7 +51,7 @@ class HttpBadRequestError extends InvalidArgumentException implements HttpServer
     public function createDebugWidget(DebugMessage $debugWidget)
     {
         $debugWidget = parent::createDebugWidget($debugWidget);
-        $debugRenderer = new HttpMessageDebugWidgetRenderer($this->getRequest());
+        $debugRenderer = new HttpMessageDebugger($this->getRequest());
         $debugWidget = $debugRenderer->createDebugWidget($debugWidget);
         return $debugWidget;
     }

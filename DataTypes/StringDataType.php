@@ -2,11 +2,16 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderModifier;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\Exceptions\RangeException;
+use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
+use exface\Core\Factories\FormulaFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Templates\Modifiers\IfNullModifier;
 use Random\RandomException;
 use Transliterator;
 
@@ -490,13 +495,26 @@ class StringDataType extends AbstractDataType
      * 
      * @return string
      */
-    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false) : string
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false, WorkbenchInterface $evaluateFormulasViaWorkbench = null) : string
     {
         $phs = static::findPlaceholders($string);
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
             $phKey = '[#' . ($ph ?? '') . '#]';
+            
+            // If the placeholder is a formula, AND we have a workbench to evaluate it, handle it here
+            if ($evaluateFormulasViaWorkbench !== null && Expression::detectCalculation($ph)) {
+                $formula = FormulaFactory::createFromString($evaluateFormulasViaWorkbench, $ph);
+                if ($formula->isStatic() === false) {
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in "' . $search . '": the used formula is not static! Only static formulas can be used in placeholders in this case!');
+                }
+                $search[] = $phKey;
+                $replace[] = $formula->evaluate();
+                continue;
+            }
+            
+            // All other placeholders are replace by their respecitve values
             if ($strict === true && array_key_exists($ph, $placeholders) === false) {
                 throw new PlaceholderNotFoundError($phKey, 'Missing value for placeholder "' . $phKey . '"!');
             }
@@ -516,6 +534,18 @@ class StringDataType extends AbstractDataType
         }
         
         return $replaced;
+    }
+
+    /**
+     * Removes modifiers from a given placenolder name: e.g. `myph|??NULL` -> `myph`
+     * 
+     * @param string $expression
+     * @param string $delimiter
+     * @return string#
+     */
+    public static function stripPlaceholderModifiers(string $expression, string $delimiter = AbstractPlaceholderModifier::DELIMITER) : string
+    {
+        return StringDataType::substringBefore($expression, $delimiter, $expression);
     }
     
     /**
@@ -539,7 +569,7 @@ class StringDataType extends AbstractDataType
     }
     
     /**
-     * Returns the part of the given string ($haystack) preceeding the first occurrence of $needle.
+     * Returns the part of the given string ($haystack) preceding the first occurrence of $needle.
      * 
      * Examples:
      * - substringBefore('one, two, three', ',') => 'one'
@@ -547,7 +577,7 @@ class StringDataType extends AbstractDataType
      * - substringBefore('one, two, three', ';') => false
      * - substringBefore('one, two, three', ';', 'one, two, three') => 'one, two, three'
      * 
-     * Using the optional parameters you can make the search case sensitive and
+     * Using the optional parameters you can make the search case-sensitive and
      * search for the last occurrence instead of the first one.
      * 
      * Returns $default if the $needle was not found.
@@ -597,7 +627,7 @@ class StringDataType extends AbstractDataType
     /**
      * Returns the part of the given string ($haystack) following the first occurrence of $needle.
      * 
-     * Using the optional parameters you can make the search case sensitive and
+     * Using the optional parameters you can make the search case-sensitive and
      * search for the last occurrence instead of the first one.
      * 
      * @param string $haystack

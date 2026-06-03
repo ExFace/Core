@@ -262,28 +262,6 @@ class ShowWidget extends AbstractAction implements iShowWidget, iPrefillWidget, 
     }
 
     /**
-     * ShowWidget needs some kind of widget representation in UXON in order to be recreatable from the UXON object.
-     * TODO Currently the widget is represented by widget_id and page_alias and there is no action widget UXON saved here. This won't work for generated widgets!
-     * 
-     * @see \exface\Core\Interfaces\Actions\ActionInterface::exportUxonObject()
-     */
-    public function exportUxonObject()
-    {
-        $uxon = parent::exportUxonObject();
-        $uxon->setProperty('widget_id', $this->getWidgetId());
-        $pageAlias = $this->page_alias ?? ($this->isDefinedInWidget() ? $this->getWidgetDefinedIn()->getPage()->getAliasWithNamespace() : null);
-        if ($pageAlias !== null) {
-            $uxon->setProperty('page_alias', $pageAlias);
-        }
-        $uxon->setProperty('prefill_with_filter_context', $this->getPrefillWithFilterContext());
-        $uxon->setProperty('prefill_with_input_data', $this->getPrefillWithInputData());
-        if ($this->hasPrefillDataPreset()) {
-            $uxon->setProperty('prefill_data_sheet', $this->getPrefillDataPreset()->exportUxonObject());
-        }
-        return $uxon;
-    }
-
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\iReferenceWidget::getPage()

@@ -2,14 +2,22 @@
 namespace exface\Core\Contexts;
 
 use exface\Core\Actions\ShowDialogFromFile;
+use exface\Core\Actions\UxonAutosuggest;
+use exface\Core\Actions\UxonValidate;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Contexts\AbstractContext;
 use exface\Core\CommonLogic\Constants\Colors;
 use exface\Core\CommonLogic\Contexts\Scopes\InstallationContextScope;
 use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Exceptions\Contexts\ContextRuntimeError;
+use exface\Core\Facades\DocsFacade\MarkdownPrinters\UiWidgetMarkdownPrinter;
 use exface\Core\Factories\ActionFactory;
+use exface\Core\Factories\ResultFactory;
+use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Contexts\ContextScopeInterface;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Container;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Actions\ShowContextPopup;
@@ -59,6 +67,7 @@ class DebugContext extends AbstractContext
     const OPERATION_STOP_MAINTENANCE = 'stopMaintenance';
     
     const OPERATION_SHOW_LOG_ID = 'showLogId';
+    const OPERATION_SHOW_WIDGET_INFO = 'showWidgetInfo';
     
     const CFG_DEBUG_TRACE = 'DEBUG.TRACE';
     const CFG_MAINTENANCE_MODE = 'DEBUG.MAINTENANCE_MODE';
@@ -142,7 +151,7 @@ class DebugContext extends AbstractContext
             );
         }
         
-        $this->excludeDebugContextFromTrace();
+        $this->excludeCertainActionsFromTrace();
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('CONTEXT.DEBUG.TRACE_STARTED');
     }
     
@@ -327,17 +336,17 @@ class DebugContext extends AbstractContext
     /**
      * @return void
      */
-    protected function excludeDebugContextFromTrace()
+    protected function excludeCertainActionsFromTrace()
     {
         // Make sure the tracer is disabled for all actions dealing with this context, so
         // we don't caption stop-tracing and debug-menu actions.
         $this->getWorkbench()->eventManager()->addListener(OnBeforeActionPerformedEvent::getEventName(), array(
             $this,
-            'onContextActionDisableTracer'
+            'onExcludedActionDisableTracer'
         ));
         $this->getWorkbench()->eventManager()->addListener(OnActionPerformedEvent::getEventName(), array(
             $this,
-            'onContextActionDisableTracer'
+            'onExcludedActionDisableTracer'
         ));
     }
     
@@ -345,14 +354,20 @@ class DebugContext extends AbstractContext
      * 
      * @param ActionEventInterface $e
      */
-    public function onContextActionDisableTracer(ActionEventInterface $e)
+    public function onExcludedActionDisableTracer(ActionEventInterface $e)
     {
         $action = $e->getAction();
-        if ((($action instanceof ShowContextPopup) && $action->getContext() === $this)
-        || $action instanceof CallContext && $action->getContext() === $this){
-            if (null !== $tracer = $this->getTracer()) {
-                $tracer->disable();
-            }
+        switch (true) {
+            // Ignore UXON editor background actions to avoid spamming the logs on multi-user dev-systems
+            case $action instanceof UxonAutosuggest:
+            case $action instanceof UxonValidate:
+            // Ignore interaction with the DebugContext
+            case ($action instanceof ShowContextPopup) && $action->getContext() === $this:
+            case ($action instanceof CallContext) && $action->getContext() === $this:
+                if (null !== $tracer = $this->getTracer()) {
+                    $tracer->disable();
+                }
+                break;
         }
     }
 
@@ -783,8 +798,39 @@ JS
                 $action->setObjectAlias('exface.Core.LOG_ENTRY');
                 $result = $action->handle($task);
                 $result->getWidget()->setMaximized(true);
-                // $result->setWidget($result->getWidget()->getWidgetFirst());
                 
+                return $result;
+            case $operation === self::OPERATION_SHOW_WIDGET_INFO:
+                $pageSelector = $task->getParameter('pageAlias');
+                $widgetId = $task->getParameter('widget');
+                
+                try {
+                    $page = UiPageFactory::createFromModel($this->getWorkbench(), $pageSelector);
+                    if ($widgetId !== null) {
+                        $widget = $page->getWidget($widgetId);
+                    }
+                } catch (\Throwable $e) {
+                    throw new ContextRuntimeError($this, 'Could not get information about widget `' . $widgetId . '` on page `' . $pageSelector . '`', null, $e);
+                }
+                
+                $printer = new UiWidgetMarkdownPrinter($widget);
+                $markdown = $printer->getMarkdown();
+                $html = MarkdownDataType::convertMarkdownToHtml($markdown);
+                $html = <<<HTML
+<html>
+    <head>
+        <base href="{$this->getWorkbench()->getUrl()}">
+        <link href="vendor/npm-asset/github-markdown-css/github-markdown.css?v20260513074931" rel="stylesheet">
+    </head>
+    <body>
+        <div class="markdown-body" style="padding: 20px;">
+            {$html}
+        </div>
+    </body>
+</html>
+HTML;
+                $result = ResultFactory::createHTMLResult($task, $html);
+
                 return $result;
         }
         return parent::handle($task, $operation);
@@ -825,6 +871,22 @@ JS
      */
     public static function buildUrlToLogId(string $logId, ?string $baseUrl = null) : string
     {
-        return ($baseUrl ?? '') . "?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=showLogId&id={$logId}";
+        return ($baseUrl ?? '') . "?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=" . self::OPERATION_SHOW_LOG_ID . "&id={$logId}";
+    }
+
+    /**
+     * Returns a relative URL, that will render the debug widget for a given LogID
+     *
+     * E.g. `?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=showLogId&id=763EFFB9#`
+     *
+     * @param string $logId
+     * @param string|null $baseUrl
+     * @return string
+     */
+    public static function buildUrlWidgetInfo(WidgetInterface $widget, ?string $baseUrl = null) : string
+    {
+        $pageAlias = $widget->getPage()->getAliasWithNamespace();
+        $widgetId = $widget->getId();
+        return ($baseUrl ?? '') . "?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=" . self::OPERATION_SHOW_WIDGET_INFO . "&pageAlias={$pageAlias}&widget={$widgetId}";
     }
 }

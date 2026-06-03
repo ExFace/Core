@@ -426,15 +426,17 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             default: return $this->getOnDuplicateMultiRow();
         }
     }
-    
+
     /**
      * Updates duplicates found by the given matcher and returns an array of row numbers affected
      * 
+     * TODO refactor this method to use the DuplicatesMatcher::getMatchesToUpdate() to centralize the logic for
+     * comparing rows. 
+     *
      * @param DataSheetInterface $eventSheet
-     * @param DataMatcherInterface $matcher
+     * @param MultiMatcher $matcher
      * @param DataTransactionInterface $transaction
-     * @param bool $ignoreUidMatches
-     * @throws BehaviorRuntimeError
+     * @param BehaviorLogBook $logbook
      * @return int[]
      */
     protected function updateDuplicates(DataSheetInterface $eventSheet, MultiMatcher $matcher, DataTransactionInterface $transaction, BehaviorLogBook $logbook) : array
@@ -722,7 +724,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $rowFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $checkSheet->getMetaObject());
             foreach (array_merge($compareCols, $missingCols) as $col) {
                 if (! array_key_exists($col->getName(), $row)) {
-                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!', null, null, $logbook);
+                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute `' . $col->getAttributeAlias() . '`!', null, null, $logbook);
                 }
                 $value = $row[$col->getName()];
                 
@@ -734,7 +736,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         $eventSheet, // $dataSheet
                         null, // $message - empty to make exception autogenerate one
                         null, // $alias
-                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!', null, null, $logbook)), // $previous
+                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute `' . $col->getAttributeAlias() . '` in row "' . $rowNo . '"!', null, null, $logbook)), // $previous
                         $col, // $column
                         $col->findEmptyRows() // $rowNumbers
                     );

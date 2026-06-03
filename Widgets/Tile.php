@@ -239,6 +239,9 @@ class Tile extends Button
             throw new WidgetConfigurationError($this, 'Invalid definition of the dipslay widget in a ' . $this->getWidgetType() . ': expecting a UXON description or an instantiated display widget, received "' . gettype($uxon_or_widget) . '" instead!');
         }
         $this->displayWidget = $widget;
+
+        // also set as input widget for actions
+        $this->setInputWidget($this->getDisplayWidget());
         return $this;
     }
     

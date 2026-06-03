@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 use exface\Core\CommonLogic\Actions\ActionConfirmationList;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionConfirmationListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -162,6 +163,8 @@ abstract class AbstractAction implements ActionInterface
     private $offlineStrategy = null;
 
     private $confirmations = null;
+    
+    private ?int $longRunningThreshold = null;
 
     /**
      *
@@ -345,6 +348,9 @@ abstract class AbstractAction implements ActionInterface
             $transaction = $this->getWorkbench()->data()->startTransaction();
         }
         
+        // TODO What's the correct response here? Throw, silent, message or something else.
+        $this->validateApplicability($task);
+        
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
             return $this->getInputDataSheet($task);
         }));
@@ -385,6 +391,22 @@ abstract class AbstractAction implements ActionInterface
         return $result;
     }
 
+    /**
+     * Validates whether this action can be applied to a given task. Throws an error, when encountering issues
+     * and returns `void` if the task is valid for this action.
+     * 
+     * Base validation ensures that the task object and action object match, provided both are defined.
+     * 
+     * @throws ActionTaskInvalidException
+     * Throws an exception if validation FAILS, containing a description of the violation.
+     */
+    protected function validateApplicability(TaskInterface $task) : ActionInputValidator
+    {
+        $validator = new ActionInputValidator($this, $task);
+        $validator->validateTaskObject();
+        return $validator;
+    }
+    
     /**
      *
      * {@inheritdoc}
@@ -1211,12 +1233,6 @@ abstract class AbstractAction implements ActionInterface
         
         $logbook->addDataSheet('Final input data', $inputData);
         
-        if ($prevSection !== null && $prevSection !== 'Input data') {
-            $logbook->setSectionActive($prevSection);
-        } else {
-            $logbook->setIndentActive(0);
-        }
-        
         // Validate the input data and dispatch events for event-based validation
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionInputValidatedEvent($this, $task, $inputData));
         $diagram .= " InputValidation[Input Validation]";
@@ -1224,6 +1240,13 @@ abstract class AbstractAction implements ActionInterface
         $logbook->addPlaceholderValue('input_diagram', $diagram);
         $inputData = $this->validateInputData($inputData, $logbook);
         $this->getWorkbench()->eventManager()->dispatch(new OnActionInputValidatedEvent($this, $task, $inputData));
+
+        // Leave the input data section of the logbook and return to wherever we were previously
+        if ($prevSection !== null && $prevSection !== 'Input data') {
+            $logbook->setSectionActive($prevSection);
+        } else {
+            $logbook->setIndentActive(0);
+        }
         
         return $inputData;
     }
@@ -1554,18 +1577,20 @@ abstract class AbstractAction implements ActionInterface
         $handlesChanges = $this instanceof iModifyData;
         $effects = [];
         $effects[] = ActionEffectFactory::createForEffectedObject($this, $this->getMetaObject(), $name, $handlesChanges);
+        
         // If the action is bound to a button, it might also affect objects of the buttons input widget (e.g. dialog)
         // and those of the input of the button that opened that dialog, etc.
         if ($button !== null) {
             $effects = array_merge($effects, $this->getEffectsFromTriggerWidget($button, $this->getMetaObject(), $name, RelationPathFactory::createForObject($this->getMetaObject())));
         }
-        // Totally independently, we need to examine the input widget of the button. If it has data widgets, that
-        // produce subsheets, the action will obviosly also save their changes if it handles changes at all
+        
+        // Totally independently, we need to examine the input widget of the button. 
         if ($handlesChanges === true && ($button instanceof iUseInputWidget)) {
             $actionObj = $this->getMetaObject();
             $buttonInput = $button->getInputWidget();
             $inputDataObj = $buttonInput->getMetaObject();
-            // This can happen in containers only - their data might include subsheets
+            // If it has data widgets, that produce subsheets, the action will obviously also save their changes
+            // if it handles changes at allThis can happen in containers only - their data might include subsheets
             if ($buttonInput instanceof iContainOtherWidgets) {
                 foreach ($buttonInput->getInputWidgets() as $input) {
                     if (($input instanceof iTakeInputAsDataSubsheet) && $input->isSubsheetForObject($inputDataObj)) {
@@ -1593,24 +1618,31 @@ abstract class AbstractAction implements ActionInterface
     protected function getEffectsFromTriggerWidget(iTriggerAction $button, MetaObjectInterface $prevLevelObject, string $prevLevelName, MetaRelationPathInterface $prevLevelRelPath = null) : array
     {
         $effects = [];
+        $effectName = $button->getCaption() ?: $prevLevelName;
         
-        if (! ($name = $button->getCaption())) {
-            $name = $prevLevelName;
-        }
         $thisLevelObject = $button->getMetaObject();
         
         // Add effect on the object of the button triggering this action - if it is based on a different object.
         if ($thisLevelObject !== $prevLevelObject) {
-            if ($prevLevelObject !== $button->getMetaObject()) {
-                $name .= ' > ' . $prevLevelName;
+            if ($prevLevelName !== $effectName && $prevLevelObject !== $button->getMetaObject()) {
+                $effectName .= ' > ' . $prevLevelName;
             }
             $effectUxon = new UxonObject([
-                'name' => $name,
+                'name' => $effectName,
                 'effected_object' => $thisLevelObject->getAliasWithNamespace()
             ]);
+            // If we can find a relation from the previous level to this one, include the relation in the
+            // effect. But watch out for inherited relations: if the relation is inherited, its right object will
+            // not be te object of this level! In this case, add two relation - one with the level object and NO
+            // relation and one with the relation (resulting in an effect on the relations right object).
             $relationFromPrev = null;
             if ($prevLevelRelPath && $relationFromPrev = $prevLevelObject->findRelation($thisLevelObject, true)) {
                 $relPathFromPrev = $prevLevelRelPath->copy()->appendRelation($relationFromPrev);
+                // If the relation does not point to this levels object, add both effects - for the relaiton
+                // and for the level object
+                if ($relationFromPrev->getRightObject() !== $thisLevelObject) {
+                    $effects[] = new ActionEffect($this, $effectUxon->copy());
+                }
                 $effectUxon->setProperty('relation_path_to_effected_object', $relPathFromPrev->toString());
             }
             $effects[] = new ActionEffect($this, $effectUxon);
@@ -1652,7 +1684,7 @@ abstract class AbstractAction implements ActionInterface
             // level objects) - add an effect for it
             if ($inputObject !== $button->getMetaObject() && $inputObject !== $prevLevelObject) {
                 $effectUxon = new UxonObject([
-                    'name' => $name,
+                    'name' => $effectName,
                     'effected_object' => $inputObject->getAliasWithNamespace()
                 ]);
                 if ($inputObjectRelPath) {
@@ -1678,7 +1710,7 @@ abstract class AbstractAction implements ActionInterface
                     }
                     $effects = array_merge(
                         $effects, 
-                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $name, $relPath)
+                        $this->getEffectsFromTriggerWidget($inputDialogTrigger, $thisLevelObject, $effectName, $relPath)
                     );
                 }
             }
@@ -1925,7 +1957,7 @@ abstract class AbstractAction implements ActionInterface
      * @param TaskInterface $task
      * @return ActionLogBook
      */
-    protected function getLogBook(TaskInterface $task) : ActionLogBook
+    public function getLogBook(TaskInterface $task) : ActionLogBook
     {
         foreach ($this->logBooks as $lb) {
             if ($lb->getTask() === $task) {
@@ -2009,7 +2041,7 @@ abstract class AbstractAction implements ActionInterface
             default:
                 throw new ActionConfigurationError($this, 'Invalid value for confirmation_for_action in action');
         }
-        $this->getConfirmations()->addFromUxon($uxon);
+        $this->getConfirmations()->prepend($this->confirmations->createConfirmation($uxon));
         return $this;
     }
 
@@ -2080,6 +2112,53 @@ abstract class AbstractAction implements ActionInterface
         foreach ($arrayOfConfirmations as $uxon) {
             $this->getConfirmations()->addFromUxon($uxon);
         }
+        return $this;
+    }
+
+    /**
+     * Returns the long-running action monitor threshold (in seconds) for this action.
+     * 
+     * @return int|null
+     * - `>= 0`: The maximum execution in seconds, before this action should be logged.
+     * - `-1`: Do not log this action, regardless of execution time.
+     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
+     * in the `System.config.json`
+     */
+    public function getMonitorAsLongRunningAfterSeconds(?int $default = null) : int|null
+    {
+        return $this->longRunningThreshold ?? $default;
+    }
+
+    /**
+     * Set a custom maximum run time for this action, after which it will appear in the monitor as long-running action.
+     *
+     * If running the action takes longer than this threshold, a message will appear in the monitor and may issue
+     * an alert depending on the monitor configuration.
+     *
+     * Logging long-running actions must be explicitly enabled in `MONITOR.LONG_RUNNERS.ENABLED` System.config.json.
+     * If enabled, all actions taking longer than `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS` will be logged to the
+     * monitor.
+     *
+     * - Any value >= 0 will override the config setting.
+     * - You can disable this feature by setting the threshold to `-1` or `false`.
+     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
+     * in the `System.config.json`.
+     * 
+     * @uxon-property monitor_as_long_running_after_seconds
+     * @uxon-type int
+     * @uxon-template 5
+     * 
+     * @see ActionInterface::setMonitorAsLongRunningAfterSeconds()
+     */
+    public function setMonitorAsLongRunningAfterSeconds(int|bool $value) : AbstractAction
+    {
+        if($value === true) {
+            $value = null;
+        } elseif ($value === false) {
+            $value = -1;
+        }
+
+        $this->longRunningThreshold = $value;
         return $this;
     }
 

@@ -4,6 +4,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
+use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
@@ -22,7 +24,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * 
  * A split-style dashboard contains only one widget: a `SplitHorizontal` or `SplitVertical`.
  * In this case, the dashboard screen consists of bordered areas and is not scrollable.
- * It is the same as a split widget, but with the option to have have common filters.
+ * It is the same as a split widget, but with the option to have common filters.
  * 
  * ## Grid layout 
  * 
@@ -33,7 +35,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * 
  * ## Common filters
  * 
- * A dasboard can provide common filters, that apply to all widgets in it. It has its own
+ * A dashboard can provide common filters, that apply to all widgets in it. It has its own
  * `DashboardConfigurator` to house these filters. For now, this configurator only supports
  * filters. In practice, it is easier to define `filters` directly in the dashboard.
  * 
@@ -46,9 +48,9 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * ```json
  *  {
  *      "object_alias": "exface.Core.PAGE",
- *      "widget_type": "Dashbaord",
+ *      "widget_type": "Dashboard",
  *      "filters": [
- *          {"attribtue_alias": "APP"}
+ *          {"attribute_alias": "APP"}
  *      ],
  *      "filters_apply_to": {
  *          "APP": [
@@ -75,7 +77,7 @@ use exface\Core\Widgets\Traits\iHaveConfiguratorTrait;
  * @author Andrej Kabachnik
  *        
  */
-class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
+class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigurator, iHaveFilters
 {
     use iHaveConfiguratorTrait;
 
@@ -386,6 +388,15 @@ class Dashboard extends WidgetGrid implements iHaveConfigurator, iHaveFilters
     public function setMessages(UxonObject $arrayOfUxon) : Dashboard
     {
         $this->getConfiguratorWidget()->getMessageList()->setMessages($arrayOfUxon);
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see iFillEntireContainer::getAlternativeContainerForOrphanedSiblings()
+     */
+    public function getAlternativeContainerForOrphanedSiblings(): ?iContainOtherWidgets
+    {
         return $this;
     }
 }

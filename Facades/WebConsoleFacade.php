@@ -2,7 +2,7 @@
 namespace exface\Core\Facades;
 
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Facades\ConsoleFacade\CommandRunner;
+use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use GuzzleHttp\Psr7\Response;
@@ -147,7 +147,7 @@ class WebConsoleFacade extends AbstractHttpFacade
                 $envVars = $this->buildEnvironmentVars($widget);
                 
                 
-                $generator = CommandRunner::runCliCommand($cmd, $envVars, $widget->getCommandTimeout());
+                $generator = CliCommandRunner::runCliCommand($cmd, $envVars, $widget->getCommandTimeout());
                 $stream = new IteratorStream($generator);
         }
         

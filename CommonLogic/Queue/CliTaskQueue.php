@@ -5,12 +5,18 @@ use exface\Core\CommonLogic\Tasks\ResultMessageStream;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
-use exface\Core\Facades\ConsoleFacade\CommandRunner;
+use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
 /**
  * Performs CLI command(s) from the task parameter `cmd` - similar to the WebConsoleFacade.
+ * 
+ * The `command_timeout` property sets the maximum number of seconds a CLI command is allowed to 
+ * run before it is forcefully terminated. Without this limit, a command that hangs indefinitely 
+ * — due to a deadlock, waiting for user input, or an unresponsive external service — would keep 
+ * the PHP process alive forever and leave the queue item stuck in IN_PROGRESS state with no way 
+ * to recover automatically. By enforcing a timeout, the process is killed cleanly.
  * 
  * @author Andrej Kabachnik
  *
@@ -49,7 +55,9 @@ class CliTaskQueue extends SyncTaskQueue
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = $task->getParameter('timeout');
+        $timeout = $task->hasParameter('timeout')
+            ? (float) $task->getParameter('timeout')
+            : $this->getCommandTimeout();
         $result = new ResultMessageStream($task);
 
         // Store each command's outputs
@@ -71,7 +79,7 @@ class CliTaskQueue extends SyncTaskQueue
             }
 
             // Run each command and collect the output
-            foreach (CommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false) as $output) {
+            foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false) as $output) {
                 $allOutputs[] = $output;
             }
         }
@@ -138,7 +146,7 @@ class CliTaskQueue extends SyncTaskQueue
      */
     public function getCommandTimeout() : float
     {
-        return $this->commandTimeout;
+        return $this->commandTimeout ?? 600.0;
     }
 
 

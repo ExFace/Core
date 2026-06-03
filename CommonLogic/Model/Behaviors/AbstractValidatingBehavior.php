@@ -10,6 +10,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataSheetErrorMultiple;
 use exface\Core\Exceptions\DataSheets\DataCheckFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
+use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Events\DataChangeEventInterface;
@@ -23,6 +24,7 @@ use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\DataSheets\DataCheckListInterface;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataEvent;
 use exface\Core\Interfaces\Events\DataSheetEventInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\OptionalDataRowPlaceholder;
 
@@ -69,6 +71,8 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
     private $requiresOldData = null;
 
     private $oldData = [];
+
+    private ?UxonObject $onlyIfDataMatchesConditionGroupUxon = null;
 
     protected function getEventHandlerToPerformChecks() : callable
     {
@@ -168,6 +172,22 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
             $logbook->addIndent(-1);
         } else {
             $newDataPerUid = $newData;
+        }
+
+        //after preparing the input data check it matches the conditions if some are defined
+        // See if relevant
+        if ($this->hasRestrictionConditions()) {
+            $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
+            $logbook->addIndent(+1);
+            $logbook->addLine('`' . $this->getOnlyIfDataMatchesConditions()->__toString() . '`');
+            $newDataPerUid = $newDataPerUid->extract($this->getOnlyIfDataMatchesConditions(), true);
+            $logbook->addIndent(-1);
+            if ($newDataPerUid->isEmpty()) {
+                $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');
+                $this->inProgress = false;
+                $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event, $logbook));
+                return;
+            }
         }
 
         // TODO what about mass updates by filters? Shouldn't we throw an error here?
@@ -519,5 +539,42 @@ abstract class AbstractValidatingBehavior extends AbstractBehavior
                 $this, 
                 $msg);
         }
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    protected function hasRestrictionConditions() : bool
+    {
+        return $this->onlyIfDataMatchesConditionGroupUxon !== null;
+    }
+    
+    /**
+     * 
+     * @return ConditionGroupInterface|NULL
+     */
+    protected function getOnlyIfDataMatchesConditions() : ?ConditionGroupInterface
+    {
+        if ($this->onlyIfDataMatchesConditionGroupUxon === null) {
+            return null;
+        }
+        return ConditionGroupFactory::createFromUxon($this->getWorkbench(), $this->onlyIfDataMatchesConditionGroupUxon, $this->getObject());
+    }
+    
+    /**
+     * Only call the action if it's input data would match these conditions
+     * 
+     * @uxon-property only_if_data_matches_conditions
+     * @uxon-type \exface\Core\CommonLogic\Model\ConditionGroup
+     * @uxon-template {"operator": "AND","conditions":[{"expression": "","comparator": "=","value": ""}]}
+     * 
+     * @param UxonObject $uxon
+     * @return AbstractValidatingBehavior
+     */
+    protected function setOnlyIfDataMatchesConditions(UxonObject $uxon) : AbstractValidatingBehavior
+    {
+        $this->onlyIfDataMatchesConditionGroupUxon = $uxon;
+        return $this;
     }
 }

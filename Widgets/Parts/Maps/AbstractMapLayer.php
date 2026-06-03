@@ -26,6 +26,9 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
     private $showPopupOnClick = true;
     
     private ?AutoZoom $autoZoom = null;
+
+    private $hideInLayerSelection = false;
+    
     
     /**
      * The type (prototype class) of the layer.
@@ -175,7 +178,32 @@ abstract class AbstractMapLayer extends AbstractMapPart implements MapLayerInter
         return $this;
     }
 
-
+    /**
+     * @return bool
+     */
+    public function getHideInLayerSelection() : bool
+    {
+        return $this->hideInLayerSelection;
+    }
+    
+    /**
+     * Set to TRUE to hide the layer selection entry for this layer in the map's layer selector (legend) at the right upper corner of the map.
+     * This only hides the selection entry inside the layer selector. The layer will still be displayed on  the map.
+     * This can be used if the layer is turned on or off elsewhere.
+     * 
+     * @uxon-property hide_in_layer_selection
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return AbstractMapLayer
+     */
+    protected function setHideInLayerSelection(bool $value) : AbstractMapLayer
+    {
+        $this->hideInLayerSelection = $value;
+        return $this;
+    }
+    
     /**
      *
      * {@inheritDoc}

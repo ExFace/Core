@@ -123,7 +123,7 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
         $fromExpr = $this->getFromExpression();
         $toExpr = $this->getToExpression();
         
-        $log = "Column `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`.";
+        $logbook?->addLine("Column `{$fromExpr->__toString()}` -> `{$toExpr->__toString()}`.");
         $fromCol = $fromSheet->getColumns()->getByExpression($fromExpr);
         
         switch (true) {
@@ -134,10 +134,12 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 // we need to add a row manually.
                 if ($toSheet->isEmpty() === true) {
                     if ($this->getCreateRowInEmptyData() === true) {
-                        $log .= ' Adding a new row because the to-sheet was empty.';
-                        $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate()]);
+                        $logbook?->continueLine('Adding a new row because the to-sheet was empty.');
+                        $toSheet->addRow([
+                            $newCol->getName() => $this->mapValue($fromExpr->evaluate())
+                        ]);
                     } else {
-                        $log .= ' Will not add row to empty data because `create_row_in_empty_data` is `false`.';
+                        $logbook?->continueLine('Will not add row to empty data because `create_row_in_empty_data` is `false`.');
                     }
                 }
                 break;
@@ -150,10 +152,12 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 // has at least one row - othewise non-static formulas will throw an error!
                 if ($toSheet->isEmpty() === true) {
                     if ($fromSheet->isEmpty() === false && $this->getCreateRowInEmptyData() === true) {
-                        $log .= ' Adding a new row because the to-sheet was empty.';
-                        $toSheet->addRow([$newCol->getName() => $fromExpr->evaluate($fromSheet, 0)]);
+                        $logbook?->continueLine(' Adding a new row because the to-sheet was empty.');
+                        $toSheet->addRow([
+                            $newCol->getName() => $this->mapValue($fromExpr->evaluate($fromSheet, 0))
+                        ]);
                     } else {
-                        $log .= ' Will not add row to empty data because ' . ($fromSheet->isEmpty() ? 'from-sheet is empty.' : '`create_row_in_empty_data` is `false`.');
+                        $logbook?->continueLine(' Will not add row to empty data because ' . ($fromSheet->isEmpty() ? 'from-sheet is empty.' : '`create_row_in_empty_data` is `false`.'));
                     }
                 }
                 break;
@@ -183,27 +187,52 @@ class DataColumnMapping extends AbstractDataSheetMapping implements DataColumnMa
                 }
             // Data column references
             case $fromCol:
-                $toSheet->getColumns()->addFromExpression($toExpr, null, $fromCol->getHidden())->setValues($fromCol->getValues(false));
+                $toCol = $toSheet->getColumns()->addFromExpression($toExpr, null, $fromCol->getHidden());
+                $toCol->setValues($this->mapValues($fromCol->getValues(false)));
                 break;
             // Data column references should not result in errors if the data sheet is completely empty
             // Otherwise input-mappers would always produce errors on empty input data!
             case $fromSheet->getColumns()->isEmpty() && ! $fromExpr->isReference():
-                if ($logbook !== null) $logbook->addLine($log . ' Not required because from-sheet is empty.');
+                $logbook?->continueLine(' Not required because from-sheet is empty.');
                 return $toSheet;
             // If not enough data, but explicitly configured to ignore it, exit here
             case $this->getIgnoreIfMissingFromColumn() === true && ($fromExpr->isMetaAttribute() || $fromExpr->isFormula() || $fromExpr->isUnknownType()):
-                if ($logbook !== null) $logbook->addLine($log . ' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
+                $logbook?->continueLine(' Ignored because `ignore_if_missing_from_column` is `true` and not from-data was found.');
                 return $toSheet;
             default:
                 if ($fromExpr->isMetaAttribute()) {
                     throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot map from attribute "' . $fromExpr->toString() . '" in a column-to-column mapping: there is no matching column in the from-data and it cannot be loaded automatically (e.g. because the from-object ' . $fromSheet->getMetaObject() .' has no UID attribute)!', '7H6M243');
                 }
-                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
+                throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Cannot use "' . $fromExpr->__toString() . '" as from-expression in a column-to-column mapping: only data column names, constants and formulas allowed!', '7H6M243');
         }
         
-        if ($logbook !== null) $logbook->addLine($log);
-        
         return $toSheet;
+    }
+
+    /**
+     * Transforms a from-value into a to-value (if any changes are needed)
+     * 
+     * Override this method in extending mapper classes to add value transformation
+     * 
+     * @param mixed $fromValue
+     * @return mixed
+     */
+    protected function mapValue($fromValue)
+    {
+        return $fromValue;
+    }
+
+    /**
+     * Transforms an array of from-values into to-values (if any changes are needed)
+     *
+     * Override this method in extending mapper classes to add value transformation
+     *
+     * @param array $fromValues
+     * @return array
+     */
+    protected function mapValues(array $fromValues) : array
+    {
+        return $fromValues;
     }
     
     /**

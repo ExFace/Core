@@ -56,6 +56,12 @@ class CommandLoader implements FacadeCommandLoaderInterface
         $commands = $this->getCommandActionMap();
         $found = null;
         
+        foreach ($commands as $name => $alias) {
+            if (strcasecmp($name, $command) === 0) {
+                return $alias;
+            }
+        }
+        
         list ($cspace, $cname) = explode(':', $command);
         foreach ($commands as $name => $alias) {
             list($namespace, $name) = explode(':', $name);

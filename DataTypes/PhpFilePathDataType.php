@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
+use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\FileSelectorInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
@@ -22,7 +23,6 @@ class PhpFilePathDataType extends FilePathDataType
     
     private static array $cachedFileClasses = [];
     private static array $cachedAppFolders = [];
-    private static array $cachedAppAliases = [];
     private static array $cachedNamespaces = [];
     
     /**
@@ -81,7 +81,7 @@ class PhpFilePathDataType extends FilePathDataType
         }
 
         // In most cases, we can be sure, the class name is the file name exactly.
-        // TODO this will not work reliably with classes typed by users: formulas, class-propertiesin
+        // TODO this will not work reliably with classes typed by users: formulas, class-properties in
         // UXON configurations, etc. Maybe it is better to call FilePathDataType::findPathCaseInsensitive
         // right away without all these extra checks?
         $className = FilePathDataType::findFileName($relPath);
@@ -117,11 +117,6 @@ class PhpFilePathDataType extends FilePathDataType
 
         // If we do not know the app namespace or did not find the class right away
         if (! file_exists($absPath)) {
-            // See if we already know the real app folder. If not, find it and cache it
-            if (null === $appFolderReal = (self::$cachedAppFolders[mb_strtoupper($appFolder)] ?? null)) {
-                $appFolderReal = $workbench->getAppFolder($appVendor . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $appAlias);
-                self::$cachedAppFolders[mb_strtoupper($appFolder)] = $appFolderReal;
-            }
             $relPath = FilePathDataType::findPathCaseInsensitive($relPath, $vendorFolder, $dirSep);
             $triedPaths[] = $relPath;
             $absPath = $vendorFolder . $dirSep . $relPath;
@@ -317,5 +312,40 @@ class PhpFilePathDataType extends FilePathDataType
     {
         $parts = explode('\\', $class);
         return array_pop($parts);
+    }
+
+
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\WorkbenchInterface::getAppFolder()
+     */
+    public static function findPathToApp(AppSelectorInterface|string $selector, WorkbenchInterface $workbench) : string
+    {
+        $alias = is_string($selector) ? $selector : $selector->getAppAlias();
+        list($appVendor, $appAlias) = explode(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $alias);
+        $appFolder = $appVendor . DIRECTORY_SEPARATOR . $appAlias;
+
+        $appFolderLC = mb_strtolower($appFolder);
+        // See if we already know the real app folder. If not, find it and cache it
+        if (null === $appFolderReal = (self::$cachedAppFolders[$appFolderLC] ?? null)) {
+            $pathToVendor = $workbench->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR;
+            switch (true) {
+                case is_dir($pathToVendor . $appFolderLC):
+                    $appFolderReal = $appFolderLC;
+                    break;
+                case is_dir($pathToVendor . $appFolder):
+                    $appFolderReal =  $appFolder;
+                    break;
+                default:
+                    $appFolderReal = $appFolderLC;
+            }
+            
+            self::$cachedAppFolders[$appFolderLC] = $appFolderReal;
+            return $appFolderReal;
+        }
+        
+        return $appFolderReal;
     }
 }

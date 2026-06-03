@@ -2,6 +2,8 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 class BooleanDataType extends AbstractDataType
 {
@@ -23,9 +25,21 @@ class BooleanDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, bool $silent = true) : string
     {
-        $val = $this->parse($value);
+        try {
+            $val = $this->parse($value ?? $this->getValue());
+        } catch (DataTypeExceptionInterface $e) {
+            $val = $value ?? $this->getValue();
+            $e = $this->createFormatterError($val, $e);
+            // When formatting, casting/parsing/validation errors should not break the operation
+            if ($silent === true) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+                return $val ?? '';
+            } else {
+                throw $e;
+            }
+        }
         if ($val === null || $val === EXF_LOGICAL_NULL) {
             return '';
         }

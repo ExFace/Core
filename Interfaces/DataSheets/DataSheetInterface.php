@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\DataSheetJoinRules;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
 use exface\Core\Exceptions\DataSheets\DataSheetRuntimeError;
@@ -112,13 +113,20 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
      *
-     * @param DataSheetInterface $otherSheet
-     * @param string|null $leftKeyColName
-     * @param string|null $rightKeyColName
-     * @param string $relationPath
+     * @param DataSheetInterface      $otherSheet
+     * @param string|null             $leftKeyColName
+     * @param string|null             $rightKeyColName
+     * @param string                  $relationPath
+     * @param DataSheetJoinRules|null $joinRules
      * @return DataSheetInterface
      */
-    public function joinLeft(DataSheetInterface $otherSheet, string $leftKeyColName = null, string $rightKeyColName = null, string $relationPath = '') : DataSheetInterface;
+    public function joinLeft(
+        DataSheetInterface $otherSheet,
+        string $leftKeyColName = null,
+        string $rightKeyColName = null,
+        string $relationPath = '',
+        DataSheetJoinRules $joinRules = null
+    ) : DataSheetInterface;
 
     /**
      * Replaces data if this sheet with data in matching columns of the given sheet.
@@ -430,21 +438,30 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return array[]
      */
     public function getRowsByIndex(array $indexes) : array;
-    
+
     /**
      * Returns only those rows from the current sheet, that are not present in the other sheet provided.
-     *
-     * This method is mainly usefull to compare data sheets deemed to be identical - it compares
-     * rows with the same row numbers.
      * 
+     * Internally this method will compare the values of every column of this sheet with the column of the same
+     * name in the provided other sheet:
+     * - If both sheets have the column, the values are compared row-by-row
+     * - If this column has columns not present in the other sheet, ALL rows will be considered different unless
+     * `$ignoreEmptyCols` ist set to TRUE and the column is empty.
+     * - If the other sheet a column, that is not part of this sheet, it will be ignored.
+     *
+     * This method is mainly useful to compare data sheets deemed to be identical - it compares
+     * rows with the same row numbers.
+     *
      * Columns, attributes or expressions can be excluded from the comparison via `$exclude` argument.
      * Differences in the corresponding columns will be ignored!
+     * 
      *
      * @param DataSheetInterface $otherSheet
      * @param DataColumnInterface[]|MetaAttributeInterface[]|ExpressionInterface[]|string[] $exclude
+     * @param bool $ignoreEmptyCols
      * @return array
      */
-    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array;
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = [], bool $ignoreEmptyCols = false) : array;
 
     /**
      * Returns the specified row as an associative array (e.g.
@@ -680,6 +697,30 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      */
     public function isPaged() : bool;
 
+    /**
+     * Returns TRUE if the data of this sheet can/should be cached.
+     * 
+     * By default, a data sheet is considered cacheable, if:
+     * 
+     * - It is explicitly marked as cacheable via `setCacheable(true)`
+     * - OR is not explicitly marked as uncacheable via `setCacheable(false)`
+     *  - AND it has no columns with binary data
+     * 
+     * @return bool
+     */
+    public function isCacheable() : bool;
+
+    /**
+     * Mark the sheet as cacheable or not explicitly
+     *
+     * Marking a DataSheet as not-cacheable will make sure it is NEVER cached, so any `dataRead()` will always query
+     * the data source.
+     *
+     * @param bool $trueOrFalse
+     * @return DataSheetInterface
+     */
+    public function setCacheable(bool $trueOrFalse) : DataSheetInterface;
+
     public function getRowsLimit() : ?int;
 
     public function setRowsLimit($value) : DataSheetInterface;
@@ -871,4 +912,36 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * @return DataSheetInterface
      */
     public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface;
+
+    /**
+     * Copies this instance and aggregates it based on the key column of a specified other sheet.
+     *
+     * Values found in `$otherKeyColumn` will be de-aggregated and then matched with values found in `$selfKeyColumn`
+     * to collect the data that needs to be aggregated.
+     *
+     * Then all `$aggregationsPerColumn` are performed on the collected data. The resulting sheet will contain
+     * matching keys for each value in `$otherKeyColumn` and only columns for which you provided aggregations. Since
+     * it is fully aggregated and has a matching key column, you can JOIN the result sheet with the `$otherSheet`.
+     *
+     * @param DataSheetInterface  $otherSheet
+     * @param DataColumnInterface $otherKeyColumn
+     * @param DataColumnInterface $selfKeyColumn
+     * @param array               $aggregationsPerColumn
+     * Specify the aggregations you want to be performed per column. You can specify any number of aggregations per 
+     * column. The array must have the following structure:
+     * ```
+     *  [
+     *      'colName1' => [ AggregatorInterface, ... , AggregatorInterface ],
+     *      'colName2' => [ AggregatorInterface, ... , AggregatorInterface ],
+     *      ...
+     *  ]
+     * ```
+     * @return DataSheetInterface
+     */
+    public function aggregateLike(
+        DataSheetInterface $otherSheet,
+        DataColumnInterface $otherKeyColumn,
+        DataColumnInterface $selfKeyColumn,
+        array $aggregationsPerColumn
+    ) : DataSheetInterface;
 }

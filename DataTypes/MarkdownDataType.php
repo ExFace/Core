@@ -95,7 +95,7 @@ class MarkdownDataType
         $headings = $headings ?? array_keys($rows[0] ?? []);
         $md = '|';
         foreach ($headings as $heding) {
-            $md .= ' ' . static::escapeString($heding) . ' |';
+            $md .= ' ' . static::escapeString($heding ?? '') . ' |';
         }
         $md .= PHP_EOL . '|';
         foreach ($headings as $heding) {
@@ -104,7 +104,7 @@ class MarkdownDataType
         foreach ($rows as $row) {
             $md .= PHP_EOL . '|';
             foreach ($row as $cell) {
-                $md .= ' ' . static::escapeString($cell) . ' |';
+                $md .= ' ' . static::escapeString($cell ?? '') . ' |';
             }
         }
 
@@ -273,5 +273,26 @@ MD;
     public static function makeHorizontalLine() : string
     {
         return "\n\n-------------------------------------\n\n";
+    }
+
+    /**
+     * Removes YAML-style front matter from th given markdown
+     * 
+     * @param string $markdown
+     * @return string
+     */
+    public static function stripFrontMatter(string $markdown): string
+    {
+        // Remove UTF-8 BOM if present
+        $markdown = preg_replace('/^\xEF\xBB\xBF/', '', $markdown);
+
+        // Strip YAML front matter at the very beginning
+        $markdown = preg_replace(
+            '/\A---\R.*?\R---\R?/s',
+            '',
+            $markdown
+        );
+
+        return $markdown;
     }
 }

@@ -23,16 +23,16 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     /**
      * Prefills the widget with values of a data sheet.
      * 
-     * Each widget has it's own prefill logic: simple value widgets will just look for
+     * Each widget has its own prefill logic: simple value widgets will just look for
      * a suitable cell value in the data sheet, key-value widgets will try to get
      * both, while complex data widgets may use filters, rows, UIDs, etc.
      * 
      * The prefill process produces three types of events: `OnBeforePrefill` and
      * `OnPrefill` will be fired for every widget, the prefill data is passed to - before 
-     * and after processing it - regardless of whether it affetcs a widget or not.
+     * and after processing it - regardless of whether it affects a widget or not.
      * `OnPrefillChangeProperty`, on the other hand, will be fired only if the prefill
      * actually affects the widget and will be triggered for every widget property
-     * that is changed. This event let's you examine the results of the prefill
+     * that is changed. This event lets you examine the results of the prefill
      * in detail as it contains old and new values of the affected properties.
      *
      * @triggers \exface\Core\Events\Widget\OnBeforePrefillEvent
@@ -59,19 +59,35 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
     public function isPrefilled() : bool;
 
     /**
-     * Adds attributes, filters, etc.
-     * to a given data sheet, so that it can be used to fill the widget with data
+     * Makes sure, the given DataSheet reads everything required to fill this widget once a read is performed on it.
      *
-     * @param DataSheetInterface $data_sheet            
+     * Depending on the widget type, this method will add column, filter, aggregations, etc. If a blank data sheet is
+     * provided, it will have exactly what the widget needs. If an existing data sheet is given, the widget will check,
+     * if it can use this data sheet to read its data and add whatever is missing to it. This allows to reuse data
+     * sheets for multiple widgets if they have similar requirements.
+     *
+     * There are two similar methods: `prepareDataSheetToPrefill` and `prepareDataSheetToPrefill`. For simple widgets,
+     * that display single attributes, they may even be identical, but they are very different for complex widgets like
+     * lazy loading data widget. E.g. for a lazy table preparing to prefill will make sure required filters will have
+     * values, while preparing to read will add all required columns to fill the table. Thus, preparing to read will
+     * only work for sheets of the same object and will make sure the sheet will read the data for the table, while
+     * preparing to prefill may work with other object too and will not include table data in the sheet, but might add
+     * a column for a required filter of the table.
+     *
+     * @param DataSheetInterface|null $data_sheet
      * @return DataSheetInterface
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null);
 
     /**
-     * Adds attributes, filters, etc.
-     * to a given data sheet, so that it can be used to prefill the widget
+     * Makes sure, the given DataSheet reads everything required to prefill this widget once a read is performed on it.
      *
-     * @param DataSheetInterface $data_sheet            
+     * There are two similar methods: `prepareDataSheetToPrefill` and `prepareDataSheetToPrefill`. For simple widgets,
+     * that display single attributes, they may even be identical, but they are very different for complex widgets like
+     * lazy loading data widget. E.g. for a lazy table preparing to prefill will make sure required filters will have
+     * values, while preparing to read will add all required columns to fill the table.
+     *
+     * @param DataSheetInterface|null $data_sheet
      * @return DataSheetInterface
      */
     public function prepareDataSheetToPrefill(DataSheetInterface $data_sheet = null) : DataSheetInterface;

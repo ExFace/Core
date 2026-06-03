@@ -6,6 +6,7 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Widgets\Parts\Maps\Interfaces\DataMapLayerInterface;
+use exface\Core\Widgets\Parts\Maps\MapLayerUxonSchema;
 use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 use exface\Core\Interfaces\Widgets\iHaveToolbars;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
@@ -30,8 +31,107 @@ use exface\Core\Exceptions\UnexpectedValueException;
 
 /**
  * A map with support for different mapping data providers and data layers.
+ * 
  *
+ * ## Table of Contents
+ *
+ * - [Object Alias](#object-alias)
+ * - [Data Setup Guide](#data-setup-guide)
+ * - [General Map configuration](#general-map-configuration)
+ * - [Auto Zoom](#auto-zoom)
+ * 
+ * ### Object Alias
+ * 
+ * A map can have an object alias on multiple levels. Please make sure to specify the specific object alias on each level. 
+ * There is a known-issue that data with filters does not work correctly with when multiple layers contain different objects with filters. (#1629)
+ * 
+ * ### Data Setup Guide
+ * 
+ * **Data widget link to an existing table**
+ * 
+ * Use this setup if you want **only** load data that is **visible** inside the table you are linking (paging and filter will be adopted).
+ * If you need more data please check the additional setup.
+ * 
+ * `"data_widget_link": "=your_table_widget_id"`
+ * 
+ * the content of the pop-up on the map will be the same data that is shown in the table itself.
+ * 
+ * **Configurator widget link to an existing table**
+ * 
+ * Use this setup if you want link an existing table in a way that you use the configuration but can modify what and how you want to load that data. Filter from the linked widget table will be transferred to your widget no matter your configurations (since they will be merged).
+ * 
+ * ```
+ * "data": {
+ *   "object_alias": "the.app.your_object_alias",
+ *   "configurator_widget_link": "=your_table_widget_id",
+ *   "paginate": false,
+ *   "//": "with columns you can define what data will be shown in the pop-up content on the map. If none are defined PUI will use the attributes with a defined display position."
+ *   "columns": [
+ *       {
+ *           "attribute_alias": "your_attribute_alias"
+ *       },
+ *       ...
+ *       {
+ *           "attribute_group_alias": "the.app.your_attribute_group_alias"
+ *       }
+ *   ]
+ * }
+ *
+ * ```
+ * 
+ * **Define your own data**
+ * 
+ * Use this setup if you want a map with completely separat data from any other widget.
+ * 
+ * ```
+ * "data": {
+ *  "object_alias": "the.app.your_object_alias",
+ *  "//": "only load data you need to see. Otherwise, PUI will load the whole table."
+ *  "filter": [
+ *      {
+ *          "attribute_alias": "your_attribute_alias",
+ *          "comparator": "your_comparator",
+ *          "value": "your_value"
+ *      }
+ *  ],
+ *  "columns": [
+ *      {
+ *          "attribute_alias": "your_attribute_alias"
+ *      },
+ *      {
+ *          "attribute_group_alias": "the.app.your_attribute_group_alias"
+ *      },
+ *      {
+ *          "~snippet": "the.app.your_snippet_alias"
+ *      }
+ *  ]
+ * }
+ * 
+ * ```
+ * 
+ * ### General Map configuration
+ * 
+ * - Set a specific coordinate bounding box as a default center
+ *      - `center_latitude` and `center_latitude_attribute_alias` give you the ability to set the latitude that is used for the original zoom when no data with auto zoom is found
+ *      - `center_longitude` and `center_longitude_attribute_alias` give you the ability to set the longitude that is used for the original zoom when no data with auto zoom is found
+ *      - use `center_via_gps` instead if you want the current gps data to decide the center of the map
+ * 
+ * ### Auto Zoom
+ * 
+ * Please use auto zoom as an object to configure the map zoom options. If you put that config at `map` level, it will apply these options to all layers. Alternatively you can add them to a specific `layer`.
+ * See options on `auto_zoom` for more information.
+ * 
+ * ```
+ * "auto_zoom": {
+ *      "zoom_in": true,
+ *      "zoom_out": true,
+ *      "include_other_layers": true
+ * }
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
+ * @summary_author Miriam Seitz
  *        
  */
 class Map extends AbstractWidget implements
@@ -76,11 +176,11 @@ class Map extends AbstractWidget implements
     
     private $centerViaGps = null;
     
-    private $zoom = null;
-    
-    private $zoomMin = null;
-    
-    private $zoomMax = null;
+    private ?float $zoomInitial = null;
+    private ?float $zoomMin = null;
+    private ?float $zoomMax = null;
+    private ?float $zoomSnap = null;
+    private ?UxonObject $autoZoomDefaults = null;
     
     private $showFullScreenButton = null;
     
@@ -102,8 +202,6 @@ class Map extends AbstractWidget implements
     private $hide_header = null;
     
     private $coordinateSystem = self::COORDINATE_SYSTEM_AUTO;
-    
-    private ?UxonObject $autoZoomDefaults = null;
     
     /**
      *
@@ -218,10 +316,14 @@ class Map extends AbstractWidget implements
         }
         return $this;
     }
-    
+
     /**
+     * Returns the correct class string for that layer type.
      * 
+     * specify subfolder for a quicker match.
+     *
      * @param string $layerType
+     * @param string|null $subfolder
      * @return string
      */
     public static function getLayerClassFromType(string $layerType, string $subfolder = null) : string
@@ -229,11 +331,14 @@ class Map extends AbstractWidget implements
         if (substr($layerType, 0, 1) === '\\') {
             $class = $layerType;
         } else {
-            $class = __NAMESPACE__ . '\\Parts\\Maps\\' . ($subfolder !== null ? $subfolder . '\\' : '') . $layerType;
-            if ($subfolder === null && ! StringDataType::endsWith($class, 'Layer')) {
-                $class .= 'Layer';
-            }
-        }        
+            $class = __NAMESPACE__ . '\\Parts\\Maps\\' . ($subfolder !== null ? $subfolder . '\\' : '');
+            // Try every possible path addition for a map type class
+            switch ($class) {
+                case class_exists($class .= $layerType):
+                case class_exists($class .= 'Layer'):
+                    return $class;
+            }            
+        }
         return $class;
     }
 
@@ -677,7 +782,7 @@ class Map extends AbstractWidget implements
      */
     public function getZoom() : ?int
     {
-        return $this->zoom;
+        return $this->zoomInitial;
     }
 
     public function getDoubleClickToZoom() : ?bool
@@ -707,23 +812,38 @@ class Map extends AbstractWidget implements
      * are very common: 1 for complete zoom out (whole earth or even more), 2 double zoom, 3
      * for 4x zoom, etc.
      * 
-     * @uxon-property zoom
-     * @uxon-type integer
+     * Many map layers support `auto_zoom`, which will zoom automatically when the layer is loaded and make sure,
+     * all layer items are visible. You can set the defaults for `auto_zoom` on map level too. However, `zoom_initial`
+     * will be applied right when the map is loaded - even without any layers.
      * 
-     * @param int $value
+     * @uxon-property zoom_initial
+     * @uxon-type number
+     * 
+     * @param float $value
      * @return Map
      */
-    public function setZoom(int $value) : Map
+    public function setZoomInitial(float $value) : Map
     {
-        $this->zoom = $value;
+        $this->zoomInitial = $value;
         return $this;
+    }
+
+    /**
+     * @deprecated use zoom_initial instead
+     * 
+     * @param float $value
+     * @return $this
+     */
+    protected function setZoom(float $value) : Map
+    {
+        return $this->setZoomInitial($value);
     }
     
     /**
      * 
-     * @return int|NULL
+     * @return float|NULL
      */
-    public function getZoomMin() : ?int
+    public function getZoomMin() : ?float
     {
         return $this->zoomMin;
     }
@@ -734,10 +854,10 @@ class Map extends AbstractWidget implements
      * @uxon-property zoom_min
      * @uxon-type integer
      * 
-     * @param int $value
+     * @param float $value
      * @return Map
      */
-    public function setZoomMin(int $value) : Map
+    public function setZoomMin(float $value) : Map
     {
         $this->zoomMin = $value;
         return $this;
@@ -745,9 +865,9 @@ class Map extends AbstractWidget implements
     
     /**
      * 
-     * @return int|NULL
+     * @return float|NULL
      */
-    public function getZoomMax() : ?int
+    public function getZoomMax() : ?float
     {
         return $this->zoomMax;
     }
@@ -756,15 +876,71 @@ class Map extends AbstractWidget implements
      * The maximum zoom value for this map
      * 
      * @uxon-property zoom_max
-     * @uxon-type integer
+     * @uxon-type number
      * 
-     * @param int $value
+     * @param float $value
      * @return Map
      */
-    public function setZoomMax(int $value) : Map
+    public function setZoomMax(float $value) : Map
     {
         $this->zoomMax = $value;
         return $this;
+    }
+    
+    public function getZoomStep() : ?float
+    {
+        return $this->zoomSnap;
+    }
+
+    /**
+     * Factor to zoom at a time when pressing the zoom controls or using mouse wheel.
+     * 
+     * Use fractional steps like `0.25` or `0.1` for a smooth zoom. 
+     * 
+     * By default, the `zoom_step` is 1. Thus, valid zoom levels are `0`, `1`, `2`, `3`, etc. If you set the value 
+     * of zoomSnap to 0.5, the valid zoom levels of the map will be `0`, `0.5`, `1`, `1.5`, `2`, and so on. If you set 
+     * a value of 0.1, the valid zoom levels of the map will be `0`, `0.1`, `0.2`, `0.3`, `0.4`, and so on.
+     * 
+     * @uxon-property zoom_step
+     * @uxon-type float
+     * @uxon-default 1
+     * 
+     * @param float $value
+     * @return $this
+     */
+    public function setZoomStep(float $value) : Map
+    {
+        $this->zoomSnap = $value;
+        return $this;
+    }
+
+    /**
+     * Default setting for auto_zoom for all layers, that support it
+     *
+     * @uxon-property auto_zoom
+     * @uxon-type \exface\Core\Widgets\Parts\Maps\AutoZoom
+     * @uxon-template {"zoom_in": false, "zoom_out": true}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setAutoZoom(UxonObject $uxon) : Map
+    {
+        $this->autoZoomDefaults = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    public function getAutoZoomDefaults() : ?UxonObject
+    {
+        if ($this->autoZoomDefaults === null && count($this->getDataLayers())) {
+            $this->autoZoomDefaults = new UxonObject([
+                'zoom_in' => true
+            ]);
+        }
+        return $this->autoZoomDefaults;
     }
     
     /**
@@ -790,7 +966,7 @@ class Map extends AbstractWidget implements
      * 
      * @uxon-property show_full_screen_button
      * @uxon-type boolean
-     * @uxon-defaul true
+     * @uxon-default true
      * 
      * @param bool $value
      * @return Map
@@ -983,34 +1159,5 @@ class Map extends AbstractWidget implements
             }
         }
         return array_unique($objs);
-    }
-
-    /**
-     * Default setting for auto_zoom for all layers, that support it
-     * 
-     * @uxon-property auto_zoom
-     * @uxon-type \exface\Core\Widgets\Parts\Maps\AutoZoom
-     * @uxon-template {"zoom_in": false, "zoom_out": true}
-     * 
-     * @param UxonObject $uxon
-     * @return $this
-     */
-    protected function setAutoZoom(UxonObject $uxon) : Map
-    {
-        $this->autoZoomDefaults = $uxon;
-        return $this;
-    }
-
-    /**
-     * @return UxonObject|null
-     */
-    public function getAutoZoomDefaults() : ?UxonObject
-    {
-        if ($this->autoZoomDefaults === null && count($this->getDataLayers())) {
-            $this->autoZoomDefaults = new UxonObject([
-                'zoom_in' => true
-            ]);
-        }
-        return $this->autoZoomDefaults;
     }
 }

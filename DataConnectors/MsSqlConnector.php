@@ -1,19 +1,24 @@
 <?php
 namespace exface\Core\DataConnectors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Exceptions\DataSources\DataQueryForeignKeyError;
+use exface\Core\Exceptions\DataSources\DataQueryNotNullConstraintError;
 use exface\Core\Exceptions\DataSources\MsSqlError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\ModelBuilders\MsSqlModelBuilder;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
-use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\DataSources\DataQueryRelationCardinalityError;
 use exface\Core\QueryBuilders\MsSqlBuilder;
@@ -169,6 +174,9 @@ class MsSqlConnector extends AbstractSqlConnector
     
     private $multiqueryResults = null;
     
+    private ?LogBookInterface $logbook = null;
+    private bool $logbookEnabled = false;
+    
     /**
      *
      * {@inheritdoc}
@@ -201,6 +209,8 @@ class MsSqlConnector extends AbstractSqlConnector
             }
         }
         
+        $this->getLogbook()?->addLine('Connecting `' . $this->getHost() . '`');
+        $this->getLogbook()?->addIndent(+1);
         if (! $conn = sqlsrv_connect($this->getHost() . ($this->getPort() ? ', ' . $this->getPort() : ''), $connectInfo)) {
             $e = $this->getLastErrorException();
             throw new DataConnectionFailedError($this, "Failed to connect to MS SQL Server database. " . ($e ? $e->getMessage() : 'Unknown error'), null, $e->setAlias('7ZBVB1G'));
@@ -216,6 +226,7 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     protected function performDisconnect()
     {
+        $this->getLogbook()?->addLine('**Disconnecting**')->addIndent(+1);
         if (($conn = $this->getCurrentConnection()) !== null) {
             @sqlsrv_close($conn);
             $this->resetCurrentConnection();
@@ -232,6 +243,7 @@ class MsSqlConnector extends AbstractSqlConnector
     protected function performQuerySql(SqlDataQuery $query)
     {
         $sql = $query->getSql();
+        $this->getLogbook()?->addLine('Query `' . StringDataType::truncate($sql, 80, true, true, true) . '`');
         $this->resultCounter = null;
         if ($query->isMultipleStatements()) {
             $stmtNo = 0;
@@ -291,32 +303,65 @@ class MsSqlConnector extends AbstractSqlConnector
      * @param string $message
      * @return DataQueryExceptionInterface
      */
+    /**
+     *
+     * @param DataQueryInterface $query
+     * @param string|null $message
+     * @return DataQueryExceptionInterface
+     */
     protected function createQueryError(DataQueryInterface $query, string $message = null) : DataQueryExceptionInterface
     {
-        $err = $this->getLastErrorException();
+        $e = new MsSqlError($this, $message, '6T2T2UI', null);
         if ($message === null) {
-            $message = $err->getMessage();
+            $message = $e->getMessage();
         } else {
-            $message = StringDataType::endSentence($message) . ' SQL error: ' . $err->getMessage();
+            $message = StringDataType::endSentence($message) . ' SQL error: ' . $e->getMessage();
         }
-        
-        switch ($err->getSqlErrorCode()) {
+        $obj = $e->getAffectedObject();
+        $attrVals = $e->getAffectedAttributeValues();
+        $sqlState = intval($e->getSqlState());
+        $sqlErrorCode = intval($e->getSqlErrorCode());
+
+        switch (true) {
+            case strpos($e->getMessage(), 'UTF-16') !== false:
+                $e = new DataQueryFailedError($query, 'MS SQL encountered a UTF-16 Encoding error. ' . $e->getMessage(), '', null);
+                break;
+            case $sqlState === 23000 && ($sqlErrorCode === 2601 || $sqlErrorCode === 2627):
+                $e = new DataQueryUniqueConstraintError($query, $this, $message, '73II64M', $e, $obj, $attrVals);
+                break;
+
+            case $sqlState === 23000 && $sqlErrorCode === 547:
+                $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
+            case $sqlState === 23000 && $sqlErrorCode === 515:
+                $e = new DataQueryNotNullConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
+            case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
+            case $sqlState === 23514: // CHECK VIOLATION
+            case $sqlState === 23001: // RESTRICT VIOLATION
+                $e = new DataQueryConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+
             // Cannot perform an aggregate function on an expression containing an aggregate or a subquery
-            case 130:
-                return new DataQueryFailedError($query, $message, null, $err->setAlias('84RWYLO'));
-            case 512:
-                return new DataQueryRelationCardinalityError($query, $message, null, $err->setAlias('7W2J960'));
-            case 2627:
-            case 2601:
-                return new DataQueryConstraintError($query, $message, null, $err->setAlias('73II64M'));
-            // Subquery returns more than 1 row - SQL error code 1242
-            case 1242:
-                return new DataQueryRelationCardinalityError($query, $message, $err);
+            case $sqlErrorCode === 130:
+                $e = new DataQueryFailedError($query, $message, null, $e->setAlias('84RWYLO'));
+                break;
+
+            // Subquery returned more than 1 value
+            case $sqlErrorCode === 512: 
+            case $sqlErrorCode === 1242:
+                $e = new DataQueryRelationCardinalityError($query, $message, null, $e->setAlias('7W2J960'));
+                break;
+
             default:
-                return new DataQueryFailedError($query, $message, null, $err->setAlias('6T2T2UI'));
+                $e = new DataQueryFailedError($query, $message, null, $e);
+                break;
         }
+
+        return $e;
     }
-    
     /**
      *
      * {@inheritDoc}
@@ -369,7 +414,9 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     protected function getLastErrorException() : MsSqlError
     {
-        return new MsSqlError($this, null);
+        $e = new MsSqlError($this, null);
+        $this->getLogbook()?->addLine('**ERROR:** ' . $e->getMessage());
+        return $e;
     }
     
     /**
@@ -402,22 +449,27 @@ class MsSqlConnector extends AbstractSqlConnector
     
     public function transactionStart()
     {
+        $this->getLogbook()?->addLine('Starting transaction')->addIndent(+1);
+        
         // Do nothing if the autocommit option is set for this connection
         if ($this->getAutocommit()) {
             return $this;
         }
-        
+
         if (! $this->transactionIsStarted()) {
             // Make sure, the connection is established
             if (! $this->isConnected()) {
                 $this->connect();
             }
+            
             if (! sqlsrv_begin_transaction($this->getCurrentConnection())) {
                 $e = $this->getLastErrorException();
                 throw new DataConnectionTransactionStartError($this, 'Cannot start transaction in "' . $this->getAliasWithNamespace() . '": ' . ($e ? $e->getMessage() : 'Unknown error'), null, $e->setAlias('6T2T2JM'));
             } else {
                 $this->setTransactionStarted(true);
             }
+        } else {
+            $this->getLogbook()?->continueLine(' - already started!');
         }
         return $this;
     }
@@ -429,6 +481,8 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     public function transactionCommit()
     {
+        $this->getLogbook()?->addLine('Committing transaction')->addIndent(-1);
+        
         // Do nothing if the autocommit option is set for this connection
         if ($this->getAutocommit()) {
             return $this;
@@ -436,6 +490,7 @@ class MsSqlConnector extends AbstractSqlConnector
         
         // Do nothing if no transaction was started - there is nothing to commit.
         if ($this->transactionIsStarted() === false) {
+            $this->getLogbook()?->continueLine(' - no transaction started, **skipping**');
             return $this;
         }
         
@@ -455,6 +510,8 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     public function transactionRollback()
     {
+        $this->getLogbook()?->addLine('Rolling back transaction')->addIndent(-1);
+        
         // Throw error if trying to rollback a transaction with autocommit enabled
         if ($this->getAutocommit()) {
             throw new DataConnectionRollbackFailedError($this, 'Cannot rollback transaction in "' . $this->getAliasWithNamespace() . '": The autocommit options is set to TRUE for this connection!');
@@ -462,6 +519,7 @@ class MsSqlConnector extends AbstractSqlConnector
         
         // Do nothing if no transaction was started - no changes to roll back.
         if ($this->transactionIsStarted() === false) {
+            $this->getLogbook()?->continueLine(' - no transaction started, **skipping**');
             return $this;
         }
         
@@ -481,8 +539,11 @@ class MsSqlConnector extends AbstractSqlConnector
      */
     public function freeResult(SqlDataQuery $query)
     {
+        $this->getLogbook()?->addLine('Free result');
         if (is_resource($query->getResultResource())) {
             sqlsrv_free_stmt($query->getResultResource());
+        } else {
+            $this->getLogbook()?->continueLine(' - no resource, **skipping**');
         }
     }
     
@@ -732,5 +793,33 @@ class MsSqlConnector extends AbstractSqlConnector
     public function getSqlDialect(): string
     {
         return MsSqlBuilder::SQL_DIALECT_TSQL;
+    }
+
+    /**
+     * @return LogBookInterface|null
+     */
+    public function getLogbook() : ?LogBookInterface
+    {
+        if ($this->logbook === null && $this->logbookEnabled === true) {
+            $this->logbook = new MarkdownLogBook('MS SQL Server connection log');
+        }
+        
+        return $this->logbook;
+    }
+
+    /**
+     * Set to TRUE to write a very detailed log with every connection/query for detailed debugging
+     * 
+     * @uxon-property log_every_connection
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setLogEveryConnection(bool $trueOrFalse) : MsSqlConnector
+    {
+        $this->logbookEnabled = $trueOrFalse;
+        return $this;
     }
 }

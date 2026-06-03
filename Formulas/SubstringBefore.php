@@ -5,8 +5,13 @@ use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\DataTypes\StringDataType;
 
 /**
- * Returns the part of a text up to the given delimiter
+ * Returns the part of the given text ($haystack) preceding the first occurrence of the needle (delimiter).
  *
+ * Examples:
+ *
+ * - `=SubstringBefore('123_Text', '_') => '123'`
+ * - `=SubstringBefore('32450196,06', ',') => '32450196'`
+ * 
  * @author Andrej Kabachnik
  *        
  */

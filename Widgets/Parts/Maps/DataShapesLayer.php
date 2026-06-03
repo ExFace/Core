@@ -28,8 +28,37 @@ use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Widgets\iHaveColorWithOutline;
 
 /**
+ * Shows any shape provided by your data on the map as an interactive shape.
+ *
+ * ### Data format
+ * 
+ * The data for a shape needs to be a GeoJSON. You can find the valid geometry types here: https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.
+ * 
+ * ### Data Setup Guide
+ * 
+ * please open the properties of widget_type `Map` for a full guide on how to pass on data to any layer in a map widget!
+ *  If no data or filter within data is provided everything from the object_alias is loaded, or it will use the data from another layer with the same object_alias.
+ * 
+ * ### Map PopUp
+ * 
+ * use `columns` inside `data` to define which attributes are to be shown in the pop-up of your interactive area. There is no property yet to define the pop-up columns separately.
+ * 
+ * ### Widget configuration guide
+ * 
+ * ```
+ * {
+ *      "type": "DataShapes",
+ *      "object_alias": "the.app.your_object_alias",
+ *      "caption": "Your interactive shape layer.",
+ *      "shapes_attribute_alias": "your_shape_attribute_alias",
+ *      "//": "For data setup please look into the properties of the Map widget."
+ * }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
+ * @summary_author Miriam Seitz
+ * @link https://datatracker.ietf.org/doc/html/rfc7946#section-3.1
  *
  */
 class DataShapesLayer extends AbstractDataLayer 
@@ -80,6 +109,7 @@ class DataShapesLayer extends AbstractDataLayer
     private $isBlinking = false;
     
     private $valuePosition = self::VALUE_POSITION_TOOLTIP;
+    private $valueTextAutoSize = false;
     
     private $dropToActions = [];
     
@@ -311,6 +341,27 @@ class DataShapesLayer extends AbstractDataLayer
         return $this;
     }
     
+    public function getValueTextFitToShape() : bool
+    {
+        return $this->valueTextAutoSize;
+    }
+
+    /**
+     * Set to TRUE to scale the size of the value text automatically to fit in to the bounds of the shape
+     * 
+     * @uxon-property value_text_fit_to_shape
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return MapLayerInterface
+     */
+    public function setValueTextFitToShape(bool $value): MapLayerInterface
+    {
+        $this->valueTextAutoSize = $value;
+        return $this;
+    }
+
     /**
      * 
      * @return array

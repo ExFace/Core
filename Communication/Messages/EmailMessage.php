@@ -3,6 +3,7 @@ namespace exface\Core\Communication\Messages;
 
 use exface\Core\DataTypes\EmailPriorityDataType;
 use exface\Core\DataTypes\HtmlDataType;
+use exface\Core\Factories\FileFactory;
 use exface\Core\Interfaces\Communication\CommunicationMessageInterface;
 use exface\Core\Interfaces\Communication\EmailRecipientInterface;
 use exface\Core\Communication\Recipients\EmailRecipient;
@@ -10,6 +11,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Communication\UserRecipientInterface;
 use exface\Core\Interfaces\Communication\RecipientGroupInterface;
 use exface\Core\Interfaces\Communication\RecipientInterface;
+use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 
 /**
  * Email message to be sent to one or multiple email addresses, users or user groups
@@ -39,6 +41,7 @@ class EmailMessage extends TextMessage
     
     private $attachmentPath = null;
     
+    private $attachments = [];
     
     /**
      * 
@@ -347,6 +350,63 @@ class EmailMessage extends TextMessage
     public function setAttachmentPath(string $value) : EmailMessage
     {
         $this->attachmentPath = $value;
+        return $this;
+    }
+
+    /**
+     * @return FileInfoInterface[]
+     */
+    public function getAttachments(): array
+    {
+        return $this->attachments;
+    }
+
+    /**
+     * /**
+     *  List of files to attach
+     *
+     *  ```
+     *  {
+     *      "attachments": [
+     *           "C:\wamp\www\exface\data\file1.txt",
+     *           "metamodel://my.app.ObjectAlias/uid_of_file/filename.ext",
+     *           "file://c/wamp/www/exface/data/file1.txt",
+     *           "ftp://folder/file.ext"
+     *      ]
+     *  }
+     *
+     *  ```
+     *
+     *  Here is how you would write a message template in a NotifyingBehavior if you have an
+     *  object with an `FileAttachmentBehavior`. Since an attachment is actually a file itself,
+     *  it is enough to reference the UID of the attachment and the message will have access to
+     *  the file contents, name, mime type, etc.
+     *
+     *  ```
+     *   {
+     *       "attachments": [
+     *            "metamodel://my.app.ObjectAlias/[#~input:Id#]/*"
+     *       ]
+     *   }
+     *
+     *   ```
+     * 
+     * @uxon-property attachments
+     * @uxon-type string[]
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|array $attachmentPaths
+     * @return $this
+     */
+    public function setAttachments(UxonObject|array $attachmentPaths): EmailMessage
+    {
+        $this->attachments = [];
+
+        $workbench = $this->getWorkbench();
+        foreach ($attachmentPaths as $attachmentPath) {
+            $this->attachments[] = FileFactory::createFileInfoFromPath($workbench, $attachmentPath);
+        }
+
         return $this;
     }
 }

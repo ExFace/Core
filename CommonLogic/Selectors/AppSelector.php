@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait;
+use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
 
@@ -41,8 +42,8 @@ class AppSelector extends AbstractSelector implements AppSelectorInterface
     public function getFolderRelativePath() : string
     {
         // The workbench is actually responsible for placing apps in folders, but since
-        // the selector knows it's workbench, it can allways ask it for the folder for
+        // the selector knows it's workbench, it can always ask it for the folder for
         // itself.
-        return $this->getWorkbench()->getAppFolder($this);
+        return PhpFilePathDataType::findPathToApp($this, $this->getWorkbench());
     }
 }

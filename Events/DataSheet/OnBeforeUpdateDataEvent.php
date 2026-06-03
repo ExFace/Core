@@ -10,9 +10,38 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 
 /**
- * Event fired before a data sheet starts updating it's data in the corresponding data sources.
+ * Event fired before a data sheet starts processing an update for its data in the data sources.
  * 
- * Use `$event->preventUpdate()` to disable the general create logic of the data sheet: i.e.
+ * Data sheet update event lifecycle:
+ * 
+ * 1. DataSheet::updateData() is called
+ * 2. Event OnBeforeSaveData is fired
+ * 3. If we have rows, that need to be created, a create-subsheet is spawned and that subset of data is created.
+ *      - Create-events are fired
+ *      - Rows of the update-sheet are updated with the result of the create-operation, so they are now ALL existing
+ *  and definitely ready to be updated
+ * 4. Event OnBeforeUpdateData (THIS) is fired for the entire update-sheet (including newly created rows)
+ * 5. Default and fixed values are set in the update-sheet
+ * 6. Event OnBeforeUpdateDataWriteEvent is fired immediately before building the query for the data source. 
+ * Modifications done by OnBeforeUpdateDataWriteEvent handlers still effect that query.
+ * 7. The update-sheet is validated (e.g. missing-values are discovered here)
+ * 8. If there are UID values missing, they are read from the data source.
+ * 9. The update query is executed for the data sheet.
+ * 10. Subsheets are updated (if there are any)
+ *      - Update-events are fired for each subsheet
+ *      - Create-events may also be fired if the subsheets contain rows without UIDs.
+ * 11. Event OnUpdateData is fired for the entire update-sheet.
+ * 12. Event OnSaveData is fired for the entire update-sheet.
+ * 
+ * The data available through `$event->getDataSheet()` is the data that needed to be updated. Event listeners like
+ * behaviors can modify this data and, thus, affect the resulting update query. They can even cancel the update by 
+ * calling `$event->preventUpdate()`, which is useful if some behavior "replaces" the update logic completely. It
+ * is important, that listeners, who modify the data to-be-updated in the data source take care of keeping the
+ * update sheet up-to-date to avoid data going out of sync while the update operation commences. From outside the
+ * update operation should appear atomic: we pass data into the update and get the same data back in a new state.
+ * From the outside it is obvious, that all rows, we passed in were updated in the end.
+ * 
+ * Use `$event->preventUpdate()` to disable the general update logic of the data sheet: i.e.
  * the UPDATE-query to the data source(s).
  * 
  * The event also allows to get information about changes, that the update is expected to cause:

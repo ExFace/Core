@@ -13,7 +13,12 @@ namespace exface\Core\Interfaces\Tasks;
  *
  */
 interface CliTaskInterface extends TaskInterface
-{    
+{
+    /**
+     * @return string
+     */
+    public function getCliCommandName() : string;
+    
     /**
      *
      * @return array
@@ -36,23 +41,9 @@ interface CliTaskInterface extends TaskInterface
     
     /**
      *
-     * @param array $nameValuePairs
-     * @return CliTaskInterface
-     */
-    public function setCliArguments(array $nameValuePairs) : CliTaskInterface;
-    
-    /**
-     *
      * @return array
      */
     public function getCliOptions() : array;
-    
-    /**
-     *
-     * @param array $nameValuePairs
-     * @return CliTaskInterface
-     */
-    public function setCliOptions(array $nameValuePairs) : CliTaskInterface;
     
     /**
      * 

@@ -172,7 +172,7 @@ class UndeletableBehavior extends AbstractBehavior
         // read data if $eventData->isFresh() === false and $eventData()->getMetaObject()->isReadable()
         if ($dataSheet->isFresh() === false && $dataSheet->getMetaObject()->isReadable()){
             $uidCol = $dataSheet->getUidColumn();
-            if ($uidCol === false){
+            if ($uidCol === null){
                 $uidCol = $dataSheet->getColumns()->addFromUidAttribute();
             }
             $dataSheet->getFilters()->addConditionFromColumnValues($uidCol);

@@ -17,11 +17,6 @@ class ExceptionHtmlRenderer extends AbstractExceptionRenderer
     {
         $this->charset = $charset;
         parent::__construct($exception, $maxArgChars, $maxArgArrayItems);
-        
-        $previous = $exception->getPrevious();
-        if ($previous instanceof \Throwable) {
-            $this->previous = new self($previous);
-        }
     }
 
     /**
@@ -97,8 +92,8 @@ EOF;
     }
 
     /**
-     * @param bool $withHeader
-     * @return string
+     * {@inheritdoc}
+     * @see AbstractExceptionRenderer::render()
      */
     public function render(bool $withHeader = true) : string
     {
@@ -194,7 +189,7 @@ EOF;
      */
     private function formatArgs(array $args): string
     {
-        if ($this->maxArgChars === 0) {
+        if ($this->getMaxArgumentChars() === 0) {
             return '';
         }
 
@@ -211,7 +206,7 @@ EOF;
             } elseif ('resource' === $item[0]) {
                 $formattedValue = '<em>resource</em>';
             } else {
-                $formattedValue = str_replace("\n", '', $this->escapeHtml(StringDataType::truncate(var_export($item[1], true), $this->maxArgChars, false, false, true, true)));
+                $formattedValue = str_replace("\n", '', $this->escapeHtml(StringDataType::truncate(var_export($item[1], true), $this->getMaxArgumentChars(), false, false, true, true)));
             }
 
             $result[] = \is_int($key) ? $formattedValue : sprintf("'%s' => %s", $this->escapeHtml($key), $formattedValue);

@@ -9,8 +9,12 @@ use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryForeignKeyError;
+use exface\Core\Exceptions\DataSources\DataQueryNotNullConstraintError;
+use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\Exceptions\DataSources\PostgreSqlError;
+use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\ModelBuilders\PostgreSqlModelBuilder;
@@ -155,30 +159,39 @@ class PostgreSqlConnector extends AbstractSqlConnector
     }
 
     /**
-     * 
+     *
      * @param DataQueryInterface $query
      * @param string $message
      * @return DataQueryExceptionInterface
      */
     protected function createQueryError(DataQueryInterface $query, string $message = null, ?Result $res = null) : DataQueryExceptionInterface
-    {        
+    {
         $message = 'PostgreSQL query failed. ' . $message;
         $e = new PostgreSqlError($this, $message, '6T2T2UI', null, $res);
-        $sqlState = $e->getSqlState();
+        $obj = $e->getAffectedObject();
+        $attrVals = $e->getAffectedAttributeValues();
+        $sqlState = intval($e->getSqlState());
         switch (true) {
+            case $sqlState === PostgreSqlError::SQL_STATE_UNIQUE_VIOLATION:
+                $e = new DataQueryUniqueConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                break;
+            case $sqlState === 23001 && strpos($e->getMessage(), 'foreign key'): 
+            case $sqlState === PostgreSqlError::SQL_STATE_FOREIGN_KEY_VIOLATION:
+                $e = new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals, $e->getOtherAffectedObject());
+                break;
+            case $sqlState === PostgreSqlError::SQL_STATE_NOT_NULL_VIOLATION:// NOT NULL VIOLATION
+                $e = new DataQueryNotNullConstraintError($query,$this, $message, null, $e, $obj, $attrVals);
+                break;
             case $sqlState === 23000: // INTEGRITY CONSTRAINT VIOLATION
-            case $sqlState === 23001: // RESTRICT VIOLATION
-            case $sqlState === 23502: // NOT NULL VIOLATION
-            case $sqlState === 23503: // FOREIGN KEY VIOLATION
-            case $sqlState === 23505: // UNIQUE VIOLATION
             case $sqlState === 23514: // CHECK VIOLATION
-                $e = new DataQueryConstraintError($query, $message, null, $e->setAlias('73II64M'));
+            case $sqlState === 23001: // RESTRICT VIOLATION
+                $e = new DataQueryConstraintError($query,$this, $message, null, $e, $obj, $attrVals);
                 break;
             default:
                 $e = new DataQueryFailedError($query, $message, null, $e);
                 break;
         }
-        
+
         return $e;
     }
 
@@ -377,5 +390,19 @@ class PostgreSqlConnector extends AbstractSqlConnector
     {
         $this->sessionOptions = $arrayOfOptions->toArray();
         return $this;
+    }
+
+    /**
+     * PosgreSQL can JOIN across schemas, but not across different databases on one installation
+     * 
+     * @see AbstractSqlConnector::canJoin()
+     */
+    public function canJoin(DataConnectionInterface $otherConnection) : bool
+    {
+        $parentDecision = parent::canJoin($otherConnection);
+        if ($parentDecision === true && $this->getDbase() !== $otherConnection->getDbase()) {
+            return false;
+        }
+        return $parentDecision;
     }
 }

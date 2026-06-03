@@ -187,7 +187,7 @@ class InputColorPalette extends Input implements iHaveHintScale
      *
      * @uxon-property prefer_custom_color_presets
      * @uxon-type string
-     * @uxon-defaul false
+     * @uxon-default false
      *
      * @param bool $value
      * @return $this

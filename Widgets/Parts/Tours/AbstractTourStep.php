@@ -1,40 +1,42 @@
 <?php
+
 namespace exface\Core\Widgets\Parts\Tours;
 
 use Error;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
 /**
- * Represents a single step in a tour, which can be associated with a specific widget and contains information about the content and position of the popover that will be displayed to the user.
+ * Represents a single step in a tour. 
+ * A tour step is associated with a specific widget and contains information 
+ * about the title, body text, and the position of the popover that will be displayed when the step is active.
  * 
- * - The `waypoints` array property contains the identifiers of the tours, that this step belongs to. One Step can belong to multiple tours.
- * 
+ * - `title`: The title will be displayed at the top of the popover when the step is active.
+ * - `body`: The body text can contain a more detailed description and will be displayed below the title in the popover.
+ * - `side`: (top, bottom, left, right) The side on which the popover should be displayed referred to the focus area.
+ * - `align`: (start, center, end) The alignment of the popover referred to the focus area.
+ *
  * ##Examples:
- * 
+ *
  * ```
- *  "tour_steps": [
  *      {
- *          "waypoints": [
- *              "news",
- *              "table"
- *          ],
- *          "position_in_tour": 1,
  *          "title": "New Column",
  *          "body": "This text will appear in the popover when the step is active.",
  *          "side": "bottom",
  *          "align": "center",
+ *          "$click_on_next_step": true
+ *          "$on_next_step": {
+ *              "function": "press",
+ *              "autostart_tour_id" : "news"
+ *          }
  *     },
- * ]
  * ```
- * 
+ *
  * @author Sergej Riel
  */
-
-class TourStep implements TourStepInterface
+abstract class AbstractTourStep implements TourStepInterface
 {
     use ICanBeConvertedToUxonTrait;
 
@@ -51,33 +53,13 @@ class TourStep implements TourStepInterface
     private ?string $body = "";
     private ?string $side = null;
     private ?string $align = null;
-    private ?array $waypoints = [];
-    private ?string $element = null;
-    private ?int $positionInTour = null;
-    private ?UxonObject $waypointsUxon = null;
+    private $onNextStepFunction = null;
+    private $onNextStepFunctionUxon = null;
 
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
         $this->widget = $widget;
         $this->importUxonObject($uxon);
-    }
-
-    /**
-     * @inheritDoc
-     * @see \exface\Core\Interfaces\Widgets\WidgetPartInterface::getWidget()
-     */
-    public function getWidget(): WidgetInterface
-    {
-        return $this->widget;
-    }
-
-    /**
-     * @inheritDoc
-     * @see \exface\Core\Interfaces\WorkbenchDependantInterface::getWorkbench()
-     */
-    public function getWorkbench()
-    {
-        return $this->widget->getWorkbench();
     }
 
     /**
@@ -151,7 +133,7 @@ class TourStep implements TourStepInterface
     protected function setSide(string $side): TourStepInterface
     {
         $constant = 'self::SIDE_' . strtoupper($side);
-        if (!defined($constant)) { 
+        if (!defined($constant)) {
             //TODO: the "WidgetPropertyInvalidValueError" have not worked here. Find a better error to drop.
             throw new Error("Invalid tour step side value: $side. Allowed values are: top, right, bottom, left.");
         }
@@ -188,64 +170,30 @@ class TourStep implements TourStepInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see TourStepInterface::getWaypoints()
+     * @return TourOnNextStepFunction
      */
-    public function getWaypoints(): array
+    public function getOnNextStepFunction() : TourOnNextStepFunction
     {
-        return $this->waypoints;
+        if ($this->onNextStepFunction === null) {
+            $this->onNextStepFunction = new TourOnNextStepFunction($this, $this->onNextStepFunctionUxon);
+        }
+        return $this->onNextStepFunction;
     }
 
     /**
-     * Waypoints are the identifiers of the tours, that this step belongs to. One Step can belong to multiple tours.
+     * It defines a function that will be executed when the user clicks on the "next" button in the popover of this step.
      * 
-     * @uxon-property waypoints
-     * @uxon-type string[]
-     * @uxon-template [""]
+     * @uxon-property on_next_step_function
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourOnNextStepFunction
+     * @uxon-template {"function": "press"}
      * 
-     * @param UxonObject $arrayOfWaypoints
+     * @param UxonObject $onNextStepFunctionUxon
      * @return TourStepInterface
      */
-    protected function setWaypoints(UxonObject $arrayOfWaypoints) : TourStepInterface
+    protected function setOnNextStepFunction(UxonObject $onNextStepFunctionUxon) : TourStepInterface
     {
-        $this->waypoints = $arrayOfWaypoints->toArray();
+        $this->onNextStepFunctionUxon = $onNextStepFunctionUxon;
+        $this->onNextStepFunction = null;
         return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getPositionInTour(): ?int
-    {
-        return $this->positionInTour;
-    }
-
-    /**
-     * Defines at which point in the tour this step will be displayed to the user.
-     * Steps with defined position_in_tour property will be sorted by it,
-     * while steps without position_in_tour will be sorted in the order they are defined in the uxon configuration.
-     * 
-     * @uxon-property position_in_tour
-     * @uxon-type int
-     * 
-     * @param int $positionInTour
-     * @return TourStepInterface
-     */
-    protected function setPositionInTour(int $positionInTour) : TourStepInterface
-    {
-        $this->positionInTour = $positionInTour;
-        return $this;
-    }
-    
-    /**
-     * This method returns the ID of the widget that this tour step is associated with.
-     * The popover for this step will be displayed next to this element.
-     * 
-     * @param HttpFacadeInterface $facade
-     * @return string
-     */
-    public function getElementId(HttpFacadeInterface $facade): string
-    {
-        return $facade->getElement($this->widget)->getId();
     }
 }

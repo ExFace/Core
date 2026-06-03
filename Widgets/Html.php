@@ -24,10 +24,13 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 class Html extends Display
 {
     private $css = null;
+    private $cssInlineStyle = null;
 
     private $javascript = null;
     
     private $headTags = null;
+    
+    private $htmlTemplate = null;
     
     private $margins = false;
     
@@ -63,6 +66,32 @@ class Html extends Display
     {
         return $this->setValue($value);
     }
+
+    /**
+     * @return string|null
+     */
+    public function getHtmlTemplate() : ?string
+    {
+        return $this->htmlTemplate;
+    }
+
+    /**
+     * A template to wrap around the HTML value
+     * 
+     * E.g. `<div class="myclass">[#~value#]</div>`
+     * 
+     * @uxon-property html_template
+     * @uxon-type string
+     * @uxon-template <div class="myclass">[#~value#]</div>
+     * 
+     * @param string $value
+     * @return $this
+     */
+    public function setHtmlTemplate(string $value) : Html
+    {
+        $this->htmlTemplate = $value;
+        return $this;
+    }
     
     /**
      * 
@@ -87,7 +116,7 @@ class Html extends Display
     }
 
     /**
-     * Defines custom CSS for this widget: accepts any CSS style definitions.
+     * Custom CSS for styling DOM elements defined in the `html` property.
      * 
      * @uxon-property css
      * @uxon-type string
@@ -97,6 +126,32 @@ class Html extends Display
     public function setCss($value)
     {
         $this->css = $value;
+        return $this;
+    }
+
+    /**
+     *
+     * @return string|null
+     */
+    public function getCssInlineStyle() : ?string
+    {
+        return $this->cssInlineStyle;
+    }
+
+    /**
+     * Defines the value for the `style` DOM element property for this particular widget.
+     * 
+     * Most facades will generate a `<div>` element for an HTML widget. Using `css_inline_style` you can inject
+     * styles into `<div style="">`.
+     *
+     * @uxon-property css_inline_style
+     * @uxon-type string
+     *
+     * @return Html
+     */
+    public function setCssInlineStyle($value) : Html
+    {
+        $this->cssInlineStyle = $value;
         return $this;
     }
 
@@ -141,6 +196,7 @@ class Html extends Display
         }
         return $uxon;
     }
+    
     /**
      * @return boolean
      */
@@ -350,7 +406,10 @@ class Html extends Display
         }
         return parent::getValue();
     }
-    
+
+    /**
+     * @return bool
+     */
     public function getInline() : bool
     {
         return $this->inline;

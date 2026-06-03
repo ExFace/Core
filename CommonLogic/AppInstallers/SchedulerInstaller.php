@@ -10,8 +10,10 @@ use exface\Core\Exceptions\RuntimeException;
 /**
  * Registeres a CLI facade command as scheduled task in the current operating system.
  * 
- * Can be disabled in the configuration of the app by adding the option
- * `"INSTALLER.SCHEDULERINSTALLER.DISABLED": true`.
+ * Can be configured in the config file of the installed file: 
+ * 
+ * - `"INSTALLER.SCHEDULERINSTALLER.DISABLED": true` - disabled the installer completely
+ * - `"INSTALLER.SCHEDULERINSTALLER.INTERVAL_MINUTES": 15` - change the interval
  * 
  * @author Andrej Kabachnik
  *        
@@ -19,6 +21,7 @@ use exface\Core\Exceptions\RuntimeException;
 class SchedulerInstaller extends AbstractAppInstaller
 {
     const CONFIG_OPTION_DISABLED = 'INSTALLER.SCHEDULERINSTALLER.DISABLED';
+    const CONFIG_OPTION_INTERVAL_MINUTES = 'INSTALLER.SCHEDULERINSTALLER.INTERVAL_MINUTES';
     
     private $tasks;
     
@@ -41,14 +44,14 @@ class SchedulerInstaller extends AbstractAppInstaller
         } 
         foreach ($this->tasks as $name => $args) {
             try {
-                $this->registerScheduledTask($name, $args['command'], $args['intervalInMinutes'], $args['overwrite']);
-                yield $indent . 'Scheduled task "' . $name . '" registered in ' . $this->getOsFamily() . '.' . PHP_EOL;
+                $result = $this->registerScheduledTask($name, $args['command'], $args['intervalInMinutes'], $args['overwrite']);
+                yield $indent . 'Scheduled task "' . $name . '" registered in ' . $this->getOsFamily() . '. ' . PHP_EOL;
+                yield $indent . $indent . $result . PHP_EOL;
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::NOTICE);
                 yield $indent . 'Scheduled task "' . $name . '" NOT registered in ' . $this->getOsFamily() . ': ' . $e->getMessage() . ' in ' . $e->getFile() . ' at line ' . $e->getLine() . PHP_EOL;
             }
         }
-        return;
     }
     
     /**
@@ -57,8 +60,15 @@ class SchedulerInstaller extends AbstractAppInstaller
      * @param string $command
      * @return SchedulerInstaller
      */
-    public function addTask(string $name, string $command, int $intervalInMinutes = 60, bool $overwrite = false) : SchedulerInstaller
+    public function addTask(string $name, string $command, ?int $intervalInMinutes = null, bool $overwrite = false) : SchedulerInstaller
     {
+        if ($intervalInMinutes === null) {
+            if ($this->getApp()->getConfig()->hasOption(self::CONFIG_OPTION_INTERVAL_MINUTES)) {
+                $intervalInMinutes = $this->getApp()->getConfig()->getOption(self::CONFIG_OPTION_INTERVAL_MINUTES);
+            } else {
+                $intervalInMinutes = 60;
+            }
+        }
         $this->tasks[$name] = [
             'command' => $command,
             'intervalInMinutes' => $intervalInMinutes,
@@ -74,7 +84,7 @@ class SchedulerInstaller extends AbstractAppInstaller
      * @throws InstallerRuntimeError
      * @return SchedulerInstaller
      */
-    protected function registerScheduledTask(string $name, string $command, int $intervalInMinutes = 60, bool $overwrite = false) : SchedulerInstaller
+    protected function registerScheduledTask(string $name, string $command, int $intervalInMinutes = 60, bool $overwrite = false) : string
     {
         $output = [];
         $returnVar = null;
@@ -92,6 +102,7 @@ class SchedulerInstaller extends AbstractAppInstaller
                 if ($returnVar === 1) {
                     throw new CliExecException($cmd, $output);
                 }
+                $result = implode("\n", $output);
                 break;
                 /* TODO has yet to be verified if it is working correctly on Linux based systems
             case 'Linux':
@@ -114,7 +125,7 @@ class SchedulerInstaller extends AbstractAppInstaller
                 throw new RuntimeException('SchedulerInstaller does not (yet) support OS ' . $this->getOsFamily());
         }
         
-        return $this;
+        return $result;
     }
     
     /*

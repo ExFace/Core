@@ -258,4 +258,9 @@ trait UiMenuItemTrait
     {
         return $this->getIcon() !== null && $this->getIcon() !== '';
     }
+    
+    public function __toString() : string
+    {
+        return $this->getName() . ' [' . $this->getAliasWithNamespace() . ']';
+    }
 }

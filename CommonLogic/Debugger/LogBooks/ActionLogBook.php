@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Debugger\LogBooks;
 
+use exface\Core\CommonLogic\Debugger\ActionDebugger;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
@@ -39,11 +40,12 @@ use exface\Core\DataTypes\PhpClassDataType;
 class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
 {
     const SECTION_INNER_EVENTS = 'Inner events';
-    private $task = null;
     
+    private $task = null;
     private $action = null;
     
     private $logBook = null;
+    private $logBookInitialized = false;
     
     private $flowDiagram = null;
 
@@ -71,24 +73,16 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
         $this->maxEventCount = $maxEventCount;
         $this->logBook = new DataLogBook($title);
         $this->logBook->addSection('Action ' . $action->getAliasWithNamespace() . ' "' . $action->getName() . '"');
-        $this->logBook->addIndent(1);
-        $this->logBook->addLine('Prototype class: [' . MarkdownDataType::escapeString(get_class($action)) . '](' . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ')');
-        try {
-            $this->logBook->addLine('Action object: [' . MarkdownDataType::escapeString($action->getMetaObject()->__toString()) . '](' . DocsFacade::buildUrlToDocsForMetaObject($action->getMetaObject()) . ')');
-        } catch (\Throwable $e) {
-            $this->logBook->addLine('Action object not defined');
-        }
-        if ($task->isTriggeredByWidget()) {
-            try {
-                $trigger = $task->getWidgetTriggeredBy();
-                $this->logBook->addLine('Trigger widget: ' . $trigger->getWidgetType() . ' "**' . $trigger->getCaption() . '**"');
-            } catch (\Throwable $e) {
-                $this->logBook->addLine('Trigger widget not accessible: ' . $e->getMessage());
-            }
-        } else {
-            $this->logBook->addLine('Trigger widget not known');
-        }
-        $this->logBook->addIndent(-1);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getTitle()
+     */
+    public function getTitle(): string
+    {
+        return $this->logBook->getTitle();
     }
 
     public function startLoggingEvents() : void
@@ -242,7 +236,7 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
                     }
                     $logbook = $event->getLogbook();
                     $link = $logbook instanceof IHaveLogIdInterface ? ' - see [#LOG-' . $logbook->getLogId() . '](' . DebugContext::buildUrlToLogId($logbook->getLogId()) . ')' : '';
-                    $this->addLine("{$eventName}{$behavior->getAlias()} `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")" . $link, $idt);
+                    $this->addLine("{$eventName} **{$behavior->getAlias()}** `{$behavior->getName()}` for object {$behavior->getObject()->getAliasWithNamespace()} (inst. " . spl_object_id($behavior) . ")" . $link, $idt);
                     break;
                 case $event instanceof OnBeforeActionPerformedEvent:
                     $action = $event->getAction();
@@ -305,7 +299,39 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
      */
     protected function toMarkdown() : string
     {
+        $this->generateActionSummary();
         return $this->logBook->__toString();
+    }
+    
+    protected function generateActionSummary() : void
+    {
+        if (! $this->logBookInitialized) {
+            $this->logBookInitialized = true;
+            $this->logBook->setSectionActive($this->logBook->getSectionFirst());
+            $this->logBook->setIndentActive(0);
+            $action = $this->action;
+            $task = $this->task;
+            $this->logBook->addIndent(+1);
+            try {
+                $this->logBook->insertLine('Action object: [' . MarkdownDataType::escapeString($action->getMetaObject()->__toString()) . '](' . DocsFacade::buildUrlToDocsForMetaObject($action->getMetaObject()) . ')');
+            } catch (\Throwable $e) {
+                $this->logBook->insertLine('Action object not defined');
+            }
+            $this->logBook->insertLine('Prototype class: [' . MarkdownDataType::escapeString(get_class($action)) . '](' . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ')');
+            $this->logBook->addIndent(-1);
+            
+            if ($task->isTriggeredByWidget()) {
+                try {
+                    $actionDebugger = new ActionDebugger($action, $task);
+                    $breadcrumbs = $actionDebugger->getTriggerUiPathMarkdown();
+                } catch (\Throwable $e) {
+                    $breadcrumbs = 'Trigger widget not accessible: ' . $e->getMessage();
+                }
+            } else {
+                $breadcrumbs = 'Trigger widget not known';
+            }
+            $this->logBook->insertLine($breadcrumbs, null, null, 0);
+        }
     }
 
     /**
@@ -327,6 +353,7 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
     public function continueLine(string $text): LogBookInterface
     {
         $this->logBook->continueLine($text);
+        return $this;
     }
 
     /**
@@ -346,18 +373,29 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
      */
     public function createDebugWidget(DebugMessage $debug_widget)
     {
+        $this->generateActionSummary();
         if ($this->eventStackProcessed === false) {
             $this->eventStackProcessed = true;
             $this->generateEventsSection();
         }
 
         $debug_widget = $this->logBook->createDebugWidget($debug_widget);
-        $actionTabs = $debug_widget->getWidgetFirst()->getWidgetFirst();
-        if ($actionTabs instanceof DebugMessage) {
-            $tab = $actionTabs->createTab();
+        $actionTab = $debug_widget->findChild(function($widget) {
+            return $widget->getCaption() === $this->getTitle();
+        });
+        $innerTabs = $actionTab->getWidgetFirst();
+
+        // Widget, that defines the action
+        if ($this->action->isDefinedInWidget()) {
+            $this->action->getWidgetDefinedIn()->createDebugWidget($innerTabs);
+        }
+        
+        // Add action config tab
+        if ($innerTabs instanceof DebugMessage) {
+            $tab = $innerTabs->createTab();
             $tab->setCaption('Action config');
-            $actionTabs->addTab($tab);
-            $tab->addWidget(WidgetFactory::createFromUxonInParent($actionTabs, new UxonObject([
+            $innerTabs->addTab($tab);
+            $tab->addWidget(WidgetFactory::createFromUxonInParent($innerTabs, new UxonObject([
                 'widget_type' => 'InputUxon',
                 'width' => 'max',
                 'height' => '100%',
@@ -367,6 +405,7 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
                 'root_prototype' => '\\' . get_class($this->action)
             ])));
         }
+        
         return $debug_widget;
     }
 
@@ -600,5 +639,22 @@ class ActionLogBook implements DataLogBookInterface, IHaveLogIdInterface
     public function getLogId() : string
     {
         return $this->logBook->getLogId();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function insertLine(string $text, int $indent = null, $section = null, ?int $position = null): LogBookInterface
+    {
+        $this->logBook->insertLine($text, $indent, $section, $position);
+        return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getSectionFirst(): ?string
+    {
+        return $this->logBook->getSectionFirst();
     }
 }

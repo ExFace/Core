@@ -310,7 +310,7 @@ JS
                             jqCarousel.slick('slickRemove', iSlideIdx);
                             oData.rows.splice(iSlideIdx, 1);
                             if (oData.rows.length === 0) {
-                                $('#{$this->getIdOfSlick()}-nodata').show();
+                                {$this->buildJsShowNoDataOverlay()};
                             }
                             jqCarousel.data({$this->getJqDataProperty()}, oData);
                         }
@@ -483,6 +483,8 @@ JS;
     oData.rows = (oData.rows || []).map(({ $colNamesList }) => ({ $colNamesList }));
     oData.filters = oConfiguratorData.filters;
     
+    {$this->buildJsFileNameNormalizer("oData")}
+
     {$this->buildJsFileNameDuplicateRenamer("oData")}
     
     return {
@@ -527,8 +529,12 @@ JS;
      * @param string $oDataJs
      * @return string
      */
-    public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string {
-        $fileStorageFieldName = $this->getWidget()->getUploader()->getFileContentAttribute()->getAliasWithRelationPath();
+    public function buildJsFileNameDuplicateRenamer(string $oDataJs) : string
+    {
+        
+        $uploader = $this->getWidget()->getUploader();
+        $fileStorageFieldName = $uploader->getFileContentAttribute()->getAliasWithRelationPath();
+        $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
 
         return <<<JS
       
@@ -539,14 +545,14 @@ JS;
               oData.rows.forEach(function(oRow) {
                 // The fileStorageFieldName variable is only set with data for new file uploads. 
                 // And only new file uploads can be renamed.
-                if (oRow?.{$fileStorageFieldName} !== undefined || !oRow.Dateiname) return;
-                  fillNameCopysSeenArray(aNameCopysSeen, oRow.Dateiname);
+                if (oRow?.{$fileStorageFieldName} !== undefined || !oRow.{$filenameColName}) return;
+                  fillNameCopysSeenArray(aNameCopysSeen, oRow.{$filenameColName});
               });
               
               // new uploads:
               oData.rows.forEach( oRow => {
-                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.Dateiname) return;
-                  const sFileName = oRow.Dateiname;
+                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.{$filenameColName}) return;
+                  const sFileName = oRow.{$filenameColName};
                   fillNameCopysSeenArray(aNameCopysSeen, sFileName);
                   
                   if (aNameCopysSeen[sFileName.toLowerCase()] > 0){
@@ -555,9 +561,9 @@ JS;
                     const sCurrentExt = (/(?:\.([^.]+))?$/).exec((sFileName || ''))[1];
                     
                     if (sCurrentExt?.length > 0) {
-                      oRow.Dateiname = createNewBaseName(sFileNameBase, sCurrentExt);
+                      oRow.{$filenameColName} = createNewBaseName(sFileNameBase, sCurrentExt);
                     } else {
-                      oRow.Dateiname = createNewBaseName(sFileName);
+                      oRow.{$filenameColName} = createNewBaseName(sFileName);
                     }
                   }
               });
@@ -600,7 +606,36 @@ JS;
                   aNameCopysSeen[sFileNameLowerCase]++;
                 }
               }
-            })($oDataJs)      
+            })($oDataJs);     
+JS;
+    }
+
+    /**
+     * It normalizes filenames to standard NFC format that is used in windows and most linux systems.
+     * macOS or other apple system might use NFD to encode unicode characters in filenames.
+     * Those can clash with regex expression even though the filename seems valid for the user.
+     * See https://aeb.win.tue.nl/linux/uc/nfc_vs_nfd.html
+     * @param string $oDataJs
+     * @return string
+     */
+    public function buildJsFileNameNormalizer(string $oDataJs) : string
+    {
+        $uploader = $this->getWidget()->getUploader();
+        $fileStorageFieldName = $uploader->getFileContentAttribute()->getAliasWithRelationPath();
+        $filenameColName = DataColumn::sanitizeColumnName($uploader->getFilenameAttribute()->getAliasWithRelationPath());
+
+        return <<<JS
+      
+            (function(oData) {
+              let aNameCopysSeen = {};
+              
+              // new uploads:
+              oData.rows.forEach( oRow => {
+                  if (oRow?.{$fileStorageFieldName} == undefined || !oRow.{$filenameColName}) return;
+                  const sFileName = oRow.{$filenameColName};
+                  oRow.{$filenameColName} = sFileName.normalize("NFC");
+              });
+            })($oDataJs);      
 JS;
     }
 
@@ -735,7 +770,7 @@ JS;
                     if (aRows.length > 0) {
                         $('#{$this->getIdOfSlick()}-nodata').hide();
                     } else {
-                        $('#{$this->getIdOfSlick()}-nodata').show();
+                        {$this->buildJsShowNoDataOverlay()};
                     }
 
                 })();
@@ -817,7 +852,7 @@ JS;
                 .data({$this->getJqDataProperty()}, {})
                 .data({$this->getJqLastLoadedProperty()}, {})
                 .slick('slickRemove', null, null, true);
-            $('#{$this->getIdOfSlick()}-nodata').show();
+            {$this->buildJsShowNoDataOverlay()};
            
 JS;
     }
@@ -919,7 +954,7 @@ JS;
 
     $('#{$this->getId()}').on('dragleave', function(){
         $('#{$this->getIdOfSlick()}-dropzone').hide();
-        $('#{$this->getIdOfSlick()}-nodata').show();
+        {$this->buildJsShowNoDataOverlay()};
     })*/
 
     $('#{$this->getIdOfSlick()}')
@@ -1054,6 +1089,11 @@ JS;
         return <<<JS
 
         (function (oLastLoadedData, oData) {
+            if ({$this->buildJsIsDataPending()}) {
+                // Can't check for changes, while data is pending.
+                return [];
+            }
+            
             var aAllRows = oData?.rows || [];
             var aLoadedRows = oLastLoadedData?.rows || [];
             
@@ -1083,6 +1123,67 @@ JS;
         })({$lasLoadedGetterJs}, {$dataGetterJs})
 JS;
     }
+
+
+    /**
+     * Returns an inline JS snippet which validates the widget.
+     * 
+     * Returns TRUE if the widget is valid, returns FALSE if the widget is invalid.
+     *
+     * @param string|null $valJs
+     * @return string
+     */
+    public function buildJsValidator(?string $valJs = null) : string
+    {
+        if (!$this->getWidget()->isRequired()) {
+            return 'true';
+        }
+        
+        return <<<JS
+
+(function () {
+    var aData = {$this->buildJsDataGetter()};
+    return aData?.rows?.length > 0;
+})()
+JS;
+    }
+
+    /**
+     * Returns a JavaScript snippet which handles the situation where the widget is invalid e.g.
+     * by overwriting this function the widget could be highlighted or an error message could be
+     * shown.
+     *
+     * @return string
+     */
+    public function buildJsValidationError()
+    {
+        return <<<JS
+
+{$this->buildJsShowNoDataOverlay(true)}
+JS;
+
+    }
+
+    /**
+     * Builds a JS-Snippet that displays an overlay to inform the user that the gallery is currently empty.
+     * 
+     * @param bool $error
+     * If TRUE, the overlay will be highlighted in red.
+     * @return string
+     */
+    public function buildJsShowNoDataOverlay(bool $error = false) : string
+    {
+        $styleBorder = $error ? "'.125rem solid #b00'" : "''";
+        $styleColor = $error ? "'#b00'" : "''";
+        
+        return <<<JS
+
+var jqNoData = $('#{$this->getIdOfSlick()}-nodata');
+jqNoData.show();
+jqNoData.children().eq(0)?.css('border', {$styleBorder});
+jqNoData.children().eq(0)?.children().eq(1)?.css('color', {$styleColor});
+JS;
+    }
     
     /**
      * 
@@ -1090,23 +1191,35 @@ JS;
      */
     protected function buildHtmlNoDataOverlay() : string
     {
-        if ($this->getWidget()->isUploadEnabled()) {
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
-        } else {
-            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
-        }
         return <<<HTML
         
             <div id="{$this->getIdOfSlick()}-nodata" class="imagecarousel-overlay">
                 <div class="imagecarousel-nodata">
                     <i class="fa fa-file-image-o" aria-hidden="true"></i>
                     <div>
-                        {$message}
+                        {$this->buildHtmlNoDataMessage()}
                     </div>
                 </div>
             </div>
             
 HTML;
+    }
+
+    /**
+     * @return string
+     */
+    protected function buildHtmlNoDataMessage() : string
+    {
+        if ($this->getWidget()->isUploadEnabled()) {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_UPLOAD');
+            if($this->getWidget()->isRequired()) {
+                $message .= '<div>' . $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_REQUIRED') . '</div>';
+            }
+        } else {
+            $message = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.IMAGEGALLERY.HINT_EMPTY');
+        }
+        
+        return $message;
     }
     
     /**
