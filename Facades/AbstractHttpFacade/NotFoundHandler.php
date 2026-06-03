@@ -7,12 +7,17 @@ use Psr\Http\Message\ServerRequestInterface;
 use GuzzleHttp\Psr7\Response;
 
 /**
- * This is a simple PSR-15 compilant request handler that allways returns a 404 error.
+ * This is a simple PSR-15 compliant request handler that always returns a 404 error.
  * 
  * @author Andrej Kabachnik
  */
 class NotFoundHandler implements RequestHandlerInterface
 {    
+    private ?string $message = null;
+    public function __construct(string $notFoundMessage = null)
+    {
+        $this->message = $notFoundMessage;
+    }
     /**
      * 
      * {@inheritDoc}
@@ -20,6 +25,6 @@ class NotFoundHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request) : ResponseInterface
     {
-        return new Response(404, [], 'Error 404: Document not found!');
+        return new Response(404, [], $this->message);
     }
 }
