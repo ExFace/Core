@@ -282,9 +282,15 @@ MD;
     }
 
     /**
-     * Returns the metaobject for the "other" table in SQLSTATE 23503 errors.
+     * Returns the metaobject for the referenced table in SQLSTATE 23503 (foreign key) errors.
+     * 
+     * E.g. if deleting from "dropdown_group" is blocked by a FK on "dropdown_value",
+     * the affected object is "dropdown_value" and this returns "dropdown_group".
+     * Result is cached; returns null if the table cannot be resolved to a metaobject.
      *
      * @return MetaObjectInterface|null
+     * @see getOtherAffectedTableName() to get only the table address
+     * @see getAffectedObject() for the primary affected metaobject
      */
     public function getOtherAffectedObject() : ?MetaObjectInterface
     {
