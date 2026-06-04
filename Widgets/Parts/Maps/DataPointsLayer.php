@@ -19,7 +19,11 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
 /**
  * A map layer to draw point(s) into a map using longitude and latitude values.
  * 
- * ### How to provide values
+ * ### Data Setup Guide
+ *
+ *  please open the properties of widget_type 'Map' for a full guide on how to pass on data to any layer in a map widget!
+ * 
+ * ### Widget Configuration Guide
  * 
  * **Widget Links**
  * 
@@ -29,57 +33,55 @@ use exface\Core\Widgets\Traits\iHaveIconTrait;
  *      "value": 450196.06,
  *      "caption": "UTM Longitude",
  *      "data_column_name": "UTM_Longitude",
- *      "id": "Test_Long"
+ *      "id": "your_long_widget"
  * },
  * {
  *      "widget_type": "Input",
  *      "value": 5427449.28,
  *      "data_column_name": "UTM_Latitude",
  *      "caption": "UTM Latitude",
- *      "id": "Test_Lat"
+ *      "id": "your_lat_widget"
  * }
  * 
  * ...
- * 
+ *
  * {
-*       "type": "DataPoints",
-*       "caption": "Test Koordinaten für einen Mast",
-*       "auto_zoom_to_see_all": true,
-*       "latitude_widget_link": "=Test_Lat",
-*       "longitude_widget_link": "=Test_Long",
-*       "auto_zoom_max": 17,
-*       "projection": {
-*           "name": "EPSG:25832",
-*           "definition": "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
-*       }
+ *       "type": "DataPoints",
+ *       "caption": "Your Marker",
+ *       "latitude_widget_link": "=your_lat_widget",
+ *       "longitude_widget_link": "=your_long_widget",
+ *       "//": "UTM needs to be projected since this is not the native leaflet format. see https://epsg.io/ to find other formats."
+ *       "projection": {
+ *           "name": "EPSG:25832",
+ *           "definition": "+proj=utm +zone=32 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
+ *       }
  * }
  * 
  * ```
  * 
  * **data with value links via attribute alias**
- * 
- * ```
+ *
+ *  ```
  *  {
- *          "type": "DataPoints",
- *          "caption": "Ausgewählter Mast",
- *          "data_widget_link": "=tabelle_Mast",
- *          "latitude_attribute_alias": "Latitude",
- *          "longitude_attribute_alias": "Longitude",
- *          "value_attribute_alias": "LABEL",
- *          "color_attribute_alias": "Bautyp__Farbe",
- *          "auto_zoom_to_see_all": true,
- *          "auto_zoom_max": 17,
- *          "visibility": "optional",
- *          "projection": {
- *              "name": "EPSG:31467",
- *              "definition": "+proj=tmerc +lat_0=0 +lon_0=8.999 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +units=m +no_defs +type=crs"
- *          }
+ *      "type": "DataPoints",
+ *      "caption": "Your point from client data",
+ *      "latitude_attribute_alias": "your_latitude_alias",
+ *      "longitude_attribute_alias": "your_longitude_alias",
+ *      "value_attribute_alias": "LABEL",
+ *      "color_attribute_alias": "your_color_alias",
+ *      "//icon": "you can change the icon but that will ignore the color_attribute_alias"
+ *      "//": "This is a Gauss Krueger example and needs to be projected since this is not the native leaflet format. see https://epsg.io/ to find other formats."
+ *      "projection": {
+ *          "name": "EPSG:31467",
+ *          "definition": "+proj=tmerc +lat_0=0 +lon_0=8.999 +k=1 +x_0=3500000 +y_0=0 +ellps=bessel +units=m +no_defs +type=crs"
+ *      }
  *  }
- * 
+ *
  * ```
  * 
  * @author Andrej Kabachnik
- *
+ * @summary_author Miriam Seitz
+ * 
  */
 class DataPointsLayer extends AbstractDataLayer 
     implements

@@ -433,17 +433,15 @@ class PageInstaller extends AbstractAppInstaller
         // Start a new workbench with a custom config. Remove all static listeners 
         // of the TranslatableBehavior from that config to ensure, that page properties
         // do not get translated when being loaded.
-        $exportConfig = [
-            'EVENTS.STATIC_LISTENERS' => $this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray()
-        ];
-        foreach ($exportConfig['EVENTS.STATIC_LISTENERS'] as $eventName => $listeners) {
-            foreach ($listeners as $idx => $listener) {
+        $exportWb = Workbench::startNewInstance();
+        $exportEventMgr = $exportWb->eventManager();
+        foreach ($this->getWorkbench()->eventManager()->getStaticListenersEvents() as $eventName => $listeners) {
+            foreach ($listeners as $listener) {
                 if (StringDataType::startsWith($listener, '\\' . TranslatableBehavior::class . '::')) {
-                    unset($exportConfig['EVENTS.STATIC_LISTENERS'][$eventName][$idx]);
+                    $exportEventMgr->removeStaticListener($eventName, $listener);
                 }
             }
         }
-        $exportWb = Workbench::startNewInstance($exportConfig);
         $exportWb->getContext()->getScopeSession()->setSessionDisabled(true);
         $exportApp = $exportWb->getApp($this->getApp()->getSelector());
         

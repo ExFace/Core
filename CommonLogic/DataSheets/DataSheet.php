@@ -87,42 +87,35 @@ class DataSheet implements DataSheetInterface
 
     // properties to be copied on copy()
     private $cols = array();
-
     private $rows = array();
-
     private $totals_rows = array();
+    private $subsheets = array();
 
     private $filters = null;
 
     private $sorters = array();
-    
     private $autosort = true;
 
-    private $total_row_count = null;
-    
-    private $autocount = true;
-
-    private $subsheets = array();
-
-    private $aggregation_columns = null;
-    
-    private $aggregateAll = null;
 
     private $rows_on_page = null;
-
     private $row_offset = 0;
+    private $total_row_count = null;
+    private $autocount = true;
+
+    private $aggregation_columns = null;
+    private $aggregateAll = null;
 
     private $uid_column_name = null;
 
     private $invalid_data_flag = false;
     
     private $is_fresh = true;
-    
     private $is_fresh_tag = null;
+    
+    private ?bool $is_cacheable = null;
 
     // properties NOT to be copied on copy()
     private $exface;
-
     private $meta_object;
     
     private $dataSourceHasMoreRows = true;
@@ -1026,10 +1019,13 @@ class DataSheet implements DataSheetInterface
         // Ensure, the columns with system attributes are always in the select if a row represents a
         // single UID. Adding system attributes does not make sense for aggregated rows as it is 
         // unclear, how they should be aggregated.
-        //
+        // We have a similar logic in FormToolbar::addSystemAttributeWidgets() where a Form widget is automatically
+        // given hidden inpiuts for all system attributes. These are using default aggregators.
+        // IDEA #system-attributes add a centralize mechanism to ensure system attributes are always present?
         // FIXME With growing numbers of behaviors and system attributes, this becomes a pain, as more and more possibly
         // aggregated columns are added automatically - even if the sheet is only meant for reading. Maybe we should let
-        // the code creating the sheet add the system columns. The behaviors will prduce errors if this does not happen anyway.
+        // the code creating the sheet add the system columns. The behaviors will produce errors if this does not happen
+        // anyway.
         if ($this->hasAggregateAll() === false) {
             foreach ($object->getAttributes()->getSystem()->getAll() as $attr) {
                 if (! $this->getColumns()->getByAttribute($attr)) {
@@ -3732,7 +3728,7 @@ class DataSheet implements DataSheetInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getRowsDiff()
      */
-    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = []) : array
+    public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = [], bool $ignoreEmptyCols = false) : array
     {
         $diffRows = [];
         $diffIdxs = [];
@@ -3760,10 +3756,19 @@ class DataSheet implements DataSheetInterface
             if (in_array($thisCol, $excludeColumns)) {
                 continue;
             }
-            if ($otherCol = $otherSheet->getColumns()->get($thisCol->getName())) {
-                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
-            } else {
-                $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
+            switch (true) {
+                // If both sheets have the column, diff values in the
+                case $otherCol = $otherSheet->getColumns()->get($thisCol->getName()):
+                    $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->diffRows($otherCol)));
+                    break;
+                // If the other sheet has no corresponding colum AND we can ignore empty columns, ignore this column
+                // if it is empty.
+                case $ignoreEmptyCols === true && $thisCol->isEmpty(true):
+                    break;
+                // Otherwise treat ALL rows as diffs
+                default:
+                    $diffIdxs = array_merge($diffIdxs, array_keys($thisCol->getValues(false)));
+                    break;
             }
         }
         $diffIdxs = array_unique($diffIdxs);
@@ -3802,7 +3807,11 @@ class DataSheet implements DataSheetInterface
         return $removeRows;
     }
 
-    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     */
     public function getSingleRow(string $errorOnNotFound = null, string $errorOnMultiple = null) : array
     {
         $cnt = $this->countRows();
@@ -3837,7 +3846,7 @@ class DataSheet implements DataSheetInterface
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::getSingleRow()
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::extractRows()
      */
     public function extractRows(array $rowIndexes, bool $reindex = true) : DataSheetInterface
     {
@@ -3845,5 +3854,26 @@ class DataSheet implements DataSheetInterface
         $allIdx = $this->getRowIndexes();
         $removeIdx = array_diff($allIdx, $rowIndexes);
         return $copy->removeRows($removeIdx, $reindex);
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::isCacheable()
+     */
+    public function isCacheable() : bool
+    {
+        return $this->is_cacheable;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setCacheable()
+     */
+    public function setCacheable(bool $trueOrFalse) : DataSheetInterface
+    {
+        $this->is_cacheable = $trueOrFalse;
+        return $this;
     }
 }

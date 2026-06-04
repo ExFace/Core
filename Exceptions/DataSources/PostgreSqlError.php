@@ -36,6 +36,8 @@ class PostgreSqlError extends RuntimeException implements DataConnectorException
     private PostgreSqlConnector $connector;
     private string $errorMessage;
     private ?MetaObjectInterface $obj = null;
+    private ?MetaObjectInterface $otherObj = null;
+    private bool $otherObjResolved = false;
     
     private array $details;
 
@@ -237,6 +239,70 @@ MD;
     }
 
     /**
+     * Returns the other table name involved in a foreign key violation (SQLSTATE 23503).
+     *
+     * Example for delete/update conflicts:
+     * - primary: update or delete on table "dropdown_group" ... on table "dropdown_value"
+     * - affected table: dropdown_value
+     * - this method returns: dropdown_group
+     *
+     * @return string|null
+     */
+    protected function getOtherAffectedTableName() : ?string
+    {
+
+        $msg = $this->details['MESSAGE_PRIMARY'] ?? $this->errorMessage;
+        if (! is_string($msg) || trim($msg) === '') {
+            return null;
+        }
+
+        $tables = $this->extractPgTablesFromForeignKeyMessage($msg);
+        if (empty($tables)) {
+            return null;
+        }
+        
+        $tables = array_map(function ($table) {
+            return trim($table, '"');
+        }, $tables);
+        
+        $affectedTable = $this->details['TABLE_NAME'] ?? null;
+        if ($affectedTable === null || $affectedTable === '' || count($tables) === 1) {
+            return $this->details['SCHEMA_NAME'] ."." . $tables[0];
+        }
+
+        $affectedTable = strtolower($affectedTable);
+        foreach ($tables as $table) {
+            $tableNameOnly = strtolower($this->extractTableNameFromAddress($table));
+            if ($tableNameOnly !== $affectedTable) {
+                return $this->details['SCHEMA_NAME'] .".". $table;
+            }
+        }
+        
+        return null;
+    }
+
+    /**
+     * Returns the metaobject for the "other" table in SQLSTATE 23503 errors.
+     *
+     * @return MetaObjectInterface|null
+     */
+    public function getOtherAffectedObject() : ?MetaObjectInterface
+    {
+        if ($this->otherObjResolved) {
+            return $this->otherObj;
+        }
+        $this->otherObjResolved = true;
+
+        $address = $this->getOtherAffectedTableName();
+        if ($address === null) {
+            return null;
+        }
+
+        $this->otherObj = $this->findObjectByDataAddress($address);
+        return $this->otherObj;
+    }
+
+    /**
      * Returns an array of values that caused the error with attribute aliases as array keys
      * 
      * @return array
@@ -312,6 +378,82 @@ MD;
             return null;
         }
         return $found;
+    }
+
+    /**
+     * Extract table addresses from PostgreSQL fk-violation MESSAGE_PRIMARY text.
+     *
+     * Supports patterns like:
+     * - update or delete on table "a" ... on table "b"
+     * - insert or update on table "a" ... on table "b"
+     * - same with schema-qualified identifiers
+     *
+     * @param string $messagePrimary
+     * @return string[]
+     */
+    protected function extractPgTablesFromForeignKeyMessage(string $messagePrimary) : array
+    {
+        $matches = [];
+        $tables = [];
+
+        // Capture all table names following "on table ...".
+        preg_match_all('/\bon\s+table\s+((?:"(?:[^"]|"")+"\s*\.\s*)?"(?:[^"]|"")+"|[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)/i', $messagePrimary, $matches);
+
+        foreach (($matches[1] ?? []) as $rawAddress) {
+            $norm = $this->normalizePgTableAddress($rawAddress);
+            if ($norm !== null) {
+                $tables[] = $norm;
+            }
+        }
+
+        return array_values(array_unique($tables));
+    }
+
+    /**
+     * Normalize a quoted or unquoted PostgreSQL table address.
+     *
+     * @param string $rawAddress
+     * @return string|null
+     */
+    protected function normalizePgTableAddress(string $rawAddress) : ?string
+    {
+        $rawAddress = trim($rawAddress);
+        if ($rawAddress === '') {
+            return null;
+        }
+
+        $parts = preg_split('/\s*\.\s*/', $rawAddress);
+        if (! is_array($parts) || empty($parts)) {
+            return null;
+        }
+
+        $clean = [];
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                return null;
+            }
+
+            if (preg_match('/^"(.*)"$/s', $part, $m)) {
+                $part = str_replace('""', '"', $m[1]);
+            }
+
+            $clean[] = $part;
+        }
+
+        return implode('.', $clean);
+    }
+
+    /**
+     * Returns only the table part from a table address (schema.table -> table).
+     *
+     * @param string $address
+     * @return string
+     */
+    protected function extractTableNameFromAddress(string $address) : string
+    {
+        $parts = explode('.', $address);
+        return trim(end($parts));
     }
 
     /**

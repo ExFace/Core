@@ -1,10 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\JsonDataType;
-use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
@@ -28,8 +26,7 @@ use exface\Core\Events\Widget\OnBeforePrefillEvent;
 use exface\Core\Events\Widget\OnPrefillEvent;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
-use exface\Core\Widgets\Parts\Tours\TourStep;
+use exface\Core\Widgets\Parts\Tours\TourWaypointStep;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 use exface\Core\Uxon\WidgetSchema;
 use exface\Core\Widgets\Traits\iHaveVisibilityTrait;
@@ -45,6 +42,7 @@ use exface\Core\CommonLogic\Translation\TranslationsArray;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use Throwable;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Facades\DocsFacade\MarkdownPrinters\UiWidgetMarkdownPrinter;
 
 /**
  * Base class for facade elements in AJAX facades using jQuery
@@ -1776,55 +1774,11 @@ abstract class AbstractWidget implements WidgetInterface
             $uxon_tab = $debug_widget->createTab();
             $uxon_tab->setId('widget_uxon_tab');
             $uxon_tab->setCaption('Widget');
+            $printer = new UiWidgetMarkdownPrinter($this);
             
-            $widgetUxon = $this->exportUxonObjectOriginal();
-            
-            $parent = $this;
-            $parentUxon = new UxonObject();
-            while ($parent->hasParent() && $parentUxon->isEmpty()) {
-                $parent = $parent->getParent();
-                $parentUxon = $parent->exportUxonObjectOriginal();
-            }
-            
-            if (($trigger = $this->getParentByClass(iTriggerAction::class)) && $trigger->hasAction()) {
-                $action = $trigger->getAction();
-                $actionAlias = $action->getAliasWithNamespace();
-                $protoytypeAlias = $action->getAliasOfPrototype();
-                if ($protoytypeAlias !== $actionAlias) {
-                    $actionInfo = "`{$actionAlias}` ({$action->getName()}), based on prototype [{$protoytypeAlias}](" . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ')';
-                } else {
-                    $actionInfo = "[$actionAlias](" . DocsFacade::buildUrlToDocsForUxonPrototype($action) . ") ({$action->getName()})";
-                }
-            } else {
-                $actionInfo = '[exface.Core.ShowWidget](' . DocsFacade::buildUrlToDocsForUxonPrototype(ShowWidget::class) . ') (root)';
-            }
-            
-            $docsLink = DocsFacade::buildUrlToDocsForUxonPrototype($this);
-            $tabContents = <<<MD
-
-# Widget `{$this->getWidgetType()}`
-
-- Widget type: [{$this->getWidgetType()}]($docsLink)
-- Widget ID: `{$this->getId()}`
-- Page: [{$this->getPage()->getName()}]({$this->getPage()->getAliasWithNamespace()}.html)
-- Called by action: {$actionInfo}
-
-## Widget UXON
-
-```
-{$widgetUxon->toJson(true)}
-```
-
-## Parent widget UXON
-
-```
-{$parentUxon->toJson(true)}
-```
-
-MD;
             $uxon_tab->addWidget(WidgetFactory::createFromUxonInParent($uxon_tab, new UxonObject([
                 'widget_type' => 'Markdown',
-                'value' => $tabContents,
+                'value' => $printer->getMarkdown(),
                 'width' => '100%',
                 'height' => '100%'
             ])));
@@ -1904,7 +1858,7 @@ MD;
      * Tour steps to show on this widget
      * 
      * @uxon-property tour_steps
-     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourStep[]
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourWaypointStep[]
      * @uxon-template [{"title":"","body":"","waypoints":[""]}]
      * 
      * @param UxonObject $arrayOfSteps
@@ -1926,7 +1880,7 @@ MD;
             $uxon = $this->tourSteps;
             $this->tourSteps = [];
             foreach ($uxon as $stepUxon) {
-                $this->tourSteps[] = new TourStep($this, $stepUxon);
+                $this->tourSteps[] = new TourWaypointStep($this, $stepUxon);
             }
         }
         return $this->tourSteps;

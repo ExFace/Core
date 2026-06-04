@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
-use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 
 /**
@@ -57,7 +57,7 @@ trait DataTableTrait
      * @param boolean $value            
      * @return \exface\Core\Widgets\DataTable
      */
-    public function setStriped(bool $value) : iShowData
+    public function setStriped(bool $value) : iHaveColumns
     {
         $this->striped = $value;
         return $this;

@@ -2,11 +2,16 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderModifier;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
+use exface\Core\Factories\FormulaFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Templates\Modifiers\IfNullModifier;
 use Random\RandomException;
 use Transliterator;
 
@@ -490,13 +495,26 @@ class StringDataType extends AbstractDataType
      * 
      * @return string
      */
-    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false) : string
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false, WorkbenchInterface $evaluateFormulasViaWorkbench = null) : string
     {
         $phs = static::findPlaceholders($string);
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
             $phKey = '[#' . ($ph ?? '') . '#]';
+            
+            // If the placeholder is a formula, AND we have a workbench to evaluate it, handle it here
+            if ($evaluateFormulasViaWorkbench !== null && Expression::detectCalculation($ph)) {
+                $formula = FormulaFactory::createFromString($evaluateFormulasViaWorkbench, $ph);
+                if ($formula->isStatic() === false) {
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in "' . $search . '": the used formula is not static! Only static formulas can be used in placeholders in this case!');
+                }
+                $search[] = $phKey;
+                $replace[] = $formula->evaluate();
+                continue;
+            }
+            
+            // All other placeholders are replace by their respecitve values
             if ($strict === true && array_key_exists($ph, $placeholders) === false) {
                 throw new PlaceholderNotFoundError($phKey, 'Missing value for placeholder "' . $phKey . '"!');
             }

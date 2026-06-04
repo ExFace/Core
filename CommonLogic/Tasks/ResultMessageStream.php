@@ -33,8 +33,12 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
     private $generatorArgs = [];
     
     private $generatorWasRun = false;
+
+    private $generator = null;
     
     private $generatorResult = null;
+
+    private $generatorReturn = null;
     
     /**
      * 
@@ -52,7 +56,28 @@ class ResultMessageStream extends ResultMessage implements ResultMessageStreamIn
         }
         
         $this->generatorWasRun = true;
-        return call_user_func_array($this->generatorCallable, $this->generatorArgs);
+        $this->generator = call_user_func_array($this->generatorCallable, $this->generatorArgs);
+        return $this->generator;
+    }
+
+    /**
+     * Returns the stream generator return value after the stream has finished.
+     * 
+     * Calling this method before the stream has been consumed will consume and buffer the stream.
+     * If the underlying traversable is not a generator, NULL is returned.
+     * 
+     * @return mixed
+     */
+    public function getReturn() : mixed
+    {
+        if ($this->generatorWasRun === false) {
+            $this->runGenerator();
+        }
+
+        if ($this->generator instanceof \Generator) {
+            $this->generatorReturn = $this->generator->getReturn();
+        }
+        return $this->generatorReturn;
     }
     
     /**

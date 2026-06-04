@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\DataSheets\Mappings;
 use exface\Core\Interfaces\DataSheets\DataColumnMappingInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
-use exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 
@@ -92,10 +91,10 @@ class DataFilterToFilterMapping extends DataColumnMapping
      * @uxon-property from_comparator
      * @uxon-type metamodel:comparator
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface::setFromComparator()
+     * @param string $comparator
+     * @return DataFilterToFilterMapping
      */
-    public function setFromComparator(string $comparator) : DataFilterToColumnMappingInterface
+    public function setFromComparator(string $comparator) : DataFilterToFilterMapping
     {
         $this->fromComparator = $comparator;
         return $this;
@@ -116,9 +115,9 @@ class DataFilterToFilterMapping extends DataColumnMapping
      * @uxon-type metamodel:comparator
      * 
      * @param string $comparator
-     * @return DataFilterToColumnMappingInterface
+     * @return DataFilterToFilterMapping
      */
-    public function setToComparator(string $comparator) : DataFilterToColumnMappingInterface
+    public function setToComparator(string $comparator) : DataFilterToFilterMapping
     {
         $this->toComparator = $comparator;
         return $this;
@@ -140,10 +139,10 @@ class DataFilterToFilterMapping extends DataColumnMapping
      * @uxon-type boolean
      * @uxon-default true
      * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataSheets\DataFilterToColumnMappingInterface::setPreventInheritingFilter()
+     * @param bool $value
+     * @return DataFilterToFilterMapping
      */
-    public function setPreventInheritingFilter(bool $value) : DataFilterToColumnMappingInterface
+    public function setPreventInheritingFilter(bool $value) : DataFilterToFilterMapping
     {
         $this->removeFilter = $value;
         return $this;

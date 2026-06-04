@@ -453,9 +453,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      * installer.
      * 
      * @param string $name
-     * @return string
+     * @return string|int|float|bool|null
      */
-    protected function getConfigOption(string $name) : ?string
+    protected function getConfigOption(string $name) : string|int|float|bool|null
     {
         $config = $this->getApp()->getConfig();
         $option = $this->configOptionNamePrefix . $name;

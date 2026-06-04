@@ -616,7 +616,7 @@ JS;
 
         $showPopupJs = $this->buildJsLeafletPopup($popupCaptionJs, $this->buildJsLeafletPopupList("[$popupTableRowsJs]"), 'oLine');
 
-        $color = $layer->getColor() ? $layer->getColor() : $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+        $color = $layer->getColor() ? $layer->getColor() : $this->getLayerBaseColor($layer);
         // Generate JS to run on map refresh
         switch (true) {
             case $link = $layer->getDataWidgetLink():
@@ -1730,7 +1730,7 @@ JS;
                 $colorJs = "'{$colorCss}'";
                 break;
             default:
-                $colorCss = $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+                $colorCss = $this->getLayerBaseColor($layer);
                 $colorJs = "'{$colorCss}'";
         }
         return $colorJs;
@@ -1770,7 +1770,7 @@ function(){
 JS;
                 break;
             default:
-                $colorCss = $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+                $colorCss = $this->getLayerBaseColor($layer);
                 $colorJs = "'{$colorCss}'";
         }
         return $colorJs;
@@ -1868,7 +1868,7 @@ JS;
 
     protected function buildJsClusterIcon(ColoredDataMapLayerInterface $layer, string $oClusterJs) : string
     {
-        $color = $layer->getColor() ?? $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+        $color = $layer->getColor() ?? $this->getLayerBaseColor($layer);
         $caption = str_replace("'", "\\'", trim($this->escapeString($layer->getCaption(), true, false), '"'));
 
         /* TODO SUM values instead of counting if needed
@@ -1894,9 +1894,16 @@ function ($oClusterJs) {
 JS;
     }
 
-    public function getLayerBaseColor(MapLayerInterface $layer) : string
+    public function getLayerBaseColor(MapLayerInterface $layer, bool $wrapAround = false) : string
     {
-        return $this->getLayerColors()[$this->getWidget()->getLayerIndex($layer)];
+        $layerIndex = $this->getWidget()->getLayerIndex($layer);
+        $layerColors = $this->getLayerColors();
+        $colorCount = count($layerColors);
+        $layerIndex = $wrapAround ?
+            $layerIndex % $colorCount :
+            max(min($layerIndex, $colorCount - 1), 0);
+
+        return $layerColors[$layerIndex];
     }
 
     protected function getLayerColors() : array

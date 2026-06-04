@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
+use exface\Core\Exceptions\Actions\ActionInputError;
 use exface\Core\Interfaces\ActionListInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
@@ -192,6 +193,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     
     private $skip_action_if_empty_input = false;
     
+    private $skip_action_if_input_invalid = false;
+    
     private $result_message_delimiter = "\n";
 
     /**
@@ -217,6 +220,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $logbook = $this->getLogBook($task);
         $logbook->addLine('### Important action properties:');
         $logbook->addLine("`skip_action_if_input_empty`: `" . ($this->getSkipActionsIfInputEmpty() ? 'true' : 'false') . "`", +1);
+        $logbook->addLine("`skip_action_if_input_invalid`: `" . ($this->getSkipActionIfInputInvalid() ? 'true' : 'false') . "`", +1);
         $logbook->addLine("`use_single_transaction`: `" . ($this->getUseSingleTransaction() ? 'true' : 'false') . "`", +1);
         $logbook->addLine("`use_input_data_of_action`: `" . ($this->getUseInputDataOfAction() ?? ' ') . "`", +1);
         $logbook->addLine("`use_result_of_action`: `" . ($this->getUseResultOfAction() ?? ' ') . "`", +1);
@@ -288,6 +292,14 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                 $diagram .= " -->|" . DataLogBook::buildMermaidTitleForData($inputSheet) . "| $diagramShapeId";
                 try {
                     $lastResult = $action->handle($t, $tx);
+                } catch (ActionInputError $e) {
+                    if ($this->getSkipActionIfInputInvalid()) {
+                        $skip = true;
+                        $diagram .= " .-x {$diagramShapeId}";
+                        $logbook->addLine("Skipped because input invalid: " . $e->getMessage());
+                    } else {
+                        throw $e;
+                    }
                 } catch (\Throwable $e) {
                     if ($idx === 0) {
                         $diagram .= PHP_EOL . "$diagramShapeId --> {$lbId}ERR(Error)";
@@ -297,25 +309,27 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                     $logbook->setFlowDiagram($diagram);
                     throw $e;
                 }
-                $results[$idx] = $lastResult;
-                if (null !== $lastMessage = $lastResult->getMessage()) {
-                    $messages[$idx] = $lastMessage;
-                }
-                if ($lastResult->isDataModified()) {
-                    $chainDataModified = true;
-                }
-                // Determine the input data for the next action: either take that of the last data result or
-                // the explicitly specified step id in `user_result_of_action`
-                // mermaid: preparation for the next --> ...
-                if ($freezeInputIdx === null || $freezeInputIdx > $idx) {
-                    if ($lastResult instanceof ResultData) {
-                        $inputSheet = $lastResult->getData();
+                if (!$skip) {
+                    $results[$idx] = $lastResult;
+                    if (null !== $lastMessage = $lastResult->getMessage()) {
+                        $messages[$idx] = $lastMessage;
                     }
-                    $diagram .= $idx < $idxLast ? PHP_EOL . $diagramShapeId : '';
-                } else {
-                    // If the input is always taken from a certain step, the arrow needs to start from the
-                    // step before it!
-                    $diagram .= $idx < $idxLast ? PHP_EOL . $lbId . ($freezeInputIdx > 0 ? ($freezeInputIdx-1) : 'T') : '';
+                    if ($lastResult->isDataModified()) {
+                        $chainDataModified = true;
+                    }
+                    // Determine the input data for the next action: either take that of the last data result or
+                    // the explicitly specified step id in `user_result_of_action`
+                    // mermaid: preparation for the next --> ...
+                    if ($freezeInputIdx === null || $freezeInputIdx > $idx) {
+                        if ($lastResult instanceof ResultData) {
+                            $inputSheet = $lastResult->getData();
+                        }
+                        $diagram .= $idx < $idxLast ? PHP_EOL . $diagramShapeId : '';
+                    } else {
+                        // If the input is always taken from a certain step, the arrow needs to start from the
+                        // step before it!
+                        $diagram .= $idx < $idxLast ? PHP_EOL . $lbId . ($freezeInputIdx > 0 ? ($freezeInputIdx-1) : 'T') : '';
+                    }
                 }
             }
         }
@@ -725,6 +739,27 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     public function setSkipActionsIfInputEmpty(bool $value) : ActionChain
     {
         $this->skip_action_if_empty_input = $value;
+        return $this;
+    }
+    
+    public function getSkipActionIfInputInvalid() : bool
+    {
+        return $this->skip_action_if_input_invalid;
+    }
+    
+    /**
+     * Skip any action if its input fails validation (i.e. does not match the "input_invalid_if" conditions) - instead of halting the chain.
+     * 
+     * @uxon-property skip_action_if_input_invalid
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return ActionChain
+     */
+    public function setSkipActionIfInputInvalid(bool $value) : ActionChain
+    {
+        $this->skip_action_if_input_invalid = $value;
         return $this;
     }
     

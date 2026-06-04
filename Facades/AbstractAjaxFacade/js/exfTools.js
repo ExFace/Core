@@ -676,6 +676,48 @@
 		 * 
 		 */
 		data: {
+			
+			/**
+			 * Compares two JSON objects for equality. (Regardless of the order of the keys in the objects)
+			 * @param {*} obj1 
+			 * @param {*} obj2 
+			 * @param {string[]} [excludeKeys] Keys to ignore during comparison
+			 * @returns {boolean}
+			 */
+			compareJSONObjects: function(obj1, obj2, excludeKeys) {
+				excludeKeys = Array.isArray(excludeKeys) ? excludeKeys : [];
+				if (obj1 === obj2) return true;
+
+				if (obj1 === null || obj2 === null) return obj1 === obj2;
+				if (typeof obj1 !== "object" || typeof obj2 !== "object") return false;
+
+				// Arrays
+				const aIsArr = Array.isArray(obj1);
+				const bIsArr = Array.isArray(obj2);
+				if (aIsArr || bIsArr) {
+					if (!aIsArr || !bIsArr || obj1.length !== obj2.length) return false;
+					for (let i = 0; i < obj1.length; i++) {
+					if (!this.compareJSONObjects(obj1[i], obj2[i], excludeKeys)) return false;
+					}
+					return true;
+				}
+
+				// Objects (ignore key order)
+				const aKeys = Object.keys(obj1).filter(function(key) {
+					return excludeKeys.indexOf(key) === -1;
+				});
+				const bKeys = Object.keys(obj2).filter(function(key) {
+					return excludeKeys.indexOf(key) === -1;
+				});
+				if (aKeys.length !== bKeys.length) return false;
+
+				for (const key of aKeys) {
+					if (!Object.prototype.hasOwnProperty.call(obj2, key)) return false;
+					if (!this.compareJSONObjects(obj1[key], obj2[key], excludeKeys)) return false;
+				}
+
+				return true;
+			},
 
 			/**
 			 * Returns TRUE if two data rows arrays contain exactly the same rows (possibly in different order)

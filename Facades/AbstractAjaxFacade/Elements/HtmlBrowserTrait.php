@@ -25,7 +25,7 @@ trait HtmlBrowserTrait
         
         return <<<HTML
 
-<iframe src="{$url}" style="{$this->buildCssElementStyle()}" id="{$this->getId()}" name="{$this->getId()}" seamless></iframe>
+<iframe src="{$url}" style="{$this->buildCssElementStyle()}" id="{$this->getId()}" name="{$this->getId()}" seamless class="{$this->buildCssElementClass()} {$this->buildCssWidgetClass()}"></iframe>
 HTML;
     }
         

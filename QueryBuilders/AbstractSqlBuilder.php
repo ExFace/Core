@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\QueryBuilders;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
@@ -140,6 +141,15 @@ use exface\Core\Templates\Modifiers\IfNullModifier;
  * SQL dialect has its own syntax - typically functions like `JSON_VALUE(column, jsonPath)` or
  * `JSON_SET(column, jsonPath, value)` or similar. The common syntax introduced above will be
  * automatically translated into these JSON functions by the query builder.
+ * 
+ * ### Raw SQL filters (techie mode)
+ * 
+ * To give SQL skilled users more flexibility, SQL builders support "techie-mode" filter values: e.g. `sql:like:%[0-9]`.
+ * These special values can be used with `=` and `!=` comparators and allow to securely pass advanced SQL commands.
+ * Such a value consists of three parts separated by colons:
+ * 1. SQL dialect - `sql` by default
+ * 2. SQL function - `like` in this example - each query builder can provide different function with different syntax
+ * 3. the actual value - `%[0-9]` in this example - this must be compatible with the corresponding function
  *
  * @author Andrej Kabachnik
  *
@@ -1431,6 +1441,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
+     * @param $string
+     * @return string
+     */
+    protected function escapeLikeExpression($string) : string
+    {
+        return $this->escapeString($string);
+    }
+
+    /**
      * {@inheritdoc}
      * @see \exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder::delete()
      */
@@ -1983,7 +2002,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // if you use $qpart->getUsedRelations() on a FilterGroup and just continue with the "else" part of this if, reverse relations are being ignored.
             // The problem is, that the special treatment for attributes of the main object and an explicit left_table_alias should be applied to filter group
             // at some point, but it is not, because it is not possible to determine, what object the filter group belongs to (it might have attributes from
-            // many object). I don not understand, however, why that special treatment seems to be important for reverse relations... In any case, this recursion
+            // many object). I do not understand, however, why that special treatment seems to be important for reverse relations... In any case, this recursion
             // does the job.
             foreach ($qpart->getFiltersAndNestedGroups() as $f) {
                 $joins = array_merge($joins, $this->buildSqlJoins($f));
@@ -2594,6 +2613,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             case $comparator === EXF_COMPARATOR_IS_NOT:
             case $comparator === EXF_COMPARATOR_IS:
+                if (stripos($value, 'sql:') !== false) {
+                    $output = $this->buildSqlWhereComparatorCustomSql($subject, $comparator, $value, $valueIsSQL);
+                    break;
+                }
                 $like = $comparator === EXF_COMPARATOR_IS_NOT ? 'NOT LIKE' : 'LIKE';
                 $output = "UPPER({$subject}) $like ";
                 if ($valueIsSQL) {
@@ -2614,6 +2637,32 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 break;
             default:
                 throw new QueryBuilderException('Comparator "' . $comparator . '" is not supported in SQL query builders');
+        }
+        return $output;
+    }
+
+    /**
+     * Renders the "techie-mode" filters: `sql:like:%[0-9]`
+     * 
+     * @param string $subject
+     * @param string $comparator
+     * @param mixed $value
+     * @param bool $valueIsSQL
+     * @return string
+     */
+    protected function buildSqlWhereComparatorCustomSql(string $subject, string $comparator, $value, bool $valueIsSQL) : string
+    {
+        list($dialect, $function, $val) = explode(':', $value);
+        // IDEA check if the $dialect matches the current query builder.
+        switch (mb_strtolower($function)) {
+            case 'like':
+                $output = $subject . ' ' . ($comparator === ComparatorDataType::IS_NOT ? 'NOT LIKE' : 'LIKE');
+                $likeExpr = $this->escapeLikeExpression(mb_strtoupper($val));
+                $output .= ' ' . ($valueIsSQL ? $likeExpr : "'$likeExpr'");
+                break;
+            // IDEA add more functions here - e.g. regex matching, etc.
+            default:
+                throw new QueryBuilderException('Unknown custom SQL filter `' . $value . '`');
         }
         return $output;
     }
@@ -3101,7 +3150,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // - but is it really enough to search for a single pipe? Can there be pipes in placeholders without modifiers?
             $phAlias = IfNullModifier::stripFilter($ph);
             // TODO how to use the default value from the modifier here?
-            if (StringDataType::startsWith($phAlias, '=')) {
+            if (Expression::detectCalculation($phAlias)) {
                 $formula = FormulaFactory::createFromString($this->getWorkbench(), $phAlias);
                 if ($formula->isStatic() === false) {
                     throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in data address "' . $original_data_address . '": the used formula is not static! Only static formulas are supported in data address placeholders!');
@@ -3200,6 +3249,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $phVals = [];
         foreach ($phs as $ph) {
             switch (true) {
+                
+                // Static formulas like `[#=User()#]` do not care about being left or right - they can be evaluated immediately
+                // TODO #placeholder-modifiers needed here?
+                case Expression::detectCalculation($ph):
+                    $formula = FormulaFactory::createFromString($this->getWorkbench(), $ph);
+                    if ($formula->isStatic() === false) {
+                        throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in SQL JOIN `' . $sqlJoin . '`: the used formula is not static! Only static formulas are supported in data address placeholders!');
+                    }
+                    $phVals[$ph] = $formula->evaluate();
+                    continue;
+                    
+                // Left-side placeholders like `[#~left:MY_ATTR#]` can be replaced using the same logic as for regular data addresses
                 case StringDataType::startsWith($ph, '~left:'):
                     $phVals[$ph] = $leftQuery->replacePlaceholdersInSqlAddress(
                         '[#' . StringDataType::substringAfter($ph, '~left:') . '#]',
@@ -3208,6 +3269,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $leftTableAlias
                     );
                     break;
+                    
+                // Right-side placeholders like `[#~right:MY_ATTR#]` belong to a related object, so the need some rebasing
                 case StringDataType::startsWith($ph, '~right:'):
                     $attrAlias = StringDataType::substringAfter($ph, '~right:');
                     // TODO #placeholder-modifiers switch to more generic StringDataType::stripPlaceholderModifiers()
@@ -3260,14 +3323,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         );
                     }
                     break;
+                    
+                // Hard-coded placeholders
                 case $ph === '~left_alias':
                     $phVals[$ph] = $leftTableAlias;
                     break;
                 case $ph === '~right_alias':
                     $phVals[$ph] = $rightTableAlias;
                     break;
+                    
+                // Error for all unknown placeholders
                 default:
-                    throw new PlaceholderNotFoundError('Invalid placeholder "' . $ph . '" in custom SQL_JOIN_ON of object ' . $leftQuery->getMainObject()->__toString() . ': ' . $sqlJoin);
+                    throw new PlaceholderNotFoundError($ph, 'Invalid placeholder "' . $ph . '" in custom SQL_JOIN_ON of object ' . $leftQuery->getMainObject()->__toString(), null, null, $sqlJoin);
             }
         }
 
