@@ -101,6 +101,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     private $exportable = null;
     
+    private ?bool $system = null;
+    
     private $footer = null;
     
     private $widthMax = null;
@@ -129,7 +131,8 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
 
     private $data_column_name = null;
     
-    private $calculationExpr = null;
+    private ?ExpressionInterface $bindingExpression = null;
+    private ?ExpressionInterface $calculationExpr = null;
     
     private $nowrap = null;
     
@@ -187,6 +190,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function setAttributeAlias($value)
     {
         $this->attribute = null;
+        $this->bindingExpression = null;
         if (Expression::detectCalculation($value)) {
             $this->setCalculation($value);
         } else {
@@ -823,7 +827,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 if ($this->getExpression()->isFormula()) {
                     $this->attribute = $this->getMetaObject()->getAttribute($this->getExpression()->getRequiredAttributes()[0]);
                 } else {
-                    throw new WidgetPropertyInvalidValueError($this, 'Attribute "' . $this->getAttributeAlias() . '" specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
+                    throw new WidgetPropertyInvalidValueError($this, 'Attribute `' . $this->getAttributeAlias() . '` specified for widget ' . $this->getWidgetType() . ' not found for the widget\'s object "' . $this->getMetaObject()->getAliasWithNamespace() . '"!', null, $e);
                 }
             }
         }
@@ -933,13 +937,19 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
 
     /**
-     *
+     * Returns the expression the column is bound to - i.e. `attribute_alias`, but as an instantiated expression
+     * 
+     * Note: there is some confusion about the differences between `getExpression()` and `getCalculationExpression()`
+     * because it is not quite clear, which one has priority in which cases. It seems
+     * 
      * @return ExpressionInterface
      */
     public function getExpression()
     {
-        $exface = $this->getWorkbench();
-        return ExpressionFactory::createFromString($exface, $this->getAttributeAlias());
+        if ($this->bindingExpression === null) {
+            $this->bindingExpression = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
+        }
+        return $this->bindingExpression;
     }
 
     /**
@@ -1200,9 +1210,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
      * - `=NOW()` will place the current date in every cell
      * - `=some_widget_id` will place the current value of the widget with the given id in the cells
      * 
-     * NOTE: `calculation` can be used used without an `attribute_alias` producing a calculated column,
-     * that does not affect subsequent actions or in addition to an `attribute_alias`, which will place
-     * the calculated value in the attribute's column for further processing.
+     * **NOTE:** `calculation` can be used with or without `attribute_alias`
+     * - only `calculation` will produce a calculated column, that does not affect subsequent actions 
+     * - `calculation` in addition to an `attribute_alias`, will place the calculated value in the attribute's column 
+     * for further processing.
      * 
      * @uxon-property calculation
      * @uxon-type metamodel:expression
@@ -1481,5 +1492,42 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             return $this->getAttribute()->getIconSet();
         }
         return null;
+    }
+
+    /**
+     * Returns TRUE if the widget holds a value required for system logic - similar to the system-flag of attributes.
+     * 
+     * In contrast to attributes, a widget can be marked as "system" while the UI is being rendered: e.g. if required
+     * for a conditional property (`disabled_if`, `hidden_if`, etc.), an input mapper, etc. In fact, most always-hidden 
+     * widgets are added to support some business logic, so these hidden widgets are all considered "system" too. 
+     *
+     * System widgets should 
+     * @return bool
+     */
+    public function isSystem() : bool
+    {
+        if ($this->system === null) {
+            switch (true) {
+                case $this->isHidden():
+                case $this->isBoundToAttribute() && ! $this->getAttribute()->isRelated() && $this->getAttribute()->isSystem():
+                    return true;
+            }
+        }
+        return $this->system ?? false;
+    }
+
+    /**
+     * Marks the widget as required for system logic - similar to the system-flag of attributes.
+     * 
+     * This is intentionally NOT a UXON property and is supposed to be set programmatically to avoid misuse by
+     * designers. The workbench should decide, what it really needs on itself.
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setSystem(bool $value) : DataColumn
+    {
+        $this->system = $value;
+        return $this;
     }
 }

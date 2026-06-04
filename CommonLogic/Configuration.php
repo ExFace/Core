@@ -308,4 +308,9 @@ class Configuration implements ConfigurationInterface
     {
         return null;
     }
+    
+    public function isEmpty() : bool
+    {
+        return $this->config_uxon === null || $this->config_uxon->isEmpty();
+    }
 }

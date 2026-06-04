@@ -4,7 +4,9 @@ namespace exface\Core;
 use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\CommonLogic\AppInstallers\NginxServerInstaller;
+use exface\Core\CommonLogic\AppInstallers\StaticEventListenerInstaller;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\Facades\HealthCheckFacade;
 use exface\Core\Facades\LogHubFacade;
 use exface\Core\Facades\PermalinkFacade;
 use exface\Core\Interfaces\InstallerInterface;
@@ -60,6 +62,10 @@ class CoreApp extends App
         // Make sure, it runs before any other installers do.
         $installer->addInstaller(new CoreInstaller($this->getSelector()), true);
 
+        // Static listeners.
+        $staticListenersInstaller = new StaticEventListenerInstaller($this->getSelector());
+        $installer->addInstaller($staticListenersInstaller);
+        
         // robot.txt
         $robotsTxtInstaller = new FileContentInstaller($this->getSelector());
         $robotsTxtInstaller
@@ -109,6 +115,11 @@ Disallow: /
         // LogHub facade
         $tplInstaller = new HttpFacadeInstaller($this->getSelector());
         $tplInstaller->setFacade(FacadeFactory::createFromString(LogHubFacade::class, $this->getWorkbench()));
+        $installer->addInstaller($tplInstaller);
+
+        // HealthCheck facade
+        $tplInstaller = new HttpFacadeInstaller($this->getSelector());
+        $tplInstaller->setFacade(FacadeFactory::createFromString(HealthCheckFacade::class, $this->getWorkbench()));
         $installer->addInstaller($tplInstaller);
         
         // Server installer.

@@ -342,7 +342,7 @@ class DataCheck implements DataCheckInterface
      */
     public function exportUxonObject()
     {
-        $uxon = $this->getConditionGroupUxon();
+        $uxon = $this->getConditionGroupUxon()->copy();
         if ($this->errorText !== null) {
             $uxon->setProperty('error_text', $this->errorText);
         }        

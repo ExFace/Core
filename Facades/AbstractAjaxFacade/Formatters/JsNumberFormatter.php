@@ -129,7 +129,14 @@ JS;
                 }
             }
             if (mNumber === '' || mNumber === $emptyFormatJs) return null;
-            mNumber = mNumber.toString().replace(/{$thousandsRegex}/g, '').replace(/ /g, '').replace(/{$decimalRegex}/g, '.');
+            
+            // Normalize string. Invalid strings will be caught by parseFloat() but may produce unexpected outputs.
+            mNumber = mNumber.toString().
+                replace(/{$thousandsRegex}/g, '').  // Remove thousand-separator.
+                replace(/ /g, '').                  // Remove spaces.
+                replace(/{$decimalRegex}/g, '.').   // Normalize decimals.
+                replace(/,/g, '.');                 // Interpret remaining commas as decimal-separators to accomodate 
+                                                    // users who expect comma to be the decimal-separator.
 
             // Return as number because otherwise comparisons between 100 and 100.00 will fail! The comparator logic cannot
             // know, whether the value was inteded to be a number, so it is important to parse a numeric string to a real

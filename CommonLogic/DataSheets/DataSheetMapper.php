@@ -30,6 +30,7 @@ use exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToColumnMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataJoinMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataToSubsheetMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataUnpivotMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\RowSplitMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\RowFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\SubsheetMapping;
 use exface\Core\Interfaces\Exceptions\DataMappingExceptionInterface;
@@ -63,6 +64,7 @@ use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
  * - `joins` can join arbitrary data in a way similar to SQL JOINs
  * - `unpivot_mappings` Transform selected columns of the from-sheet to rows in the to-sheet (resulting 
  * in two columns - labels and values)
+ * - `row_split_mappings` split list values in one column and duplicate rows so each list entry gets its own row
  * - `action_to_column_mappings` will perform an action on the from-sheet and map data from
  * the actions result to the to-sheet
  * - `row_filter` allows to remove rows either from the to-sheet or even from the from-sheet in
@@ -892,6 +894,24 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         foreach ($uxon as $prop){
             $this->addMapping(new DataUnpivotMapping($this, $prop));
+        }
+        return $this;
+    }
+
+    /**
+     * Split list values in one from-column and create one output row per split part.
+     *
+     * @uxon-property row_split_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\RowSplitMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setRowSplitMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop){
+            $this->addMapping(new RowSplitMapping($this, $prop));
         }
         return $this;
     }

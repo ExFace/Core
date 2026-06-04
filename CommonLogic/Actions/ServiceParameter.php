@@ -14,8 +14,14 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
-use Sabre\Xml\Service;
 
+/**
+ * Generic model for external service parameters/arguments
+ * 
+ * This model describes properties of arguments or parameters of external services like RPC, web services, etc.
+ * 
+ * @author Andrej Kabachnik
+ */
 class ServiceParameter implements ServiceParameterInterface
 {
     use ImportUxonObjectTrait;
@@ -41,6 +47,8 @@ class ServiceParameter implements ServiceParameterInterface
     private $service = null;
     
     private $dataSourceProperties = null;
+
+    private $examples = null;
     
     public function __construct(WorkbenchDependantInterface $service, UxonObject $uxon = null)
     {
@@ -58,8 +66,7 @@ class ServiceParameter implements ServiceParameterInterface
     public function exportUxonObject()
     {
         $uxon = new UxonObject([
-            'name' => $this->getName(),
-            'data_type' => $this->getDataType()->exportUxonObject()
+            'name' => $this->getName()
         ]);
 
         if (null !== $val = $this->getDescription()) {
@@ -74,6 +81,20 @@ class ServiceParameter implements ServiceParameterInterface
         if (null !== $val = $this->getDefaultValue()) {
             $uxon->setProperty('default_value', $val);
         }
+        if (null !== $val = $this->getExample()) {
+            $uxon->setProperty('example', $val);
+        }
+        
+        // Make sure, every exported parameter UXON has a data_type. The DataType::exportUxonObject() for some reason
+        // does not always include an alias - add it here, just to make sure!
+        $type = $this->getDataType();
+        $typeUxon = $type->exportUxonObject();
+        if (! $typeUxon->hasProperty('alias')) {
+            $typeUxon->setProperty('alias', $type->getAliasWithNamespace());
+        }
+        $uxon->setProperty('data_type', $typeUxon);
+        
+        // Also export custom properties as-is
         if (! ($val = $this->getCustomProperties())->isEmpty()) {
             $uxon->setProperty('custom_properties', $val);
         }
@@ -417,6 +438,66 @@ class ServiceParameter implements ServiceParameterInterface
         } else {
             $this->emptyExpression = null;
         }
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ServiceParameterInterface::getExamples()
+     */
+    public function getExamples() : ?array
+    {
+        if ($this->examples === null) {
+            if ($this->defaultValue !== null) {
+                return $this->defaultValue;
+            }
+        }
+        return $this->examples;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ServiceParameterInterface::hasExamples()
+     */
+    public function hasExamples() : bool
+    {
+        return $this->getExamples() !== null;
+    }
+
+    /**
+     * A single example value for this parameter.
+     *
+     * Similar to OpenAPI's `example` field, this provides a sample value that helps
+     * users understand the expected format or typical content for this parameter.
+     *
+     * @uxon-property example
+     * @uxon-type string
+     *
+     * @param int|float|bool|string $value
+     * @return ServiceParameterInterface
+     */
+    public function setExample(int|float|bool|string $value) : ServiceParameterInterface
+    {
+        $this->examples = [$value];
+        return $this;
+    }
+
+    /**
+     * A array of example values for this parameter.
+     *
+     * Similar to OpenAPI's `example` field, this provides a sample value that helps
+     * users understand the expected format or typical content for this parameter.
+     *
+     * @uxon-property examples
+     * @uxon-type array
+     * @uxon-template [""]
+     *
+     * @param UxonObject|array $value
+     * @return ServiceParameterInterface
+     */
+    public function setExamples(UxonObject|array $value) : ServiceParameterInterface
+    {
+        $this->examples = ($value instanceof UxonObject) ? $value->toArray() : $value;
         return $this;
     }
 }

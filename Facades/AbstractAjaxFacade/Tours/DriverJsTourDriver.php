@@ -5,7 +5,9 @@ use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Filter;
+use exface\Core\Widgets\Parts\Tours\TourStoryStep;
 
 /**
  * This class is a tour driver that uses the driver.js library to create interactive tours on the UI.
@@ -18,7 +20,7 @@ use exface\Core\Widgets\Filter;
 class DriverJsTourDriver implements TourDriverInterface
 {
     private HttpFacadeInterface $facade;
-    private array $steps = [];
+    private array $waypointSteps = [];
     
     public function __construct(HttpFacadeInterface $httpFacade)
     {
@@ -35,17 +37,19 @@ class DriverJsTourDriver implements TourDriverInterface
     }
 
     /**
+     * Registers a tour waypoint step.
+     * 
      * {@inheritDoc}
-     * @see TourDriverInterface::addStep()
+     * @see TourDriverInterface::registerWaypointStep()
      */
-    public function registerStep(TourStepInterface $step) : TourDriverInterface
+    public function registerWaypointStep(TourStepInterface $step) : TourDriverInterface
     {
-        $this->steps[] = $step;
+        $this->waypointSteps[] = $step;
         return $this;
     }
 
     /**
-     * Gets the steps for the given tour, filtered by the tour's waypoint route and sorted by their order.
+     * Gets the steps (TourWaypointStep and TourStoryStep) for the given tour, filtered by the tour's waypoint route and sorted by their order.
      * 
      * {@inheritDoc}
      * @see TourDriverInterface::getTourSteps()
@@ -56,7 +60,9 @@ class DriverJsTourDriver implements TourDriverInterface
         $tourWaypoints = explode("&", $tour->getWaypointsRoute());
         $takeAllWaypoints = in_array("~all", $tourWaypoints);
         
-        foreach ($this->steps as $step) {
+        // * TourWaypointSteps:
+        foreach ($this->waypointSteps as $step) {
+            
             // Filter only steps, that have matching waypoints
             $stepWaypoints = $step->getWaypoints();
             
@@ -65,8 +71,24 @@ class DriverJsTourDriver implements TourDriverInterface
             }
         }
         
-        // sorting steps by order
-        usort($steps, function ($a, $b) {
+        // Sorts the steps based on the order of the waypoints in the tour's waypoint route
+        // and then by their position_in_tour property.
+        usort($steps, function ($a, $b) use ($tourWaypoints, $takeAllWaypoints) {
+            $aWaypoints = $a->getWaypoints();
+            $bWaypoints = $b->getWaypoints();
+
+            if ($takeAllWaypoints) {
+                $aGroup = $this->getStepWaypointSortValue($aWaypoints);
+                $bGroup = $this->getStepWaypointSortValue($bWaypoints);
+            } else {
+                $aGroup = $this->getFirstMatchingWaypointIndex($aWaypoints, $tourWaypoints);
+                $bGroup = $this->getFirstMatchingWaypointIndex($bWaypoints, $tourWaypoints);
+            }
+
+            if ($aGroup !== $bGroup) {
+                return $aGroup <=> $bGroup;
+            }
+
             $aOrder = $a->getPositionInTour();
             $bOrder = $b->getPositionInTour();
 
@@ -76,8 +98,45 @@ class DriverJsTourDriver implements TourDriverInterface
 
             return $aOrder <=> $bOrder;
         });
+
+        // * TourStorySteps:
+        // Adds the tour stroy steps after the waypoint steps.
+        if (null !== $tourStorySteps = $tour->getTourStorySteps()) {
+            $steps = array_merge($steps, $tourStorySteps);
+        }
         
         return $steps;
+    }
+
+    /**
+     * Gets the index of the first matching waypoint in the tour's waypoint route for the given step waypoints.
+     * 
+     * @param array $stepWaypoints
+     * @param array $tourWaypoints
+     * @return int
+     */
+    private function getFirstMatchingWaypointIndex(array $stepWaypoints, array $tourWaypoints): int
+    {
+        foreach ($tourWaypoints as $index => $tourWaypoint) {
+            if (in_array($tourWaypoint, $stepWaypoints, true)) {
+                return $index;
+            }
+        }
+
+        return PHP_INT_MAX;
+    }
+
+    /**
+     * Gets a string value for sorting the steps that have the same waypoints, 
+     * by sorting their waypoints and concatenating them.
+     * 
+     * @param array $stepWaypoints
+     * @return string
+     */
+    private function getStepWaypointSortValue(array $stepWaypoints): string
+    {
+        sort($stepWaypoints, SORT_NATURAL | SORT_FLAG_CASE);
+        return implode('|', $stepWaypoints);
     }
 
     /**
@@ -119,6 +178,7 @@ JS;
                       description: {$this->escapeString($step->getBody())},
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
+                      {$this->buildJsOnNextClick($step)}
                     }
                 },
 JS;
@@ -143,6 +203,58 @@ JS;
 
      return $driverJs;
     }
+
+    /**
+     * Builds the JavaScript code for the onNextClick event of a tour step, 
+     * which will be executed when the user clicks the "Next" button in the popover of that step.
+     * 
+     * @param TourStepInterface $step
+     * @return string
+     */
+    protected function buildJsOnNextClick(TourStepInterface $step) :string
+    {
+        $onNextStepFunction = $step->getOnNextStepFunction();
+        if (($functionName = $onNextStepFunction->getFunctionName()) === null) {
+            return '';
+        }
+        
+        $focusedWidget = $this->getFocusedWidget($step);
+        
+        //function call:
+        try {
+            //TODO: If this is in a dialog, it currently gets one step from the called page and tries to click on it.
+            // At this case the controller of the called page is not found and we getting an error here.
+            // The Quick fix is to catch the missing controller error.
+            // A propper Fix must be implemented! For that, start at the point where the "registerWaypointStep()" is called.
+            $callFunctionJs = $this->getFacade()?->getElement($focusedWidget)?->buildJsCallFunction($functionName);
+        } catch (\Exception $e) {
+            $callFunctionJs = 'console.warn(' . $this->escapeString($e->getMessage()) . ');';
+        }
+        
+        //set the tour of that step to pending, so it will autostart if the view with that tour is loaded:
+        $pendingDialogTourJs = '';
+        $autostartTourId = $onNextStepFunction->getAutostartTourId();
+        
+        if ($autostartTourId) {
+            $pendingDialogTourJs = <<<JS
+                window.exfTourContext.setPendingTour({
+                    targetTourId: {$this->escapeString($autostartTourId)}
+                });
+JS;
+        }
+        
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              if (element) {
+                  {$callFunctionJs}
+                
+                  {$pendingDialogTourJs}
+              }
+              driver.moveNext();
+          }
+JS;
+    }
     
     protected function escapeString($value) : string
     {
@@ -159,13 +271,34 @@ JS;
      */
     public function getStepHighlightedElementId(TourStepInterface $step): string
     {
-        $widget = $step->getWidget();
-        
+        // If there is no widget to focus, we return a dummy string,
+        // which means that the popover will be displayed in the center of the screen
+        // without highlighting any element.
+        if ( null === $focusedWidget = $this->getFocusedWidget($step)) {
+            return 'exf-tour-step-no-highlight';
+        } else {
+            return $this->getFacade()->getElement($focusedWidget)->getId();
+        }
+    }
+
+    /**
+     * Returns the widget that should be focused (highlighted) in the given step.
+     * 
+     * @param TourStepInterface $step
+     * @return WidgetInterface|null
+     */
+    protected function getFocusedWidget(TourStepInterface $step) : ?WidgetInterface
+    {
+        if ($step instanceof TourStoryStep) {
+            $widget = $step->getWidgetToFocus() ? $step->getWidgetToFocus()->getTargetWidget() : null;
+        } else {
+            $widget = $step->getWidget();
+        }
+
         // Filters will mostly not have any id - they just render their input_widget, so we take that
         if ($widget instanceof Filter) {
             $widget = $widget->getInputWidget();
         }
-        
-        return $this->getFacade()->getElement($widget)->getId();
+        return $widget;
     }
 }

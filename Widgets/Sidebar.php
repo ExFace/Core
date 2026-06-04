@@ -2,12 +2,12 @@
 namespace exface\Core\Widgets;
 
 /**
- * A dialog sidebar is a collapsible secondary content are in a dialog - e.g. for an AI chat, comments, etc.
+ * A sidebar is a collapsible secondary content inside a bigger widget - e.g. for an AI chat, comments, etc.
  *     
  * @author Andrej Kabachnik
  *        
  */
-class DialogSidebar extends Panel
+class Sidebar extends Panel
 {
     private $resizable = true;
 
@@ -29,9 +29,9 @@ class DialogSidebar extends Panel
      * @uxon-default true
      * 
      * @param bool $trueOrFalse
-     * @return \exface\Core\Widgets\DialogSidebar
+     * @return \exface\Core\Widgets\Sidebar
      */
-    public function setResizable(bool $trueOrFalse) : DialogSidebar
+    public function setResizable(bool $trueOrFalse) : Sidebar
     {
         $this->resizable = $trueOrFalse;
         return $this;

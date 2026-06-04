@@ -176,12 +176,6 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
     
     private $tableDataSheet = null;
     
-    /**
-     * 
-     * @var WidgetLinkInterface[]
-     */
-    private $incomingLinks = [];
-    
     private $autosearch_single_suggestion = false;
     
     /**
@@ -886,28 +880,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
      */
     public function getValueLinksToThisWidget() : array
     {
-        return $this->incomingLinks;
-    }
-    
-    /**
-     * 
-     * @param WidgetLinkEventInterface $event
-     * @return void
-     */
-    public function handleWidgetLinkedEvent(WidgetLinkEventInterface $event)
-    {
-        $link = $event->getWidgetLink();
-        if ($link->getTargetWidgetId() !== $this->getId()) {
-            return;
-        }
-        
-        foreach ($this->incomingLinks as $existing) {
-            if ($link->getSourceWidget() === $existing->getSourceWidget() && $link->getTargetColumnId() === $existing->getTargetColumnId()) {
-                return;
-            }
-        }
-        
-        $this->incomingLinks[] = $event->getWidgetLink();
+        return $this->getLinksToThisWidget();
     }
     
     public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface

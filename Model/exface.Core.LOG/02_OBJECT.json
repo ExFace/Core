@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Log [exface.Core.LOG]",
             "CREATED_ON": "2017-05-10 15:06:24",
-            "MODIFIED_ON": "2025-12-18 14:25:53",
+            "MODIFIED_ON": "2026-05-04 15:59:57",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7359214da6ecbba83e4b318306b9a",
@@ -125,11 +125,7 @@
                     },
                     {
                         "attribute_alias": "timestamp",
-                        "comparator": ">"
-                    },
-                    {
-                        "attribute_alias": "timestamp",
-                        "comparator": "<"
+                        "widget_type": "RangeFilter"
                     },
                     {
                         "attribute_alias": "level",
@@ -137,7 +133,9 @@
                     },
                     {
                         "attribute_alias": "logfile",
-                        "widget_type": "InputHidden"
+                        "hidden": true,
+                        "required": true,
+                        "comparator": "=="
                     }
                 ],
                 "columns": [

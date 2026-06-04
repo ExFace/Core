@@ -52,6 +52,7 @@ class DataColumnGroup extends AbstractWidget implements iHaveColumns
                 // be needed when passing the data to the saving-action
                 // BUT: do not add system columns if we are in the process of adding one
                 // right now as this would result in an infinite loop
+                // IDEA #system-attributes add a centralize mechanism to ensure system attributes are always present?
                 if (! ($column->isBoundToAttribute() && $column->getAttribute()->isSystem())) {
                     $parent->addColumnsForSystemAttributes();
                 }

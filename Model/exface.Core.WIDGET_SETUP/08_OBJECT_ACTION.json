@@ -67,9 +67,9 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Edit [WidgetSetupEditForUsers]",
             "CREATED_ON": "2025-08-08 15:11:58",
-            "MODIFIED_ON": "2025-08-14 12:34:27",
+            "MODIFIED_ON": "2026-05-11 11:34:04",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0854043e6831a8540025041000001",
             "OBJECT": "0x11f086ea436aa07486ea025041000001",
             "ACTION_PROTOTYPE": "exface/core/Actions/ShowObjectEditDialog.php",
@@ -85,7 +85,7 @@
                         "operator": "AND",
                         "conditions": [
                             {
-                                "expression": "PRIVATE_FOR_USER",
+                                "expression": "CREATED_BY_USER",
                                 "comparator": "!==",
                                 "value": "=User('UID')"
                             }
@@ -109,8 +109,24 @@
                             "attribute_alias": "DESCRIPTION"
                         },
                         {
+                            "attribute_alias": "PRIVATE_FOR_USER",
+                            "readonly": true,
+                            "hidden": true,
+                            "id": "privateForUser"
+                        },
+                        {
                             "widget_type": "WidgetGroup",
                             "caption": "Shared with users",
+                            "hidden_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=privateForUser",
+                                        "comparator": "==",
+                                        "value_right": ""
+                                    }
+                                ]
+                            },
                             "widgets": [
                                 {
                                     "widget_type": "DataTable",
@@ -118,6 +134,7 @@
                                     "hide_caption": true,
                                     "paginate": false,
                                     "configurator_setups_enabled": false,
+                                    "multi_select": true,
                                     "filters": [
                                         {
                                             "attribute_alias": "WIDGET_SETUP",
@@ -159,6 +176,16 @@
                             "hint": "Shares the setup with another new person",
                             "caption": "Share",
                             "align": "default",
+                            "hidden_if": {
+                                "operator": "AND",
+                                "conditions": [
+                                    {
+                                        "value_left": "=privateForUser",
+                                        "comparator": "==",
+                                        "value_right": ""
+                                    }
+                                ]
+                            },
                             "action": {
                                 "alias": "exface.core.ActionChain",
                                 "actions": [
@@ -182,9 +209,9 @@
         {
             "_EXPORT_SUMMARY": "Widget setup: Share [WidgetSetupShareForUsers]",
             "CREATED_ON": "2025-08-12 11:50:22",
-            "MODIFIED_ON": "2025-08-14 12:27:18",
+            "MODIFIED_ON": "2026-05-11 16:39:04",
             "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f0b59ac3940686b59a025041000001",
             "OBJECT": "0x11f086ea436aa07486ea025041000001",
             "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
@@ -204,8 +231,8 @@
                         "conditions": [
                             {
                                 "expression": "PRIVATE_FOR_USER",
-                                "comparator": "==",
-                                "value": ""
+                                "comparator": "!=",
+                                "value": "=User('UID')"
                             }
                         ]
                     }
@@ -223,7 +250,8 @@
                             "table_object_alias": "exface.Core.USER",
                             "text_attribute_alias": "FULL_NAME",
                             "value_attribute_alias": "UID",
-                            "data_column_name": "_SharedUser"
+                            "data_column_name": "_SharedUser",
+                            "multi_select": true
                         }
                     ],
                     "buttons": [
@@ -245,7 +273,9 @@
                                                 {
                                                     "from": "UID",
                                                     "to": "WIDGET_SETUP"
-                                                },
+                                                }
+                                            ],
+                                            "row_split_mappings": [
                                                 {
                                                     "from": "_SharedUser",
                                                     "to": "USER"
@@ -316,6 +346,78 @@
                             "align": "opposite",
                             "action": {
                                 "alias": "exface.Core.SaveData",
+                                "input_mapper": {
+                                    "column_to_column_mappings": [
+                                        {
+                                            "from": "=NullValue()",
+                                            "to": "PRIVATE_FOR_USER"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "APP": "0x31000000000000000000000000000000",
+            "USE_IN_OBJECT_BASKET_FLAG": 0,
+            "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Widget setup: Publish [WidgetSetupPublishDialogForUsers]",
+            "CREATED_ON": "2026-05-08 13:24:37",
+            "MODIFIED_ON": "2026-05-11 16:39:44",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f185957f56c88a8595025041000001",
+            "OBJECT": "0x11f086ea436aa07486ea025041000001",
+            "ACTION_PROTOTYPE": "exface/core/Actions/ShowDialog.php",
+            "ALIAS": "WidgetSetupPublishDialogForUsers",
+            "NAME": "Publish",
+            "SHORT_DESCRIPTION": "Make this setup available for all users",
+            "CONFIG_UXON": {
+                "input_rows_min": 1,
+                "input_rows_max": 1,
+                "input_object_alias": "exface.Core.WIDGET_SETUP",
+                "icon": "users",
+                "offline_strategy": "online_only",
+                "input_invalid_if": [
+                    {
+                        "error_text": "This setup is already public",
+                        "operator": "AND",
+                        "conditions": [
+                            {
+                                "expression": "PRIVATE_FOR_USER",
+                                "comparator": "!=",
+                                "value": "=User('UID')"
+                            }
+                        ]
+                    }
+                ],
+                "dialog": {
+                    "width": 1,
+                    "height": "auto",
+                    "columns_in_grid": 1,
+                    "widgets": [
+                        {
+                            "attribute_alias": "NAME"
+                        },
+                        {
+                            "attribute_alias": "DESCRIPTION",
+                            "caption": "=Translate('exface.Core', 'WIDGET.DATACONFIGURATOR.SETUPS_TAB_SETUP_DESC_PLACEHOLDER')"
+                        }
+                    ],
+                    "buttons": [
+                        {
+                            "caption": "Veröffentlichen",
+                            "visibility": "promoted",
+                            "align": "opposite",
+                            "action": {
+                                "alias": "exface.Core.SaveData",
+                                "confirmation_for_action": {
+                                    "widget_type": "ConfirmationMessage",
+                                    "text": "Wollen Sie diese Ansicht wirklich global freigeben?"
+                                },
                                 "input_mapper": {
                                     "column_to_column_mappings": [
                                         {

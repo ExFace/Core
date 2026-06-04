@@ -3,7 +3,6 @@ namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -65,6 +64,8 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
 
     private $aggregateFunc = null;
     
+    private ?DataTypeInterface $dataType = null;
+    
     /**
      * 
      * @param \exface\Core\Interfaces\WidgetInterface $widget
@@ -108,6 +109,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
             $this->attributeAlias = $alias;
         }
         $this->dataBindingType = null;
+        $this->dataType = null;
         return $this;
     }
 
@@ -153,6 +155,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
         }
         $this->dataColumnName = DataColumn::sanitizeColumnName($name);
         $this->dataBindingType = null;
+        $this->dataType = null;
         return $this;
     }
 
@@ -393,6 +396,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
                 throw new InvalidArgumentException('Invalid type of value for a widget property binding: expecting an expression as string or object, "' . get_class($value) . '" received.');
         }
         $this->dataBindingType = null;
+        $this->dataType = null;
         return $this;
     }
     
@@ -456,12 +460,22 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
      */
     public function getDataType() : ?DataTypeInterface
     {
-        switch ($this->getBindingType()) {
-            case self::BINDING_TYPE_ATTRIBUTE:
-                return $this->getAttribute()->getDataType();
-            // TODO what about data columns?
-        } 
-        return null;
+        if ($this->dataType === null) {
+            switch ($this->getBindingType()) {
+                // If bound to an attribute, use the data type of the expression - not the attribute itself because
+                // expression could have aggregators, that actually change the data type!
+                case self::BINDING_TYPE_ATTRIBUTE:
+                    $expr = ExpressionFactory::createFromString($this->getWorkbench(), $this->getAttributeAlias(), $this->getMetaObject());
+                    $this->dataType = $expr->getDataType();
+                    break;
+                // For calculation use the data type of the formula
+                case self::BINDING_TYPE_CALCULATION:
+                    $this->dataType = $this->getValueExpression()->getDataType();
+                    break;
+                // TODO what about data columns?
+            }
+        }
+        return $this->dataType;
     }
     
     /**

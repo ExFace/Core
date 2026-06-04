@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\DataTypes\StringDataType;
 
 /**
@@ -39,12 +40,12 @@ class JsStringFormatter extends JsTransparentFormatter
             $checksOk[] = "mVal.toString().length <= {$type->getLengthMax()} \n";
         }
         
-        if ($type->getValidationRegexForGoodValues() !== null) {
-            $checksOk[] = "{$type->getValidationRegexForGoodValues()}.test({$jsValue}) !== false \n";
+        if (null !== $regex = $type->getValidationRegexForGoodValues()) {
+            $checksOk[] = "{$this->buildJsRegex($regex)}.test({$jsValue}) !== false \n";
         }
 
-        if ($type->getValidationRegexForBadValues() !== null) {
-            $checksOk[] = "{$type->getValidationRegexForBadValues()}.test({$jsValue}) === false \n";
+        if (null !== $regex = $type->getValidationRegexForBadValues()) {
+            $checksOk[] = "{$this->buildJsRegex($regex)}.test({$jsValue}) === false \n";
         }
         
         $checksOkJs = ! empty($checksOk) ? implode(' && ', $checksOk) : 'true';
@@ -56,6 +57,16 @@ function(mVal) {
                 return (bEmpty || ($checksOkJs));
             }($jsValue)
 JS;
+    }
+    
+    protected function buildJsRegex(string $regex) : string
+    {
+        if (RegularExpressionDataType::isRegex($regex)) {
+            $regexJs = RegularExpressionDataType::findDelimiter($regex) === '/' ? $regex : "('{$regex}')";
+        } else {
+            $regexJs = '/' . $regex . '/';
+        }
+        return $regexJs;
     }
 
     /**

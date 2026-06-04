@@ -54,6 +54,8 @@ class User implements UserInterface
     private $disabled = false;
     
     private $disabledCommunication = false;
+    
+    private array $attributesCache = [];
 
     /**
      * 
@@ -556,7 +558,7 @@ class User implements UserInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\UserInterface::getAttribute()
      */
-    public function getAttribute(string $alias)
+    public function getAttribute(string $alias, bool $noCache = false)
     {
         switch (mb_strtoupper($alias)) {
             case "ID":
@@ -568,12 +570,19 @@ class User implements UserInterface
             case "NAME":
                 return $this->getName();
         }
+        if ($noCache === false && array_key_exists($alias, $this->attributesCache)) {
+            return $this->attributesCache[$alias];
+        }
         $userObj = $this->getWorkbench()->model()->getObject('exface.Core.USER');
         $ds = DataSheetFactory::createFromObject($userObj);
         $col = $ds->getColumns()->addFromExpression($alias);
         $ds->getFilters()->addConditionFromString($userObj->getUidAttributeAlias(), $this->getUid(), ComparatorDataType::EQUALS);
         $ds->dataRead();
-        return $col->getValue(0);
+        $val = $col->getValue(0);
+        if ($noCache === false) {
+            $this->attributesCache[$alias] = $val;
+        }
+        return $val;
     }
     
     /**

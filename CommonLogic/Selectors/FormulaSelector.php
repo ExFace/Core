@@ -17,7 +17,8 @@ use exface\Core\Interfaces\WorkbenchInterface;
 class FormulaSelector extends AbstractSelector implements FormulaSelectorInterface
 {
     const SHORT_NAMES = [
-        'If' => 'IfThenElse'
+        'If' => 'IfThenElse',
+        'Case' => 'CaseWhen'
     ];
 
     use ResolvableNameSelectorTrait;

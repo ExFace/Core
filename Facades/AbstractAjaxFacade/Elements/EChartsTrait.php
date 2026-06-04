@@ -2,7 +2,9 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\WidgetLink;
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsBooleanFormatter;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -2350,6 +2352,11 @@ JS;
                 $type->setPrecisionMax(2);
                 $type->setPrecisionMin(0);
                 break;
+            // Format booleans without HTML (by default they will be formatted as checkmark icons)
+            case $type instanceof BooleanDataType:
+                $formatter = new JsBooleanFormatter($type);
+                return $formatter->buildJsFormatter($js_var_value, false);
+                
         }
         $formatter = $this->getFacade()->getDataTypeFormatter($type);
 
