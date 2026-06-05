@@ -52,7 +52,7 @@ class PostgreSqlModelBuilder extends AbstractSqlModelBuilder
         $columns_array = $meta_object->getDataConnection()->runSql($columns_sql)->getResultArray();
         $rows = array();
         foreach ($columns_array as $col) {
-            $dataType = $this->guessDataType($meta_object, $col['data_type']);
+            $dataType = $this->guessDataType($meta_object, $col['data_type'], $col['character_maximum_length'], $col['numeric_scale']);
             $row = [
                 'NAME' => $this->generateLabel($col['column_name'], ''),
                 'ALIAS' => $col['column_name'],
@@ -87,7 +87,7 @@ class PostgreSqlModelBuilder extends AbstractSqlModelBuilder
                 $row['DATA_ADDRESS_PROPS'] = $addrProps->toJson();
             }
 
-            $dataTypeProps = $this->getDataTypeConfig($dataType, $col['data_type']);
+            $dataTypeProps = $this->getDataTypeConfig($dataType, $col['data_type'], $col['character_maximum_length'], $col['numeric_scale']);
             if (! $dataTypeProps->isEmpty()) {
                 $row['CUSTOM_DATA_TYPE'] = $dataTypeProps->toJson();
             }
