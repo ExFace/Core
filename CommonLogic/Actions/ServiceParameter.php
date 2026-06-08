@@ -81,8 +81,8 @@ class ServiceParameter implements ServiceParameterInterface
         if (null !== $val = $this->getDefaultValue()) {
             $uxon->setProperty('default_value', $val);
         }
-        if (null !== $val = $this->getExample()) {
-            $uxon->setProperty('example', $val);
+        if (null !== $val = $this->getExamples()) {
+            $uxon->setProperty('examples', $val);
         }
         
         // Make sure, every exported parameter UXON has a data_type. The DataType::exportUxonObject() for some reason
