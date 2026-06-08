@@ -49,7 +49,6 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
-use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 
 /**
@@ -99,7 +98,6 @@ class Data
     use iHaveContextualHelpTrait;
     use iHaveConfiguratorTrait;
     use iCanAutoloadDataTrait;
-    use iTrackIncomingLinksTrait;
     use IHaveTourGuideTrait;
     use iHaveSidebarTrait;
 
@@ -270,8 +268,8 @@ class Data
                 
                 // If we do not need ALL column, see if the column is requested - search for matching 
                 // data column names and attribute aliases. If none of them match, stop here as the column
-                // was not requestd.
-                if (! $needAllCols) {
+                // was not requested.
+                if (! $needAllCols && ! $widgetCol->isSystem()) {
                     $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
                     if (! $dataCol && $widgetCol->isBoundToAttribute()) {
                         $dataCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
@@ -297,18 +295,6 @@ class Data
             // Add aggregations            
             foreach ($this->getAggregations() as $attr) {
                 $data_sheet->getAggregations()->addFromString($attr);
-            }
-
-            // Make sure we always read system attributes if the datasheet is not aggregated
-            foreach ($this->getMetaObject()->getAttributes()->getSystem()->getAll() as $attr) {
-                if (! $data_sheet->getColumns()->getByAttribute($attr)) {
-                    // Check if the system attribute has a default aggregator if the data sheet is being aggregated
-                    if ($this->hasAggregations() && $attr->getDefaultAggregateFunction()) {
-                        $data_sheet->getColumns()->addFromExpression($attr->getAlias() . DataAggregation::AGGREGATION_SEPARATOR . $attr->getDefaultAggregateFunction(), null, true);
-                    } else {
-                        $data_sheet->getColumns()->addFromAttribute($attr, true);
-                    }
-                }
             }
             
             // Add filters only if lazy loading is disabled!
@@ -1524,6 +1510,7 @@ class Data
             }
             $colNames[] = $col->getDataColumnName();
         }
+        // IDEA #system-attributes add a centralize mechanism to ensure system attributes are always present?
         foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
             $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
         }

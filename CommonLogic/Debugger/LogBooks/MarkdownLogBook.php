@@ -43,6 +43,16 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
     {
         $this->title = $title;
     }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Debug\LogBookInterface::getTitle()
+     */
+    public function getTitle() : string
+    {
+        return $this->title;
+    }
     
     /**
      * 
@@ -186,7 +196,7 @@ class MarkdownLogBook implements LogBookInterface, IHaveLogIdInterface
         // Add a tab with the data sheet UXON
         $tab = $debugWidget->createTab();
         $debugWidget->addTab($tab);
-        $tab->setCaption($this->title);
+        $tab->setCaption($this->getTitle());
         $tab->setColumnsInGrid(1);
         $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
             'widget_type' => 'Markdown',

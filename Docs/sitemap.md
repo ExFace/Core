@@ -75,7 +75,7 @@
       - [SubPageList Placeholder](documentation/placeholders/SubPageListPlaceholder.md)
     - [The "Docs" folder](documentation/docs_structure.md)
   - [Getting started](Getting_started/index.md)
-    - [Introduction \& key concepts](Getting_started/Introduction.md)
+    - [Platform introduction \& key concepts](Getting_started/Introduction.md)
     - [Welcome\!](Getting_started/Welcome.md)
   - [Installation](Installation/index.md)
     - [IIS with SQL Server](Installation/IIS_with_SQL_Server.md)

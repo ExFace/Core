@@ -724,7 +724,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
             $rowFilterGrp = ConditionGroupFactory::createEmpty($this->getWorkbench(), EXF_LOGICAL_AND, $checkSheet->getMetaObject());
             foreach (array_merge($compareCols, $missingCols) as $col) {
                 if (! array_key_exists($col->getName(), $row)) {
-                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute "' . $col->getAttributeAlias() . '"!', null, null, $logbook);
+                    throw new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': no input data found for attribute `' . $col->getAttributeAlias() . '`!', null, null, $logbook);
                 }
                 $value = $row[$col->getName()];
                 
@@ -736,7 +736,7 @@ class PreventDuplicatesBehavior extends AbstractBehavior
                         $eventSheet, // $dataSheet
                         null, // $message - empty to make exception autogenerate one
                         null, // $alias
-                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute "' . $col->getAttributeAlias() . ' in row "' . $rowNo . '"!', null, null, $logbook)), // $previous
+                        (new BehaviorRuntimeError($this, 'Cannot check for duplicates for ' . $this->getObject()->__toString() . ': missing required value for attribute `' . $col->getAttributeAlias() . '` in row "' . $rowNo . '"!', null, null, $logbook)), // $previous
                         $col, // $column
                         $col->findEmptyRows() // $rowNumbers
                     );

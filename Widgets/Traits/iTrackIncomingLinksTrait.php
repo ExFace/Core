@@ -27,16 +27,44 @@ trait iTrackIncomingLinksTrait
      *
      * @var WidgetLinkInterface[]
      */
-    private $incomingLinks = [];
+    private array $incomingLinks = [];
+    private array $reportedLinksCount = [];
     
     /**
      * Returns an array of widget links that point to this widget
+     * 
+     * Since the links are collected from `OnWidgetLinked` events, they will get added here at different points in
+     * time. So if you call this method once, there is no guarantee, that it will return the same result later too.
+     * Use `getLinksToThisWidgetAddedSinceLastCall()` to get the links incrementally instead.
      *
      * @return WidgetLinkInterface[]
      */
-    public function getValueLinksToThisWidget() : array
+    public function getLinksToThisWidget() : array
     {
         return $this->incomingLinks;
+    }
+
+    /**
+     * Returns an array of widget links that have been added since the last time this method was called with the same $callId.
+     * 
+     * This allows to get the links incrementally. For example, we need all links every time `Data::getColumns()` is 
+     * called to make sure all linked columns are marked as system columns. But we don't want to get all links every 
+     * time, but only the new ones since the last call.
+     * 
+     * @param string $callId
+     * @return WidgetLinkInterface[]
+     */
+    public function getLinksToThisWidgetAddedSinceLastCall(string $callId) : array
+    {
+        $links = $this->getLinksToThisWidget();
+        $currentCnt = count($links);
+        $lastCnt = $this->reportedLinksCount[$callId] ?? 0;
+        $this->reportedLinksCount[$callId] = count($links);
+        if ($currentCnt <= $lastCnt) {
+            return [];
+        } else {
+            return array_slice($links, $lastCnt);
+        }
     }
     
     /**
@@ -44,18 +72,20 @@ trait iTrackIncomingLinksTrait
      * @param WidgetLinkEventInterface $event
      * @return void
      */
-    public function handleWidgetLinkedEvent(WidgetLinkEventInterface $event)
+    public function handleWidgetLinkedEvent(WidgetLinkEventInterface $event) : void
     {
         $link = $event->getWidgetLink();
         if ($link->getTargetWidgetId() !== $this->getId()) {
             return;
         }
-        
-        foreach ($this->incomingLinks as $existing) {
-            if ($link->hasSourceWidget() === true 
-            && $link->getSourceWidget() === $existing->getSourceWidget() 
-            && $link->getTargetColumnId() === $existing->getTargetColumnId()) {
-                return;
+        if ($link->hasSourceWidget() === true) {
+            foreach ($this->incomingLinks as $existing) {
+                if (
+                    $link->getSourceWidget() === $existing->getSourceWidget()
+                    && $link->getTargetColumnId() === $existing->getTargetColumnId()
+                ) {
+                    return;
+                }
             }
         }
         

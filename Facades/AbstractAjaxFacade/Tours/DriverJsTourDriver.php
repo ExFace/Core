@@ -5,6 +5,7 @@ use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Filter;
 use exface\Core\Widgets\Parts\Tours\TourStoryStep;
 
@@ -177,6 +178,7 @@ JS;
                       description: {$this->escapeString($step->getBody())},
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
+                      {$this->buildJsOnNextClick($step)}
                     }
                 },
 JS;
@@ -201,6 +203,58 @@ JS;
 
      return $driverJs;
     }
+
+    /**
+     * Builds the JavaScript code for the onNextClick event of a tour step, 
+     * which will be executed when the user clicks the "Next" button in the popover of that step.
+     * 
+     * @param TourStepInterface $step
+     * @return string
+     */
+    protected function buildJsOnNextClick(TourStepInterface $step) :string
+    {
+        $onNextStepFunction = $step->getOnNextStepFunction();
+        if (($functionName = $onNextStepFunction->getFunctionName()) === null) {
+            return '';
+        }
+        
+        $focusedWidget = $this->getFocusedWidget($step);
+        
+        //function call:
+        try {
+            //TODO: If this is in a dialog, it currently gets one step from the called page and tries to click on it.
+            // At this case the controller of the called page is not found and we getting an error here.
+            // The Quick fix is to catch the missing controller error.
+            // A propper Fix must be implemented! For that, start at the point where the "registerWaypointStep()" is called.
+            $callFunctionJs = $this->getFacade()?->getElement($focusedWidget)?->buildJsCallFunction($functionName);
+        } catch (\Exception $e) {
+            $callFunctionJs = 'console.warn(' . $this->escapeString($e->getMessage()) . ');';
+        }
+        
+        //set the tour of that step to pending, so it will autostart if the view with that tour is loaded:
+        $pendingDialogTourJs = '';
+        $autostartTourId = $onNextStepFunction->getAutostartTourId();
+        
+        if ($autostartTourId) {
+            $pendingDialogTourJs = <<<JS
+                window.exfTourContext.setPendingTour({
+                    targetTourId: {$this->escapeString($autostartTourId)}
+                });
+JS;
+        }
+        
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              if (element) {
+                  {$callFunctionJs}
+                
+                  {$pendingDialogTourJs}
+              }
+              driver.moveNext();
+          }
+JS;
+    }
     
     protected function escapeString($value) : string
     {
@@ -217,25 +271,34 @@ JS;
      */
     public function getStepHighlightedElementId(TourStepInterface $step): string
     {
+        // If there is no widget to focus, we return a dummy string,
+        // which means that the popover will be displayed in the center of the screen
+        // without highlighting any element.
+        if ( null === $focusedWidget = $this->getFocusedWidget($step)) {
+            return 'exf-tour-step-no-highlight';
+        } else {
+            return $this->getFacade()->getElement($focusedWidget)->getId();
+        }
+    }
+
+    /**
+     * Returns the widget that should be focused (highlighted) in the given step.
+     * 
+     * @param TourStepInterface $step
+     * @return WidgetInterface|null
+     */
+    protected function getFocusedWidget(TourStepInterface $step) : ?WidgetInterface
+    {
         if ($step instanceof TourStoryStep) {
-            
-            // If there is no widget to focus, we return a dummy string,
-            // which means that the popover will be displayed in the center of the screen
-            // without highlighting any element.
-            if ( null === $widgetLink = $step->getWidgetToFocus()) {
-                return 'exf-tour-step-no-highlight';
-            }
-            
-            $widget = $widgetLink->getTargetWidget();
+            $widget = $step->getWidgetToFocus() ? $step->getWidgetToFocus()->getTargetWidget() : null;
         } else {
             $widget = $step->getWidget();
         }
-        
+
         // Filters will mostly not have any id - they just render their input_widget, so we take that
         if ($widget instanceof Filter) {
             $widget = $widget->getInputWidget();
         }
-        
-        return $this->getFacade()->getElement($widget)->getId();
+        return $widget;
     }
 }

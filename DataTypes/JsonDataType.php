@@ -30,17 +30,22 @@ class JsonDataType extends CodeDataType
     /**
      * Set to true to export JSON in a human readable form (line-breaks, intendations).
      * 
-     * default: false
+     * Non-prettified
      * 
-     * e.g:
-     * false:
+     * ```
      * {"key1":"value1","key2":"value2"}
      * 
-     * true:
+     * ```
+     * 
+     * Prettified
+     * 
+     * ```
      * {
      *     "key1": "value1",
      *     "key2": "value2"
      * }
+     * 
+     * ```
      * 
      * @uxon-property prettify
      * @uxon-type boolean
@@ -321,5 +326,14 @@ class JsonDataType extends CodeDataType
             $enc = substr($enc, 1, -1);
         }
         return $enc;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see CodeDataType::getLanguage()
+     */
+    public function getLanguage(): ?string
+    {
+        return parent::getLanguage() ?? 'json';
     }
 }

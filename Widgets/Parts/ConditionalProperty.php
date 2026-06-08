@@ -418,7 +418,7 @@ class ConditionalProperty implements WidgetPartInterface, ConditionalExpressionI
      */
     public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null): bool
     {
-        return $this->getConditionGroup()->evaluate($data_sheet, $row_number);
+        return $this->getConditionGroup()->toConditionGroup()->evaluate($data_sheet, $row_number);
     }
 
     /**

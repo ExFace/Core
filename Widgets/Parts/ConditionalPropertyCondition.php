@@ -417,7 +417,7 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
                 $delim = $rightTargetWidget->getAttribute()->getValueListDelimiter();
             } elseif ($rightTargetWidget instanceof iHaveColumns && $colName = $this->getValueRightLink()->getTargetColumnId()) {
                 $targetCol = $rightTargetWidget->getColumnByDataColumnName($colName);
-                if ($targetCol->isBoundToAttribute() === true) {
+                if ($targetCol && $targetCol->isBoundToAttribute() === true) {
                     $delim = $targetCol->getAttribute()->getValueListDelimiter();
                 }
             }

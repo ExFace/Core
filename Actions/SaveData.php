@@ -45,12 +45,14 @@ class SaveData extends AbstractAction implements iModifyData, iCanBeUndone
     /**
      * @inheritDoc
      */
-    protected function validateApplicability(ActionInputValidator $validator): void
+    protected function validateApplicability(TaskInterface $task) : ActionInputValidator
     {
-        parent::validateApplicability($validator);
-        
+        $validator = parent::validateApplicability($task);
+
         $expectedColumns = $validator->getExpectedColumns();
         $validator->validateTaskColumns($expectedColumns);
+        
+        return $validator;
     }
 
     /**

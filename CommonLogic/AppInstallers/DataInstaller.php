@@ -548,7 +548,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         
         $requiredCols = $sheet->getColumns()->getAll();
         $sheet->dataRead();
-        // Reading data might add add some columns (e.g. if one of the "real" columns is a formula
+        // Reading data might add some columns (e.g. if one of the "real" columns is a formula
         // with multiple other attributes), so we need to remove them here to avoid installing things
         // that were not intended to change. For example, exporting PAGE_GROUP_PAGES also means
         // including the LABEL column, which is a =Concatenate() with PAGE_GROUP__NAME. This adds
@@ -613,7 +613,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                     $filePathRel = $folderPathRel . $fileName;
                 }
                 // Put only the filtered rows into the UXON. For now NO prettifying!!! Otherwise the
-                // diff with the previous version below will produces false positives!
+                // diff with the previous version below will produce false positives!
                 $uxon->setProperty('rows', $filteredRows);
                 $filePath = $modelDir . DIRECTORY_SEPARATOR . $filePathRel;
                 $folderPath = FilePathDataType::findFolderPath($filePath);
@@ -629,11 +629,9 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                             $changesDetected = true;
                             break;
                         }
-                        if (count($decryptedSheet->getRow(0)) !== count($prevSheet->getRow(0))) {
-                            $changesDetected = true;
-                            break;
-                        }
-                        $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
+                        // Diff values of the new and the old sheet - but ignore new columns, that did not exist previously
+                        // if they are empty
+                        $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs, true);
                         if (! empty($diff)) {
                             $changesDetected = true;
                             break;
@@ -668,11 +666,9 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                         $changesDetected = true;
                         break;
                     }
-                    if (count($decryptedSheet->getRow(0)) !== count($prevSheet->getRow(0))) {
-                        $changesDetected = true;
-                        break;
-                    }
-                    $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs);
+                    // Diff values of the new and the old sheet - but ignore new columns, that did not exist previously
+                    // if they are empty
+                    $diff = $decryptedSheet->getRowsDiff($prevSheet, $excludeAttrs, true);
                     if (! empty($diff)) {
                         $changesDetected = true;
                         break;

@@ -1089,6 +1089,11 @@ JS;
         return <<<JS
 
         (function (oLastLoadedData, oData) {
+            if ({$this->buildJsIsDataPending()}) {
+                // Can't check for changes, while data is pending.
+                return [];
+            }
+            
             var aAllRows = oData?.rows || [];
             var aLoadedRows = oLastLoadedData?.rows || [];
             

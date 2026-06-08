@@ -274,4 +274,25 @@ MD;
     {
         return "\n\n-------------------------------------\n\n";
     }
+
+    /**
+     * Removes YAML-style front matter from th given markdown
+     * 
+     * @param string $markdown
+     * @return string
+     */
+    public static function stripFrontMatter(string $markdown): string
+    {
+        // Remove UTF-8 BOM if present
+        $markdown = preg_replace('/^\xEF\xBB\xBF/', '', $markdown);
+
+        // Strip YAML front matter at the very beginning
+        $markdown = preg_replace(
+            '/\A---\R.*?\R---\R?/s',
+            '',
+            $markdown
+        );
+
+        return $markdown;
+    }
 }

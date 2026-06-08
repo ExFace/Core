@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Page [exface.Core.PAGE]",
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2026-02-09 08:30:47",
+            "MODIFIED_ON": "2026-05-29 16:57:28",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -268,7 +268,14 @@
                                                                 "caption": "Security Policies"
                                                             },
                                                             {
-                                                                "attribute_alias": "APP__LABEL"
+                                                                "attribute_alias": "APP__ALIAS",
+                                                                "caption": "Assignment app",
+                                                                "hint": "App of the page-to-group assignment"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "PAGE_GROUP__APP__ALIAS",
+                                                                "caption": "Group app",
+                                                                "hint": "App of the page group"
                                                             },
                                                             {
                                                                 "attribute_alias": "PAGE_GROUP__DESCRIPTION"

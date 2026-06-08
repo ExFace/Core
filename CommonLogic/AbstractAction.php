@@ -349,7 +349,7 @@ abstract class AbstractAction implements ActionInterface
         }
         
         // TODO What's the correct response here? Throw, silent, message or something else.
-        $this->validateApplicability(new ActionInputValidator($this, $task));
+        $this->validateApplicability($task);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeActionPerformedEvent($this, $task, $transaction, function() use ($task) {
             return $this->getInputDataSheet($task);
@@ -400,9 +400,11 @@ abstract class AbstractAction implements ActionInterface
      * @throws ActionTaskInvalidException
      * Throws an exception if validation FAILS, containing a description of the violation.
      */
-    protected function validateApplicability(ActionInputValidator $validator) : void
+    protected function validateApplicability(TaskInterface $task) : ActionInputValidator
     {
+        $validator = new ActionInputValidator($this, $task);
         $validator->validateTaskObject();
+        return $validator;
     }
     
     /**
@@ -1955,7 +1957,7 @@ abstract class AbstractAction implements ActionInterface
      * @param TaskInterface $task
      * @return ActionLogBook
      */
-    protected function getLogBook(TaskInterface $task) : ActionLogBook
+    public function getLogBook(TaskInterface $task) : ActionLogBook
     {
         foreach ($this->logBooks as $lb) {
             if ($lb->getTask() === $task) {

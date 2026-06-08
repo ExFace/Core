@@ -48,33 +48,35 @@ class ReadData extends AbstractAction implements iReadData
     /**
      * @inheritDoc
      */
-    protected function validateApplicability(ActionInputValidator $validator): void
+    protected function validateApplicability(TaskInterface $task) : ActionInputValidator
     {
-        parent::validateApplicability($validator);
-
+        $validator = parent::validateApplicability($task);
         $expectedColumns = $validator->getExpectedColumns();
-        
-        try { 
+
+        try {
             $validator->validateTaskColumns($expectedColumns);
         } catch (ActionTaskInvalidException $exception) {
             $task = $validator->getTask();
-            if(!$task->hasInputData()) {
+            if (! $task->hasInputData()) {
                 throw $exception;
             }
 
             // We ignore unexpected columns IF they are system columns.
+            // TODO wouldn't it be easier to always add system columns to the expected list? There is also a new
+            // $columnWidget->isSystem() method, that could  be used here
             $inputData = $task->getInputData();
             foreach ($exception->getIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN) as $badColumn) {
                 $col = $inputData->getColumns()->get($badColumn);
-                if(
+                if (
                     $col !== null &&
-                    $col->isAttribute() && 
+                    $col->isAttribute() &&
                     $col->getAttribute()->isSystem()
                 ) {
                     $inputData->getColumns()->removeByKey($badColumn);
                 }
             }
         }
+        return $validator;
     }
 
     /**
