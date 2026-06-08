@@ -345,7 +345,11 @@ class PostgreSqlConnector extends AbstractSqlConnector
      */
     public function escapeString(string $string): string
     {
-        return pg_escape_string($this->getCurrentConnection(), $string);
+        if (null === $connection = $this->getCurrentConnection()) {
+            $this->connect();
+            $connection = $this->getCurrentConnection();
+        }
+        return pg_escape_string($connection, $string);
     }
 
     /**

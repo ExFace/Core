@@ -2,6 +2,7 @@
 namespace exface\Core\Formulas;
 
 use exface\Core\CommonLogic\Model\Formula;
+use exface\Core\DataTypes\SemanticVersionDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Factories\DataTypeFactory;
@@ -18,6 +19,9 @@ use exface\Core\Factories\DataTypeFactory;
  * - `=VersionIncrease('1.2.3', 1, 0, 0)` -> `2.2.3`
  * - `=VersionIncrease('1.2.3-beta.1', 0, 1, 0)` -> `1.3.3-beta.1`
  * - `=VersionIncrease('1.2.3', -1, 0, 0)` -> `0.2.3`
+ *
+ * Validation of the semantic version is delegated to `SemanticVersionDataType`
+ * to keep version handling centralized.
  *
  * @author Andrej Kabachnik
  */
@@ -70,14 +74,20 @@ class VersionIncrease extends Formula
     /**
      * Parses a semantic version into numeric parts and optional suffix.
      *
+     * Validation is performed via the centralized SemanticVersionDataType logic,
+     * while splitting is kept local because this formula needs to preserve the
+     * original pre-release/build suffix unchanged.
+     *
      * @param string $version
      * @return array{major:int,minor:int,patch:int,suffix:string}
      */
     protected function parseSemVer(string $version) : array
     {
-        $pattern = '/^(0|[1-9]\\d*)\.(0|[1-9]\\d*)\.(0|[1-9]\\d*)((?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?)$/';
+        if (SemanticVersionDataType::isValueVersion($version) === false) {
+            throw new FormulaError($this, 'Cannot evaluate formula =VersionIncrease(): invalid semantic version "' . $version . '" provided.');
+        }
 
-        if (preg_match($pattern, $version, $matches) !== 1) {
+        if (preg_match('/^(\d+)\.(\d+)\.(\d+)(.*)$/', $version, $matches) !== 1) {
             throw new FormulaError($this, 'Cannot evaluate formula =VersionIncrease(): invalid semantic version "' . $version . '" provided.');
         }
 
@@ -106,7 +116,7 @@ class VersionIncrease extends Formula
             return $value;
         }
 
-        if (preg_match('/^-?\\d+$/', (string) $value) !== 1) {
+        if (preg_match('/^-?\d+$/', (string) $value) !== 1) {
             throw new FormulaError($this, 'Cannot evaluate formula =VersionIncrease(): invalid ' . $name . ' delta "' . $value . '" provided.');
         }
 

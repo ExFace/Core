@@ -111,6 +111,8 @@ class DataCarousel extends Split
     private $detailPosition = null;
 
     private $detailTitleColumn = null;
+
+    private $resetDetailOnSelect = false;
     
     /**
      * 
@@ -398,6 +400,35 @@ class DataCarousel extends Split
     {
         $this->detailPosition = $value;
         return $this;
+    }
+
+    /**
+     * Controls how the details section is reset when switching between selected data entries.
+     * 
+     * By default only input widgets in the details section are reset to avoid resetting
+     * complex widgets (for example DataTables, which resets additional settings, such as widget setups). 
+     * Set this property to `true` to reset all detail widgets on each selection change.
+     * 
+     * @uxon-property reset_detail_on_select
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataCarousel
+     */
+    public function setResetDetailOnSelect(bool $value) : DataCarousel
+    {
+        $this->resetDetailOnSelect = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getResetDetailOnSelect() : bool
+    {
+        return $this->resetDetailOnSelect;
     }
     
     /**

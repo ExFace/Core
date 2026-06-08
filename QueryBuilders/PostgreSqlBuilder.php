@@ -92,24 +92,36 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
-        /* Date values are wrapped in the ODBC syntax {ts 'value'}. This only should happen
-         * if the value is an actual date and not an SQL statement like 'DATE_DIMENSION.date'.
-         * Therefor the value is tried to parse as a date in the DateDataType, if that fails the value
-         * is treated as an SQL statement. 
-         */
-        if ($data_type instanceof DateDataType) {
-            try {
-                $data_type::cast($value);  
-                if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
-                    $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+        switch (true) {
+            case $data_type instanceof DateTimeDataType:
+                /* Date values are wrapped in the ODBC syntax {ts 'value'}. This only should happen
+                 * if the value is an actual date and not an SQL statement like 'DATE_DIMENSION.date'.
+                 * Therefore, the value is tried to parse as a date in the DateDataType, if that fails, the value
+                 * is treated as an SQL statement. 
+                 */
+                try {
+                    $data_type::cast($value);
+                    if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
+                        $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+                    }
+                    $output = "'" . $value . "'";
+                } catch (DataTypeValidationError $e) {
+                    $output = $this->escapeString($value);
                 }
-                $output = "'" . $value . "'";
-            } catch (DataTypeValidationError $e) {
-                $output = $this->escapeString($value);
-            }
-        } else {
-            $output = parent::prepareWhereValue($value, $data_type, $dataAddressProps);
+                break;
+            case $data_type instanceof DateDataType:
+                try {
+                    $data_type::cast($value);
+                    $output = "'" . $value . "'";
+                } catch (DataTypeValidationError $e) {
+                    $output = $this->escapeString($value);
+                }
+                break;
+            default:
+                $output = parent::prepareWhereValue($value, $data_type, $dataAddressProps);
+                break;
         }
+        
         return $output;
     }
     

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
-use axenox\GenAI\Interfaces\MarkdownPrinterInterface;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Factories\DataSheetFactory;
