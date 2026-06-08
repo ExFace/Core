@@ -4,7 +4,6 @@ namespace exface\Core\Exceptions\DataSources;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Exceptions\DataConnectorExceptionInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
@@ -65,6 +64,19 @@ class DataQueryConstraintError extends DataQueryFailedError implements DataConne
     public function getMetaObject() : ?MetaObjectInterface
     {
         return $this->obj;
+    }
+
+    /**
+     * Replace the main object of this error and regenerate its message relative to the new object
+     * 
+     * @param MetaObjectInterface $object
+     * @return $this
+     */
+    public function replaceMetaObject(MetaObjectInterface $object) : DataQueryConstraintError
+    {
+        $this->obj = $object;
+        $this->message = $this->generateMessage($object) ?? $this->message;
+        return $this;
     }
 
     /**

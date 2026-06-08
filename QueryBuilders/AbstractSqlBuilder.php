@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -556,7 +557,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $q->setDialect($this->getSqlDialectDefault());
             $q->setSql($query);
             // first do the main query
-            $qr = $data_connection->query($q);
+            try {
+                $qr = $data_connection->query($q);
+            } catch (DataQueryConstraintError $e) {
+                // Constraint errors include a human-friendly message, that describes the cause. This needs to know, 
+                // which object was involved. The corresponding exception classes can determine the object themselves
+                // from data addresses, but this is inaccurate if multiple objects are based on the same data address.
+                // This code attempt to detect these situations and to regenerate the error message based on the
+                // correct object.
+                $eObj = $e->getMetaObject();
+                $qObj = $this->getMainObject();
+                // TODO compare data addresses instead? Or in addition?
+                // TODO what if the error happened in a JOIN - look through all relations in attributes?
+                if ($qObj->isExtendedFrom($eObj)) {
+                    $e->replaceMetaObject($qObj);
+                }
+                throw $e;
+            }
             $rows = $this->getReadResultRows($qr);
             // If the query already includes a total row counter, use it!
             $result_total_count = $qr->getResultRowCounter();
