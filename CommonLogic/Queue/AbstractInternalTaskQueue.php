@@ -112,7 +112,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
                 $logbook = null;
             }
 
-            $dataSheet->setCellValue('LOGBOOK', 0, $logbook->__toString());
+            $dataSheet->setCellValue('LOGBOOK', 0,  $logbook !== null ? $logbook->__toString() : '');
             $dataSheet->setCellValue('RESULT_CODE', 0, $result->getResponseCode());
             $dataSheet->setCellValue('RESULT', 0, $result->getMessage());
             $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
@@ -411,6 +411,11 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
      */
     public function onRunPerformTask(OnQueueRunEvent $event)
     {
+        // Ensure the task completes even if the HTTP connection is closed by the client
+        // or a proxy timeout. Without this, PHP stops execution when the connection drops,
+        // leaving the task permanently stuck in IN_PROGRESS state.
+        ignore_user_abort(true);
+        
         if ($event->getQueue() !== $this) {
             return;
         }
