@@ -49,10 +49,14 @@ trait JsRangeFilterTrait
             $filterToUxon->setProperty('comparator', $widget->getComparatorTo());
             
             if ($widget->hasValueFrom() === true) {
-                $filterFromUxon->setProperty('value', $widget->getValueFrom());
+                // Use the expression directly so widget link references (e.g. "=someId!~value_from")
+                // are propagated to the inner filter. getValueFrom() returns null for references.
+                $exprFrom = $widget->getValueFromExpression();
+                $filterFromUxon->setProperty('value', $exprFrom->__toString());
             }
             if ($widget->hasValueTo() === true) {
-                $filterToUxon->setProperty('value', $widget->getValueTo());
+                $exprTo = $widget->getValueToExpression();
+                $filterToUxon->setProperty('value', $exprTo->__toString());
             }
             
             $groupWidgets = new UxonObject([
