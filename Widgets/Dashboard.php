@@ -260,6 +260,7 @@ class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigu
         }
 
         foreach ($filtersToAppy as $i => $filter) {
+            $isRangeFilter = $filter instanceof RangeFilter;
             $filterLinkValue = '=' . $filter->getId();
             
             foreach ($filterableChildren as $child) {
@@ -273,15 +274,15 @@ class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigu
                             break 2;
                         // If filters are to be applied to matching attribute aliases and the alias matches, link the filter
                         case $this->getFiltersApplyToUxonAttributesWithMatchingAliases() && $childFilter->getAttributeAlias() === $filter->getAttributeAlias():
-                            $childFilter->setValue($filterLinkValue);
+                            $this->linkChildFilterToSource($childFilter, $filter);
                             $filterApplied = true;
                             break;
                         // If existing filter has the same object, attribute_alias and comparator, link it
                         case $childFilter->getMetaObject()->is($filter->getMetaObject()) && $childFilter->getAttributeAlias() === $filter->getAttributeAlias():
-                            if ($childFilter->getValueWidgetLink() !== null) {
+                            if ($this->isChildFilterAlreadyLinked($childFilter)) {
                                 break;
                             }
-                            $childFilter->setValue($filterLinkValue);
+                            $this->linkChildFilterToSource($childFilter, $filter);
                             $filterApplied = true;
                             break;
                         // If there is a foreign filter mapping with the same alias as the found filter, link the filter
@@ -289,7 +290,7 @@ class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigu
                             if ($childFilter->getAttributeAlias() !== $mapper->getSourceFilterAttributeAlias()) {
                                 break;
                             }
-                            $childFilter->setValue($filterLinkValue);
+                            $this->linkChildFilterToSource($childFilter, $filter);
                             $filterApplied = true;
                             break;
                     }
@@ -309,6 +310,11 @@ class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigu
                             if ($filter->isRequired()) {
                                 $uxonTpl->setProperty('required', true);
                             }
+                            if ($isRangeFilter) {
+                                $uxonTpl->setProperty('widget_type', 'RangeFilter');
+                                $uxonTpl->setProperty('comparator_from', $filter->getComparatorFrom());
+                                $uxonTpl->setProperty('comparator_to', $filter->getComparatorTo());
+                            }
                         }
                     }
                     
@@ -316,7 +322,17 @@ class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigu
                         continue;
                     }
                     
-                    $uxonTpl->setProperty('value', $filterLinkValue);
+                    $isRangeTarget = $uxonTpl->getProperty('widget_type') === 'RangeFilter';
+                    if ($isRangeTarget && $isRangeFilter) {
+                        $uxonTpl->setProperty('value_from', $filterLinkValue . '!' . RangeFilter::VALUE_FROM);
+                        $uxonTpl->setProperty('value_to', $filterLinkValue . '!' . RangeFilter::VALUE_TO);
+                    } elseif ($isRangeTarget) {
+                        // Non-range source linked to a range target: feed the single value into both boundaries
+                        $uxonTpl->setProperty('value_from', $filterLinkValue);
+                        $uxonTpl->setProperty('value_to', $filterLinkValue);
+                    } else {
+                        $uxonTpl->setProperty('value', $filterLinkValue);
+                    }
                     if ($this->getFiltersAppliedHidden()) {
                         $uxonTpl->setProperty('hidden', true);
                     } else {
@@ -328,6 +344,47 @@ class Dashboard extends WidgetGrid implements iFillEntireContainer, iHaveConfigu
         }
 
         return $this;
+    }
+
+    /**
+     * Apply a widget link from a dashboard filter to a child filter, handling RangeFilter on either side.
+     *
+     * @param Filter $childFilter
+     * @param Filter $sourceFilter
+     * @return void
+     */
+    protected function linkChildFilterToSource(Filter $childFilter, Filter $sourceFilter) : void
+    {
+        $sourceId = $sourceFilter->getId();
+        $isRangeSource = $sourceFilter instanceof RangeFilter;
+        if ($childFilter instanceof RangeFilter) {
+            if ($isRangeSource) {
+                $childFilter->setValueFrom('=' . $sourceId . '!' . RangeFilter::VALUE_FROM);
+                $childFilter->setValueTo('=' . $sourceId . '!' . RangeFilter::VALUE_TO);
+            } else {
+                // Non-range source linked to a range child: feed the single value into both boundaries
+                $childFilter->setValueFrom('=' . $sourceId);
+                $childFilter->setValueTo('=' . $sourceId);
+            }
+        } else {
+            // Plain child filter: a single widget link. For a range source this resolves to "from...to"
+            // (BETWEEN syntax), which only works when the child filter uses a BETWEEN comparator.
+            $childFilter->setValue('=' . $sourceId);
+        }
+    }
+
+    /**
+     * Check if a child filter already has a value link bound to it.
+     *
+     * @param Filter $childFilter
+     * @return bool
+     */
+    protected function isChildFilterAlreadyLinked(Filter $childFilter) : bool
+    {
+        if ($childFilter instanceof RangeFilter) {
+            return $childFilter->getValueFromWidgetLink() !== null || $childFilter->getValueToWidgetLink() !== null;
+        }
+        return $childFilter->getValueWidgetLink() !== null;
     }
 
     /**
