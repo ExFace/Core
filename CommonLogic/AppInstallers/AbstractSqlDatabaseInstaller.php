@@ -21,9 +21,9 @@ use exface\Core\DataTypes\JsonDataType;
 /**
  * This creates and manages SQL databases and performs SQL updates.
  *
- * If the app has it's own SQL database (= is not built on top of an existing
+ * If the app has its own SQL database (= is not built on top of an existing
  * data source), changes to the SQL schema must go hand-in-hand with changes of
- * the meta model and the code. This installer takes care of migrating the schema
+ * the metamodel and the code. This installer takes care of migrating the schema
  * by performing SQL scripts stored in a special folder within the app (by
  * default "install/Sql/%Database_Version").
  * 
@@ -34,7 +34,7 @@ use exface\Core\DataTypes\JsonDataType;
  * 1. Create a database according to the given data connection (if it does not exist)
  * 2. Execute migrations, that were not applied to the DB schema yet and take down those,
  * that were applied, but are not required anymore.
- * 3. Execute any SQL within files in specified folders - in constrast to migrations,
+ * 3. Execute any SQL within files in specified folders - in contrast to migrations,
  * this SQL will be executed on every install, regardless of whether it was executed
  * before or not.
  * 
