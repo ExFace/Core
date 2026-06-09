@@ -254,7 +254,7 @@ MD;
             } 
             $contentType = mb_strtolower($message->getHeader('Content-Type')[0]);
             
-            $messageBody = ByteSizeDataType::formatWithScale($bodySize) . ' of type "' . $contentType . '".' . PHP_EOL . PHP_EOL;
+            $messageBody = ByteSizeDataType::formatWithScale($bodySize) . ' of type `' . $contentType . '`.' . PHP_EOL . PHP_EOL;
             switch (true) {
                 case stripos($contentType, 'application/x-www-form-urlencoded') !== false:
                     if (! $message->getBody()->isReadable() && $message instanceof ServerRequestInterface) {
