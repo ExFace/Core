@@ -58,6 +58,10 @@ class CliTaskQueue extends SyncTaskQueue
         $timeout = $task->hasParameter('timeout')
             ? (float) $task->getParameter('timeout')
             : $this->getCommandTimeout();
+        // Normalize ignored_exit_codes — UXON delivers arrays as UxonObject, values as strings.
+        // runCliCommand() uses strict in_array(), so values must be integers.
+        $rawExitCodes = $task->hasParameter('ignored_exit_codes') ? $task->getParameter('ignored_exit_codes') : [];
+        $ignoredExitCodes = array_map('intval', $rawExitCodes instanceof UxonObject ? $rawExitCodes->toArray() : (array) $rawExitCodes);
         $result = new ResultMessageStream($task);
 
         // Store each command's outputs
@@ -79,7 +83,7 @@ class CliTaskQueue extends SyncTaskQueue
             }
 
             // Run each command and collect the output
-            foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false) as $output) {
+            foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false, $ignoredExitCodes) as $output) {
                 $allOutputs[] = $output;
             }
         }

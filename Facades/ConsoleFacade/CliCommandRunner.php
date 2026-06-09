@@ -9,12 +9,21 @@ use Symfony\Component\Process\Process;
 class CliCommandRunner
 {
     /**
-     * 
-     * @param string $cmd
-     * @param array $envVars
-     * @param float $timeout
+     * Runs a CLI command and streams its output as a generator.
+     *
+     * By default any non-zero exit code is treated as a failure. Use
+     * $ignoredExitCodes to suppress specific codes that are expected and should
+     * not be considered errors. For example, Behat exits with code 1 when at
+     * least one test fails — this is normal and expected behaviour; pass [1] to
+     * prevent CliCommandRunner from treating it as a hard failure while still
+     * letting exit code 2 (Behat internal error / crash) surface as an error.
+     *
+     * @param string   $cmd
+     * @param array    $envVars
+     * @param float    $timeout
      * @param string|null $cwd
-     * @param bool $silent
+     * @param bool     $silent          If false, a non-ignored failure throws a RuntimeException.
+     * @param int[]    $ignoredExitCodes Exit codes that are treated as success even when non-zero.
      * @return \Generator
      * @throws \Throwable
      */
@@ -23,17 +32,18 @@ class CliCommandRunner
         array   $envVars = [],
         float   $timeout = 60,
         ?string $cwd = null,
-        bool    $silent = true
+        bool    $silent = true,
+        array   $ignoredExitCodes = []
     ) : \Generator {
         if (static::canUseSymfonyProcess()) {
             $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
             $process->start();
-            
-            $generator = function (Process $process, bool $silent) : \Generator {
+
+            $generator = function (Process $process, bool $silent, array $ignoredExitCodes) : \Generator {
                 // Keep copies because iterating over $process consumes incremental buffers
                 $stdout = '';
                 $stderr = '';
-                
+
                 foreach ($process as $type => $buffer) {
                     if ($buffer !== '') {
                         if ($type === Process::OUT) {
@@ -48,7 +58,12 @@ class CliCommandRunner
                 
                 // opt-in failure signaling
                 if (! $process->isSuccessful()) {
-                    $exit = $process->getExitCode();    
+                    $exit = $process->getExitCode();
+                    // Ignored exit codes are expected non-zero results (e.g. Behat exit 1
+                    // when tests fail) — treat them as success and do not emit an error line.
+                    if (in_array($exit, $ignoredExitCodes, true)) {
+                        return;
+                    }
                     yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exit . '.';
                     // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
@@ -57,18 +72,15 @@ class CliCommandRunner
                             $logId = $matches[1];
                             $errorMessage = "LogID: $logId\n";
                         } else {
-                            $errorMessage =  "no error output.\n";
+                            $errorMessage = "no error output.\n";
                         }
                         throw new RuntimeException('CLI command "' . $process->getCommandLine() . '" failed: ' . ($stderr !== '' ? $stderr : $errorMessage));
                     }
-                }                
+                }
             };
-            return $generator($process, $silent);
+            return $generator($process, $silent, $ignoredExitCodes);
         } else {
-            $generator = function() use ($cmd, $envVars, $silent) {
-                // This workaround resulted from an issue with Microsoft IIS:
-                // `$process->start()` seems not to produce any output.
-                // See https://github.com/symfony/symfony/issues/24924
+            $generator = function() use ($cmd, $envVars, $silent, $ignoredExitCodes) {
                 $result = null;
                 $code = 0;
                 foreach ($envVars as $var => $val) {
@@ -76,26 +88,29 @@ class CliCommandRunner
                 }
                 exec($cmd . ' 2>&1', $result, $code);
                 $resultStr = implode("\n", $result);
-                // If command failed, emit error line AFTER output
+                yield $resultStr;
                 if ($code !== 0) {
+                    // Ignored exit codes are expected non-zero results — skip error handling.
+                    if (in_array($code, $ignoredExitCodes, true)) {
+                        return;
+                    }
                     yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
-                    // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
-                        throw new RuntimeException('CLI command "' . $cmd . '" failed: ' . ($stderr !== '' ? $stderr : 'no error output'));
+                        // $resultStr contains both stdout and stderr (merged via 2>&1)
+                        throw new RuntimeException('CLI command "' . $cmd . '" failed: ' . ($resultStr !== '' ? $resultStr : 'no error output'));
                     }
                 }
-                yield $resultStr;
             };
             return $generator();
         }
     }
-    
+
     /**
      * Returns TRUE if Symfony process should work on the current server setup
-     * 
+     *
      * Currently known systems not compatible with Symfony process:
      * - Some IIS versions on Windows
-     * 
+     *
      * @return bool
      */
     protected static function canUseSymfonyProcess() : bool
@@ -121,7 +136,7 @@ class CliCommandRunner
     }
 
     public static function setPermissionsForPath(string $path, string $user) : array
-    {        
+    {
         if (ServerSoftwareDataType::isOsWindows()) {
             // Grant Modify (M) to user. (Closer to old CACLS ":c" change permission.)
             // /T optional (propagate through subfolders). /C continue on errors.
@@ -152,7 +167,7 @@ class CliCommandRunner
                 . "Command: {$cmd} Output: " . implode("\n", $output)
             );
         }
-        
+
         return $output;
     }
 }
