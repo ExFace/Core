@@ -117,8 +117,8 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
             $nodes = $tree->getRootNodes();
             foreach ($nodes as $node) {
                 if ($node->hasChildNodes()) {
-                    $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName());
-                }
+                    $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName(), null, 0);
+                } 
             }         
             $this->tilesBuilt = true;
             
@@ -149,18 +149,28 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
      *
      * @param UiPageTreeNode[] $nodes
      * @param string $caption
-     * @param int $depth
      * @param Tile $upperLevelTile
+     * @param int $depth
      * @return Tiles
      */
-    protected function createTileGroupFromNodes(array $nodes, string $caption, Tile $upperLevelTile = null) : Tiles
+    protected function createTileGroupFromNodes(array $nodes, string $caption, Tile $upperLevelTile = null, int $depth = -1) : Tiles
     {
         $tiles = WidgetFactory::create($this->getPage(), 'Tiles', $this);
         $tiles->setCaption($caption);
         $this->addWidget($tiles);
+        $hasVisibleTiles = false;
         
         foreach ($nodes as $node) {
             $tile = $this->createTileFromTreeNode($node, $tiles);
+
+            // if show_overview_group is false, hide all tiles with children in the first group (overview), 
+            // and hide the entire group if no tiles are visible in the group at all
+            // keep nodes with no children visible, otherwise they are not accessible at all if the overview group is hidden
+            if ($this->getDepth() !== 1 && $depth === 0 && $this->getShowOverviewGroup() === false && $node->hasChildNodes()) {
+                $tile->setHidden(true);
+            } else {
+                $hasVisibleTiles = true;
+            }
             $tiles->addWidget($tile);
             if ($upperLevelTile !== null) {
                 $this->parentTileIds[$tile->getId()] = $upperLevelTile;
@@ -172,8 +182,13 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
                     $groupCaption = $node->getName();
                 }
 
-                $this->createTileGroupFromNodes($node->getChildNodes(), $groupCaption, $tile);
+                $this->createTileGroupFromNodes($node->getChildNodes(), $groupCaption, $tile, $depth + 1);
             }
+        }
+
+        // hide empty groups
+        if ($hasVisibleTiles === false) {
+            $tiles->setHidden(true);
         }
         
         return $tiles;
