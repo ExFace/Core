@@ -204,7 +204,7 @@ class ConditionGroup implements ConditionGroupInterface
             // both: this group and the added one
             default:
                 $grp = ConditionGroupFactory::createEmpty($this->getWorkbench(), $operator, $this->getBaseObject(), $this->ignoreEmptyValues);
-                $grp = $grp->with($conditionOrGroup);
+                $grp = $grp->with($operator, $conditionOrGroup);
                 if (! $this->isEmpty()) {
                     $grp->addNestedGroup($this);
                 }
