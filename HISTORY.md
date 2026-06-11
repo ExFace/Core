@@ -1,6 +1,90 @@
 # Release history
 
-## 1.38 - in Development
+## 1.39 - 04.06.2026
+
+Big points
+
+- New navigation controls in UI5 facade. Much improved side navigation and 
+tiles with more interactivity, search, etc.
+- All new Cloud IDE with Monaco Code editor, Toast UI markdown editor, image 
+  preview, Side-by-side diffs and more.
+
+New features
+
+- [axenox.Deployer](https://github.com/axenox/deployer) can now deploy to
+  mutiple hosts at once and also build+deploy in one step.
+- AI in [axenox.GenAI app](https://github.com/axenox/genai)
+  - Much improved agent editor with a dedicated markdown editor for the instructuons
+  - New AI tools: `ReadFileTool`, `ReadFolderTool`, `WriteFileTool`, 
+    `ReadDataSheetTool`, `ImportTool`, `FindObjectTool`, `GetTimeTool`
+  - Now displaying errors and warnings directly in the conversation logs
+  - Built-in agents
+    - The SQL assistant from axenox.IDE can now create migration file automatically
+    - Custom Formula generator agent to create formulas in any project
+- Added data flow mutations in [axenox.ETL](https://github.com/axenox/etl) app
+- UI5 facade - [exface.UI5Facade](https://github.com/exface/ui5facade)
+  - Tours
+    - Fully preconfigured tours with all steps defined in the tour as an 
+      alternative to waypoint-driven tours
+    - Support for auto-starting tours
+    - Binding widget function to the "Next" button of a tour step
+  - Improved functionality of widget setups
+    - Users can now make their setups public
+    - Setups now include header filters
+- New health check facade at `api/health` to check if system is up
+- New formulas: `=CaseWhen()`, `=VersionIncrease()`, `=JsonList()`
+- New human-friendly error messages for SQL errors in MS SQL and PostgreSQL - in 
+  particular, constraint errors. This reduces the need for 
+  `PreventDuplicatesBehavior` for many tables with unique constraints.
+- Advanced "techie" mode for SQL filters: e.g. `sql:like:%[0-9]`
+- New `StaticEventListenerInstaller` to register static event listeners in
+  apps other than the Core.
+- Background user-sync in [axenox.Microsoft365Connector](https://github.com/axenox/microsoft365connector/)
+- `examples` property in service parameter models
+- Placeholders in function `run_command` of `Console` widgets allowing to 
+  use input data in CLI commands
+
+Improvements
+
+- Improved DataCarousel widget in UI5 - now keeps table setups, filter and 
+  sorting when moving the carousel
+- PostgreSQL database installer now support schema compare
+- Customizable filter for tasks in `Gantt` widget via `data` property in 
+  `tasks` model
+- Improved action `CustomDataSourceQuery` to run only once for multiple 
+  input rows if possible
+- Added `skip_action_if_input_invalid` to `ActionChain`
+- Added `required` property for `ImageGallery` widget
+- Many improvements in [axenox.BDT](https://github.com/axenox/bdt) app for automated tests
+
+## 1.38 - 16.04.2026
+
+Big Points:
+
+- All new usage analytics app [axenox.Analytics](https://github.com/axenox/analytics) 
+- Visually improved `DataSpreadSheet` widget with lots of improvements and
+  clear separation between editable and non-editable areas.
+- Metrics framework for automated tests in [axenox.BDT](https://github.
+  com/axenox/bdt) app
+
+New features:
+
+- AI in [axenox.GenAI app](https://github.com/axenox/genai)
+  - File uploads to the AI chat
+  - New agent versions will automatically inherit connections from previous 
+    versions
+  - New AI tool `MockTool` for testing prompts with tools
+- New data mapper `column_dictionary_mapping`
+- `wrap_lines` property for `InputCode` widget
+- Action `DownloadFile` no automatically converts file contents to binary if 
+  needed
+
+Improvements:
+
+- Support `[#placeholders#]` in data addresses of file query builders
+- Validating behaviors now support `only_if_data_matches_conditions` - e.g. 
+  `ValidatingBehavior` and `ChecklistingBehavior`
+- `CalculatingBehavior` now supports `only_if_attributes_change`
 
 ## 1.37 - 19.03.2026
 

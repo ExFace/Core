@@ -626,6 +626,7 @@ class GenericTask implements TaskInterface
                     break;
                 case 'timeout':
                 case 'cmd':
+                case 'ignored_exit_codes':
                     $this->setParameter($prop, $val);
                     break;
             }
@@ -637,7 +638,7 @@ class GenericTask implements TaskInterface
             'action', 'action_alias',
             'page', 'page_selector', 'page_alias',
             'meta_object', 'object_alias',
-            'widget_id', 'cmd', 'timeout'
+            'widget_id', 'cmd', 'timeout', 'ignored_exit_codes'
         ]);
         return;
     }

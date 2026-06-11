@@ -6,6 +6,7 @@ use exface\Core\DataTypes\ListDataType;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
+use exface\Core\Facades\AbstractHttpFacade\FacadeResolver;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Widgets\AbstractWidget;
@@ -24,6 +25,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterfa
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsEnumFormatter;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsBooleanFormatter;
+use GuzzleHttp\Psr7\Uri;
 use GuzzleHttp\Psr7\Utils;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -73,6 +75,7 @@ use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\MessageTypeDataType;
 use exface\Core\Factories\FacadeFactory;
+use Psr\Http\Message\UriInterface;
 
 /**
  * 
@@ -1196,5 +1199,20 @@ HTML;
     {
         $page = $widget->getPage();
         return $this->buildUrlToPage($page);
+    }
+
+    /**
+     * Returns the widget that the facade would render for this URL
+     *
+     * E.g. http://127.0.0.1/exface/exface.core.administration.html -> `NavTiles` of page `exface.core.administration` 
+     * because this is the root widget of the administration page
+     *
+     * @see HtmlPageFacadeInterface::findUrlWidget()
+     */
+    public function findUrlWidget(UriInterface|string $url) : WidgetInterface
+    {
+        $uri = is_string($url) ? new Uri($url) : $url;
+        $resolver = new FacadeResolver($this->getWorkbench(), $uri);
+        return $resolver->getPage()->getWidgetRoot();
     }
 }

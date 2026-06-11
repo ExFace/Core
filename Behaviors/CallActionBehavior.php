@@ -391,7 +391,7 @@ class CallActionBehavior extends AbstractBehavior
                 $logbook->addLine('Evaluating `only_if_data_matches_conditions`)');
                 $logbook->addIndent(+1);
                 $logbook->addLine('`' . $this->getOnlyIfDataMatchesConditions()->__toString() . '`');
-                $inputSheet = $inputSheet->extract($this->getOnlyIfDataMatchesConditions(), true);
+                $inputSheet = $inputSheet->extract($this->getOnlyIfDataMatchesConditions(), true, $logbook);
                 $logbook->addIndent(-1);
                 if ($inputSheet->isEmpty()) {
                     $logbook->addLine('**Skipped** because of `only_if_data_matches_conditions`');

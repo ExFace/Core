@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
-use axenox\GenAI\Interfaces\MarkdownPrinterInterface;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\WorkbenchInterface;
