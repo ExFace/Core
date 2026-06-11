@@ -88,6 +88,9 @@ MD;
         // Page chapter
         $pagePrinter = new UiPageMarkdownPrinter($widget->getPage(), $this->headingLevel + 1);
         
+        // Object link
+        $widgetObjectLink = DocsFacade::buildUrlToDocsForMetaObject($widget->getMetaObject()->getAliasWithNamespace());
+        
         // Put it all together
         return <<<MD
 {$headingWidget}
@@ -95,6 +98,7 @@ MD;
 {$widgetDebugger->getBreadcrumbs(true, true, false)}
 
 - Widget type: {$prototypeLink}
+- Widget object: [{$widget->getMetaObject()->__toString()}]({$widgetObjectLink})
 - Widget ID: `{$widget->getId()}`
 - Rendered by action: {$renderingActionInfo}
 
