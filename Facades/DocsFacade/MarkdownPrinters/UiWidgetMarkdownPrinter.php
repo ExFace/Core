@@ -5,8 +5,8 @@ use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Debugger\WidgetDebugger;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Facades\DocsFacade;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -15,7 +15,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * 
  * @author Andrej Kabachnik
  */
-class UiWidgetMarkdownPrinter
+class UiWidgetMarkdownPrinter implements MarkdownPrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
