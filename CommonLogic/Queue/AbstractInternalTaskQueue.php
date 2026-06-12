@@ -56,7 +56,6 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     private $errorLogLevel = null;
     
     private bool $skipTaskIfAlreadyRunning = false;
-    private ?\DateInterval $timeOutInterval = null;
     private ?int $processId = null;
 
     /**
