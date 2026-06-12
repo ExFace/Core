@@ -51,8 +51,6 @@ use exface\Core\Events\Queue\OnQueueRunEvent;
  */
 abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
 {
-    public const CFG_TIMEOUT_INTERVAL = 'TASK.QUEUE.TIMEOUT_INTERVAL';
-    
     private $daysToKeepTasks = null;
     
     private $errorLogLevel = null;
@@ -448,27 +446,36 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
 
         $sheet->dataRead();
         
-        $timeOutSheet = $sheet->copy()->removeRows();
-        $timezone = DateTimeDataType::getTimeZoneDefault($this->getWorkbench());
-        $now = new \DateTime('now', new \DateTimeZone($timezone));
-        $timeOut = $this->getTimeOutInterval();
-        foreach ($sheet->getRows() as $rowIdx => $row) {
-            $pid = $row['PID'];
-            $date = new \DateTime($row['ENQUEUED_ON']);
-            $date->add($timeOut);
-
-            // Check if the run is timed out.
-            if($date <= $now && $pid !== null && !$this->isProcessRunning($pid)) {
-                $row['STATUS'] = QueuedTaskStateDataType::STATUS_TIMEOUT;
-                $row['PID'] = -1;
-                $timeOutSheet->addRow($row);
-                $sheet->removeRow($rowIdx);
+        // Check for timeouts.
+        if($task instanceof ScheduledTask) {
+            $timeOutSheet = $sheet->copy()->removeRows();
+            $now = new \DateTime();
+            $timeOutInterval = $task->getTimeOutInterval();
+            $maxTimeOutInterval = $task->getMaxTimeOutInterval();
+            
+            foreach ($sheet->getRows() as $rowIdx => $row) {
+                $pid = $row['PID'];
+                $timeOutDate = new \DateTime($row['ENQUEUED_ON']);
+                $timeOutDate->add($timeOutInterval);
+                
+                $maxTimeOutDate = new \DateTime($row['ENQUEUED_ON']);
+                $maxTimeOutDate->add($maxTimeOutInterval);
+                
+                // Check if the run is timed out.
+                if( $maxTimeOutDate <= $now ||
+                    ($timeOutDate <= $now && $pid !== null && !$this->isProcessRunning($pid))
+                ) {
+                    $row['STATUS'] = QueuedTaskStateDataType::STATUS_TIMEOUT;
+                    $row['PID'] = null;
+                    $timeOutSheet->addRow($row);
+                    $sheet->removeRow($rowIdx);
+                }
             }
-        }
 
-        if($timeOutSheet->countRows() > 0) {
-            // Update status.
-            $timeOutSheet->dataUpdate();
+            if($timeOutSheet->countRows() > 0) {
+                // Update status.
+                $timeOutSheet->dataUpdate();
+            }
         }
 
         return $sheet;
@@ -615,60 +622,6 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     protected function willSkipTaskIfAlreadyRunning() : bool
     {
         return $this->skipTaskIfAlreadyRunning;
-    }
-
-    /**
-     * Tasks automatically time out after running longer than this interval.
-     * 
-     * Use the common PHP-DateInterval syntax:
-     * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
-     * - Concatenate with `+`.
-     * - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
-     * 
-     * @uxon-property time_out
-     * @uxon-type string
-     * 
-     * @param string $timeout
-     * @return $this
-     * @throws \Exception
-     */
-    protected function setTimeOut(string $timeout) : AbstractInternalTaskQueue
-    {
-        try {
-            $this->timeOutInterval = \DateInterval::createFromDateString($timeout);
-        } catch (\Throwable $e) {
-            throw new QueueRuntimeError($this, 'Invalid time out configuration: ' . $e->getMessage(), null, $e);
-        }
-        return $this;
-    }
-
-    /**
-     * @return \DateInterval
-     */
-    protected function getTimeOutInterval() : \DateInterval
-    {
-        // Initialize the timeout interval.
-        if($this->timeOutInterval === null) {
-            $intervalString = '1 day';
-            $cfg = $this->getApp()?->getConfig();
-            
-            // Try to read config option for app.
-            if($cfg !== null && $cfg->hasOption(self::CFG_TIMEOUT_INTERVAL)) {
-                $intervalString = $cfg->getOption(self::CFG_TIMEOUT_INTERVAL) ?? '1 day';
-            }
-
-            try {
-                $this->setTimeOut($intervalString);
-            } catch (\Throwable $e) {
-                $msg = 'Invalid timeout interval "' . $intervalString .
-                    '" in config option "' . self::CFG_TIMEOUT_INTERVAL . '" ' . 'of app "' .
-                    $this->getApp()?->getAliasWithNamespace() . '".';
-                
-                throw new QueueRuntimeError($this, $msg, null, $e);
-            }
-        }
-        
-        return $this->timeOutInterval;
     }
     
     /**
