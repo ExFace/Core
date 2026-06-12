@@ -2,6 +2,7 @@
 
 namespace exface\Core\CommonLogic;
 
+use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\ComponentRegistryInterface;
@@ -21,7 +22,8 @@ class ComponentRegistry implements ComponentRegistryInterface
         $this->config = [];
         $baseConfigFile = $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'ComponentRegistry.config.json';
         if (is_readable($baseConfigFile)) {
-            $this->config = array_merge_recursive($this->config, json_decode(file_get_contents($baseConfigFile), true));
+            $json = JsonDataType::decodeJson(file_get_contents($baseConfigFile), true);
+            $this->config = array_merge_recursive($this->config, $json);
         }
     }
     
@@ -33,12 +35,12 @@ class ComponentRegistry implements ComponentRegistryInterface
     
     protected function canInstantiate(string $component) : bool
     {
-        return null !== $this->getSelectorFactoryClass($component);
+        return null !== $this->getSelectorFactory($component);
     }
     
     protected function getSelectorFactory($component) : ?callable
     {
-        $factoryClass = ($this->config[$component] ?? [])['selector_factory'] ?? null;
+        $factoryClass = (($this->config[$component] ?? [])['selector'] ?? [])['factory'] ?? null;
         switch (true) {
             case null === $factoryClass:
                 return null;
@@ -56,7 +58,7 @@ class ComponentRegistry implements ComponentRegistryInterface
 
     protected function getSelectorClass(string $component) : ?string
     {
-        return ($this->config[$component] ?? [])['selector_class'] ?? null;
+        return (($this->config[$component] ?? [])['selector'] ?? null)['class'] ?? null;
     }
     
     protected function instantiate(string $component, string $selector) : object
@@ -65,12 +67,11 @@ class ComponentRegistry implements ComponentRegistryInterface
         if (! $selectorClass) {
             throw new RuntimeException("Cannot find selector class for '{$component}'");
         }
-        $factoryClass = $this->getSelectorFactoryClass($component);
-        if (! $factoryClass) {
-            throw new RuntimeException('Cannot instantiate ' . $component . ' `' . $selector . '` - no selector factory found');
-        }
         $selector = new $selectorClass($this->getWorkbench(), $selector);
         $factory = $this->getSelectorFactory($component);
+        if (! $factory) {
+            throw new RuntimeException('Cannot instantiate ' . $component . ' `' . $selector . '` - no selector factory found');
+        }
         return $factory($selector);
     }
 
@@ -100,7 +101,7 @@ class ComponentRegistry implements ComponentRegistryInterface
                 $printer = $printerClass::constructForInstance($instance);
                 break;
         }
-        return $printer;
+        return $printer->getMarkdown();
     }
     
     public function findComponentKey(string $aliasOrUxonProperty) : ?string

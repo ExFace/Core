@@ -12,7 +12,7 @@
     "documentation": {
       "app_docs": null,
       "ai_instructions": null,
-      "markdown_printer_class": "\\exface\\Core\\Documentation\\MarkdownPrinters\\ObjectMarkdownPrinter"
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\ObjectMarkdownPrinter"
     },
     "search_selector_data": {
       "object_alias": "exface.Core.OBJECT",
@@ -40,12 +40,12 @@
     },
     "prototypes": {
       "app_subfolder": "Actions",
-      "class_suffix": "Action",
+      "class_suffix": "Action"
     },
     "documentation": {
       "app_docs": null,
       "ai_instructions": null,
-      "markdown_printer_class": "\\exface\\Core\\Documentation\\MarkdownPrinters\\ActionMarkdownPrinter"
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\ActionMarkdownPrinter"
     },
     "search_selector_data": [
       {
