@@ -51,12 +51,16 @@ use exface\Core\Events\Queue\OnQueueRunEvent;
  */
 abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
 {
+    public const CFG_TIMEOUT_INTERVAL = 'TASK.QUEUE.TIMEOUT_INTERVAL';
+    
     private $daysToKeepTasks = null;
     
     private $errorLogLevel = null;
     
     private bool $skipTaskIfAlreadyRunning = false;
-    
+    private ?\DateInterval $timeOutInterval = null;
+    private ?int $processId = null;
+
     /**
      * 
      * @param string $queueItemUid
@@ -69,6 +73,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $dataSheet->getColumns()->addFromSystemAttributes();
         $dataSheet->getColumns()->addFromExpression('STATUS');
+        $dataSheet->getColumns()->addFromExpression('PID');
         if (! empty($readAttributeAliases)) {
             $dataSheet->getColumns()->addMultiple($readAttributeAliases);
         }
@@ -83,12 +88,114 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         
         $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_INPROGRESS);
         $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
+        $dataSheet->setCellValue('PID', 0, $this->getProcessId());
         
         $dataSheet->dataUpdate();
         
         return $dataSheet;
     }
     
+    /**
+     * Returns the process ID for this instance.
+     *
+     * @return int
+     */
+    protected function getProcessId() : int
+    {
+        if($this->processId !== null) {
+            return $this->processId;
+        }
+        
+        // 1. Preferred: built-in PHP (works on all platforms)
+        if (function_exists('getmypid')) {
+            $pid = getmypid();
+            if ($pid !== false) {
+                $this->processId = (int)$pid;
+                return $this->processId;
+            }
+        }
+
+        // 2. POSIX (Unix/Linux environments)
+        if (function_exists('posix_getpid')) {
+            $this->processId = (int)posix_getpid();
+            return $this->processId;
+        }
+
+        // 3. Fallback: environment variable (some SAPIs)
+        $pid = getenv('PID');
+        if ($pid !== false && ctype_digit($pid)) {
+            $this->processId = (int)$pid;
+            return $this->processId;
+        }
+
+        // 4. Last resort: shell-based detection (avoid unless really needed)
+        if (stripos(PHP_OS, 'WIN') === 0) {
+            // Windows
+            $output = [];
+            @exec('echo %PROCESS_ID%', $output);
+            if (!empty($output[0]) && ctype_digit($output[0])) {
+                $this->processId = (int)$output[0];
+                return $this->processId;
+            }
+        } else {
+            // Unix-like
+            $output = [];
+            @exec('echo $$', $output);
+            if (!empty($output[0]) && ctype_digit($output[0])) {
+                $this->processId = (int)$output[0];
+                return $this->processId;
+            }
+        }
+
+        throw new RuntimeException('Unable to determine process ID');
+    }
+
+    /**
+     * Returns true if PID is currently running, false if definitely not.
+     */
+    protected function isProcessRunning(?int $pid) : bool
+    {
+        if ($pid === null || $pid <= 0) {
+            return false;
+        }
+
+        // Unix/Linux/macOS: safest API check
+        if (function_exists('posix_kill') && stripos(PHP_OS, 'WIN') !== 0) {
+            // signal 0 does not kill; it only checks process existence/permissions
+            return @posix_kill($pid, 0);
+        }
+
+        if (stripos(PHP_OS, 'WIN') === 0) {
+            $pid = (int)$pid;
+            if ($pid <= 0) {
+                return false;
+            }
+
+            $tasklist = (getenv('WINDIR') ?: 'C:\\Windows') . '\\System32\\tasklist.exe';
+            $cmd = sprintf('"%s" /FI "PID eq %d" /FO CSV /NH', $tasklist, $pid);
+
+            $output = [];
+            $exitCode = 1;
+            @exec($cmd, $output, $exitCode);
+
+            if ($exitCode !== 0 || empty($output)) {
+                return false;
+            }
+
+            // Running process rows come as CSV lines starting with a quote.
+            foreach ($output as $line) {
+                $line = trim($line);
+                if ($line !== '' && isset($line[0]) && $line[0] === '"') {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * 
      * @param DataSheetInterface $dataSheet
@@ -119,6 +226,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
             $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
+            $dataSheet->setCellValue('PID', 0, null);
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
@@ -154,6 +262,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
             $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
+            $dataSheet->setCellValue('PID', 0, null);
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
@@ -326,7 +435,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             ->addMultiple([
                 'STATUS',
                 'PARENT_ITEM',
-                'ENQUEUED_ON'
+                'ENQUEUED_ON',
+                'PID'
             ]);
         $sheet->getFilters()
             ->addConditionFromString('PRODUCER', $producer, ComparatorDataType::EQUALS)
@@ -337,6 +447,30 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         $sheet->getSorters()->addFromString('CREATED_ON', 'DESC');
 
         $sheet->dataRead();
+        
+        $timeOutSheet = $sheet->copy()->removeRows();
+        $timezone = DateTimeDataType::getTimeZoneDefault($this->getWorkbench());
+        $now = new \DateTime('now', new \DateTimeZone($timezone));
+        $timeOut = $this->getTimeOutInterval();
+        foreach ($sheet->getRows() as $rowIdx => $row) {
+            $pid = $row['PID'];
+            $date = new \DateTime($row['ENQUEUED_ON']);
+            $date->add($timeOut);
+
+            // Check if the run is timed out.
+            if($date <= $now && $pid !== null && !$this->isProcessRunning($pid)) {
+                $row['STATUS'] = QueuedTaskStateDataType::STATUS_TIMEOUT;
+                $row['PID'] = -1;
+                $timeOutSheet->addRow($row);
+                $sheet->removeRow($rowIdx);
+            }
+        }
+
+        if($timeOutSheet->countRows() > 0) {
+            // Update status.
+            $timeOutSheet->dataUpdate();
+        }
+
         return $sheet;
     }
     
@@ -483,6 +617,60 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         return $this->skipTaskIfAlreadyRunning;
     }
 
+    /**
+     * Tasks automatically time out after running longer than this interval.
+     * 
+     * Use the common PHP-DateInterval syntax:
+     * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
+     * - Concatenate with `+`.
+     * - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * 
+     * @uxon-property time_out
+     * @uxon-type string
+     * 
+     * @param string $timeout
+     * @return $this
+     * @throws \Exception
+     */
+    protected function setTimeOut(string $timeout) : AbstractInternalTaskQueue
+    {
+        try {
+            $this->timeOutInterval = \DateInterval::createFromDateString($timeout);
+        } catch (\Throwable $e) {
+            throw new QueueRuntimeError($this, 'Invalid time out configuration: ' . $e->getMessage(), null, $e);
+        }
+        return $this;
+    }
+
+    /**
+     * @return \DateInterval
+     */
+    protected function getTimeOutInterval() : \DateInterval
+    {
+        // Initialize the timeout interval.
+        if($this->timeOutInterval === null) {
+            $intervalString = '1 day';
+            $cfg = $this->getApp()?->getConfig();
+            
+            // Try to read config option for app.
+            if($cfg !== null && $cfg->hasOption(self::CFG_TIMEOUT_INTERVAL)) {
+                $intervalString = $cfg->getOption(self::CFG_TIMEOUT_INTERVAL) ?? '1 day';
+            }
+
+            try {
+                $this->setTimeOut($intervalString);
+            } catch (\Throwable $e) {
+                $msg = 'Invalid timeout interval "' . $intervalString .
+                    '" in config option "' . self::CFG_TIMEOUT_INTERVAL . '" ' . 'of app "' .
+                    $this->getApp()?->getAliasWithNamespace() . '".';
+                
+                throw new QueueRuntimeError($this, $msg, null, $e);
+            }
+        }
+        
+        return $this->timeOutInterval;
+    }
+    
     /**
      * Set to TRUE to double-check if exactly this task is already running and prevent parallel launches
      * 
