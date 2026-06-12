@@ -186,7 +186,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     /**
      * It gets the header lines with its settings.
      * 
-     * @return array
+     * @return DataTimelineHeader[]
      */
     public function getHeaderLines() : ?array
     {
