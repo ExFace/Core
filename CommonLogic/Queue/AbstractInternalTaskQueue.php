@@ -56,7 +56,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     private $errorLogLevel = null;
     
     private bool $skipTaskIfAlreadyRunning = false;
-    
+    private ?int $processId = null;
+
     /**
      * 
      * @param string $queueItemUid
@@ -69,6 +70,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         $dataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
         $dataSheet->getColumns()->addFromSystemAttributes();
         $dataSheet->getColumns()->addFromExpression('STATUS');
+        $dataSheet->getColumns()->addFromExpression('PID');
         if (! empty($readAttributeAliases)) {
             $dataSheet->getColumns()->addMultiple($readAttributeAliases);
         }
@@ -83,12 +85,114 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         
         $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_INPROGRESS);
         $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
+        $dataSheet->setCellValue('PID', 0, $this->getProcessId());
         
         $dataSheet->dataUpdate();
         
         return $dataSheet;
     }
     
+    /**
+     * Returns the process ID for this instance.
+     *
+     * @return int
+     */
+    protected function getProcessId() : int
+    {
+        if($this->processId !== null) {
+            return $this->processId;
+        }
+        
+        // 1. Preferred: built-in PHP (works on all platforms)
+        if (function_exists('getmypid')) {
+            $pid = getmypid();
+            if ($pid !== false) {
+                $this->processId = (int)$pid;
+                return $this->processId;
+            }
+        }
+
+        // 2. POSIX (Unix/Linux environments)
+        if (function_exists('posix_getpid')) {
+            $this->processId = (int)posix_getpid();
+            return $this->processId;
+        }
+
+        // 3. Fallback: environment variable (some SAPIs)
+        $pid = getenv('PID');
+        if ($pid !== false && ctype_digit($pid)) {
+            $this->processId = (int)$pid;
+            return $this->processId;
+        }
+
+        // 4. Last resort: shell-based detection (avoid unless really needed)
+        if (stripos(PHP_OS, 'WIN') === 0) {
+            // Windows
+            $output = [];
+            @exec('echo %PROCESS_ID%', $output);
+            if (!empty($output[0]) && ctype_digit($output[0])) {
+                $this->processId = (int)$output[0];
+                return $this->processId;
+            }
+        } else {
+            // Unix-like
+            $output = [];
+            @exec('echo $$', $output);
+            if (!empty($output[0]) && ctype_digit($output[0])) {
+                $this->processId = (int)$output[0];
+                return $this->processId;
+            }
+        }
+
+        throw new RuntimeException('Unable to determine process ID');
+    }
+
+    /**
+     * Returns true if PID is currently running, false if definitely not.
+     */
+    protected function isProcessRunning(?int $pid) : bool
+    {
+        if ($pid === null || $pid <= 0) {
+            return false;
+        }
+
+        // Unix/Linux/macOS: safest API check
+        if (function_exists('posix_kill') && stripos(PHP_OS, 'WIN') !== 0) {
+            // signal 0 does not kill; it only checks process existence/permissions
+            return @posix_kill($pid, 0);
+        }
+
+        if (stripos(PHP_OS, 'WIN') === 0) {
+            $pid = (int)$pid;
+            if ($pid <= 0) {
+                return false;
+            }
+
+            $tasklist = (getenv('WINDIR') ?: 'C:\\Windows') . '\\System32\\tasklist.exe';
+            $cmd = sprintf('"%s" /FI "PID eq %d" /FO CSV /NH', $tasklist, $pid);
+
+            $output = [];
+            $exitCode = 1;
+            @exec($cmd, $output, $exitCode);
+
+            if ($exitCode !== 0 || empty($output)) {
+                return false;
+            }
+
+            // Running process rows come as CSV lines starting with a quote.
+            foreach ($output as $line) {
+                $line = trim($line);
+                if ($line !== '' && isset($line[0]) && $line[0] === '"') {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * 
      * @param DataSheetInterface $dataSheet
@@ -119,6 +223,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
             $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
+            $dataSheet->setCellValue('PID', 0, null);
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
@@ -154,6 +259,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('PROCESSED_ON', 0, DateTimeDataType::now());
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
             $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
+            $dataSheet->setCellValue('PID', 0, null);
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
@@ -326,7 +432,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             ->addMultiple([
                 'STATUS',
                 'PARENT_ITEM',
-                'ENQUEUED_ON'
+                'ENQUEUED_ON',
+                'PID'
             ]);
         $sheet->getFilters()
             ->addConditionFromString('PRODUCER', $producer, ComparatorDataType::EQUALS)
@@ -337,6 +444,39 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         $sheet->getSorters()->addFromString('CREATED_ON', 'DESC');
 
         $sheet->dataRead();
+        
+        // Check for timeouts.
+        if($task instanceof ScheduledTask) {
+            $timeOutSheet = $sheet->copy()->removeRows();
+            $now = new \DateTime();
+            $timeOutInterval = $task->getTimeOutInterval();
+            $maxTimeOutInterval = $task->getMaxTimeOutInterval();
+            
+            foreach ($sheet->getRows() as $rowIdx => $row) {
+                $pid = $row['PID'];
+                $timeOutDate = new \DateTime($row['ENQUEUED_ON']);
+                $timeOutDate->add($timeOutInterval);
+                
+                $maxTimeOutDate = new \DateTime($row['ENQUEUED_ON']);
+                $maxTimeOutDate->add($maxTimeOutInterval);
+                
+                // Check if the run is timed out.
+                if( $maxTimeOutDate <= $now ||
+                    ($timeOutDate <= $now && $pid !== null && !$this->isProcessRunning($pid))
+                ) {
+                    $row['STATUS'] = QueuedTaskStateDataType::STATUS_TIMEOUT;
+                    $row['PID'] = null;
+                    $timeOutSheet->addRow($row);
+                    $sheet->removeRow($rowIdx);
+                }
+            }
+
+            if($timeOutSheet->countRows() > 0) {
+                // Update status.
+                $timeOutSheet->dataUpdate();
+            }
+        }
+
         return $sheet;
     }
     
@@ -482,7 +622,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     {
         return $this->skipTaskIfAlreadyRunning;
     }
-
+    
     /**
      * Set to TRUE to double-check if exactly this task is already running and prevent parallel launches
      * 

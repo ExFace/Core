@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "Scheduler [exface.Core.SCHEDULER]",
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2022-08-09 10:23:36",
+            "MODIFIED_ON": "2026-06-12 15:20:45",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ebb374ef0b5eacb374847beb4a5184",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -173,7 +173,7 @@
                                         "widget_type": "InputUxon",
                                         "hide_caption": true,
                                         "height": "100%",
-                                        "root_prototype": "exface\\Core\\CommonLogic\\Tasks\\GenericTask"
+                                        "root_prototype": "exface\\Core\\CommonLogic\\Tasks\\ScheduledTask"
                                     }
                                 ]
                             },

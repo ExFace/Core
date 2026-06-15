@@ -19,6 +19,7 @@ class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInt
     CONST STATUS_QUEUED = 30;
     CONST STATUS_INPROGRESS = 50;
     CONST STATUS_ERROR = 70;
+    CONST STATUS_TIMEOUT = 71;
     CONST STATUS_CANCELED = 90;
     CONST STATUS_DUPLICATE = 91;
     CONST STATUS_REPLACED = 95;
