@@ -216,8 +216,12 @@ class DataSheet implements DataSheetInterface
         array $aggregationsPerColumn
     ) : DataSheetInterface
     {
+        if($this->countRows() === 0) {
+            return $this->copy();
+        }
+
         if($otherKeyColumn->getDataSheet() !== $otherSheet) {
-            throw new DataSheetColumnNotFoundError($otherSheet, 'Cannot aggregate like: Column "' . 
+            throw new DataSheetColumnNotFoundError($otherSheet, 'Cannot aggregate like: Column "' .
                 $otherKeyColumn->getName() . '" does belong to the expected datasheet!');
         }
 
@@ -239,8 +243,8 @@ class DataSheet implements DataSheetInterface
             if($key === null || $key === '') {
                 continue;
             }
-            
-            $selfKeys[$key] = $rowNr;
+
+            $selfKeys[$key][] = $rowNr;
         }
         
         $columnValuesPerKey = [];
@@ -256,19 +260,20 @@ class DataSheet implements DataSheetInterface
             
             // De-aggregate the key and match its components.
             foreach (explode($delimiter, $otherKey) as $subKey) {
-                $rowNr = $selfKeys[$subKey];
-                if($rowNr === null) {
-                    continue;
-                }
-                
-                // If we found a matching row in our data, we extract its values per column.
-                // We ignore columns that don't have any pending aggregations.
-                foreach ($this->getRow($rowNr) as $colName => $value) {
-                    if(!key_exists($colName, $aggregationsPerColumn)) {
+                foreach ($selfKeys[$subKey] as $rowNr) {
+                    if($rowNr === null) {
                         continue;
                     }
-                    
-                    $columnValuesPerKey[$otherKey][$colName][] = $value;
+
+                    // If we found a matching row in our data, we extract its values per column.
+                    // We ignore columns that don't have any pending aggregations.
+                    foreach ($this->getRow($rowNr) as $colName => $value) {
+                        if(!key_exists($colName, $aggregationsPerColumn)) {
+                            continue;
+                        }
+
+                        $columnValuesPerKey[$otherKey][$colName][] = $value;
+                    }
                 }
             }
         }
