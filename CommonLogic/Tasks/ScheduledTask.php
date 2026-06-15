@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -13,8 +14,13 @@ use exface\Core\CommonLogic\UxonObject;
  */
 class ScheduledTask extends GenericTask
 {
-    private $schedulerUid = null;
+    public const DEFAULT_TIMEOUT = '6 hours';
+    public const DEFAULT_MAX_TIMEOUT = '1 day';
     
+    private $schedulerUid = null;
+    private ?\DateInterval $timeOutInterval = null;
+    private ?\DateInterval $maxTimeOutInterval = null;
+
     /**
      * 
      * @param FacadeInterface $facade
@@ -36,5 +42,82 @@ class ScheduledTask extends GenericTask
     public function getSchedulerUid() : string
     {
         return $this->schedulerUid;
+    }
+
+    /**
+     * If a task is marked as running for longer than this interval, the system will check if the process is still
+     *  alive, and if it isn't, mark it as timed out to make room for a new run.
+     * 
+     * Use the common PHP-DateInterval syntax:
+     * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
+     * - Concatenate with `+`.
+     * - For example, `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * 
+     * @uxon-property timeout
+     * @uxon-type string
+     * 
+     * @param string $timeout
+     * @return $this
+     * @throws \Exception
+     */
+    protected function setTimeOut(string $timeout) : ScheduledTask
+    {
+        try {
+            $this->timeOutInterval = \DateInterval::createFromDateString($timeout);
+        } catch (\Throwable $e) {
+            throw new InvalidArgumentException('Invalid value for `timeout` configuration: ' . $e->getMessage(), null, $e);
+        }
+        
+        return $this;
+    }
+
+    /**
+     * @return \DateInterval
+     * @throws \Exception
+     */
+    public function getTimeOutInterval() : \DateInterval
+    {
+        // Initialize with the default timeout interval.
+        if($this->timeOutInterval === null) {
+            $this->setTimeOut(self::DEFAULT_TIMEOUT);
+        }
+
+        return $this->timeOutInterval;
+    }
+
+    /**
+     * If a task is marked as running for longer than this interval, it will be marked as timed out, regardless of whether
+     *  the process is still alive. Set this value conservatively to avoid unintentional parallel execution.
+     *
+     * Use the common PHP-DateInterval syntax:
+     * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
+     * - Concatenate with `+`.
+     * - For example, `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     *
+     * @uxon-property timeout_max
+     * @uxon-type string
+     *
+     * @param string $timeout
+     * @return $this
+     * @throws \Exception
+     */
+    protected function setMaxTimeOut(string $timeout) : ScheduledTask
+    {
+        try {
+            $this->maxTimeOutInterval = \DateInterval::createFromDateString($timeout);
+        } catch (\Throwable $e) {
+            throw new InvalidArgumentException('Invalid value for `timeout_max` configuration: ' . $e->getMessage(), null, $e);
+        }
+
+        return $this;
+    }
+
+    public function getMaxTimeOutInterval() : \DateInterval
+    {
+        if($this->maxTimeOutInterval === null) {
+            $this->setMaxTimeOut(self::DEFAULT_MAX_TIMEOUT);
+        }
+        
+        return $this->maxTimeOutInterval;
     }
 }
