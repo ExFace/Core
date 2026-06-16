@@ -163,4 +163,9 @@ interface WorkbenchInterface extends TaskHandlerInterface
      * @return MutatorInterface
      */
     public function getMutator() : MutatorInterface;
+
+    /**
+     * @return ComponentRegistryInterface
+     */
+    public function getComponentRegistry() : ComponentRegistryInterface;
 }
