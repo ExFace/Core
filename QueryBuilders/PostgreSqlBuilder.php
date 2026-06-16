@@ -508,7 +508,7 @@ SQL;
      * @param mixed $value
      * @return mixed
      */
-    protected function normalizePlaceholderValue($value)
+    protected function preparePlaceholderValue($value)
     {
         if (!is_string($value)) {
             return $value;

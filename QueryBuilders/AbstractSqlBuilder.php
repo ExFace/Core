@@ -18,6 +18,7 @@ use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
@@ -3277,7 +3278,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $val = $formula->evaluate();
                     // Delegate engine-specific normalization of static formula values used in JOIN placeholders
                     // to allow database-specific builders (e.g. PostgreSQL) to adjust quoting/casting.
-                    $phVals[$ph] = $this->normalizePlaceholderValue($val);
+                    $phVals[$ph] = $this->preparePlaceholderValue($val, $formula->getDataType());
                     break;
                     
                 // Left-side placeholders like `[#~left:MY_ATTR#]` can be replaced using the same logic as for regular data addresses
@@ -3623,9 +3624,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param mixed $value Value returned by the evaluated formula
      * @return mixed Normalized value to be substituted into the SQL JOIN
      */
-    protected function normalizePlaceholderValue($value)
+    protected function preparePlaceholderValue($value, ?DataTypeInterface $dataType = null, array $dataAddressProps = [])
     {
-        return $value;
+        switch (true) {
+            case StringDataType::startsWith($value, '0x', false) && $dataType->isExactly(StringDataType::class):
+                $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), HexadecimalNumberDataType::class);
+                break;
+        }
+        return $this->prepareWhereValue($value, $dataType);
     }
 
     /**
