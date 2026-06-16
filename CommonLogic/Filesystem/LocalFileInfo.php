@@ -42,7 +42,7 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
         if ($pathOrSplFileInfo instanceof \SplFileInfo) {
             $this->splFileInfo = $pathOrSplFileInfo;
         } else {
-            $this->splFileInfo = new \SplFileInfo($pathOrSplFileInfo);
+            $this->splFileInfo = new \SplFileInfo(FilePathDataType::makeAbsolute($pathOrSplFileInfo, $basePath, $directorySeparator));
         }
         
         $this->directorySeparator = $directorySeparator;        
