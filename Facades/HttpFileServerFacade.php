@@ -281,9 +281,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
     public function createResponseForDonwload(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        //encode the filename here because in Chrome a filename with a `,` needs to be wrapped in quotation marks,
-        //else Chrome will shown a network error when trying to download that file
-        $response = $response->withHeader('Content-Disposition', "attachment; filename=" . json_encode($fileInfo->getFilename(), JSON_UNESCAPED_UNICODE));
+        //convert to asci because in some cases a request with non-asci characters in the filename can cause issues in some browsers
+        //add a second header with the urlencoded filename for browsers that support it - see https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http for details
+        $encodedFilename = rawurlencode($fileInfo->getFilename());
+        $fallback = StringDataType::transliterate($fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', "attachment; filename="
+            . json_encode($fallback, JSON_UNESCAPED_UNICODE)
+            . "; filename*=UTF-8''{$encodedFilename}");
         return $response;
     }
     
@@ -295,9 +299,13 @@ class HttpFileServerFacade extends AbstractHttpFacade
     protected function createResponseForEmbedding(FileInfoInterface $fileInfo) : ResponseInterface
     {
         $response = $this->createResponseFromFile($fileInfo);
-        //encode the filename here because in Chrome a filename with a `,` needs to be wrapped in quotation marks,
-        //else Chrome will shown a network error when trying to download that file
-        $response = $response->withHeader('Content-Disposition', 'inline; filename=' . json_encode($fileInfo->getFilename(), JSON_UNESCAPED_UNICODE));
+        //convert to asci because in some cases a request with non-asci characters in the filename can cause issues in some browsers
+        //add a second header with the urlencoded filename for browsers that support it - see https://stackoverflow.com/questions/93551/how-to-encode-the-filename-parameter-of-content-disposition-header-in-http for details
+        $encodedFilename = rawurlencode($fileInfo->getFilename());
+        $fallback = StringDataType::transliterate($fileInfo->getFilename());
+        $response = $response->withHeader('Content-Disposition', "inline; filename="
+            . json_encode($fallback, JSON_UNESCAPED_UNICODE)
+            . "; filename*=UTF-8''{$encodedFilename}");
         return $response;
     }
     
