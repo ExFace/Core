@@ -1,7 +1,11 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * Exception thrown when exec() calls fail.
@@ -66,7 +70,8 @@ class CliExecException extends RuntimeException
             
             $this->output = $output;
         } else {
-            $message = $output;
+            // TODO search for the error here???
+            $message = 'Unknown command line error';
             $this->output = [$output];
         }
         parent::__construct($message, null, $previous);
@@ -101,5 +106,27 @@ class CliExecException extends RuntimeException
     public function getType() : ?string
     {
         return $this->type;
+    }
+    
+    public function createDebugWidget(DebugMessage $debug_widget)
+    {
+        $debug_widget = parent::createDebugWidget($debug_widget);
+        
+        $tab = $debug_widget->createTab();
+        $tab->setCaption('CLI');
+        $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
+            'widget_type' => 'Markdown',
+            'value' => $this->buildMarkdown()
+        ])));
+        $debug_widget->addTab($tab);
+        
+        return $debug_widget;
+    }
+    
+    protected function buildMarkdown() : string
+    {
+        $cliContent = '> ' . $this->getCommand();
+        $cliContent .= "\n\n" . implode("\n", $this->getCliOutput());
+        return MarkdownDataType::escapeCodeBlock($cliContent, 'bash');
     }
 }
