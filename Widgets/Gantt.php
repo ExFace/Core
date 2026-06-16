@@ -365,4 +365,19 @@ class Gantt extends DataTree
         $this->viewModeColumnWidthYear = $value;
         return $this;
     }
+
+    /**
+     * This property is deprecated and do not work in the new Gantt version! Don't use it! It will be removed in the next versions.
+     * 
+     * @uxon-property auto_relayout_on_change
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setAutoRelayoutOnChange(bool $value) : Gantt
+    {
+        return $this;
+    }
 }
