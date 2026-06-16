@@ -3631,7 +3631,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), HexadecimalNumberDataType::class);
                 break;
         }
-        return $this->prepareWhereValue($value, $dataType);
+        return $this->prepareWhereValue($value, $dataType, $dataAddressProps);
     }
 
     /**

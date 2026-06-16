@@ -496,39 +496,4 @@ SQL;
 
         return $string;
     }
-
-    /**
-     * Normalize static-formula values used in JOIN placeholders for PostgreSQL.
-     *
-     * PostgreSQL may interpret values like `0x...` or bare hex strings as numeric literals,
-     * causing type-mismatch errors when compared to uuid columns. To avoid this, we quote
-     * common hex/UUID representations. If a value matches the hyphenated UUID format, append
-     * an explicit `::uuid` cast which is commonly used in PostgreSQL.
-     *
-     * @param mixed $value
-     * @return mixed
-     */
-    protected function preparePlaceholderValue($value)
-    {
-        if (!is_string($value)) {
-            return $value;
-        }
-
-        // 0x... hex literal -> strip 0x and quote
-        if (preg_match('/^0x[0-9a-fA-F]+$/', $value)) {
-            return "'" . substr($value, 2) . "'";
-        }
-
-        // 32-char hex (no 0x) -> quote
-        if (preg_match('/^[0-9a-fA-F]{32}$/', $value)) {
-            return "'" . $value . "'";
-        }
-
-        // UUID with hyphens -> quote and cast to uuid
-        if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $value)) {
-            return "'" . $value . "'::uuid";
-        }
-
-        return $value;
-    }
 }
