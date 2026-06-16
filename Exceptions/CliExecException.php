@@ -52,12 +52,18 @@ class CliExecException extends RuntimeException
                         $this->type = self::TYPE_WARNING;
                         $message = $line;
                         break 2;
-                    case StringDataType::startsWith($line, self::TYPE_ERROR . ': '):
+                    case StringDataType::startsWith($line, self::TYPE_SUCCESS . ': '):
                         $this->type = self::TYPE_SUCCESS;
                         $message = $line;
                         break; // do not break the foreach() here - keep looking for errors/warnings
                 }
             }
+            
+            if(empty($message)) {
+                $message = $output[0] ?? '';
+                $this->type = self::TYPE_WARNING;
+            }
+            
             $this->output = $output;
         } else {
             $message = $output;

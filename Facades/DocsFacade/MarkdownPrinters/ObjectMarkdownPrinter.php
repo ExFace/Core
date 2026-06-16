@@ -1,26 +1,25 @@
 <?php
-
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
-
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaRelationBrokenError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\QueryBuilderFactory;
-use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use Respect\Validation\Rules\Length;
 
 /**
  * Builds a Markdown documentation view for a meta object and its related objects.
@@ -29,7 +28,7 @@ use Respect\Validation\Rules\Length;
  * optionally walk through relation attributes to print child objects up to a
  * configurable depth.
  */
-class ObjectMarkdownPrinter extends AbstractMarkdownPrinter //implements MarkdownPrinterInterface
+class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownInstancePrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
@@ -59,6 +58,18 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter //implements Markdow
         $this->objectIdOrAlias = $this->normalize($objectId);
         $this->headingLevel = $headingLevel;
         $this->relationDepth = $relationDepth;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see MarkdownInstancePrinterInterface::constructForInstance()
+     */
+    public static function constructForInstance(object $instance) : MarkdownPrinterInterface
+    {
+        if (! $instance instanceof MetaObjectInterface) {
+            throw new InvalidArgumentException('Cannot use ObjectMarkdownPrinter on ' . get_class($instance));
+        }
+        return new self($instance->getWorkbench(), $instance->getId());
     }
 
     /**

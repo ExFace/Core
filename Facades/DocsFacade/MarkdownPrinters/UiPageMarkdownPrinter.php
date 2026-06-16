@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
+use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Facades\DocsFacade;
@@ -13,7 +14,7 @@ use exface\Core\Interfaces\Model\UiPageInterface;
  * 
  * @author Andrej Kabachnik
  */
-class UiPageMarkdownPrinter extends AbstractMarkdownPrinter
+class UiPageMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownInstancePrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
@@ -29,6 +30,15 @@ class UiPageMarkdownPrinter extends AbstractMarkdownPrinter
         $this->workbench = $page->getWorkbench();
         $this->page = $page;
         $this->headingLevel = $headingLevel;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see MarkdownInstancePrinterInterface::constructForInstance()
+     */
+    public static function constructForInstance(object $instance): MarkdownPrinterInterface
+    {
+        return new self($instance);
     }
 
     /**

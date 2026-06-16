@@ -361,6 +361,7 @@
     "TASK.QUEUE.STATUS_QUEUED": "Wartend",
     "TASK.QUEUE.STATUS_INPROGRESS": "In Bearbeitung",
     "TASK.QUEUE.STATUS_ERROR": "Fehler",
+    "TASK.QUEUE.STATUS_TIMEOUT": "Zeitüberschreitung",
     "TASK.QUEUE.STATUS_CANCELED": "Storniert",
     "TASK.QUEUE.STATUS_REPLACED": "Ersetzt",
     "TASK.QUEUE.STATUS_DONE_MANUALLY": "Erledigt manuell",

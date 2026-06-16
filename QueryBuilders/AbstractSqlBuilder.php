@@ -3274,8 +3274,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     if ($formula->isStatic() === false) {
                         throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in SQL JOIN `' . $sqlJoin . '`: the used formula is not static! Only static formulas are supported in data address placeholders!');
                     }
-                    $phVals[$ph] = $formula->evaluate();
-                    continue;
+                    $val = $formula->evaluate();
+                    // Delegate engine-specific normalization of static formula values used in JOIN placeholders
+                    // to allow database-specific builders (e.g. PostgreSQL) to adjust quoting/casting.
+                    $phVals[$ph] = $this->normalizePlaceholderValue($val);
+                    break;
                     
                 // Left-side placeholders like `[#~left:MY_ATTR#]` can be replaced using the same logic as for regular data addresses
                 case StringDataType::startsWith($ph, '~left:'):
@@ -3608,6 +3611,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlComment(string $text) : string
     {
         return '/* ' . str_replace(['/*', '*/'], '', $text) . ' */';
+    }
+
+    /**
+     * Normalize a static formula value that is used as a placeholder inside a SQL JOIN clause.
+     *
+     * Default implementation returns the original value unchanged. Engine-specific builders
+     * can override this method to provide proper quoting/casting for their SQL dialect
+     * (for example, PostgreSQL should quote hex/uuid-like values to avoid numeric interpretation).
+     *
+     * @param mixed $value Value returned by the evaluated formula
+     * @return mixed Normalized value to be substituted into the SQL JOIN
+     */
+    protected function normalizePlaceholderValue($value)
+    {
+        return $value;
     }
 
     /**

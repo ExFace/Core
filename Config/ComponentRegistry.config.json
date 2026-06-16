@@ -1,0 +1,128 @@
+{
+  "object": {
+    "name": "Meta object",
+    "description": "Objects in the metamodel",
+    "uxon_properties": [
+      "object_alias"
+    ],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\MetaObjectSelector",
+      "factory": "\\exface\\Core\\Factories\\MetaObjectFactory::createFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\ObjectMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.OBJECT",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS_WITH_NS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      }
+    }
+  },
+  "action": {
+    "name": "Action",
+    "description": "Actions to be called by widgets, background processes or through facades directly. Aliases refer to prototypes (with default configuration) or action models saved per object",
+    "uxon_properties": [
+      "action_alias"
+    ],
+    "selector":  {
+        "class": "\\exface\\Core\\CommonLogic\\Selectors\\ActionSelector",
+        "factory": "\\exface\\Core\\Factories\\ActionFactory::create"
+    },
+    "prototypes": {
+      "app_subfolder": "Actions",
+      "class_suffix": "Action"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\ActionMarkdownPrinter"
+    },
+    "search_selector_data": [
+      {
+        "object_alias": "exface.Core.OBJECT_ACTION",
+        "filters": {
+          "operator": "OR",
+          "conditions": [
+            {
+              "expression": "ALIAS_WITH_NS",
+              "comparator": "=",
+              "value": "[#~query#]"
+            },
+            {
+              "expression": "NAME",
+              "comparator": "=",
+              "value": "[#~query#]"
+            }
+          ]
+        },
+        "columns": [
+          {
+            "attribute_alias":  "ALIAS_WITH_NS"
+          }
+        ]
+      },
+      {
+        "object_alias": "exface.Core.ACTION",
+        "filters": {
+          "operator": "AND",
+          "conditions": [
+            {
+              "expression": "FILENAME",
+              "comparator": "=",
+              "value": "[#~query#]"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "action": {
+    "name": "UI page",
+    "description": "Pages in the main menu of the app",
+    "uxon_properties": [
+      "page_alias"
+    ],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\UiPageSelector",
+      "factory": "\\exface\\Core\\Factories\\UiPageFactory::create"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\UiPageMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.PAGE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "ALIAS"
+        }
+      ]
+    }
+  }
+}
