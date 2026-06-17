@@ -505,10 +505,9 @@ SQL;
      * common hex/UUID representations. If a value matches the hyphenated UUID format, append
      * an explicit `::uuid` cast which is commonly used in PostgreSQL.
      *
-     * @param mixed $value
-     * @return mixed
+     * @see AbstractSqlBuilder::preparePlaceholderValue()
      */
-    protected function preparePlaceholderValue($value)
+    protected function preparePlaceholderValue($value, ?DataTypeInterface $dataType = null, array $dataAddressProps = [])
     {
         if (!is_string($value)) {
             return $value;
