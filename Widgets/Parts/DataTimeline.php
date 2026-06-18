@@ -5,7 +5,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-
 /**
  * DataTimeline configuration for data-widgets like Scheduler or certain Chart types.
  * 
@@ -19,42 +18,37 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * ## Examples
  * 
+ * Take one of the default Gantt views to build your own Gantt view! 
+ *
+ * - ###Days:
+ * 
  * ```
  * {
  *      "timeline": {
  *          "views": [
- *              {
- *                  "name": "Days",
- *                  "icon": "",
- *                  "description": "Show as many days as there is space on the screen"
- *                  "granularity": "days",
- *                  "column_width": "38",
- *                  "highlight_weekends": true
- *              },
- *              {
- *                  "name": "Week per year",
- *                  "description": "Show the weeks of exactly one year"
- *                  "granularity": "weeks",
- *                  "visible_interval": "year"
- *                  "column_width": "70",
- *                  "header_lines": [
- *                      {
- *                          "interval": "year",
- *                          "format": "YYYY"
- *                      },
- *                      {
- *                          "interval": "Year",
- *                          "format": "ww"
- *                      }
- *                  ]
- *              },
- *              {
- *                  "name": "Super cool custom view",
- *                  "description": "Show days grouped by week with highlighted weekends"
- *                  "granularity": "weeks",
- *                  "bordered_interval": "month",
- *                  "border_color": "darkgray",
- *                  "column_width": "40"
+ *                 {
+ *                      "name": "Tage",
+ *                      "description": "Tagesansicht",
+ *                      "granularity": "days",
+ *                      "date_format": "yyyy-MM-dd",
+ *                      "padding": "7d",
+ *                      "header_lines": [
+ *                          {
+ *                              "interval": "month",
+ *                              "date_format": "",
+ *                              "date_format_at_border": "MMMM"
+ *                          },
+ *                          {
+ *                              "interval": "day",
+ *                              "date_format": "dd"
+ *                          }
+ *                      ],
+ *                      "thick_lines": [
+ *                          {
+ *                              "interval": "week",
+ *                              "value": 1,
+ *                          }
+ *                      ]
  *              },
  *          ]
  *      }    
@@ -62,35 +56,100 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * ```
  *
+ * - ###Weeks:
+ * 
  * ```
  * {
- *      "timeline": {
- *          "granularity": "days",
- *          "highlight_weekends": true,
- *          "views": [
- *              {
- *                  "name": "Days",
- *                  "description": "Show as many days as there is space on the screen"
- *                  "column_width": "38"
- *              },
- *              {
- *                  "name": "Days per week",
- *                  "description": "Show the days of exactly one week"
- *                  "interval": "week"
- *              },
- *              {
- *                  "name": "All",
- *                  "description": "Show the entire project timeline in months"
- *                  "interval": "month",
- *                  "visible_interval": "all"
- *              },
- *          ]
- *      }
+ *      "name": "Wochen",
+ *      "description": "Wochenansicht",
+ *      "granularity": "weeks",
+ *      "date_format": "yyyy-MM-dd",
+ *      "column_width": 140,
+ *      "padding": "1m",
+ *      "upper_text_frequency": 4,
+ *      "header_lines": [
+ *          {
+ *              "interval": "month",
+ *              "date_format": "",
+ *              "date_format_at_border": "MMMM"
+ *          },
+ *          {
+ *              "date_format": "~weekRange"
+ *          }
+ *      ],
+ *      "thick_lines": [
+ *          {
+ *              "interval": "month_range_in_days",
+ *              "from": 1,
+ *              "to": 7
+ *          }
+ *      ]
  * }
- *
+ * 
  * ```
  * 
- * @author Andrej Kabachnik
+ * - ###Calendar weeks:
+ * 
+ * ```
+ * {
+ *      "name": "Kalenderwochen",
+ *      "description": "Kalenderwochenansicht",
+ *      "granularity": "weeks",
+ *      "date_format": "yyyy-MM-dd",
+ *      "column_width": 35,
+ *      "upper_text_frequency": 4,
+ *      "header_lines": [
+ *          {
+ *              "interval": "month",
+ *              "date_format": "",
+ *              "date_format_at_border": "MMMM"
+ *          },
+ *          {
+ *              "date_format": "w"
+ *          }
+ *      ],
+ *      "thick_lines": [
+ *          {
+ *              "interval": "year_quarter",
+ *              "color": "#7c7c7c"
+ *          }
+ *      ]
+ * }
+ * 
+ * ```
+ * 
+ * - ###Months:
+ * 
+ * ```
+ * {
+ *      "name": "Monate",
+ *      "description": "Monatsansicht",
+ *      "granularity": "months",
+ *      "date_format": "yyyy-MM",
+ *      "column_width": 120,
+ *      "snap_at": "weekly",
+ *      "padding": "2m",
+ *      "header_lines": [
+ *          {
+ *              "interval": "year",
+ *              "date_format_at_border": "yyyy"
+ *          },
+ *          {
+ *              "date_format": "MMMM"
+ *          }
+ *      ],
+ *      "thick_lines": [
+ *          {
+ *              "interval": "month_range_in_days",
+ *              "from": 1,
+ *              "to": 7,
+ *              "color": "#BABABA"
+ *          }
+ *      ]
+ * }
+ * ```
+ * 
+ * @author Andrej Kabachnik, Sergej Riel
  *
  */
 class DataTimeline implements WidgetPartInterface
@@ -98,6 +157,8 @@ class DataTimeline implements WidgetPartInterface
     use DataWidgetPartTrait;
     
     const GRANULARITY_DAYS = 'days';
+    const GRANULARITY_QUARTER_DAYS  = 'quarter_days';
+    const GRANULARITY_HALF_DAYS  = 'half_days';
     const GRANULARITY_DAYS_PER_WEEK = 'days_per_week';
     const GRANULARITY_DAYS_PER_MONTH = 'days_per_month';
     const GRANULARITY_HOURS = 'hours';
@@ -110,6 +171,7 @@ class DataTimeline implements WidgetPartInterface
     const INTERVAL_WEEK = 'week';
     const INTERVAL_MONTH = 'month';
     const INTERVAL_YEAR = 'year';
+    const INTERVAL_DECADE = 'decade';
     
     private ?array $views = null;
     private ?UxonObject $viewsUxon = null;
@@ -145,7 +207,7 @@ class DataTimeline implements WidgetPartInterface
      * Initial zoom level: `hours`, `days`, `weeks`, `months`, `years` or `all`
      * 
      * @uxon-property granularity
-     * @uxon-type [hours,days,days_per_week,days_per_month,weeks,months,years,all]
+     * @uxon-type [hours,days,quarter_days,half_day,days_per_week,days_per_month,weeks,months,years,all]
      * @uxon-default hour
      * 
      * @param string $value
@@ -248,24 +310,99 @@ class DataTimeline implements WidgetPartInterface
             if ($this->viewsUxon === null) {
                 $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
                 // IDEA get defaults from widget? Different defaults for Gantt and Scheduler?
+                // Info: This defaults are similar to frappe-gantt defaults.
                 $this->views = [
                     new DataTimelineView($this, new UxonObject([
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_DAY'),
-                        'granularity' => DataTimelineView::GRANULARITY_DAYS,
                         'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_DAY_DESCRIPTION'),
-                        'column_width' => 38
+                        'granularity' => DataTimelineView::GRANULARITY_DAYS,
+                        'date_format' => 'yyyy-MM-dd',
+                        'padding' => '7d',
+                        'header_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimeline::INTERVAL_MONTH, 
+                                'date_format' => '', 
+                                'date_format_at_border' => 'MMMM'
+                            ], [
+                                'interval' => DataTimeline::INTERVAL_DAY, 
+                                'date_format' => 'dd',
+                            ]
+                        ]),
+                        'thick_lines' => new UxonObject([[
+                            'interval' => 'week',
+                            'value' => 1
+                        ]])
                     ])),
                     new DataTimelineView($this, new UxonObject([
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_WEEK'),
-                        'granularity' => DataTimelineView::GRANULARITY_WEEKS,
                         'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_WEEK_DESCRIPTION'),
-                        'column_width' => 140
+                        'granularity' => DataTimelineView::GRANULARITY_WEEKS,
+                        'date_format' => 'yyyy-MM-dd',
+                        'column_width' => 140,
+                        'padding' => '1m',
+                        'upper_text_frequency' => 4,
+                        'header_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimeline::INTERVAL_MONTH, 
+                                'date_format' => '', 
+                                'date_format_at_border' => 'MMMM'
+                            ], [
+                                'date_format' => '~weekRange',
+                            ]
+                        ]),
+                        'thick_lines' => new UxonObject([[
+                            'interval' => 'month_range_in_days',
+                            'from' => 1,
+                            'to' => 7
+                        ]])
+                    ])),
+                    new DataTimelineView($this, new UxonObject([
+                        'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_CALENDAR_WEEKS'),
+                        'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_CALENDAR_WEEKS_DESCRIPTION'),
+                        'granularity' => DataTimelineView::GRANULARITY_WEEKS,
+                        'date_format' => 'yyyy-MM-dd',
+                        'column_width' => 35,
+                        'upper_text_frequency' => 4,
+                        'header_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimeline::INTERVAL_MONTH,
+                                'date_format' => '',
+                                'date_format_at_border' => 'MMMM'
+                            ], [
+                                'date_format' => 'w',
+                            ]
+                        ]),
+                        'thick_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimelineThicklines::INTERVAL_YEAR_QUARTER,
+                                'color' => '#7c7c7c',
+                            ]
+                        ]),
                     ])),
                     new DataTimelineView($this, new UxonObject([
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH'),
-                        'granularity' => DataTimelineView::GRANULARITY_MONTHS,
                         'description' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_MONTH_DESCRIPTION'),
-                        'column_width' => 20
+                        'granularity' => DataTimelineView::GRANULARITY_MONTHS,
+                        'date_format' => 'yyyy-MM',
+                        'column_width' => 120,
+                        'snap_at' => DataTimelineView::SNAP_AT_WEEKLY,
+                        'padding' => '2m',
+                        'header_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimeline::INTERVAL_YEAR,
+                                'date_format_at_border' => 'yyyy'
+                            ], [
+                                'date_format' => 'MMMM',
+                            ]
+                        ]),
+                        'thick_lines' => new UxonObject([
+                            [
+                                'interval' => DataTimelineThicklines::INTERVAL_MONTH_RANGE_IN_DAYS,
+                                'from' => 1,
+                                'to' => 7,
+                                'color' => '#BABABA',
+                            ]
+                        ])
                     ])),
                 ];
             } else {

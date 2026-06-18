@@ -29,8 +29,6 @@ class Gantt extends DataTree
     
     private $keepScrollPosition = false;
     
-    private $autoRelayoutOnChange = false;
-    
     private $viewModeColumnWidthDay = null;
     
     private $viewModeColumnWidthWeek = null;
@@ -273,31 +271,6 @@ class Gantt extends DataTree
     }
 
     /**
-     * @return bool
-     */
-    public function getAutoRelayoutOnChange() : bool
-    {
-        return $this->autoRelayoutOnChange;
-    }
-
-    /**
-     * Automatically rearrange when dragging/resizing  the taskbars.
-     * It is necessary if multiple bars are at the same row:
-     * 
-     * @uxon-property auto_relayout_on_change
-     * @uxon-type boolean
-     * @uxon-default true
-     * 
-     * @param bool $value
-     * @return $this
-     */
-    public function setAutoRelayoutOnChange(bool $value) : Gantt
-    {
-        $this->autoRelayoutOnChange = $value;
-        return $this;
-    }
-
-    /**
      * @return int|null
      */
     public function getViewModeColumnWidthDay() : ?int
@@ -390,6 +363,21 @@ class Gantt extends DataTree
     public function setViewModeColumnWidthYear(int $value): Gantt
     {
         $this->viewModeColumnWidthYear = $value;
+        return $this;
+    }
+
+    /**
+     * This property is deprecated and do not work in the new Gantt version! Don't use it! It will be removed in the next versions.
+     * 
+     * @uxon-property auto_relayout_on_change
+     * @uxon-type bool
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return $this
+     */
+    public function setAutoRelayoutOnChange(bool $value) : Gantt
+    {
         return $this;
     }
 }
