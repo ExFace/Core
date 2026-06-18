@@ -22,6 +22,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Exceptions\UxonParserError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * Groups multiple conditions and/or condition groups using a logical operator like AND, OR, etc.
@@ -307,21 +308,22 @@ class ConditionGroup implements ConditionGroupInterface
      * {@inheritdoc}
      * @see ConditionGroupInterface::rebase()
      */
-    public function rebase(string $relation_path_to_new_base_object, callable $conditionFilterCallback = null) : ConditionGroupInterface
+    public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject, ?callable $conditionFilterCallback = null) : ConditionGroupInterface
     {
+        $relationPathStr = $relationPathToNewBaseObject instanceof MetaRelationPathInterface ? $relationPathToNewBaseObject->toString() : $relationPathToNewBaseObject;
         // Do nothing, if the relation path is empty (nothing to rebase...)
-        if (! $relation_path_to_new_base_object) {
+        if (! $relationPathToNewBaseObject) {
             return $this;
         }
         
         if ($this->hasBaseObject() === true) {
-            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relation_path_to_new_base_object), $this->ignoreEmptyValues);
+            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relationPathStr), $this->ignoreEmptyValues);
         } else {
             $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), null, $this->ignoreEmptyValues);
         }
         foreach ($this->getConditions() as $condition) {
             // Remove conditions not matching the filter
-            if (! is_null($conditionFilterCallback) && call_user_func($conditionFilterCallback, $condition, $relation_path_to_new_base_object) === false) {
+            if (! is_null($conditionFilterCallback) && call_user_func($conditionFilterCallback, $condition, $relationPathStr) === false) {
                 continue;
             }
             // Remove conditions not matching the path if required by user
@@ -334,17 +336,16 @@ class ConditionGroup implements ConditionGroupInterface
             
             // Rebase the expression behind the condition and create a new condition from it
             try {
-                $new_expression = $condition->getExpression()->rebase($relation_path_to_new_base_object);
+                $new_condition = $condition->rebase($relationPathToNewBaseObject);
             } catch (ExpressionRebaseImpossibleError $e) {
                 // Silently omit conditions, that cannot be rebased
                 continue;
             }
-            $new_condition = ConditionFactory::createFromExpression($this->exface, $new_expression, $condition->getValue(), $condition->getComparator(), $condition->willIgnoreEmptyValues());
             $result->addCondition($new_condition);
         }
         
         foreach ($this->getNestedGroups() as $group) {
-            $result->addNestedGroup($group->rebase($relation_path_to_new_base_object, $conditionFilterCallback));
+            $result->addNestedGroup($group->rebase($relationPathToNewBaseObject, $conditionFilterCallback));
         }
         
         return $result;
