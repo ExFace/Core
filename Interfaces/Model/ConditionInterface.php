@@ -91,5 +91,12 @@ interface ConditionInterface extends ConditionalExpressionInterface
      * @return bool
      */
     public function willIgnoreEmptyValues() : bool;
-}
 
+    /**
+     * Returns TRUE if this condition applies to aggregated values.
+     * 
+     * @return bool
+     */
+    public function willApplyToAggregatedValues() : bool;
+
+}
