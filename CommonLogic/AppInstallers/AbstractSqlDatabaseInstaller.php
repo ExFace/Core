@@ -171,7 +171,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
             yield $indent . 'No comparison possible Schema dump not found.';
             return;
         }
-        //Soll Lokal
+        //Soll Local (app)
         $schema = file_get_contents($schemaFile);
         //Ist Server
         $tmpSchema = $this->buildSqlSchema();
@@ -179,11 +179,11 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         $diffs = $this->performComparison($tmpSchema, $schema);
         
         if (empty($diffs)) {
-            yield $indent . 'The schemas matches fully' . PHP_EOL;
+            yield "The schemas matches fully";
         } else {
-            yield $indent . 'Differences found:' . PHP_EOL;
+            echo "Differences found:\n";
             foreach ($diffs as $line) {
-                yield $indent . $this->getOutputIndentation() . $line . PHP_EOL;
+                echo $line . "\n";
             }
         }
     }

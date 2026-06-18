@@ -127,34 +127,40 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
      */
     protected function buildTreeLines(array $diffTree) : array
     {
-        $lines = ['Schema differences'];
+        $lines = [
+            'Schema diff -- a/current-server-schema b/local-app-schema',
+            '',
+            'Required changes to transform the current server schema into the local app schema:',
+        ];
         $sections = [];
         $changedTables = $this->buildChangedTableTree($diffTree['added'], $diffTree['removed']);
 
         if (! empty($diffTree['added_tables'])) {
-            $sections[] = ['Added tables', $diffTree['added_tables'], '+ ', 'tables'];
+            $sections[] = ['Removed tables', $diffTree['added_tables'], '- ', 'tables'];
         }
         if (! empty($diffTree['removed_tables'])) {
-            $sections[] = ['Removed tables', $diffTree['removed_tables'], '- ', 'tables'];
+            $sections[] = ['Added tables', $diffTree['removed_tables'], '+ ', 'tables'];
         }
         if (! empty($changedTables)) {
             $sections[] = ['Changed tables', $changedTables, '', 'changed_tables'];
         }
-        $sections[] = ['Legend', [], '', 'legend'];
 
-        $lastSectionIndex = array_key_last($sections);
-        foreach ($sections as $sectionIndex => $section) {
-            $isLastSection = $sectionIndex === $lastSectionIndex;
-            if ($section[3] === 'tables') {
-                $this->appendTableSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
-            } elseif ($section[3] === 'changed_tables') {
-                $this->appendChangedTableSectionLines($lines, $section[0], $section[1], $isLastSection);
-            } elseif ($section[3] === 'tree') {
-                $this->appendSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
-            } else {
-                $this->appendLegendSectionLines($lines, $section[0], $isLastSection);
+        if (! empty($sections)) {
+            $lastSectionIndex = array_key_last($sections);
+            foreach ($sections as $sectionIndex => $section) {
+                $isLastSection = $sectionIndex === $lastSectionIndex;
+                if ($section[3] === 'tables') {
+                    $this->appendTableSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
+                } elseif ($section[3] === 'changed_tables') {
+                    $this->appendChangedTableSectionLines($lines, $section[0], $section[1], $isLastSection);
+                } elseif ($section[3] === 'tree') {
+                    $this->appendSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
+                }
             }
         }
+
+        $lines[] = '';
+        $this->appendLegendSectionLines($lines, 'Legend:', true);
 
         return $lines;
     }
@@ -171,12 +177,12 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
         $changedTables = [];
         foreach ($addedTree as $table => $lines) {
             foreach ($lines as $line) {
-                $changedTables[$table][] = ['prefix' => '+ ', 'line' => $line];
+                $changedTables[$table][] = ['prefix' => '- ', 'line' => $line];
             }
         }
         foreach ($removedTree as $table => $lines) {
             foreach ($lines as $line) {
-                $changedTables[$table][] = ['prefix' => '- ', 'line' => $line];
+                $changedTables[$table][] = ['prefix' => '+ ', 'line' => $line];
             }
         }
 
@@ -324,18 +330,14 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
      */
     protected function appendLegendSectionLines(array &$lines, string $label, bool $isLastSection) : void
     {
-        $sectionConnector = $isLastSection ? '└── ' : '├── ';
-        $sectionIndent = $isLastSection ? '    ' : '│   ';
         $legend = [
-            '+ only in current database, missing in expected schema dump',
-            '- only in expected schema dump, missing in current database'
+            '- exists in the current server schema, but not in the local app schema',
+            '+ exists in the local app schema, but not in the current server schema'
         ];
-        $lines[] = $sectionConnector . $label;
+        $lines[] = $label;
 
-        $lastLineIndex = array_key_last($legend);
-        foreach ($legend as $index => $line) {
-            $connector = $index === $lastLineIndex ? '└── ' : '├── ';
-            $lines[] = $sectionIndent . $connector . $line;
+        foreach ($legend as $line) {
+            $lines[] = '  ' . $line;
         }
     }
 
