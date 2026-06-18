@@ -162,5 +162,12 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
      * @return bool
      */
     public function containsReverseRelations() : bool;
-}
 
+    /**
+     * Returns TRUE if this path starts with the given path or both are equal
+     * 
+     * @param MetaRelationPathInterface $path
+     * @return bool
+     */
+    public function startsWith(MetaRelationPathInterface $path) : bool;
+}

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
 use exface\Core\Exceptions\InvalidArgumentException;
@@ -350,6 +351,23 @@ class RelationPath implements MetaRelationPathInterface
         }
         
         return $subpath;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::startsWith()
+     */
+    public function startsWith(MetaRelationPathInterface $path) : bool
+    {
+        if (! $this->getStartObject()->isExactly($path->getStartObject())) {
+            return false;
+        }
+        $thisStr = $this->toString();
+        $compareStr = $path->toString();
+        if ($thisStr === $compareStr) {
+            return true;
+        }
+        return StringDataType::startsWith($thisStr, $compareStr . self::RELATION_SEPARATOR);
     }
 
     /**

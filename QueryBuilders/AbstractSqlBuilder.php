@@ -1762,7 +1762,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
         // path we rebase to matches the beginning of the condition's relation path.
         $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
-            if(($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator() && !$condition->appliesToAggregatedValues()) {
+            if(($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator() && !$condition->willApplyToAggregatedValues()) {
                 return false;
             }
 
@@ -2864,7 +2864,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Otherwise just add a regular filter
                 default:
                     $relFilter = $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
-                    $relFilter->getCondition()->setApplyToAggregates($qpart->getCondition()->appliesToAggregatedValues());
+                    $relFilter->getCondition()->setApplyToAggregates($qpart->getCondition()->willApplyToAggregatedValues());
                     break;
             }
 
