@@ -915,4 +915,17 @@ class Condition implements ConditionInterface
     {
         return [$this->getExpression()];
     }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionInterface::rebase()
+     */
+    public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject) : ConditionInterface
+    {
+        $pathStr = $relationPathToNewBaseObject instanceof MetaRelationPathInterface ? $relationPathToNewBaseObject->toString() : $relationPathToNewBaseObject;
+        $new_expression = $this->getExpression()->rebase($pathStr);
+        $new_condition = ConditionFactory::createFromExpression($this->exface, $new_expression, $this->getValue(), $this->getComparator(), $this->willIgnoreEmptyValues());
+        $new_condition->setApplyToAggregates($this->willApplyToAggregatedValues());
+        return $new_condition;
+    }
 }

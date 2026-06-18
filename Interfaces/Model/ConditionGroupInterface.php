@@ -159,17 +159,16 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @return string
      */
     public function getOperator() : string;
-    
+
     /**
      * Returns a condition group with the same conditions, but based on a related object specified by the given relation path.
      *
-     * @see ExpressionInterface::rebase()
-     *
-     * @param string $relation_path_to_new_base_object
-     * @param callable $conditionFilterCallback
+     * @param MetaRelationPathInterface|string $relationPathToNewBaseObject
+     * @param callable|null $conditionFilterCallback
      * @return ConditionGroupInterface
+     * @see ExpressionInterface::rebase()
      */
-    public function rebase(string $relation_path_to_new_base_object, callable $conditionFilterCallback = null) : ConditionGroupInterface;
+    public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject, ?callable $conditionFilterCallback = null) : ConditionGroupInterface;
     
     /**
      * Returns a condition group based on the new object, that only includes conditions, that
