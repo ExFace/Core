@@ -1134,7 +1134,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *
      * @return bool
      */
-    public function appliesToAggregatedValues() : bool
+    public function willApplyToAggregatedValues() : bool
     {
         return $this->appliesToAggregatedValues;
     }

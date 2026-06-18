@@ -41,7 +41,7 @@ trait JqueryFilterTrait {
   "expression" : "{$widget->getAttributeAlias()}",
   "comparator" : {$this->buildJsComparatorGetter()},
   "value" : $value,
-  "apply_to_aggregates" : {$this->escapeBool($widget->appliesToAggregatedValues())},
+  "apply_to_aggregates" : {$this->escapeBool($widget->willApplyToAggregatedValues())},
   {$metaObjectAliasJs}
 }
 JSON;
