@@ -129,31 +129,58 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     {
         $lines = ['Schema differences'];
         $sections = [];
+        $changedTables = $this->buildChangedTableTree($diffTree['added'], $diffTree['removed']);
 
         if (! empty($diffTree['added_tables'])) {
             $sections[] = ['Added tables', $diffTree['added_tables'], '+ ', 'tables'];
         }
-        if (! empty($diffTree['added'])) {
-            $sections[] = [$this->buildDifferenceSectionLabel($diffTree['added'], 'Added columns', 'Added in current schema'), $diffTree['added'], '+ ', 'tree'];
-        }
         if (! empty($diffTree['removed_tables'])) {
             $sections[] = ['Removed tables', $diffTree['removed_tables'], '- ', 'tables'];
         }
-        if (! empty($diffTree['removed'])) {
-            $sections[] = [$this->buildDifferenceSectionLabel($diffTree['removed'], 'Removed columns', 'Removed from previous schema'), $diffTree['removed'], '- ', 'tree'];
+        if (! empty($changedTables)) {
+            $sections[] = ['Changed tables', $changedTables, '', 'changed_tables'];
         }
+        $sections[] = ['Legend', [], '', 'legend'];
 
         $lastSectionIndex = array_key_last($sections);
         foreach ($sections as $sectionIndex => $section) {
             $isLastSection = $sectionIndex === $lastSectionIndex;
             if ($section[3] === 'tables') {
                 $this->appendTableSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
-            } else {
+            } elseif ($section[3] === 'changed_tables') {
+                $this->appendChangedTableSectionLines($lines, $section[0], $section[1], $isLastSection);
+            } elseif ($section[3] === 'tree') {
                 $this->appendSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
+            } else {
+                $this->appendLegendSectionLines($lines, $section[0], $isLastSection);
             }
         }
 
         return $lines;
+    }
+
+    /**
+     * Builds one table-grouped tree containing added and removed schema lines.
+     *
+     * @param array $addedTree
+     * @param array $removedTree
+     * @return array
+     */
+    protected function buildChangedTableTree(array $addedTree, array $removedTree) : array
+    {
+        $changedTables = [];
+        foreach ($addedTree as $table => $lines) {
+            foreach ($lines as $line) {
+                $changedTables[$table][] = ['prefix' => '+ ', 'line' => $line];
+            }
+        }
+        foreach ($removedTree as $table => $lines) {
+            foreach ($lines as $line) {
+                $changedTables[$table][] = ['prefix' => '- ', 'line' => $line];
+            }
+        }
+
+        return $changedTables;
     }
 
     /**
@@ -252,6 +279,63 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
                 $connector = $index === $lastLineIndex ? '└── ' : '├── ';
                 $lines[] = $sectionIndent . $contextIndent . $connector . $linePrefix . $line;
             }
+        }
+    }
+
+    /**
+     * Appends a table-grouped section with added and removed lines mixed by table.
+     *
+     * @param string[] $lines
+     * @param string $label
+     * @param array $sectionTree
+     * @param bool $isLastSection
+     * @return void
+     */
+    protected function appendChangedTableSectionLines(array &$lines, string $label, array $sectionTree, bool $isLastSection) : void
+    {
+        $sectionConnector = $isLastSection ? '└── ' : '├── ';
+        $sectionIndent = $isLastSection ? '    ' : '│   ';
+        $lines[] = $sectionConnector . $label;
+
+        $tables = array_keys($sectionTree);
+        $lastTableIndex = array_key_last($tables);
+        foreach ($tables as $tableIndex => $table) {
+            $isLastTable = $tableIndex === $lastTableIndex;
+            $tableConnector = $isLastTable ? '└── ' : '├── ';
+            $tableIndent = $isLastTable ? '    ' : '│   ';
+            $lines[] = $sectionIndent . $tableConnector . $table;
+
+            $diffLines = $sectionTree[$table];
+            $lastLineIndex = array_key_last($diffLines);
+            foreach ($diffLines as $index => $diffLine) {
+                $connector = $index === $lastLineIndex ? '└── ' : '├── ';
+                $lines[] = $sectionIndent . $tableIndent . $connector . $diffLine['prefix'] . $diffLine['line'];
+            }
+        }
+    }
+
+    /**
+     * Appends the schema comparison legend explaining the difference prefixes.
+     *
+     * @param string[] $lines
+     * @param string $label
+     * @param bool $isLastSection
+     * @return void
+     */
+    protected function appendLegendSectionLines(array &$lines, string $label, bool $isLastSection) : void
+    {
+        $sectionConnector = $isLastSection ? '└── ' : '├── ';
+        $sectionIndent = $isLastSection ? '    ' : '│   ';
+        $legend = [
+            '+ only in current database, missing in expected schema dump',
+            '- only in expected schema dump, missing in current database'
+        ];
+        $lines[] = $sectionConnector . $label;
+
+        $lastLineIndex = array_key_last($legend);
+        foreach ($legend as $index => $line) {
+            $connector = $index === $lastLineIndex ? '└── ' : '├── ';
+            $lines[] = $sectionIndent . $connector . $line;
         }
     }
 
