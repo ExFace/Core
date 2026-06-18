@@ -11,6 +11,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataWriteEvent;
 use exface\Core\Events\DataSheet\OnBeforeSaveDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataWriteEvent;
 use exface\Core\Events\DataSheet\OnSaveDataEvent;
+use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetListInterface;
@@ -1143,6 +1144,38 @@ class DataSheet implements DataSheetInterface
         
         $filterVals = array_unique($relThisSheetKeyCol->getValues());
         $nestedSheet->getFilters()->addConditionFromValueArray($relPathFromNestedSheet->toString(), $filterVals);
+        
+        // Filter the nested data using filters from the parent sheet if
+        // - condition is not empty
+        // - condition has a relation path, and it starts with the relation to the nested sheet
+        // - condition has `apply_to_aggregates` set to TRUE
+        // IDEA should we somehow make this configurable? It is hard for the designer to understand, which filters
+        // will apply to nested data and which won't
+        // NOTE: right now only level-1 conditions are applied - no nested condition groups. It is unclear, how
+        // to apply nested groups relyably as they might include conditions, that cannot be rebased.
+        foreach ($this->getFilters()->getConditions() as $cond) {
+            if ($cond->isEmpty()) {
+                continue;
+            }
+            $condExpr = $cond->getExpression();
+            if (! $condExpr->isMetaAttribute()) {
+                continue;
+            }
+            $condAttr = $condExpr->getAttribute();
+            if (
+                $condAttr->isRelated()
+                && $condAttr->getRelationPath()->startsWith($relPathToNestedSheet)
+                && $cond->willApplyToAggregatedValues()
+            ) {
+                try {
+                    $nestedCond = $cond->rebase($relPathToNestedSheet);
+                    $nestedSheet->getFilters()->addCondition($nestedCond);
+                } catch (ExpressionRebaseImpossibleError $e) {
+                    continue;
+                }
+            }
+        }
+        
         $counter = $nestedSheet->dataRead();
         
         foreach ($relThisSheetKeyCol->getValues() as $rowIdx => $thisSheetKey) {
