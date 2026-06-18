@@ -29,17 +29,38 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
      */
     public function buildTree(string $currentSchema, string $previousSchema) : array
     {
-        $current = $this->normalizeSchema($currentSchema);
-        $previous = $this->normalizeSchema($previousSchema);
-        $currentTables = array_fill_keys($current['tables'], true);
-        $previousTables = array_fill_keys($previous['tables'], true);
+        $currentLines = $this->normalizeSchema($currentSchema);
+        $previousLines = $this->normalizeSchema($previousSchema);
+        $currentTableNames = $this->getTables($currentLines);
+        $previousTableNames = $this->getTables($previousLines);
+        $currentTables = array_fill_keys($currentTableNames, true);
+        $previousTables = array_fill_keys($previousTableNames, true);
 
         return [
-            'added_tables' => $this->buildTableDifference($current['tables'], $previousTables),
-            'removed_tables' => $this->buildTableDifference($previous['tables'], $currentTables),
-            'added' => $this->buildDifferenceTree($current['records'], $previous['records'], $previousTables),
-            'removed' => $this->buildDifferenceTree($previous['records'], $current['records'], $currentTables),
+            'added_tables' => $this->buildTableDifference($currentTableNames, $previousTables),
+            'removed_tables' => $this->buildTableDifference($previousTableNames, $currentTables),
+            'added' => $this->buildDifferenceTree($currentLines, $previousLines, $previousTables),
+            'removed' => $this->buildDifferenceTree($previousLines, $currentLines, $currentTables),
         ];
+    }
+
+    /**
+     * Collects all table names and fallback contexts from schema lines.
+     *
+     * @param SqlSchemaLine[] $schemaLines
+     * @return string[]
+     */
+    protected function getTables(array $schemaLines) : array
+    {
+        $tables = [];
+        foreach ($schemaLines as $schemaLine) {
+            $tableName = $schemaLine->getTableName();
+            if ($tableName !== null) {
+                $tables[$tableName] = true;
+            }
+        }
+
+        return array_keys($tables);
     }
 
     /**
@@ -62,34 +83,37 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Builds a context grouped tree of records from $from that are missing in $against.
+     * Builds a context grouped tree of schema lines from $from that are missing in $against.
      *
-     * @param array $from
-     * @param array $against
+     * @param SqlSchemaLine[] $from
+     * @param SqlSchemaLine[] $against
      * @param array $againstTables
      * @return array
      */
     protected function buildDifferenceTree(array $from, array $against, array $againstTables) : array
     {
         $againstKeys = [];
-        foreach ($against as $record) {
-            $againstKeys[$record['key']] = true;
+        foreach ($against as $schemaLine) {
+            $againstKeys[$schemaLine->getComparisonIdentifier()] = true;
         }
 
         $diffTree = [];
-        foreach ($from as $record) {
-            if (isset($againstKeys[$record['key']])) {
-                continue;
-            }
-            if ($record['table'] !== null && ! isset($againstTables[$record['table']])) {
+        foreach ($from as $schemaLine) {
+            $comparisonIdentifier = $schemaLine->getComparisonIdentifier();
+            if (isset($againstKeys[$comparisonIdentifier])) {
                 continue;
             }
 
-            $schemaContext = $record['context'];
+            $tableName = $schemaLine->getTableName();
+            if ($tableName !== null && ! isset($againstTables[$tableName])) {
+                continue;
+            }
+
+            $schemaContext = $tableName ?? 'Schema root';
             if (! isset($diffTree[$schemaContext])) {
                 $diffTree[$schemaContext] = [];
             }
-            $diffTree[$schemaContext][] = $record['line'];
+            $diffTree[$schemaContext][] = $schemaLine->getLine();
         }
 
         return $diffTree;
@@ -232,20 +256,20 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Normalizes a schema dump into comparable records and table contexts.
+     * Normalizes a schema dump into comparable schema lines.
      *
      * @param string $schema
-     * @return array
+     * @return SqlSchemaLine[]
      */
     protected function normalizeSchema(string $schema) : array
     {
         $lines = preg_split('/\r\n|\r|\n/', $schema);
-        $schemaRecords = [];
-        $tables = [];
-        $schemaContext = 'Schema root';
+        $schemaLines = [];
+        $schemaContext = null;
         $currentTable = null;
 
-        foreach ($lines as $line) {
+        foreach ($lines as $lineIndex => $line) {
+            $lineNumber = $lineIndex + 1;
             $normalizedLine = trim($line, " \t,");
             if ($normalizedLine === '') {
                 continue;
@@ -254,7 +278,7 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
             if ($this->isSchemaStructureLine($normalizedLine)) {
                 if ($this->isTableEndLine($normalizedLine)) {
                     $currentTable = null;
-                    $schemaContext = 'Schema root';
+                    $schemaContext = null;
                 }
                 continue;
             }
@@ -263,7 +287,6 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
             if ($createdTable !== null) {
                 $schemaContext = $createdTable;
                 $currentTable = $createdTable;
-                $tables[$currentTable] = true;
                 continue;
             }
 
@@ -271,24 +294,19 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
             if ($statementTable !== null) {
                 $schemaContext = $statementTable;
                 $currentTable = $statementTable;
-                $tables[$currentTable] = true;
             } elseif (! $this->isIndentedLine($line)) {
                 $schemaContext = $this->extractGenericStatementContext($normalizedLine);
                 $currentTable = null;
             }
 
-            $schemaRecords[] = [
-                'line' => $normalizedLine,
-                'context' => $schemaContext,
-                'table' => $currentTable,
-                'key' => $schemaContext . "\n" . $normalizedLine,
-            ];
+            $schemaLines[] = new SqlSchemaLine(
+                $normalizedLine,
+                $currentTable ?? $schemaContext,
+                $lineNumber
+            );
         }
 
-        return [
-            'records' => $schemaRecords,
-            'tables' => array_keys($tables),
-        ];
+        return $schemaLines;
     }
 
     /**
