@@ -37,10 +37,10 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
         $previousTables = array_fill_keys($previousTableNames, true);
 
         return [
-            'added_tables' => $this->buildTableDifference($currentTableNames, $previousTables),
-            'removed_tables' => $this->buildTableDifference($previousTableNames, $currentTables),
-            'added' => $this->buildDifferenceTree($currentLines, $previousLines, $previousTables),
-            'removed' => $this->buildDifferenceTree($previousLines, $currentLines, $currentTables),
+            'remove_tables' => $this->buildTableDifference($currentTableNames, $previousTables),
+            'add_tables' => $this->buildTableDifference($previousTableNames, $currentTables),
+            'remove' => $this->buildDifferenceTree($currentLines, $previousLines, $previousTables),
+            'add' => $this->buildDifferenceTree($previousLines, $currentLines, $currentTables),
         ];
     }
 
@@ -130,19 +130,19 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
         $lines = [
             'Schema diff -- a/current-server-schema b/local-app-schema',
             '',
-            'Required changes to transform the current server schema into the local app schema:',
+            'Changes to transform the current DataConnection schema into the exported schema in the app:',
         ];
         $sections = [];
-        $changedTables = $this->buildChangedTableTree($diffTree['added'], $diffTree['removed']);
+        $changeTables = $this->buildChangeTableTree($diffTree['remove'], $diffTree['add']);
 
-        if (! empty($diffTree['added_tables'])) {
-            $sections[] = ['Removed tables', $diffTree['added_tables'], '- ', 'tables'];
+        if (! empty($diffTree['remove_tables'])) {
+            $sections[] = ['Remove tables', $diffTree['remove_tables'], '- ', 'tables'];
         }
-        if (! empty($diffTree['removed_tables'])) {
-            $sections[] = ['Added tables', $diffTree['removed_tables'], '+ ', 'tables'];
+        if (! empty($diffTree['add_tables'])) {
+            $sections[] = ['Add tables', $diffTree['add_tables'], '+ ', 'tables'];
         }
-        if (! empty($changedTables)) {
-            $sections[] = ['Changed tables', $changedTables, '', 'changed_tables'];
+        if (! empty($changeTables)) {
+            $sections[] = ['Change tables', $changeTables, '', 'change_tables'];
         }
 
         if (! empty($sections)) {
@@ -151,8 +151,8 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
                 $isLastSection = $sectionIndex === $lastSectionIndex;
                 if ($section[3] === 'tables') {
                     $this->appendTableSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
-                } elseif ($section[3] === 'changed_tables') {
-                    $this->appendChangedTableSectionLines($lines, $section[0], $section[1], $isLastSection);
+                } elseif ($section[3] === 'change_tables') {
+                    $this->appendChangeTableSectionLines($lines, $section[0], $section[1], $isLastSection);
                 } elseif ($section[3] === 'tree') {
                     $this->appendSectionLines($lines, $section[0], $section[1], $section[2], $isLastSection);
                 }
@@ -166,27 +166,27 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Builds one table-grouped tree containing added and removed schema lines.
+    * Builds one table-grouped tree containing remove and add schema lines.
      *
-     * @param array $addedTree
-     * @param array $removedTree
+     * @param array $removeTree
+     * @param array $addTree
      * @return array
      */
-    protected function buildChangedTableTree(array $addedTree, array $removedTree) : array
+    protected function buildChangeTableTree(array $removeTree, array $addTree) : array
     {
-        $changedTables = [];
-        foreach ($addedTree as $table => $lines) {
+        $changeTables = [];
+        foreach ($removeTree as $table => $lines) {
             foreach ($lines as $line) {
-                $changedTables[$table][] = ['prefix' => '- ', 'line' => $line];
+                $changeTables[$table][] = ['prefix' => '- ', 'line' => $line];
             }
         }
-        foreach ($removedTree as $table => $lines) {
+        foreach ($addTree as $table => $lines) {
             foreach ($lines as $line) {
-                $changedTables[$table][] = ['prefix' => '+ ', 'line' => $line];
+                $changeTables[$table][] = ['prefix' => '+ ', 'line' => $line];
             }
         }
 
-        return $changedTables;
+        return $changeTables;
     }
 
     /**
@@ -233,7 +233,7 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Appends one added/removed table section to the output lines.
+    * Appends one remove/add table section to the output lines.
      *
      * @param string[] $lines
      * @param string $label
@@ -256,7 +256,7 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Appends one added/removed section to the output lines.
+    * Appends one remove/add section to the output lines.
      *
      * @param string[] $lines
      * @param string $label
@@ -289,7 +289,7 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Appends a table-grouped section with added and removed lines mixed by table.
+    * Appends a table-grouped section with remove and add lines mixed by table.
      *
      * @param string[] $lines
      * @param string $label
@@ -297,7 +297,7 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
      * @param bool $isLastSection
      * @return void
      */
-    protected function appendChangedTableSectionLines(array &$lines, string $label, array $sectionTree, bool $isLastSection) : void
+    protected function appendChangeTableSectionLines(array &$lines, string $label, array $sectionTree, bool $isLastSection) : void
     {
         $sectionConnector = $isLastSection ? '└── ' : '├── ';
         $sectionIndent = $isLastSection ? '    ' : '│   ';
@@ -492,13 +492,13 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * Returns true if no added or removed lines are present.
+    * Returns true if no remove or add lines are present.
      *
      * @param array $diffTree
      * @return bool
      */
     protected function treeIsEmpty(array $diffTree) : bool
     {
-        return empty($diffTree['added_tables']) && empty($diffTree['removed_tables']) && empty($diffTree['added']) && empty($diffTree['removed']);
+        return empty($diffTree['remove_tables']) && empty($diffTree['add_tables']) && empty($diffTree['remove']) && empty($diffTree['add']);
     }
 }

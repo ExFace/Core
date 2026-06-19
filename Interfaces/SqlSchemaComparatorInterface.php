@@ -16,7 +16,7 @@ interface SqlSchemaComparatorInterface
     public function compare(string $currentSchema, string $previousSchema) : array;
 
     /**
-     * Builds a structured tree of added and removed schema lines.
+     * Builds a structured tree of remove and add schema lines.
      *
      * @param string $currentSchema
      * @param string $previousSchema
