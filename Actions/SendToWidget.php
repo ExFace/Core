@@ -33,6 +33,9 @@ class SendToWidget extends AbstractAction
     
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction): ResultInterface
     {
+        if ($task->hasInputData()) {
+            return ResultFactory::createDataResult($task, $task->getInputData());
+        } 
         return ResultFactory::createMessageResult($task, '');
     }
     
