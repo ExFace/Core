@@ -126,6 +126,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         $indent = $this->getOutputIndentation();
         if ($this->isDisabled() === true) {
             yield $indent . 'SQL installer disabled' . PHP_EOL;
+            if($this->getConfigOption('COMPARE_SCHEMAS') === true){
+                yield from $this->compareSchemas($source_absolute_path, $indent . $indent);
+            }
             return;
         } else {
             yield $indent . 'SQL installer:' . PHP_EOL;
@@ -136,9 +139,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
         // TODO make schema compare work
 
-        if($this->getConfigOption('COMPARE_SCHEMAS') === true){
-            yield from $this->compareSchemas($source_absolute_path, $indent . $indent);
-        }
+
         
         return;
     }
@@ -170,7 +171,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
             yield $indent . 'No comparison possible Schema dump not found.';
             return;
         }
+        //Soll Local (app)
         $schema = file_get_contents($schemaFile);
+        //Ist Server
         $tmpSchema = $this->buildSqlSchema();
         
         $diffs = $this->performComparison($tmpSchema, $schema);
@@ -180,7 +183,7 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
         } else {
             echo "Differences found:\n";
             foreach ($diffs as $line) {
-                echo "- $line\n";
+                echo $line . "\n";
             }
         }
     }
