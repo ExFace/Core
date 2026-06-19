@@ -24,10 +24,13 @@ class SqlSchemaComparator implements SqlSchemaComparatorInterface
     }
 
     /**
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\SqlSchemaComparatorInterface::buildTree()
+     * Builds a structured tree of remove and add schema lines.
+     *
+     * @param string $currentSchema
+     * @param string $previousSchema
+     * @return array
      */
-    public function buildTree(string $currentSchema, string $previousSchema) : array
+    protected function buildTree(string $currentSchema, string $previousSchema) : array
     {
         $currentLines = $this->normalizeSchema($currentSchema);
         $previousLines = $this->normalizeSchema($previousSchema);

@@ -14,13 +14,4 @@ interface SqlSchemaComparatorInterface
      * @return string[]
      */
     public function compare(string $currentSchema, string $previousSchema) : array;
-
-    /**
-     * Builds a structured tree of remove and add schema lines.
-     *
-     * @param string $currentSchema
-     * @param string $previousSchema
-     * @return array
-     */
-    public function buildTree(string $currentSchema, string $previousSchema) : array;
 }
