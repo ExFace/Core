@@ -2,8 +2,6 @@
 
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
-use exface\Core\DataTypes\StringDataType;
-use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
 use exface\Core\Interfaces\AppInterface;
 use GuzzleHttp\Psr7\Uri;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -14,6 +12,9 @@ use exface\Core\Interfaces\WorkbenchInterface;
  *
  * It can be constructed from an incoming request path or configured later
  * via app alias and docs path. 
+ *
+ * TODO: Support relative links that go up one or more directories, such as
+ * `../file.md`. Going back in the path does not work yet.
  */
 class DocMarkdownPrinter
 {
@@ -35,6 +36,10 @@ class DocMarkdownPrinter
      * Path to the document inside the Docs folder of the app.
      */
     private ?string $docsPath = null;
+    /**
+     * Maximum depth for inlining linked markdown documents.
+     */
+    private int $depth = 0;
 
     /**
      * Creates a new printer for the given workbench and optional request path.
@@ -66,14 +71,46 @@ class DocMarkdownPrinter
      */
     public function getMarkdown(): string
     {
-        $markdown = $this->readFile($this->getAbsolutePath());
+        $absolutePath = $this->getAbsolutePath();
+        $markdown = $this->readFile($absolutePath);
 
         return $this->rebaseRelativeLinks(
             $markdown,
-            $this->getAbsolutePath(),
+            $absolutePath,
             $this->getDirectoryPath(),
-            0
+            $this->getDepth()
         );
+    }
+
+    public function getErrorMessage(): string
+    {
+        return 'ERROR: file not found!';
+    }
+
+    /**
+     * Sets the maximum depth for inlining linked markdown documents.
+     *
+     * A depth of 0 keeps the default behavior and only rewrites links.
+     * Higher values replace links to local markdown files with the content
+     * of those files, recursively up to the configured depth.
+     *
+     * @param int $depth Maximum link recursion depth
+     * @return DocMarkdownPrinter Fluent interface
+     */
+    public function setDepth(int $depth): DocMarkdownPrinter
+    {
+        $this->depth = max(0, $depth);
+        return $this;
+    }
+
+    /**
+     * Returns the maximum depth for inlining linked markdown documents.
+     *
+     * @return int Configured maximum recursion depth
+     */
+    public function getDepth(): int
+    {
+        return $this->depth;
     }
 
     /**
@@ -190,17 +227,15 @@ class DocMarkdownPrinter
     /**
      * Sets the Docs path from a url or path string.
      *
-     * The given value is interpreted as Uri, normalized and then the
-     * Docs sub path is extracted. If no Docs segment is found the
-     * normalized path is used as is.
+        * If a Docs segment exists, only the path inside that folder is kept.
+        * Otherwise the normalized value is used as Docs-relative path.
      *
      * @param string $docsPath Url or path to a docs file
      * @return DocMarkdownPrinter Fluent interface
      */
     public function setDocsPath(string $docsPath): DocMarkdownPrinter
     {
-        $this->uri = new Uri($docsPath);
-        $docsPath = $this->normalizePath(rawurldecode($this->uri->getPath()));
+        $docsPath = $this->normalizePath(rawurldecode($docsPath));
         $path = $this->extractDocPath($docsPath);
         $this->docsPath = $path !== "" ? $path : $docsPath;
         return $this;
@@ -300,11 +335,13 @@ class DocMarkdownPrinter
     }
 
     /**
-     * Rewrites relative markdown links so they point to the api docs base path.
+    * Rewrites relative markdown links so they point to the api docs base path.
      *
      * For each markdown link or image link this method computes a new relative
      * path based on the current file and the app docs base directory.
      * External links, pure anchors and data urls are not changed.
+    * If a recursion depth is configured, links to local markdown files are
+    * replaced with the rendered markdown content of the linked document.
      *
      * The method walks the content once and uses a callback to rebuild each
      * markdown link in place.
@@ -312,7 +349,7 @@ class DocMarkdownPrinter
      * @param string $content Original markdown content
      * @param string $filePath Path of the current file
      * @param string $basePath App docs base path
-     * @param int $depth Unused here but kept for a compatible signature
+    * @param int $depth Remaining recursion depth for inlining markdown links
      * @param int $currentDepth Unused in the rewrite but part of the signature
      * @return string Markdown content with rebased links
      */
@@ -333,9 +370,9 @@ class DocMarkdownPrinter
 
         $dirOfFile = dirname($filePath);
 
-        $cb = function(array $m) use ($filePath, $basePath, $dirOfFile) {
-            $text  = $m['text'];
-            $url   = $m['url'];
+        $cb = function (array $m) use ($depth, $filePath, $basePath, $dirOfFile) {
+            $text = $m['text'];
+            $url = $m['url'];
             $title = isset($m['title']) ? $m['title'] : null;
 
             if ($this->isKeyboardShortcut($text)) {
@@ -364,6 +401,22 @@ class DocMarkdownPrinter
                     } else {
                         $rebased = $url;
                     }
+                }
+
+            }
+
+            
+
+            if ($depth >= 1) {
+                $printer = new DocMarkdownPrinter($this->workbench);
+                $printer->setDepth($depth - 1);
+                $printer->setDocsPath($url);
+                $appAlias = $this->app->getAliasWithNamespace();
+                $printer->setAppAlias($appAlias);
+                $md = $printer->getMarkdown();
+
+                if ($md !== $printer->getErrorMessage()) {
+                    $rebased = "\n " . $md;
                 }
             }
 
@@ -468,7 +521,7 @@ class DocMarkdownPrinter
     public function readFile(string $filePath): string
     {
         if (! file_exists($filePath)) {
-            return 'ERROR: file not found!';
+            return $this->getErrorMessage();
         }
         $md = file_get_contents($filePath);
         return $md;
