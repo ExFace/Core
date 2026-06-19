@@ -53,19 +53,19 @@ class ScheduledTask extends GenericTask
      * - Concatenate with `+`.
      * - For example, `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
      * 
-     * @uxon-property timeout
+     * @uxon-property queue_timeout
      * @uxon-type string
      * 
      * @param string $timeout
      * @return $this
      * @throws \Exception
      */
-    protected function setTimeOut(string $timeout) : ScheduledTask
+    protected function setQueueTimeOut(string $timeout) : ScheduledTask
     {
         try {
             $this->timeOutInterval = \DateInterval::createFromDateString($timeout);
         } catch (\Throwable $e) {
-            throw new InvalidArgumentException('Invalid value for `timeout` configuration: ' . $e->getMessage(), null, $e);
+            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `queue_timeout` configuration', null, $e);
         }
         
         return $this;
@@ -75,11 +75,11 @@ class ScheduledTask extends GenericTask
      * @return \DateInterval
      * @throws \Exception
      */
-    public function getTimeOutInterval() : \DateInterval
+    public function getQueueTimeOutInterval() : \DateInterval
     {
         // Initialize with the default timeout interval.
         if($this->timeOutInterval === null) {
-            $this->setTimeOut(self::DEFAULT_TIMEOUT);
+            $this->setQueueTimeOut(self::DEFAULT_TIMEOUT);
         }
 
         return $this->timeOutInterval;
@@ -94,28 +94,28 @@ class ScheduledTask extends GenericTask
      * - Concatenate with `+`.
      * - For example, `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
      *
-     * @uxon-property timeout_max
+     * @uxon-property queue_timeout_max
      * @uxon-type string
      *
      * @param string $timeout
      * @return $this
      * @throws \Exception
      */
-    protected function setMaxTimeOut(string $timeout) : ScheduledTask
+    protected function setMaxQueueTimeOut(string $timeout) : ScheduledTask
     {
         try {
             $this->maxTimeOutInterval = \DateInterval::createFromDateString($timeout);
         } catch (\Throwable $e) {
-            throw new InvalidArgumentException('Invalid value for `timeout_max` configuration: ' . $e->getMessage(), null, $e);
+            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `queue_timeout_max` configuration', null, $e);
         }
 
         return $this;
     }
 
-    public function getMaxTimeOutInterval() : \DateInterval
+    public function getMaxQueueTimeOutInterval() : \DateInterval
     {
         if($this->maxTimeOutInterval === null) {
-            $this->setMaxTimeOut(self::DEFAULT_MAX_TIMEOUT);
+            $this->setMaxQueueTimeOut(self::DEFAULT_MAX_TIMEOUT);
         }
         
         return $this->maxTimeOutInterval;
