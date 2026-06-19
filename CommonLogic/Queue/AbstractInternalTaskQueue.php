@@ -449,8 +449,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         if($task instanceof ScheduledTask) {
             $timeOutSheet = $sheet->copy()->removeRows();
             $now = new \DateTime();
-            $timeOutInterval = $task->getTimeOutInterval();
-            $maxTimeOutInterval = $task->getMaxTimeOutInterval();
+            $timeOutInterval = $task->getQueueTimeOutInterval();
+            $maxTimeOutInterval = $task->getMaxQueueTimeOutInterval();
             
             foreach ($sheet->getRows() as $rowIdx => $row) {
                 $pid = $row['PID'];

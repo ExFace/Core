@@ -40,7 +40,7 @@ class JsNumberFormatter extends AbstractJsDataTypeFormatter
             $setGroupSeparatorJs = <<<JS
 
             sTsdSep = (1000).toLocaleString({$locale}, {useGrouping: true}).charAt(1);
-            sNum = sNum.replace(sTsdSep, '{$this->getThousandsSeparator()}');
+            sNum = sNum.split(sTsdSep).join('{$this->getThousandsSeparator()}');
 JS;
         } else {
             $use_grouping =  'false';
