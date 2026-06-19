@@ -3,6 +3,7 @@ namespace exface\Core\Facades\ConsoleFacade;
 
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
+use exface\Core\Exceptions\CliRuntimeException;
 use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Process\Process;
 
@@ -97,7 +98,7 @@ class CliCommandRunner
                     yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
                     if (! $silent) {
                         // $resultStr contains both stdout and stderr (merged via 2>&1)
-                        throw new RuntimeException('CLI command "' . $cmd . '" failed: ' . ($resultStr !== '' ? $resultStr : 'no error output'));
+                        throw new CliRuntimeException($cmd, $result, $code);
                     }
                 }
             };
@@ -162,9 +163,11 @@ class CliCommandRunner
 
         if ($exitCode !== 0) {
             $filename = FilePathDataType::findFileName($path, true);
-            throw new RuntimeException(
+            throw new CliRuntimeException(
+                $cmd,
+                $output,
+                $exitCode,
                 "Permission for the user '{$user}' and folder/file '{$filename}' could not be changed! "
-                . "Command: {$cmd} Output: " . implode("\n", $output)
             );
         }
 
