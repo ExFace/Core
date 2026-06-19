@@ -47,10 +47,22 @@ class DocMarkdownPrinter
      * If a file path is provided it is normalized, the app alias is extracted
      * from the api docs segment and the Docs sub path is derived from it.
      *
-     * @param WorkbenchInterface $workbench 
+     * All additional constructor options are optional. Existing constructor
+     * calls with only workbench and file path remain compatible.
+     *
+     * @param WorkbenchInterface $workbench
      * @param string|null $filePath Optional incoming request path or url
+     * @param int|null $depth Optional maximum recursion depth for markdown inlining
+     * @param string|null $appAlias Optional app alias override
+     * @param string|null $docsPath Optional docs path override
      */
-    public function __construct(WorkbenchInterface $workbench, string $filePath = null)
+    public function __construct(
+        WorkbenchInterface $workbench,
+        string $filePath = null,
+        ?int $depth = null,
+        ?string $appAlias = null,
+        ?string $docsPath = null
+    )
     {
         $this->workbench = $workbench;
 
@@ -60,6 +72,18 @@ class DocMarkdownPrinter
             $appAlias = $this->extractApp($this->filePath);
             $this->app = $this->workbench->getApp($appAlias);
             $this->docsPath = $this->extractDocPath($this->filePath);
+        }
+
+        if ($appAlias !== null && $appAlias !== '') {
+            $this->setAppAlias($appAlias);
+        }
+
+        if ($docsPath !== null && $docsPath !== '') {
+            $this->setDocsPath($docsPath);
+        }
+
+        if ($depth !== null) {
+            $this->setDepth($depth);
         }
     }
 
