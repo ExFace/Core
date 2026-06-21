@@ -1203,6 +1203,69 @@
 				return await navigator.clipboard.readText();
 			}*/
 		},
+
+		/**
+		 * Filter operator tools for column header filters
+		 * 
+		 * Extracts operator prefixes typed into column header filter inputs.
+		 * 
+		 * Supported prefixes (longest match wins):
+		 * - `!==` (not equals)
+		 * - `==`  (equals)
+		 * - `!=`  (not contains)
+		 * - `>=`  (greater than or equal)
+		 * - `<=`  (less than or equal)
+		 * - `>`   (greater than)
+		 * - `<`   (less than)
+		 * - `=`   (equals/contains)
+		 * 
+		 * If no known prefix is found, defaults to no operator.
+		 */
+		filter: {
+
+			/**
+			 * Raw operator prefixes for filtering 
+			 * Order matters: longer prefixes must come first to avoid partial matches.
+			 */
+			_operatorMap: [
+				'!==',
+				'==',
+				'!=',
+				'>=',
+				'<=',
+				'>',
+				'<',
+				'='
+			],
+
+			/**
+			 * Extracts an operator prefix from a header filter input value.
+			 * 
+			 * Returns an object `{ operator: string, value: string }` where `operator` is the
+			 * raw operator prefix (e.g., '==', '!=', '>=') and `value` is the remaining 
+			 * filter value after stripping the prefix. If no prefix matches, `operator` is empty string
+			 * and `value` is the original input unchanged.
+			 * 
+			 * @param {string} sInput - Raw value including operator
+			 * @returns {{ operator: string, value: string }}
+			 */
+			parseOperator: function(sInput) {
+				if (typeof sInput !== 'string') {
+					return { operator: '', value: sInput };
+				}
+				var aMap = this._operatorMap;
+				for (var i = 0; i < aMap.length; i++) {
+					var sPrefix = aMap[i];
+					if (sInput.indexOf(sPrefix) === 0) {
+						return {
+							operator: sPrefix,
+							value: sInput.slice(sPrefix.length)
+						};
+					}
+				}
+				return { operator: '', value: sInput };
+			}
+		},
 		
 		/**
 		 * String tools
