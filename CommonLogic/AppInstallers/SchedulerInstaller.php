@@ -3,7 +3,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 
 
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
-use exface\Core\Exceptions\CliExecException;
+use exface\Core\Exceptions\CliRuntimeException;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Exceptions\RuntimeException;
 
@@ -100,7 +100,7 @@ class SchedulerInstaller extends AbstractAppInstaller
                 $cmd .= " 2>&1";
                 exec($cmd, $output, $returnVar);
                 if ($returnVar === 1) {
-                    throw new CliExecException($cmd, $output);
+                    throw new CliRuntimeException($cmd, $output);
                 }
                 $result = implode("\n", $output);
                 break;
@@ -112,12 +112,12 @@ class SchedulerInstaller extends AbstractAppInstaller
                     $delCmd = "crontab -l | sed '/#{$name}/d' | crontab -";
                     exec($delCmd, $output, $returnVar);
                     if ($returnVar === 1) {
-                        throw new CliExecException($delCmd, $output);
+                        throw new CliRuntimeException($delCmd, $output);
                     }
                 }
                 exec($cmd, $output, $returnVar);
                 if ($returnVar === 1) {
-                    throw new CliExecException($cmd, $output);
+                    throw new CliRuntimeException($cmd, $output);
                 }
                 break;*/
             default:
