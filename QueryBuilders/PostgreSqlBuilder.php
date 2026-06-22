@@ -496,4 +496,28 @@ SQL;
 
         return $string;
     }
+
+    /**
+     * PostgreSQL has no MAX()/MIN() aggregate for the `uuid` type, which is the SQL type of
+     * all OID (binary) columns here. When the query builder makes the UID group-safe by
+     * wrapping it in MAX() (see buildSqlQuerySelect()), a raw `MAX(uuid)` is produced and
+     * PostgreSQL throws "function max(uuid) does not exist". To avoid this, binary/uuid
+     * columns are first converted to their `0x...` hex text representation (the same form
+     * used for UIDs elsewhere) so that MAX()/MIN() operates on text instead of uuid.
+     *
+     * @see AbstractSqlBuilder::buildSqlSelectGrouped()
+     */
+    protected function buildSqlSelectGrouped(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null): string
+    {
+        $aggregator = $aggregator ?? $qpart->getAggregator();
+        $aggrFunc = $aggregator->getFunction()->__toString();
+
+        if ($this->isBinaryColumn($qpart) && ($aggrFunc === AggregatorFunctionsDataType::MAX || $aggrFunc === AggregatorFunctionsDataType::MIN)) {
+            $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
+            $select = $this->buildSqlSelectBinaryAsHEX($select);
+            return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
+        }
+
+        return parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
+    }
 }

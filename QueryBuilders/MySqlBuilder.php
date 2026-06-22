@@ -134,7 +134,8 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // using the UID with aggregate functions
                 case $group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator():
                     $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ',
+                        $this->escapeName($this->getShortAlias($qpart->getColumnKey())));
                     break;
                 // Add to core query and mark as group-safe
                 // if we are not aggregating
