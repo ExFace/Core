@@ -4,7 +4,6 @@ namespace exface\Core\Facades\ConsoleFacade;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
 use exface\Core\Exceptions\CliRuntimeException;
-use exface\Core\Exceptions\RuntimeException;
 use Symfony\Component\Process\Process;
 
 class CliCommandRunner
@@ -59,13 +58,13 @@ class CliCommandRunner
                 
                 // opt-in failure signaling
                 if (! $process->isSuccessful()) {
-                    $exit = $process->getExitCode();
+                    $exitCode = $process->getExitCode();
                     // Ignored exit codes are expected non-zero results (e.g. Behat exit 1
                     // when tests fail) — treat them as success and do not emit an error line.
-                    if (in_array($exit, $ignoredExitCodes, true)) {
+                    if (in_array($exitCode, $ignoredExitCodes, true)) {
                         return;
                     }
-                    yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exit . '.';
+                    yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . '.';
                     // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
                         $errorMessage = '';
@@ -75,7 +74,7 @@ class CliCommandRunner
                         } else {
                             $errorMessage = "no error output.\n";
                         }
-                        throw new RuntimeException('CLI command "' . $process->getCommandLine() . '" failed: ' . ($stderr !== '' ? $stderr : $errorMessage));
+                        throw new CliRuntimeException($process->getCommandLine(), ($stderr !== '' ? $stderr : $stdout), $exitCode, $errorMessage);
                     }
                 }
             };
@@ -98,7 +97,7 @@ class CliCommandRunner
                     yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
                     if (! $silent) {
                         // $resultStr contains both stdout and stderr (merged via 2>&1)
-                        throw new CliRuntimeException($cmd, $result, $code);
+                        throw new CliRuntimeException($cmd, $resultStr, $code);
                     }
                 }
             };
