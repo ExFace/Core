@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\Behaviors\BehaviorDependencies\ApplyAfterBehaviors;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
@@ -540,5 +541,17 @@ class SoftDeleteBehavior extends AbstractBehavior implements DataModifyingBehavi
     {
         $this->bypassBehaviorsOnUpdate = $trueOrFalse;
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function getDependencies(): array
+    {
+        return array_merge(parent::getDependencies(), [
+            new ApplyAfterBehaviors([
+                UndeletableBehavior::class
+            ])
+        ]);
     }
 }
