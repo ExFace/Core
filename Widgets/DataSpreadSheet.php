@@ -64,6 +64,7 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
     private $doNotValidateDynamically = false;
 
     private bool $nowrapCaptions = true;
+    private bool $auto_column_width = false;
     
     private ?bool $allowFilteringLoadedData = null;
     private ?bool $allowSortingLoadedData = null;
@@ -356,6 +357,32 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
     public function getNowrapCaptions() : bool
     {
         return $this->nowrapCaptions;
+    }
+    
+    /**
+     * Set to TRUE to automatically adjust column widths to fit content. This might make the spreadsheet extend horizontally, and enable horizontal scrolling.
+     * 
+     * Might be used in combination with nowrap:false, to also allow text wrap within the columns.
+     * 
+    * @uxon-property auto_column_width
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataSpreadSheet
+     */
+    public function setAutoColumnWidth(bool $value) : DataSpreadSheet
+    {
+        $this->auto_column_width = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAutoColumnWidth() : bool
+    {
+        return $this->auto_column_width;
     }
     
     /**
