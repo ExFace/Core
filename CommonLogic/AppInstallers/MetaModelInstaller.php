@@ -232,8 +232,12 @@ class MetaModelInstaller extends DataInstaller
         yield $idt . 'Updated composer.json for "' . $app->getAliasWithNamespace() . '".' . PHP_EOL;
         
         // Backup pages.
+        $tempFolderPages = $this->getTempFolderPath($this->getDataFolderPathAbsolute($destinationAbsolutePath)) . 
+            DIRECTORY_SEPARATOR . self::FOLDER_NAME_PAGES;
+        
         $pageInstaller = $this->getPageInstaller();
         $pageInstaller->setOutputIndentation($idt);
+        $pageInstaller->setTempPath($tempFolderPages);
         yield from $pageInstaller->backup($destinationAbsolutePath);
 
         // Verify permalinks.
