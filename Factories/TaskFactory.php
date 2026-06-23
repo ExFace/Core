@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -78,5 +80,21 @@ class TaskFactory extends AbstractStaticFactory
         $task->setActionSelector($actionSelector);
         return $task;
     }
+
+    /**
+     * @param WorkbenchInterface $workbench
+     * @param UxonObject $uxon
+     * @return TaskInterface
+     */
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : TaskInterface
+    {
+        $class = $uxon->getProperty('class');
+        $uxon->unsetProperty('class');
+        if (! class_exists($class)) {
+            throw new InvalidArgumentException('Class "' . $class . '" defined in task UXON does not exist');
+        }
+        $task = new $class($workbench);
+        $task->importUxonObject($uxon);
+        return $task;
+    }
 }
-?>
