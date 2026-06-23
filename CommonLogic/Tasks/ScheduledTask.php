@@ -1,13 +1,24 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
+use exface\Core\DataTypes\DateDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\UxonObject;
 
 /**
+ * Task run by the scheduler with additional control options for timeouts, etc.
+ * 
+ * Scheduler tasks have more options to control how they are run:
+ * - `time_to_check` - how often to check, if the task is still running
+ * - `timeout` - when is a task to be considered as timed out
+ * 
+ * If you need to run another type of task in the scheduler, you define it in detail
+ * under `task_to_run`. There you can instantiate any task class.
  * 
  * @author Andrej Kabachnik
  *
@@ -18,6 +29,7 @@ class ScheduledTask extends GenericTask
     public const DEFAULT_MAX_TIMEOUT = '1 day';
     
     private $schedulerUid = null;
+    private ?UxonObject $innerTaskUxon = null;
     private ?\DateInterval $timeOutInterval = null;
     private ?\DateInterval $maxTimeOutInterval = null;
 
@@ -45,27 +57,32 @@ class ScheduledTask extends GenericTask
     }
 
     /**
+     * Time to check if the task is still running - to mark the queue item as timeouted if not.
+     * 
      * If a task is marked as running for longer than this interval, the system will check if the process is still
-     *  alive, and if it isn't, mark it as timed out to make room for a new run.
+     * alive, and if it isn't, mark it as timed out to make room for a new run.
+     * 
+     * Make sure, this interval is smaller, than the total `timeout`, but larger, than the running interval of
+     * the scheduler.
      * 
      * Use the common PHP-DateInterval syntax:
      * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
      * - Concatenate with `+`.
-     * - For example, `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
      * 
-     * @uxon-property queue_timeout
+     * @uxon-property time_to_check
      * @uxon-type string
      * 
      * @param string $timeout
      * @return $this
      * @throws \Exception
      */
-    protected function setQueueTimeOut(string $timeout) : ScheduledTask
+    protected function setTimeToCheck(string $timeout) : ScheduledTask
     {
         try {
-            $this->timeOutInterval = \DateInterval::createFromDateString($timeout);
+            $this->timeOutInterval = DateDataType::castInterval($timeout);
         } catch (\Throwable $e) {
-            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `queue_timeout` configuration', null, $e);
+            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `time_to_check` configuration', null, $e);
         }
         
         return $this;
@@ -75,49 +92,95 @@ class ScheduledTask extends GenericTask
      * @return \DateInterval
      * @throws \Exception
      */
-    public function getQueueTimeOutInterval() : \DateInterval
+    public function getTimeToCheckInterval() : \DateInterval
     {
         // Initialize with the default timeout interval.
         if($this->timeOutInterval === null) {
-            $this->setQueueTimeOut(self::DEFAULT_TIMEOUT);
+            $this->setTimeToCheck(self::DEFAULT_TIMEOUT);
         }
 
         return $this->timeOutInterval;
     }
 
     /**
+     * Time to mark the queue item as timeouted even if the process is still running.
+     * 
      * If a task is marked as running for longer than this interval, it will be marked as timed out, regardless of whether
-     *  the process is still alive. Set this value conservatively to avoid unintentional parallel execution.
+     * the process is still alive. Set this value conservatively to avoid unintentional parallel execution.
      *
      * Use the common PHP-DateInterval syntax:
      * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
      * - Concatenate with `+`.
-     * - For example, `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
      *
-     * @uxon-property queue_timeout_max
+     * @uxon-property timeout
      * @uxon-type string
+     * @uxon-default 1 day
      *
-     * @param string $timeout
+     * @param string|int $timeout
      * @return $this
      * @throws \Exception
      */
-    protected function setMaxQueueTimeOut(string $timeout) : ScheduledTask
+    protected function setTimeout(string|int $timeout) : ScheduledTask
     {
         try {
-            $this->maxTimeOutInterval = \DateInterval::createFromDateString($timeout);
+            $this->maxTimeOutInterval = DateDataType::castInterval($timeout);
         } catch (\Throwable $e) {
-            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `queue_timeout_max` configuration', null, $e);
+            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `timeout` configuration', null, $e);
         }
 
         return $this;
     }
 
-    public function getMaxQueueTimeOutInterval() : \DateInterval
+    /**
+     * @return \DateInterval
+     * @throws \Exception
+     */
+    public function getTimeoutInterval() : \DateInterval
     {
         if($this->maxTimeOutInterval === null) {
-            $this->setMaxQueueTimeOut(self::DEFAULT_MAX_TIMEOUT);
+            $this->setTimeout(self::DEFAULT_MAX_TIMEOUT);
         }
         
         return $this->maxTimeOutInterval;
+    }
+
+    /**
+     * @return TaskInterface
+     */
+    public function getTaskToRun() : TaskInterface
+    {
+        if ($this->innerTaskUxon === null) {
+            return $this;
+        } else {
+            return TaskFactory::createFromUxon($this->getWorkbench(), $this->innerTaskUxon);
+        }
+    }
+
+    /**
+     * The task to be run when the scheduled task is due.
+     * 
+     * Here you can add advanced configuration to the task you actually want the scheduler
+     * to run - even if the scheduled task itself does not have these options.
+     * 
+     * ```
+     * {
+     *      "class": "\exface\Core\CommonLogic\Tasks\CliScriptTask",
+     *      "commands": ["php -v"],
+     *      "command_timeout": 10000 
+     * }
+     * 
+     * ```
+     * @uxon-property task_to_run
+     * @uxon-type \exface\Core\CommonLogic\Tasks\GenericTask
+     * @uxon-template {"class": "\exface\Core\CommonLogic\Tasks\GenericTask"}
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setTaskToRun(UxonObject $uxon) : ScheduledTask
+    {
+        $this->innerTaskUxon = $uxon;
+        return $this;
     }
 }

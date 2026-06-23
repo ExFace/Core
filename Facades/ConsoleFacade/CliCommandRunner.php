@@ -5,6 +5,7 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
 use exface\Core\Exceptions\CliRuntimeException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Console\Input\StringInput;
 
 class CliCommandRunner
 {
@@ -171,5 +172,63 @@ class CliCommandRunner
         }
 
         return $output;
+    }
+
+    /**
+     * Parses the given CLI command into an array of components: command name, arguments and options.
+     * 
+     * ```
+     * [
+     *  $commandName,
+     *  $args,
+     *  $opts,
+     * ]
+     * ```
+     * 
+     * @param string $command
+     * @return array
+     */
+    public static function parseCommand(string $command): array
+    {
+        $input = new StringInput($command);
+
+        // without definition → raw parsing only
+        $commandName = $input->getFirstArgument();
+
+        // raw tokens (not yet mapped)
+        $tokens = [];
+        preg_match_all('/"([^"]*)"|\'([^\']*)\'|\S+/', $command, $matches);
+        $tokens = array_map(
+            fn($t) => trim($t, "\"'"),
+            $matches[0]
+        );
+
+        // simple split logic (if you DON’T have a definition)
+        $args = [];
+        $opts = [];
+
+        foreach ($tokens as $i => $token) {
+            if ($i === 0) {
+                continue; // command already extracted
+            }
+
+            if (str_starts_with($token, '--')) {
+                $parts = explode('=', substr($token, 2), 2);
+                $opts[$parts[0]] = $parts[1] ?? true;
+            } elseif (str_starts_with($token, '-')) {
+                $flags = substr($token, 1);
+                foreach (str_split($flags) as $flag) {
+                    $opts[$flag] = true;
+                }
+            } else {
+                $args[] = $token;
+            }
+        }
+
+        return [
+            $commandName,
+            $args,
+            $opts,
+        ];
     }
 }
