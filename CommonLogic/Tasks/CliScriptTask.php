@@ -59,7 +59,7 @@ class CliScriptTask extends GenericTask
      */
     protected function setCmd(UxonObject|string|array $commands) : CliScriptTask
     {
-        return $this->setCommands($commands);
+        return $this->setCommand($commands);
     }
 
     /**

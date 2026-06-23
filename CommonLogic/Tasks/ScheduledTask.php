@@ -172,7 +172,7 @@ class ScheduledTask extends GenericTask
      * ```
      * @uxon-property task_to_run
      * @uxon-type \exface\Core\CommonLogic\Tasks\GenericTask
-     * @uxon-template {"class": "\exface\Core\CommonLogic\Tasks\GenericTask"}
+     * @uxon-template {"class": "\\exface\\Core\\CommonLogic\\Tasks\\GenericTask", "commands": ["php -v"], "command_timeout": 10000 }
      * 
      * @param UxonObject $uxon
      * @return $this
