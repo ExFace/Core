@@ -75,7 +75,7 @@ class ScheduledTask extends GenericTask
      * 
      * @param string $timeout
      * @return $this
-     * @throws \Exception
+     * @throws \InvalidArgumentException
      */
     protected function setTimeToCheck(string $timeout) : ScheduledTask
     {
@@ -90,7 +90,7 @@ class ScheduledTask extends GenericTask
 
     /**
      * @return \DateInterval
-     * @throws \Exception
+     * @throws \InvalidArgumentException
      */
     public function getTimeToCheckInterval() : \DateInterval
     {
@@ -111,7 +111,7 @@ class ScheduledTask extends GenericTask
      * Use the common PHP-DateInterval syntax:
      * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
      * - Concatenate with `+`.
-     * - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`, but also as number of seconds (`600` for 10 min).
      *
      * @uxon-property timeout
      * @uxon-type string

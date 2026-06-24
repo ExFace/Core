@@ -38,7 +38,7 @@ class CliScriptTask extends GenericTask
      * @param string $commands
      * @return CliTask
      */
-    protected function setCommand(UxonObject|string|array $commands) : CliScriptTask
+    protected function setCommands(UxonObject|string|array $commands) : CliScriptTask
     {
         switch (true) {
             case $commands instanceof UxonObject:
@@ -53,7 +53,9 @@ class CliScriptTask extends GenericTask
         return $this;
     }
 
-    /**
+    /** 
+     * @deprecated use setCommands() instead
+     * 
      * @param string $command
      * @return CliTask
      */
