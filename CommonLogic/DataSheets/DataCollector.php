@@ -398,9 +398,16 @@ class DataCollector implements DataCollectorInterface
                     $targetCol = $dataSheet->getColumns()->addFromExpression($reqAlias);
                     $reqRelSheet = DataSheetFactory::createFromObject($reqRelKeyColPath->getEndObject());
                     $valCol = $reqRelSheet->getColumns()->addFromExpression(ExpressionFactory::createForObject($this->baseObject, $reqAlias)->rebase($reqRelKeyColPath->toString()));
-                    $keyCol = $reqRelSheet->getColumns()->addFromAttribute($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute());
-                    $reqRelSheet->getFilters()->addConditionFromValueArray($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute()->getAliasWithRelationPath(), $reqRelKeyCol->getValues(), ComparatorDataType::IN);
-                    $reqRelSheet->dataRead();
+                    $rightKeyAttr = $reqRelKeyColPath->getRelationLast()->getRightKeyAttribute();
+                    $keyCol = $reqRelSheet->getColumns()->addFromAttribute($rightKeyAttr);
+                    // Read related data ONLY if there really are values to filter. If not - there will be no related
+                    // data, so no need to read anything.
+                    $keyVals = array_filter($reqRelKeyCol->getValues());
+                    $keyVals = array_unique($keyVals);
+                    if (! empty($keyVals)) {
+                        $reqRelSheet->getFilters()->addConditionFromValueArray($rightKeyAttr->getAliasWithRelationPath(), $keyVals, ComparatorDataType::IN);
+                        $reqRelSheet->dataRead();
+                    }
                     foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
                         $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
                         $refreshed = true;
