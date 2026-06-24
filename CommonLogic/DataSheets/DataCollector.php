@@ -10,6 +10,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataCollectorInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -38,6 +39,7 @@ class DataCollector implements DataCollectorInterface
     
     private bool                    $readMissingData = true;
     private bool                    $ignoreUnreadable = false;
+    private ?bool                    $readRelatedDataOnlyIfNoMissingKeys = null;
 
     /**
      * @var MetaAttributeInterface[]
@@ -378,7 +380,7 @@ class DataCollector implements DataCollectorInterface
                 foreach ($reqRelPath->getRelations() as $reqRel) {
                     if ($reqRel->isForwardRelation() || $reqAggr) {
                         $reqRelColPath = $reqRelColPath->appendRelation($reqRel);
-                        if (($keyCol = $dataSheet->getColumns()->getByExpression($reqRelColPath->toString())) && $keyCol->isEmpty(true) === false) {
+                        if (($keyCol = $dataSheet->getColumns()->getByExpression($reqRelColPath->toString())) && $this->canLoadRelatedDataFromColumn($keyCol)) {
                             $reqRelKeyCol = $keyCol;
                             $reqRelKeyColPath = $reqRelColPath->copy();
                         }
@@ -420,6 +422,66 @@ class DataCollector implements DataCollectorInterface
         }
 
         return $dataSheet;
+    }
+
+    /**
+     * Returns TRUE if it is OK to read related data using the given column as foreign key (without reading the main object)
+     * 
+     * See `setReadRelatedDataOnlyIfNoMissingKeys()` for more details on the logic behind this.
+     * 
+     * @param DataColumnInterface $keyCol
+     * @return bool
+     * @see setReadRelatedDataOnlyIfNoMissingKeys()
+     */
+    protected function canLoadRelatedDataFromColumn(DataColumnInterface $keyCol) : bool
+    {
+        $requireForeignKeys = $this->readRelatedDataOnlyIfNoMissingKeys;
+        if ($requireForeignKeys === false) {
+            return true;
+        }
+        $hasEmptyValues = $keyCol->isEmpty(true);
+        $isRequiredAttribute = $keyCol->isAttribute() && $keyCol->getAttribute()->isRequired();
+        switch (true) {
+            // READ if all keys are there
+            case $hasEmptyValues === false:
+                return true;
+            // DO NOT read if key values are explicitly required - even if it is a non-required attribute!
+            case $requireForeignKeys === true:
+                return false;
+            // READ if the attribute is non-required or it is not an attribute at all
+            case $isRequiredAttribute === false:
+                return true;
+            // READ if the column is fresh
+            case $keyCol->isFresh():
+                return true;
+            // DO NOT read in all other cases
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Set FALSE to allow reading related data even if there are empty cells in the foreign key columns and 
+     * TRUE to produce an error in this case.
+     * 
+     * This option controls the collection logic if the base sheet does not have UIDs, and we attempt to read
+     * related data based onf foreign key values. If all foreign key rows have values, that is not a problem - but
+     * what to do if there are empty cells in the foreign key column? The corresponding row might simply not have
+     * a key, so any related data should also be NULL, but it also could mean, that we did not receive the key and
+     * there actually is some related data.
+     * 
+     * By default, the collector will load related data if
+     * - the foreign key column has no empty cells
+     * - the foreign key column has empty cells, but represents a non-required attribute
+     * - the foreign key column has empty cells, but is marked as fresh (has been freshly read)
+     * 
+     * @param bool $trueOrFalse
+     * @return DataCollectorInterface
+     */
+    public function setReadRelatedDataOnlyIfNoMissingKeys(bool $trueOrFalse) : DataCollectorInterface
+    {
+        $this->readRelatedDataOnlyIfNoMissingKeys = $trueOrFalse;
+        return $this;
     }
 
     /**
