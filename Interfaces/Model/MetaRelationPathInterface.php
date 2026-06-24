@@ -162,6 +162,30 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
      * @return bool
      */
     public function containsReverseRelations() : bool;
+    
+    /**
+     * Returns TRUE if the relation points to exactly one row and FALSE otherwise.
+     * 
+     * The relation path `ORDER_POS__ORDER__CUSTOMER` is unambiguous because an order position belongs to exactly
+     * one customer. Technically this means, that all relations along the path are "-to-one" relations: n-to-one or
+     * one-to-one.
+     * 
+     * @return bool
+     */
+    public function isUnambiguous() : bool;
+
+    /**
+     * Returns TRUE if the relation points to exactly one row looking from its end and FALSE otherwise.
+     *
+     * The relation path `CUSTOMER__ORDER__ORDER_POS` is "unambiguous in reverse" because an order position belongs to 
+     * exactly one customer. Indeed, it is the reverse path of `ORDER_POS__ORDER__CUSTOMER`, which is unambiguous.
+     * 
+     * Technically a path is unambiguous in reverse when all relations along the path are "one-to-" relations: one-to-n 
+     * or one-to-one.
+     *
+     * @return bool
+     */
+    public function isUnambiguousInReverse() : bool;
 
     /**
      * Returns TRUE if this path starts with the given path or both are equal
