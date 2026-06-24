@@ -110,4 +110,14 @@ interface DataCollectorInterface extends WorkbenchDependantInterface
      * @return DataCollectorInterface
      */
     public function addAttributeAlias(string $alias) : DataCollectorInterface;
+
+    /**
+     * @return bool
+     */
+    public function isEmpty() : bool;
+
+    /**
+     * @return bool
+     */
+    public function isLoaded() : bool;
 }

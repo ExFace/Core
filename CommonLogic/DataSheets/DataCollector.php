@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\DataSheets\DataCollectorRuntimeError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
@@ -141,6 +142,15 @@ class DataCollector implements DataCollectorInterface
                 break;
         }
         return $this;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see DataCollectorInterface::isLoaded()
+     */
+    public function isLoaded() : bool
+    {
+        return $this->resultSheet !== null;
     }
 
     /**
@@ -463,6 +473,9 @@ class DataCollector implements DataCollectorInterface
     public function addExpression($expressionOrString): DataCollectorInterface
     {
         $this->requiredExpressions = null;
+        if (is_object($expressionOrString) && ! $expressionOrString instanceof ExpressionInterface) {
+            throw new InvalidArgumentException('Cannot add "' . get_class($expressionOrString) . '" to a data collector as expression!');
+        }
         if (! in_array($expressionOrString, $this->addedExpressions,true)) {
             $this->addedExpressions[] = $expressionOrString;
         }
@@ -594,5 +607,14 @@ class DataCollector implements DataCollectorInterface
             }
         }
         return $copy;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataCollectorInterface::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return empty($this->getRequiredExpressions());
     }
 }
