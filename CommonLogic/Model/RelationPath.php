@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\DataTypes\RelationCardinalityDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
@@ -493,5 +494,40 @@ class RelationPath implements MetaRelationPathInterface
             }
         }
         return false;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::isUnambiguous()
+     */
+    public function isUnambiguous() : bool
+    {
+        foreach ($this->getRelations() as $rel) {
+            switch ($rel->getCardinality()->__toString()) {
+                case RelationCardinalityDataType::ONE_TO_N:
+                case RelationCardinalityDataType::N_TO_M:
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::isUnambiguousInReverse()
+     */
+    public function isUnambiguousInReverse() : bool
+    {
+        // Iterate over relations directly and don't use $this->reverse() to avoid errors on irreversible relations!
+        foreach ($this->getRelations() as $rel) {
+            switch ($rel->getCardinality()->__toString()) {
+                case RelationCardinalityDataType::N_TO_ONE:
+                case RelationCardinalityDataType::N_TO_M:
+                    return false;
+            }
+        }
+        return true;
     }
 }

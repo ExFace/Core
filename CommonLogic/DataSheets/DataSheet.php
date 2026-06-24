@@ -1474,12 +1474,13 @@ class DataSheet implements DataSheetInterface
                     continue 2;
                 // Update nested sheets - i.e. replace all rows in the data source, that are related to
                 // the each row of the main sheet with the nested rows here.
-                // NOTE: the attribute of a column with a subsheet will always have a
-                // relation because the attribute is the foreign keiy in the subsheet.
-                // Here we need to check, if it really is only one relation - if more,
-                // the column should go into a subsheet just like other related columns
+                // NOTE: the attribute of a column with a subsheet will always have a relation because the attribute
+                // is the foreign key in the subsheet. Here we need to check, if each row in that subsheet only belongs
+                // to exactly one row of this sheet. This is important because otherwise we cannot just replace the
+                // rows as they might belong elsewhere too! Technically this means, the relation from the subsheet to
+                // this sheet must be unambiguous or the relation from this to subsheet must be unambiguous in reverse.
                 // TODO this seems to work differently to dataCreate() - why?
-                case $col->isNestedData() && $columnAttr->getRelationPath()->countRelations() <= 1:
+                case $col->isNestedData() && ($columnAttr->getRelationPath()->isEmpty() || $columnAttr->getRelationPath()->isUnambiguousInReverse()):
                     $update_ds->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2; 
                 // Update related columns, that the current query builder cannot write, as
