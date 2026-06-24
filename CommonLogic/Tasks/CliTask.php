@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
+ * This task represents a single CLI command
  * 
  * @author Andrej Kabachnik
  *
