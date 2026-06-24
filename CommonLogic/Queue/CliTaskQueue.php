@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
