@@ -349,12 +349,16 @@ class DataCollector implements DataCollectorInterface
         $ignoreMissing = $this->willIgnoreUnreadableColumns();
         $refreshed = false;
         // The original from-data has no UIDs or was not fresh right from the beginning
-        // See if any attributes required for the missing columns are related in the way described above
-        // the if(). If so, load the data separately and put it into the from-sheet. This is mainly usefull
-        // for formulas.
+        // See if any attributes required for the missing columns can be read using just the
+        // available data without reading the main sheet again.
+        $formulas = [];
         foreach ($this->getRequiredExpressions() as $expr) {
             if ($dataSheet->getColumns()->getByExpression($expr)) {
                 continue;
+            }
+            // Remember formulas and recalculate them at the end.
+            if ($expr->isFormula()) {
+                $formulas[] = $expr;
             }
             foreach ($expr->getRequiredAttributes() as $reqAlias) {
                 // Only process requried attribute aliases, that are not present as columns yet and
@@ -422,6 +426,11 @@ class DataCollector implements DataCollectorInterface
 
             } // END foreach ($expr->getRequiredAttributes())
         } // END foreach($map->getRequiredExpressions($dataSheet))
+
+        // Recalculate all formulas, that rely on the newly added columns
+        foreach ($formulas as $expr) {
+            $dataSheet->getColumns()->getByExpression($expr)->setValuesByExpression($expr);
+        }
 
         // Make sure the data is marked as fresh now to prevent further unneeded refreshes
         if ($refreshed === true) {
