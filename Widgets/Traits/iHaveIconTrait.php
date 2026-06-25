@@ -33,6 +33,7 @@ trait iHaveIconTrait {
      * 
      * - [Font Awesome 4 icons](https://fontawesome.com/v4/icons/)
      * - [SVG Material Design icons](https://pictogrammers.com/library/mdi/)
+     * - [SVG Repo](https://www.svgrepo.com/)
      * - [UI5 icon explorer (only for UI5!)](https://sapui5.hana.ondemand.com/sdk/test-resources/sap/m/demokit/iconExplorer/webapp/index.html#/overview/SAP-icons/?tab=grid)
      * 
      * The ability to use SVG icons offers a lot of flexibility as most icon sets include
