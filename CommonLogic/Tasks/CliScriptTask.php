@@ -111,4 +111,34 @@ class CliScriptTask extends GenericTask
         $this->ignoredExitCodes = array_map('intval', $array);
         return $this;
     }
+
+    /**
+     * Export this CLI task to UXON.
+     *
+     * GenericTask::exportUxonObject() only serialises the generic task properties
+     * and has no knowledge of the CLI-specific ones, so without this override
+     * commands, command_timeout and ignored_exit_codes are silently dropped. The
+     * concrete class name is written too, so the task can be re-instantiated
+     * correctly when read back from the queue.
+     *
+     * The array-valued properties are wrapped in a UxonObject - a plain PHP array
+     * is not a valid node in the UXON tree and would not serialise cleanly.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject() : UxonObject
+    {
+        $uxon = parent::exportUxonObject();
+        if (! empty($this->getCommands())) {
+            $uxon->setProperty('commands', new UxonObject($this->getCommands()));
+        }
+        if ($this->getCommandTimeout() !== null) {
+            $uxon->setProperty('command_timeout', $this->getCommandTimeout());
+        }
+        if (! empty($this->getIgnoredExitCodes())) {
+            $uxon->setProperty('ignored_exit_codes', new UxonObject($this->getIgnoredExitCodes()));
+        }
+        return $uxon;
+    }
 }
