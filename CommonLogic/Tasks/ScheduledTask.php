@@ -32,6 +32,8 @@ class ScheduledTask extends GenericTask
     private ?UxonObject $innerTaskUxon = null;
     private ?\DateInterval $timeOutInterval = null;
     private ?\DateInterval $maxTimeOutInterval = null;
+    private ?string $timeToCheckRaw = null;
+    private ?string $timeoutRaw = null;
 
     /**
      * 
@@ -54,6 +56,31 @@ class ScheduledTask extends GenericTask
     public function getSchedulerUid() : string
     {
         return $this->schedulerUid;
+    }
+    
+    /**
+     * Returns the raw `time_to_check` value as configured, or null if unset.
+     *
+     * Needed for serialisation: the interval getter casts to \DateInterval and
+     * falls back to a default, so it cannot reproduce the original UXON value.
+     *
+     * @return string|null
+     */
+    public function getTimeToCheck() : ?string
+    {
+        return $this->timeToCheckRaw;
+    }
+
+    /**
+     * Returns the raw `timeout` value as configured, or null if unset.
+     *
+     * Needed for serialisation - see getTimeToCheck() for the rationale.
+     *
+     * @return string|null
+     */
+    public function getTimeout() : ?string
+    {
+        return $this->timeoutRaw;
     }
 
     /**
@@ -80,6 +107,7 @@ class ScheduledTask extends GenericTask
     protected function setTimeToCheck(string $timeout) : ScheduledTask
     {
         try {
+            $this->timeToCheckRaw = $timeout;
             $this->timeOutInterval = DateDataType::castInterval($timeout);
         } catch (\Throwable $e) {
             throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `time_to_check` configuration', null, $e);
@@ -124,6 +152,7 @@ class ScheduledTask extends GenericTask
     protected function setTimeout(string|int $timeout) : ScheduledTask
     {
         try {
+            $this->timeoutRaw = (string) $timeout;
             $this->maxTimeOutInterval = DateDataType::castInterval($timeout);
         } catch (\Throwable $e) {
             throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `timeout` configuration', null, $e);
@@ -182,5 +211,37 @@ class ScheduledTask extends GenericTask
     {
         $this->innerTaskUxon = $uxon;
         return $this;
+    }
+
+    /**
+     * Export this scheduled task to UXON.
+     *
+     * GenericTask::exportUxonObject() does not know about the scheduler-specific
+     * properties, so without this override task_to_run, time_to_check and timeout
+     * would be lost on export. task_to_run is the critical one: it carries the
+     * inner task definition (e.g. a CliScriptTask) including its own "class", so
+     * losing it means the scheduled work can never be reconstructed from the queue.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\iCanBeConvertedToUxon::exportUxonObject()
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        $uxon->setProperty('class', '\\' . get_class($this));
+
+        // getTaskToRun() returns $this when no inner task was defined; comparing
+        // against $this both skips the export and prevents infinite recursion.
+        $innerTask = $this->getTaskToRun();
+        if ($innerTask !== $this) {
+            $uxon->setProperty('task_to_run', $innerTask->exportUxonObject());
+        }
+        if ($this->getTimeToCheck() !== null) {
+            $uxon->setProperty('time_to_check', $this->getTimeToCheck());
+        }
+        if ($this->getTimeout() !== null) {
+            $uxon->setProperty('timeout', $this->getTimeout());
+        }
+        return $uxon;
     }
 }

@@ -88,6 +88,10 @@ class TaskFactory extends AbstractStaticFactory
      */
     public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : TaskInterface
     {
+        // Operate on a copy so the caller's UXON keeps its "class" property and can
+        // be reused safely - ScheduledTask::getTaskToRun() may run createFromUxon()
+        // on the same innerTaskUxon more than once (enqueue + onRunPerformTask).
+        $uxon = $uxon->copy();
         $class = $uxon->getProperty('class');
         $uxon->unsetProperty('class');
         if (! class_exists($class)) {
