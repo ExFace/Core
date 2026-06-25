@@ -3,8 +3,9 @@ namespace exface\Core\Facades\ConsoleFacade;
 
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
-use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\CliRuntimeException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Console\Input\StringInput;
 
 class CliCommandRunner
 {
@@ -58,13 +59,13 @@ class CliCommandRunner
                 
                 // opt-in failure signaling
                 if (! $process->isSuccessful()) {
-                    $exit = $process->getExitCode();
+                    $exitCode = $process->getExitCode();
                     // Ignored exit codes are expected non-zero results (e.g. Behat exit 1
                     // when tests fail) — treat them as success and do not emit an error line.
-                    if (in_array($exit, $ignoredExitCodes, true)) {
+                    if (in_array($exitCode, $ignoredExitCodes, true)) {
                         return;
                     }
-                    yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exit . '.';
+                    yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . '.';
                     // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
                         $errorMessage = '';
@@ -74,7 +75,7 @@ class CliCommandRunner
                         } else {
                             $errorMessage = "no error output.\n";
                         }
-                        throw new RuntimeException('CLI command "' . $process->getCommandLine() . '" failed: ' . ($stderr !== '' ? $stderr : $errorMessage));
+                        throw new CliRuntimeException($process->getCommandLine(), ($stderr !== '' ? $stderr : $stdout), $exitCode, $errorMessage);
                     }
                 }
             };
@@ -97,7 +98,7 @@ class CliCommandRunner
                     yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
                     if (! $silent) {
                         // $resultStr contains both stdout and stderr (merged via 2>&1)
-                        throw new RuntimeException('CLI command "' . $cmd . '" failed: ' . ($resultStr !== '' ? $resultStr : 'no error output'));
+                        throw new CliRuntimeException($cmd, $resultStr, $code);
                     }
                 }
             };
@@ -162,12 +163,72 @@ class CliCommandRunner
 
         if ($exitCode !== 0) {
             $filename = FilePathDataType::findFileName($path, true);
-            throw new RuntimeException(
+            throw new CliRuntimeException(
+                $cmd,
+                $output,
+                $exitCode,
                 "Permission for the user '{$user}' and folder/file '{$filename}' could not be changed! "
-                . "Command: {$cmd} Output: " . implode("\n", $output)
             );
         }
 
         return $output;
+    }
+
+    /**
+     * Parses the given CLI command into an array of components: command name, arguments and options.
+     * 
+     * ```
+     * [
+     *  $commandName,
+     *  $args,
+     *  $opts,
+     * ]
+     * ```
+     * 
+     * @param string $command
+     * @return array
+     */
+    public static function parseCommand(string $command): array
+    {
+        $input = new StringInput($command);
+
+        // without definition → raw parsing only
+        $commandName = $input->getFirstArgument();
+
+        // raw tokens (not yet mapped)
+        $tokens = [];
+        preg_match_all('/"([^"]*)"|\'([^\']*)\'|\S+/', $command, $matches);
+        $tokens = array_map(
+            fn($t) => trim($t, "\"'"),
+            $matches[0]
+        );
+
+        // simple split logic (if you DON’T have a definition)
+        $args = [];
+        $opts = [];
+
+        foreach ($tokens as $i => $token) {
+            if ($i === 0) {
+                continue; // command already extracted
+            }
+
+            if (str_starts_with($token, '--')) {
+                $parts = explode('=', substr($token, 2), 2);
+                $opts[$parts[0]] = $parts[1] ?? true;
+            } elseif (str_starts_with($token, '-')) {
+                $flags = substr($token, 1);
+                foreach (str_split($flags) as $flag) {
+                    $opts[$flag] = true;
+                }
+            } else {
+                $args[] = $token;
+            }
+        }
+
+        return [
+            $commandName,
+            $args,
+            $opts,
+        ];
     }
 }
