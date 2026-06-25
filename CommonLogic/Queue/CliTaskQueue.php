@@ -244,7 +244,7 @@ class CliTaskQueue extends SyncTaskQueue
         }
 
         // Always resolve relative to the current working directory.
-        $base = rtrim(getcwd(), '/\\');
+        $base = rtrim($this->getWorkbench()->getInstallationPath(), '/\\');
         $folder = $base . DIRECTORY_SEPARATOR . trim($folder, '/\\');
 
         $filename = 'cli_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 8) . '.log';
