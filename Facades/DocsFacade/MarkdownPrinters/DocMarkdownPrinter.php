@@ -359,23 +359,26 @@ class DocMarkdownPrinter
     }
 
     /**
-    * Rewrites relative markdown links so they point to the api docs base path.
+     * Rewrites relative markdown and HTML links so they point to the api docs base path.
      *
-     * For each markdown link or image link this method computes a new relative
-     * path based on the current file and the app docs base directory.
-     * External links, pure anchors and data urls are not changed.
-    * If a recursion depth is configured, links to local markdown files are
-    * replaced with the rendered markdown content of the linked document.
+     * Markdown links and image links are handled as before:
+     *   [Text](file.md)
+     *   ![Alt](image.png)
      *
-     * The method walks the content once and uses a callback to rebuild each
-     * markdown link in place.
+     * HTML href/src attributes are now handled with the same rebasing logic:
+     *   <a href="file.md">
+     *   <img src="image.png">
      *
-     * @param string $content Original markdown content
+     * External links, pure anchors and data/about urls are not changed.
+     * If a recursion depth is configured, markdown links to local markdown files
+     * can still be replaced with the rendered markdown content of the linked document.
+     *
+     * @param string $content Original markdown/html content
      * @param string $filePath Path of the current file
      * @param string $basePath App docs base path
-    * @param int $depth Remaining recursion depth for inlining markdown links
+     * @param int $depth Remaining recursion depth for inlining markdown links
      * @param int $currentDepth Unused in the rewrite but part of the signature
-     * @return string Markdown content with rebased links
+     * @return string Markdown/html content with rebased links
      */
     public function rebaseRelativeLinks(string $content, string $filePath, string $basePath, int $depth, int $currentDepth = 2): string
     {
@@ -383,6 +386,21 @@ class DocMarkdownPrinter
             return "";
         }
 
+        $content = $this->rebaseMarkdownLinks($content, $filePath, $basePath, $depth);
+        return $this->rebaseHtmlLinkAttributes($content, $filePath, $basePath);
+    }
+
+    /**
+     * Rewrites markdown links and images.
+     *
+     * @param string $content Original content
+     * @param string $filePath Path of the current file
+     * @param string $basePath App docs base path
+     * @param int $depth Remaining recursion depth for inlining markdown links
+     * @return string Content with rebased markdown links
+     */
+    protected function rebaseMarkdownLinks(string $content, string $filePath, string $basePath, int $depth): string
+    {
         $pattern = '/
             (?P<bang>!)?                              # optional ! for images
             \[(?P<text>[^\]]*)\]                      # link text
@@ -392,60 +410,33 @@ class DocMarkdownPrinter
             \)
         /x';
 
-        $dirOfFile = dirname($filePath);
-
-        $cb = function (array $m) use ($depth, $filePath, $basePath, $dirOfFile) {
+        $cb = function (array $m) use ($depth, $filePath, $basePath) {
             $text = $m['text'];
-            $url = $m['url'];
+            $url = html_entity_decode($m['url'], ENT_QUOTES | ENT_HTML5);
             $title = isset($m['title']) ? $m['title'] : null;
 
-            if ($this->isKeyboardShortcut($text)) {
+            if ($this->isKeyboardShortcut($text) || $this->shouldKeepLinkUnchanged($url)) {
                 return $m[0];
             }
 
-            if ($this->isExternalLink($url) || $this->isPureAnchor($url) || $this->isDataLike($url)) {
-                return $m[0];
-            }
+            [$urlWithoutFragment, $fragment] = $this->splitFragment($url);
+            $rebased = $this->rebaseLinkTarget($filePath, $urlWithoutFragment, $basePath);
 
-            $fragment = '';
-            if (strpos($url, '#') !== false) {
-                [$url, $frag] = explode('#', $url, 2);
-                $fragment = '#'.$frag;
-            }
-
-            $rebased = $this->getRelativePath($filePath, $url, $basePath);
-
-            if (!$rebased || $rebased === $url) {
-                $candidate = realpath($dirOfFile . DIRECTORY_SEPARATOR . $url);
-                if ($candidate !== false) {
-                    $base = 'api' . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . $basePath . DIRECTORY_SEPARATOR;
-                    $pos = strpos($candidate, 'Docs' . DIRECTORY_SEPARATOR);
-                    if ($pos !== false) {
-                        $rebased = $base . substr($candidate, $pos);
-                    } else {
-                        $rebased = $url;
-                    }
-                }
-
-            }
-
-            
-
-            if ($depth >= 1) {
+            if ($depth >= 1 && $this->isLocalMarkdownLink($urlWithoutFragment)) {
                 $printer = new DocMarkdownPrinter($this->workbench);
                 $printer->setDepth($depth - 1);
-                $printer->setDocsPath($url);
+                $printer->setDocsPath($urlWithoutFragment);
                 $appAlias = $this->app->getAliasWithNamespace();
                 $printer->setAppAlias($appAlias);
                 $md = $printer->getMarkdown();
 
                 if ($md !== $printer->getErrorMessage()) {
                     $rebased = "\n " . $md;
+                    $fragment = "";
                 }
             }
 
             $rebased = str_replace('\\', '/', $rebased);
-
             $titlePart = $title !== null && $title !== '' ? ' "'.$title.'"' : '';
             $bang = !empty($m['bang']) ? '!' : '';
 
@@ -453,6 +444,96 @@ class DocMarkdownPrinter
         };
 
         return preg_replace_callback($pattern, $cb, $content);
+    }
+
+    /**
+     * Rewrites href and src attributes in embedded HTML with the same
+     * internal-link rebasing logic used for markdown links.
+     *
+     * @param string $content Original content
+     * @param string $filePath Path of the current file
+     * @param string $basePath App docs base path
+     * @return string Content with rebased html href/src attributes
+     */
+    protected function rebaseHtmlLinkAttributes(string $content, string $filePath, string $basePath): string
+    {
+        $pattern = '/(?P<attr>\b(?:href|src)\s*=\s*)(?P<quote>["\'])(?P<url>.*?)(?P=quote)/i';
+
+        $cb = function (array $m) use ($filePath, $basePath) {
+            $rawUrl = html_entity_decode($m['url'], ENT_QUOTES | ENT_HTML5);
+
+            if ($this->shouldKeepLinkUnchanged($rawUrl)) {
+                return $m[0];
+            }
+
+            [$urlWithoutFragment, $fragment] = $this->splitFragment($rawUrl);
+            $rebased = $this->rebaseLinkTarget($filePath, $urlWithoutFragment, $basePath);
+            $rebased = str_replace('\\', '/', $rebased) . $fragment;
+
+            return $m['attr'] . $m['quote'] . htmlspecialchars($rebased, ENT_QUOTES | ENT_HTML5) . $m['quote'];
+        };
+
+        return preg_replace_callback($pattern, $cb, $content);
+    }
+
+    /**
+     * Rebases one internal link target into the api/docs path.
+     *
+     * @param string $filePath Path of the current file
+     * @param string $linkedFile Linked relative file path
+     * @param string $basePath App docs base path
+     * @return string Rebases link path or original path if it cannot be resolved
+     */
+    protected function rebaseLinkTarget(string $filePath, string $linkedFile, string $basePath): string
+    {
+        if ($linkedFile === '') {
+            return $linkedFile;
+        }
+
+        $rebased = $this->getRelativePath($filePath, $linkedFile, $basePath);
+        return $rebased !== '' ? $rebased : $linkedFile;
+    }
+
+    /**
+     * Checks whether a link target should not be rewritten.
+     *
+     * @param string $url Url or path
+     * @return bool True if the link must stay unchanged
+     */
+    protected function shouldKeepLinkUnchanged(string $url): bool
+    {
+        return $this->isExternalLink($url)
+            || $this->isApiDocsLink($url)
+            || $this->isPureAnchor($url)
+            || $this->isDataLike($url)
+            || $this->isMailOrPhoneLink($url);
+    }
+
+    /**
+     * Splits a url into path and fragment.
+     *
+     * @param string $url Url or path
+     * @return array{0:string,1:string} Path and fragment including leading hash
+     */
+    protected function splitFragment(string $url): array
+    {
+        if (strpos($url, '#') === false) {
+            return [$url, ''];
+        }
+
+        [$path, $fragment] = explode('#', $url, 2);
+        return [$path, '#' . $fragment];
+    }
+
+    /**
+     * Checks whether the local link points to a markdown file.
+     *
+     * @param string $url Path without fragment
+     * @return bool True if it is a markdown file path
+     */
+    protected function isLocalMarkdownLink(string $url): bool
+    {
+        return strtolower(pathinfo($url, PATHINFO_EXTENSION)) === 'md';
     }
 
     /**
@@ -502,6 +583,29 @@ class DocMarkdownPrinter
     }
 
     /**
+     * Checks whether the url is a mail or phone link that should not be changed.
+     *
+     * @param string $url Url string
+     * @return bool True if it is a mailto or tel link
+     */
+    private function isMailOrPhoneLink(string $url): bool
+    {
+        return (bool)preg_match('#^(mailto:|tel:)#i', $url);
+    }
+
+    /**
+     * Checks whether the url already points to the api docs entry point.
+     *
+     * @param string $url Url string
+     * @return bool True if the url already starts with api/docs
+     */
+    private function isApiDocsLink(string $url): bool
+    {
+        $normalized = str_replace('\\', '/', $url);
+        return str_starts_with(ltrim($normalized, '/'), 'api/docs/');
+    }
+
+    /**
      * Formats a link as a markdown heading entry for the table of contents.
      *
      * @param string $text Link text
@@ -528,10 +632,29 @@ class DocMarkdownPrinter
      */
     protected function getRelativePath(string $filePath, string $linkedFile, string $basePath) : string
     {
-        $normalizedPath = dirname($filePath) . DIRECTORY_SEPARATOR . $linkedFile;
-        $fullPath = realpath($normalizedPath);
-        $base = 'api'. DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . $basePath . '\\';
-        return strstr($fullPath, 'Docs\\') ? $base . strstr($fullPath, 'Docs\\') : $linkedFile;
+        if ($linkedFile === '') {
+            return $linkedFile;
+        }
+
+        $linkedFile = rawurldecode($linkedFile);
+        $linkedFile = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $linkedFile);
+        $linkedFile = preg_replace('#' . preg_quote(DIRECTORY_SEPARATOR, '#') . '+#', DIRECTORY_SEPARATOR, $linkedFile);
+
+        if ($this->isApiDocsLink($linkedFile)) {
+            return $linkedFile;
+        }
+
+        $docsPrefix = 'Docs' . DIRECTORY_SEPARATOR;
+        $docsPosition = strpos($linkedFile, $docsPrefix);
+
+        if ($docsPosition !== false) {
+            $docsPath = substr($linkedFile, $docsPosition);
+        } else {
+            $docsPath = $docsPrefix . ltrim($linkedFile, DIRECTORY_SEPARATOR);
+        }
+
+        $base = 'api' . DIRECTORY_SEPARATOR . 'docs' . DIRECTORY_SEPARATOR . trim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        return $base . $docsPath;
     }
 
     /**
