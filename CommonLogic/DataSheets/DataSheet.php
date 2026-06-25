@@ -453,8 +453,21 @@ class DataSheet implements DataSheetInterface
      */
     public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface
     {
-        if (! $this->getMetaObject()->is($other_sheet->getMetaObject()->getAliasWithNamespace())) {
-            throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for compatible objects!', '6T5V1DR');
+        if (! $this->getMetaObject()->is($other_sheet->getMetaObject())) {
+            // If the other object is a extended version of this one, we still can import mutual columns
+            if ($other_sheet->getMetaObject()->is($this->getMetaObject())) {
+                $incompatibleExprs = [];
+                foreach ($this->getColumns() as $col) {
+                    if (! $other_sheet->getColumns()->getByExpression($col->getExpressionObj())) {
+                        $incompatibleExprs[] = $col->getExpressionObj()->__toString();
+                    }
+                }
+                if (! empty($incompatibleExprs)) {
+                    throw new DataSheetImportRowError($this, 'Cannot import rows of "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '" into "' . $this->getMetaObject()->getAliasWithNamespace() . '" - incompatible columns: `' . implode('`, `', $incompatibleExprs) . '`!', '6T5V1DR');
+                }
+            } else {
+                throw new DataSheetImportRowError($this, 'Cannot import rows of "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '" into "' . $this->getMetaObject()->getAliasWithNamespace() . '" - the target object must be the same as the replacing object or an extension of it!', '6T5V1DR');
+            }
         }
         
         // Make sure, the UID is present in the result if it is there in the other sheet
