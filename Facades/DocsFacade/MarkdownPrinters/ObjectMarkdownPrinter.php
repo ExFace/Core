@@ -205,7 +205,7 @@ MD;
         $markdown = '';
         try{
             foreach ($obj->getActions() as $act) {
-                $actionPrinter = new ActionMarkdownPrinter($this->workbench, $act, $headingLevel);
+                $actionPrinter = new ActionMarkdownPrinter($act, $headingLevel);
                 $markdown .= $actionPrinter->getMarkdown();
             } 
         } catch (\Exception $e){
