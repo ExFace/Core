@@ -41,6 +41,12 @@ class UxonPrototypeMarkdownPrinter
 {
     private PrototypeSelectorInterface $selector;
     private int $headingLevel;
+    private string $prototypeClass;
+    private string $filepathRelative;
+    private string $componentType;
+    private ?string $propertyObject;
+    private array $classInfo = [];
+    private array $propertyRows = [];
     
     /**
      * Examples:
@@ -53,59 +59,61 @@ class UxonPrototypeMarkdownPrinter
     {
         $this->selector = new UxonPrototypeSelector($workbench, $prototypeClassOrFilepath);
         $this->headingLevel = $headingLevel;
+        $this->init();
     }
-    
-    public function getMarkdown(): string
+
+    /**
+     * Loads and caches all metadata required to render markdown and to expose class/property details.
+     *
+     * @return $this
+     */
+    public function init(): self
     {
         $selector = $this->selector;
         if ($selector->isFilepath()) {
-            $filepathRelative = $selector->toString();
-            $prototypeClass = PhpFilePathDataType::findClassInFile($filepathRelative);
+            $this->filepathRelative = $selector->toString();
+            $this->prototypeClass = PhpFilePathDataType::findClassInFile($this->filepathRelative);
         } else {
-            $prototypeClass = $selector->toString();
-            $filepathRelative = PhpFilePathDataType::findFileOfClass($prototypeClass);
-        }
-        
-        switch (true) {
-            case is_a($prototypeClass, iCanBeConvertedToUxon::class, true):
-                $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
-                $schemaClass = $prototypeClass::getUxonSchemaClass() ?? UxonSchema::class;
-                $schema = new $schemaClass($selector->getWorkbench());
-                $componentType = mb_ucfirst($schema::getSchemaName());
-                if ($schema instanceof QueryBuilderSchema) {
-                    $propertyObject = 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION';
-                } else {
-                    $propertyObject = 'exface.Core.UXON_PROPERTY_ANNOTATION';
-                }
-                break;
-            case is_a($prototypeClass, FormulaInterface::class, true):
-                // $entityObject = 'exface.Core.FORMULA';
-                $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
-                $propertyObject = null;
-                $componentType = 'Formula';
-                break;
-            default:
-                throw new RuntimeException('Class "' . $prototypeClass . '" does not exist or is not a UXON prototype');
+            $this->prototypeClass = $selector->toString();
+            $this->filepathRelative = PhpFilePathDataType::findFileOfClass($this->prototypeClass);
         }
 
-        // Read prototypeClass annotations
+        switch (true) {
+            case is_a($this->prototypeClass, iCanBeConvertedToUxon::class, true):
+                $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
+                $schemaClass = $this->prototypeClass::getUxonSchemaClass() ?? UxonSchema::class;
+                $schema = new $schemaClass($selector->getWorkbench());
+                $this->componentType = mb_ucfirst($schema::getSchemaName());
+                if ($schema instanceof QueryBuilderSchema) {
+                    $this->propertyObject = 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION';
+                } else {
+                    $this->propertyObject = 'exface.Core.UXON_PROPERTY_ANNOTATION';
+                }
+                break;
+            case is_a($this->prototypeClass, FormulaInterface::class, true):
+                $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
+                $this->propertyObject = null;
+                $this->componentType = 'Formula';
+                break;
+            default:
+                throw new RuntimeException('Class "' . $this->prototypeClass . '" does not exist or is not a UXON prototype');
+        }
+
+        // Read prototype class annotations.
         $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $entityObject);
         $dsClass->getColumns()->addMultiple([
             'CLASSNAME',
+            'NAME',
             'TITLE',
             'DESCRIPTION'
         ]);
-        $dsClass->getFilters()->addConditionFromString('FILE', $filepathRelative);
-        try {
-            $dsClass->dataRead();
-        } catch (\Throwable $e) {
-            throw $e;
-        }
-        $classInfo = $dsClass->getRow(0);
+        $dsClass->getFilters()->addConditionFromString('FILE', $this->filepathRelative);
+        $dsClass->dataRead();
+        $this->classInfo = $dsClass->getRow(0) ?? [];
 
-        // Read property annotations
-        if ($propertyObject !== null) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $propertyObject);
+        // Read property annotations.
+        if ($this->propertyObject !== null) {
+            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->propertyObject);
             $ds->getColumns()->addMultiple([
                 'PROPERTY',
                 'TYPE',
@@ -115,7 +123,7 @@ class UxonPrototypeMarkdownPrinter
                 'REQUIRED',
                 'DESCRIPTION'
             ]);
-            $ds->getFilters()->addConditionFromString('FILE', $filepathRelative, ComparatorDataType::EQUALS);
+            $ds->getFilters()->addConditionFromString('FILE', $this->filepathRelative, ComparatorDataType::EQUALS);
             $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
 
             if ($schema instanceof QueryBuilderSchema) {
@@ -126,17 +134,24 @@ class UxonPrototypeMarkdownPrinter
             try {
                 $ds->dataRead();
             } catch (\Throwable $e) {
-                // TODO
+                // Keep existing behavior: do not fail rendering if property annotations cannot be read.
             }
 
-            $propertyRows = $ds->getRows();
-        } else {
-            $propertyRows = [];
+            $this->propertyRows = $ds->getRows();
         }
-        
-        $alias = $classInfo['CLASSNAME'] ? $classInfo['CLASSNAME'] : StringDataType::substringAfter($prototypeClass, '\\', '', false, true);
-        $title = $classInfo['TITLE'] ?? $classInfo['NAME'];
-        $description = $classInfo['DESCRIPTION'];
+
+        return $this;
+    }
+    
+    public function getMarkdown(): string
+    {
+        $prototypeClass = $this->getPrototypeClass();
+        $filepathRelative = $this->getFilepathRelative();
+        $alias = $this->getAlias();
+        $title = $this->getTitle();
+        $description = $this->getDescription();
+        $propertyRows = $this->getPropertyRows();
+        $componentType = $this->getComponentType();
         
         $markdown = <<<MD
 {$this->buildMarkdownHeading($componentType . ' ' . $alias, $this->headingLevel)}
@@ -154,6 +169,50 @@ class UxonPrototypeMarkdownPrinter
 
 MD;
         return $markdown;
+    }
+
+    public function getPrototypeClass(): string
+    {
+        return $this->prototypeClass;
+    }
+
+    public function getFilepathRelative(): string
+    {
+        return $this->filepathRelative;
+    }
+
+    public function getComponentType(): string
+    {
+        return $this->componentType;
+    }
+
+    public function getClassInfo(): array
+    {
+        return $this->classInfo;
+    }
+
+    public function getPropertyRows(): array
+    {
+        return $this->propertyRows;
+    }
+
+    public function getAlias(): string
+    {
+        $className = $this->classInfo['CLASSNAME'] ?? null;
+        if ($className !== null && $className !== '') {
+            return $className;
+        }
+        return StringDataType::substringAfter($this->prototypeClass, '\\', '', false, true);
+    }
+
+    public function getTitle(): string
+    {
+        return $this->classInfo['TITLE'] ?? ($this->classInfo['NAME'] ?? '');
+    }
+
+    public function getDescription(): string
+    {
+        return $this->classInfo['DESCRIPTION'] ?? '';
     }
     
     protected function buildMarkdownHeading(string $title, int $level) : string
