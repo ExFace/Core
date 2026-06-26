@@ -8,6 +8,7 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\Selectors\PrototypeSelectorInterface;
@@ -16,26 +17,7 @@ use exface\Core\Uxon\QueryBuilderSchema;
 use exface\Core\Uxon\UxonSchema;
 
 /**
- * Generates a Markdown description of a UXON prototype class
- * 
- * ## Example
- * 
- * ```
- * # DataSheet
- * 
- * A data sheet is...
- * 
- * ## Properties
- * 
- * ### meta_object
- * 
- * The object of the Data Sheet 
- * 
- * It is important because...
- * 
- * ### Presets
- * 
- * ```
+ * Generates a Markdown description of a UXON prototype class.
  */
 class UxonPrototypeMarkdownPrinter
 {
@@ -44,17 +26,21 @@ class UxonPrototypeMarkdownPrinter
     private string $prototypeClass;
     private string $filepathRelative;
     private string $componentType;
-    private ?string $propertyObject;
-    private array $classInfo = [];
-    private array $propertyRows = [];
-    
+    private ?string $propertyObject = null;
+    private string $alias = '';
+    private string $title = '';
+    private string $description = '';
+
     /**
-     * Examples:
-     * - `\exface\Core\CommonLogic\DataSheets\DataSheet`
-     * - `exface/core/CommonLogic/DataSheets/DataSheet.php`
-     * 
-     * @param string $prototypeClassOrFilepath
+     * @var mixed|null
      */
+    private $classDataSheet = null;
+
+    /**
+     * @var mixed|null
+     */
+    private $propertyDataSheet = null;
+
     public function __construct(WorkbenchInterface $workbench, string $prototypeClassOrFilepath, int $headingLevel = 1)
     {
         $this->selector = new UxonPrototypeSelector($workbench, $prototypeClassOrFilepath);
@@ -62,14 +48,10 @@ class UxonPrototypeMarkdownPrinter
         $this->init();
     }
 
-    /**
-     * Loads and caches all metadata required to render markdown and to expose class/property details.
-     *
-     * @return $this
-     */
     public function init(): self
     {
         $selector = $this->selector;
+
         if ($selector->isFilepath()) {
             $this->filepathRelative = $selector->toString();
             $this->prototypeClass = PhpFilePathDataType::findClassInFile($this->filepathRelative);
@@ -84,37 +66,44 @@ class UxonPrototypeMarkdownPrinter
                 $schemaClass = $this->prototypeClass::getUxonSchemaClass() ?? UxonSchema::class;
                 $schema = new $schemaClass($selector->getWorkbench());
                 $this->componentType = mb_ucfirst($schema::getSchemaName());
-                if ($schema instanceof QueryBuilderSchema) {
-                    $this->propertyObject = 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION';
-                } else {
-                    $this->propertyObject = 'exface.Core.UXON_PROPERTY_ANNOTATION';
-                }
+                $this->propertyObject = $schema instanceof QueryBuilderSchema
+                    ? 'exface.Core.UXON_QUERY_BUILDER_ANNOTATION'
+                    : 'exface.Core.UXON_PROPERTY_ANNOTATION';
                 break;
+
             case is_a($this->prototypeClass, FormulaInterface::class, true):
                 $entityObject = 'exface.Core.UXON_ENTITY_ANNOTATION';
+                $schema = null;
                 $this->propertyObject = null;
                 $this->componentType = 'Formula';
                 break;
+
             default:
                 throw new RuntimeException('Class "' . $this->prototypeClass . '" does not exist or is not a UXON prototype');
         }
 
-        // Read prototype class annotations.
-        $dsClass = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $entityObject);
-        $dsClass->getColumns()->addMultiple([
+        $this->classDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $entityObject);
+        $this->classDataSheet->getColumns()->addMultiple([
             'CLASSNAME',
             'NAME',
             'TITLE',
             'DESCRIPTION'
         ]);
-        $dsClass->getFilters()->addConditionFromString('FILE', $this->filepathRelative);
-        $dsClass->dataRead();
-        $this->classInfo = $dsClass->getRow(0) ?? [];
+        $this->classDataSheet->getFilters()->addConditionFromString('FILE', $this->filepathRelative);
+        $this->classDataSheet->dataRead();
 
-        // Read property annotations.
+        $classInfo = $this->classDataSheet->getRow(0) ?? [];
+        $className = $classInfo['CLASSNAME'] ?? null;
+
+        $this->alias = $className !== null && $className !== ''
+            ? $className
+            : StringDataType::substringAfter($this->prototypeClass, '\\', '', false, true);
+        $this->title = $classInfo['TITLE'] ?? ($classInfo['NAME'] ?? '');
+        $this->description = $classInfo['DESCRIPTION'] ?? '';
+
         if ($this->propertyObject !== null) {
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->propertyObject);
-            $ds->getColumns()->addMultiple([
+            $this->propertyDataSheet = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), $this->propertyObject);
+            $this->propertyDataSheet->getColumns()->addMultiple([
                 'PROPERTY',
                 'TYPE',
                 'TEMPLATE',
@@ -123,47 +112,37 @@ class UxonPrototypeMarkdownPrinter
                 'REQUIRED',
                 'DESCRIPTION'
             ]);
-            $ds->getFilters()->addConditionFromString('FILE', $this->filepathRelative, ComparatorDataType::EQUALS);
-            $ds->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
+            $this->propertyDataSheet->getFilters()->addConditionFromString('FILE', $this->filepathRelative, ComparatorDataType::EQUALS);
+            $this->propertyDataSheet->getSorters()->addFromString('PROPERTY', SortingDirectionsDataType::ASC);
 
             if ($schema instanceof QueryBuilderSchema) {
-                $ds->getColumns()->addFromExpression('TARGET');
-                $ds->getFilters()->addConditionFromString('TARGET', $schema->getLevel(), ComparatorDataType::EQUALS);
+                $this->propertyDataSheet->getColumns()->addFromExpression('TARGET');
+                $this->propertyDataSheet->getFilters()->addConditionFromString('TARGET', $schema->getLevel(), ComparatorDataType::EQUALS);
             }
 
             try {
-                $ds->dataRead();
+                $this->propertyDataSheet->dataRead();
             } catch (\Throwable $e) {
                 // Keep existing behavior: do not fail rendering if property annotations cannot be read.
             }
-
-            $this->propertyRows = $ds->getRows();
         }
 
         return $this;
     }
-    
+
     public function getMarkdown(): string
     {
-        $prototypeClass = $this->getPrototypeClass();
-        $filepathRelative = $this->getFilepathRelative();
-        $alias = $this->getAlias();
-        $title = $this->getTitle();
-        $description = $this->getDescription();
-        $propertyRows = $this->getPropertyRows();
-        $componentType = $this->getComponentType();
-        
         $markdown = <<<MD
-{$this->buildMarkdownHeading($componentType . ' ' . $alias, $this->headingLevel)}
+{$this->buildMarkdownHeading($this->getComponentType() . ' ' . $this->getAlias(), $this->headingLevel)}
 
-{$title}
+{$this->getTitle()}
 
-- PHP class: `{$prototypeClass}`
-- File path: `{$filepathRelative}`
+- PHP class: `{$this->getPrototypeClass()}`
+- File path: `{$this->getFilepathRelative()}`
 
-{$description}
+{$this->getDescription()}
 
-{$this->buildMarkdownTableForProperties($propertyRows, $this->headingLevel + 2)}
+{$this->buildMarkdownTableForProperties($this->getPropertyDataSheet(), $this->headingLevel + 2)}
 
 {$this->buildMarkdownPresets([], $this->headingLevel + 2)}
 
@@ -186,62 +165,72 @@ MD;
         return $this->componentType;
     }
 
-    public function getClassInfo(): array
-    {
-        return $this->classInfo;
-    }
-
-    public function getPropertyRows(): array
-    {
-        return $this->propertyRows;
-    }
-
     public function getAlias(): string
     {
-        $className = $this->classInfo['CLASSNAME'] ?? null;
-        if ($className !== null && $className !== '') {
-            return $className;
-        }
-        return StringDataType::substringAfter($this->prototypeClass, '\\', '', false, true);
+        return $this->alias;
     }
 
     public function getTitle(): string
     {
-        return $this->classInfo['TITLE'] ?? ($this->classInfo['NAME'] ?? '');
+        return $this->title;
     }
 
     public function getDescription(): string
     {
-        return $this->classInfo['DESCRIPTION'] ?? '';
+        return $this->description;
     }
-    
-    protected function buildMarkdownHeading(string $title, int $level) : string
+
+    protected function getClassDataSheet()
+    {
+        return $this->classDataSheet;
+    }
+
+    protected function getPropertyDataSheet()
+    {
+        return $this->propertyDataSheet;
+    }
+
+    protected function buildMarkdownHeading(string $title, int $level): string
     {
         $headingHashes = str_pad('#', $level, '#', STR_PAD_RIGHT);
         return $headingHashes . ' ' . $title;
     }
-    
-    protected function buildMarkdownTableForProperties(array $propertyRows, int $headingLevel) : string
+
+    protected function buildMarkdownTableForProperties(?DataSheetInterface $propertyDataSheet, int $headingLevel): string
     {
-        $md = '';
-        foreach ($propertyRows as $propertyRow) {
-            $md .= "\n" . $this->buildMarkdownTableRowForProperties($propertyRow, $headingLevel);
+        if ($propertyDataSheet === null) {
+            return '';
         }
+
+        $md = '';
+        foreach ($propertyDataSheet->getRows() as $propertyRow) {
+            $md .= "\n" . $this->buildMarkdownTableRowForProperties(
+                    $propertyRow['PROPERTY'] ?? '',
+                    $propertyRow['TYPE'] ?? '',
+                    $propertyRow['TITLE'] ?? '',
+                    $propertyRow['DESCRIPTION'] ?? '',
+                    $headingLevel
+                );
+        }
+
         if ($md !== '') {
             $md = $this->buildMarkdownHeading('Properties', $this->headingLevel + 1) . "\n" . $md;
         }
+
         return $md;
     }
-    
-    protected function buildMarkdownTableRowForProperties(array $propertyRow, int $headingLevel) : string
-    {
+
+    protected function buildMarkdownTableRowForProperties(
+        string $property,
+        string $type,
+        string $title,
+        string $description,
+        int $headingLevel
+    ): string {
         $links = '';
-        
-        // \exface\Core\Widgets\DataColumn[]
-        // \exface\Core\Widgets\DataColumn
-        $type = $propertyRow['TYPE'];
-        if (str_starts_with($type, '\\')) {
-            $linkedClass = rtrim($type, "[]");
+
+        if ($type !== '' && str_starts_with($type, '\\')) {
+            $linkedClass = rtrim($type, '[]');
             $linkName = PhpClassDataType::findClassNameWithoutNamespace($linkedClass);
             $linkUrl = 'UXON_prototypes.md?selector=' . urlencode($linkedClass);
             $links = <<<MD
@@ -249,25 +238,26 @@ MD;
 Read more about [{$linkName}]({$linkUrl})
 MD;
         }
+
         return <<<MD
 
 
-{$this->buildMarkdownHeading('Property `' . $propertyRow['PROPERTY'] . '`', $headingLevel + 1)}
-`Type : {$propertyRow['TYPE']}`
+{$this->buildMarkdownHeading('Property `' . $property . '`', $headingLevel + 1)}
+`Type : {$type}`
 
-{$propertyRow['TITLE']}{$links}
-{$propertyRow['DESCRIPTION']}
+{$title}{$links}
+{$description}
 MD;
     }
-    
-    protected function buildMarkdownPresets(array $presetRows, int $headingLevel) : string
+
+    protected function buildMarkdownPresets(array $presetRows, int $headingLevel): string
     {
         // TODO
         // {$this->buildMarkdownHeading('Presets', $this->headingLevel + 1)}
         return '';
     }
-    
-    public function getWorkbench()
+
+    public function getWorkbench(): WorkbenchInterface
     {
         return $this->selector->getWorkbench();
     }
