@@ -119,8 +119,11 @@ class UxonPrototypeMarkdownPrinter
         $selector = $this->selector;
 
         if ($selector->isFilepath()) {
-            $this->filepathRelative = $selector->toString();
-            $this->prototypeClass = PhpFilePathDataType::findClassInFile($this->filepathRelative);
+            $this->filepathRelative = $this->normalizeVendorRelativePath($selector->toString());
+            $this->prototypeClass = PhpFilePathDataType::findClassInVendorFile(
+                $selector->getWorkbench(),
+                $this->filepathRelative
+            );
         } else {
             $this->prototypeClass = $selector->toString();
             $this->filepathRelative = PhpFilePathDataType::findFileOfClass($this->prototypeClass);
@@ -194,6 +197,28 @@ class UxonPrototypeMarkdownPrinter
         }
 
         return $this;
+    }
+
+    /**
+     * Normalizes a prototype file path to a vendor-relative path for annotation lookups.
+     *
+     * @param string $path
+     * @return string
+     */
+    private function normalizeVendorRelativePath(string $path): string
+    {
+        $normalizedPath = str_replace('\\', '/', $path);
+        $vendorFolder = str_replace(
+            '\\',
+            '/',
+            rtrim($this->getWorkbench()->filemanager()->getPathToVendorFolder(), '\\/')
+        );
+
+        if (str_starts_with($normalizedPath, $vendorFolder . '/')) {
+            return ltrim(substr($normalizedPath, strlen($vendorFolder)), '/');
+        }
+
+        return ltrim($normalizedPath, '/');
     }
 
     public function getMarkdown(): string
