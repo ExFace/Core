@@ -17,7 +17,73 @@ use exface\Core\Uxon\QueryBuilderSchema;
 use exface\Core\Uxon\UxonSchema;
 
 /**
- * Generates a Markdown description of a UXON prototype class.
+ * Generates a Markdown documentation page for a UXON prototype class.
+ *
+ * The printer accepts either a fully qualified PHP class name or a relative PHP
+ * file path to a prototype class. During initialization it resolves the matching
+ * class/file pair, detects the UXON component type and reads the annotation
+ * metadata from the configured workbench via DataSheets.
+ *
+ * Supported input examples:
+ * - `\exface\Core\CommonLogic\DataSheets\DataSheet`
+ * - `exface/core/CommonLogic/DataSheets/DataSheet.php`
+ *
+ * The generated markdown contains:
+ * - the UXON component type and alias as heading
+ * - the annotation title
+ * - the resolved PHP class
+ * - the resolved relative file path
+ * - the annotation description
+ * - a generated properties section based on UXON property annotations
+ *
+ * Example output:
+ *
+ * ```md
+ * # DataSheet DataSheet
+ *
+ * A data sheet is...
+ *
+ * - PHP class: `\exface\Core\CommonLogic\DataSheets\DataSheet`
+ * - File path: `exface/core/CommonLogic/DataSheets/DataSheet.php`
+ *
+ * ## Properties
+ *
+ * ### Property `meta_object`
+ * `Type : string`
+ *
+ * The object of the Data Sheet
+ *
+ * It is important because...
+ *
+ * ### Presets
+ * ```
+ *
+ * The class keeps resolved prototype metadata as scalar properties so it can be
+ * accessed after initialization through getters:
+ * - getPrototypeClass()
+ * - getFilepathRelative()
+ * - getComponentType()
+ * - getAlias()
+ * - getTitle()
+ * - getDescription()
+ *
+ * Property annotation data is kept internally as a DataSheet instead of cached
+ * row arrays. The markdown renderer extracts the rows only when the properties
+ * section is built.
+ *
+ * Extension points:
+ * - buildMarkdownHeading() can be overridden to change heading formatting.
+ * - buildMarkdownTableForProperties() can be overridden to change property rendering.
+ * - buildMarkdownTableRowForProperties() can be overridden to change one property block.
+ * - buildMarkdownPresets() is currently a placeholder for future preset rendering.
+ *
+ * Editable output parts:
+ * - the base heading level via constructor argument `$headingLevel`
+ * - property section rendering via protected build methods
+ * - preset rendering via buildMarkdownPresets()
+ *
+ * Output:
+ * - getMarkdown() returns the complete markdown document as string.
  */
 class UxonPrototypeMarkdownPrinter
 {
