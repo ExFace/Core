@@ -79,6 +79,8 @@ class Icon extends Display implements iHaveIcon
     
     private $iconsScale = null;
     
+    private $emptyIcon = null;
+    
     private $valueWidget = null;
     
     private $valueWidgetUxon = null;
@@ -313,5 +315,31 @@ class Icon extends Display implements iHaveIcon
         }
         
         return false;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getEmptyIcon() : ?string
+    {
+        return $this->emptyIcon;
+    }
+    
+    /**
+     * Icon to display when the value is empty/null.
+     * 
+     * This is useful when using icon_scale with dynamic values that may be null.
+     * 
+     * @uxon-property empty_icon
+     * @uxon-type icon|string
+     * 
+     * @param string $value
+     * @return Icon
+     */
+    public function setEmptyIcon(string $value) : Icon
+    {
+        $this->emptyIcon = $value;
+        return $this;
     }
 }
