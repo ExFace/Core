@@ -194,10 +194,10 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     }
 
     /**
-     * 
+     *
      * @param DataSheetInterface $dataSheet
      * @param ResultInterface $result
-     * @throws QueueRuntimeError
+     * @param float|null $duration
      * @return DataSheetInterface
      */
     protected function saveResult(DataSheetInterface $dataSheet, ResultInterface $result, float $duration = null) : DataSheetInterface
@@ -449,16 +449,16 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         if($task instanceof ScheduledTask) {
             $timeOutSheet = $sheet->copy()->removeRows();
             $now = new \DateTime();
-            $timeOutInterval = $task->getQueueTimeOutInterval();
-            $maxTimeOutInterval = $task->getMaxQueueTimeOutInterval();
+            $intervalToCheck = $task->getTimeToCheckInterval();
+            $intervalToTimeout = $task->getTimeoutInterval();
             
             foreach ($sheet->getRows() as $rowIdx => $row) {
                 $pid = $row['PID'];
                 $timeOutDate = new \DateTime($row['ENQUEUED_ON']);
-                $timeOutDate->add($timeOutInterval);
+                $timeOutDate->add($intervalToCheck);
                 
                 $maxTimeOutDate = new \DateTime($row['ENQUEUED_ON']);
-                $maxTimeOutDate->add($maxTimeOutInterval);
+                $maxTimeOutDate->add($intervalToTimeout);
                 
                 // Check if the run is timed out.
                 if( $maxTimeOutDate <= $now ||
@@ -562,21 +562,21 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         
         try {
             $start = Debugger::getTimeMsNow();
-            $ds = $this->reserve($event->getQueueItemUid(), ['MESSAGE_ID', 'PRODUCER']);
+            $queuedTaskData = $this->reserve($event->getQueueItemUid(), ['MESSAGE_ID', 'PRODUCER']);
             
-            $messageId = $ds->getCellValue('MESSAGE_ID', 0);
-            $producer = $ds->getCellValue('PRODUCER', 0);
+            $messageId = $queuedTaskData->getCellValue('MESSAGE_ID', 0);
+            $producer = $queuedTaskData->getCellValue('PRODUCER', 0);
             
             try {
                 $this->verify($event->getTask(), $event->getQueueItemUid(), $messageId, $producer);
             } catch (QueueMessageDuplicateError $e) {
-                $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_DUPLICATE);
+                $this->saveError($queuedTaskData, $e, QueuedTaskStateDataType::STATUS_DUPLICATE);
                 $event->setResult(ResultFactory::createMessageResult($event->getTask(), 'Message id "' . $messageId . '" from producer "' . $producer . '" already enqueued - ignoring!'));
                 return;
             }
             
             $task = $event->getTask();
-            $result = $this->performTask($task);
+            $result = $this->performTask($task, $queuedTaskData);
             
             // If the task is a stream, read it completely here to make sure all generators
             // are run. If they produce errors, they should be handled as task/action errors
@@ -585,8 +585,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
                 $result->getMessage();
             }
             
-            // Save he result if no errors up-to now
-            $this->saveResult($ds, $result, (Debugger::getTimeMsNow() - $start));
+            // Save the result if no errors up-to now
+            $this->saveResult($queuedTaskData, $result, (Debugger::getTimeMsNow() - $start));
             $event->setResult($result);
         } catch (\Throwable $e) {
             if (! $e instanceof QueueRuntimeError) {
@@ -594,8 +594,11 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             }
             
             $this->getWorkbench()->getLogger()->logException($e, $this->getErrorLogLevel($e->getLogLevel()));
-            
-            $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (Debugger::getTimeMsNow() - $start));
+            if (! $queuedTaskData) {
+                $queuedTaskData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+                $queuedTaskData->setCellValue($queuedTaskData->getMetaObject()->getUidAttributeAlias(), 0, $event->getQueueItemUid());
+            }
+            $this->saveError($queuedTaskData, $e, QueuedTaskStateDataType::STATUS_ERROR, (Debugger::getTimeMsNow() - $start));
             
             $result = ResultFactory::createErrorResult($task, $e);
             $result->setDataModified(true);
@@ -610,7 +613,7 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
      * @param TaskInterface $task
      * @return ResultInterface
      */
-    protected function performTask(TaskInterface $task) : ResultInterface
+    protected function performTask(TaskInterface $task, DataSheetInterface $queueItemData) : ResultInterface
     {
         return $this->getWorkbench()->handle($task);
     }

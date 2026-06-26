@@ -121,21 +121,33 @@ INSERT INTO ...;
 INSERT INTO ...;
 ```
 
+## <a name="schemacompare"></a>Schema compare
+
+Enable automatic DB schema compare by setting `INSTALLER.SQLDATABASEINSTALLER.
+COMPARE_SCHEMAS` to TRUE. This will to save the current DB schema every time 
+the app model is exported in the `schema.sql` file in the corresponding 
+dialect folder. Using that file the installer will compare the schema of the 
+target DB connection when installing/repairing the app to the saved schema. 
+
+The global idea of these dumps is to make sure, the DB on the installation, 
+that we deploy to is structurally the same as the DB on the installation, 
+where the model was exported. It is important, that the `schema.sql` file is 
+not intended to recreate the DB, but rather is a simplified schema tailored 
+to be comparable in the first place. It does not export contraint names as 
+these may differ on every DB - just the constraint structure.
+
 ## <a name="config"></a>Configuration options
 
 By default, this installer offers the following configuration options to control it's behavior on a specific installation. These options can be added to the config of the app being installed.
 
-- `INSTALLER.SQLDATABASEINSTALLER.DISABLED` - set to TRUE to disable this installer completely (e.g. if you wish to manage the database manually).
+- `INSTALLER.SQLDATABASEINSTALLER.DISABLED` - set TRUE to disable this installer completely (e.g. if you wish to manage the database manually).
 - `INSTALLER.SQLDATABASEINSTALLER.SKIP_MIGRATIONS` - array of migration names to skip for this specific installation (see below).
+- `INSTALLER.SQLDATABASEINSTALLER.COMPARE_SCHEMAS` - set TRUE to save the DB 
+  schema when exporting models in an `.sql` file and to compare that schema 
+  with the local connection whenever the app is installed/repaired.
 
 If an app contains multiple SQL-installers, the config option namespace may be changed when instantiatiating the installer via setConfigOptionNamePrefix(), so that each installer can be configured separately. If not done so, each option will affect
 all SQL-installers. 
-		
-## <a name="skipping"></a>Skipping Migrations
-
-TODO
-
-It is possible to change the option name by calling the method `setSqlMigrationsToSkipConfigOption()`. 
 
 ## <a name="demodata"></a>Installing demo data
 

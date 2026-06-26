@@ -677,6 +677,25 @@ class DateDataType extends AbstractDataType
         
         return $returnPhpDate ? $result : static::formatDateNormalized($result);
     }
+
+    /**
+     * Casts a human readable interval format into PHP DateInterval
+     * 
+     *  - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
+     *  - Concatenate with `+`.
+     *  - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * 
+     * @param string|int $intervalString
+     * @return \DateInterval
+     */
+    public static function castInterval(string|int $intervalString) : \DateInterval
+    {
+        // Many other UXON properties use seconds, so we have a fallback here just to support the seconds too
+        if (is_int($intervalString)) {
+            $timeout = $intervalString . ' seconds';
+        }
+        return \DateInterval::createFromDateString($intervalString);
+    }
     
     /**
      * 
