@@ -213,6 +213,8 @@ class ShowLookupDialog extends ShowDialog
         }
 
         // Inherit aggregations from calling widget
+        // NOTE: a combo bound to the LABEL attribute (or a relation) is built without aggregation by
+        // InputComboTable::initTable(), so getAggregations() is empty and this block is skipped
         $aggrAttrs = [];
         switch (true) {
             // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
@@ -250,6 +252,9 @@ class ShowLookupDialog extends ShowDialog
             // accessed by data- and value-getters and should be set in the InputComboTable
             // after an item was looked up.
             case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
+                // Inherit the columns of the combo's autosuggest table so the lookup looks the same as the
+                // dropdown. For relation- and LABEL-combos this table already holds the objects
+                // default-display columns (see InputComboTable::initTable()), so they are inherited here too.
                 $cols = $inputWidget->getTable()->getColumns();
                 // IDEA can we move finding required columns to the widget calling the lookup?
                 // We could add a `required_columns` property to the action and fill it from
