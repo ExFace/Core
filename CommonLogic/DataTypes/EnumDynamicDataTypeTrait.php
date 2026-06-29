@@ -6,15 +6,17 @@ use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 
 trait EnumDynamicDataTypeTrait {
-    
+
     private $values = [];
 
     private $valueHints = [];
-    
+
     private $showValues = true;
-    
+
     private $valueLabelDelimiter = ' ';
-    
+
+    private ?string $sort = null;
+
     /**
      *
      * {@inheritDoc}
@@ -102,6 +104,22 @@ trait EnumDynamicDataTypeTrait {
             $this->values = $uxon_or_array;
         } else {
             throw new DataTypeConfigurationError($this, 'Invalid format for enumeration values ("' . gettype($uxon_or_array) . '") given: expecting UXON or array!', '6XGN4ES');
+        }
+
+        // Apply sorting.
+        switch ($this->sort) {
+            case 'values:asc':
+                asort($this->values);
+                break;
+            case 'values:desc':
+                arsort($this->values);
+                break;
+            case 'keys:asc':
+                ksort($this->values);
+                break;
+            case 'keys:desc':
+                krsort($this->values);
+                break;
         }
     }
 
@@ -228,7 +246,27 @@ trait EnumDynamicDataTypeTrait {
         $this->valueLabelDelimiter = $string;
         return $this;
     }
-    
+
+    /**
+     * Sorts the `values` array before setting it.
+     * 
+     * - `keys:asc`:    Sorts by keys, ascending.
+     * - `keys:desc`:   Sorts by keys, descending.
+     * - `values:asc`:  Sorts by values, ascending.
+     * - `values:desc`: Sorts by values, descending.
+     * 
+     * @uxon-property sort
+     * @uxon-type [keys:asc,keys:desc,values:asc,values:desc]
+     * 
+     * @param string|null $sortString
+     * @return EnumDataTypeInterface
+     */
+    public function setSort(?string $sortString) : EnumDataTypeInterface
+    {
+        $this->sort = $sortString;
+        return $this;
+    }
+
     /**
      *
      * {@inheritDoc}
@@ -251,5 +289,16 @@ trait EnumDynamicDataTypeTrait {
             return '';
         }
         return $this->getLabelOfValue($value) ?? $value;
+    }
+
+    public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
+    {
+        $sortPropName = 'sort';
+        if($uxon->hasProperty($sortPropName) && !in_array($sortPropName, $skip_property_names)) {
+            $this->setSort($uxon->getProperty($sortPropName));
+            $skip_property_names[] = $sortPropName;
+        }
+
+        parent::importUxonObject($uxon, $skip_property_names);
     }
 }
