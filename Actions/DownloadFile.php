@@ -88,8 +88,6 @@ class DownloadFile extends AbstractAction
     
     private $mode = self::MODE_DOWNLOAD;
     
-    private $openInNewWindow = false;
-
     /**
      * 
      * {@inheritDoc}
@@ -202,7 +200,7 @@ class DownloadFile extends AbstractAction
                 $result = ResultFactory::createDownloadResultFromUrl($task, $url)->setDownload($download);
         }
         
-        if ($this->openInNewWindow === true && $result instanceof ResultUriInterface) {
+        if (!$download && $result instanceof ResultUriInterface) {
             $result->setOpenInNewWindow(true);
         }
         
@@ -375,24 +373,6 @@ class DownloadFile extends AbstractAction
             throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for property `mode` of action "' . $this->getAliasWithNamespace() . '": expecting "download" or "open"!');
         }
         $this->mode = $mode;
-        return $this;
-    }
-    
-    /**
-     * Set to TRUE to open the file in a new browser tab/window instead of the current one.
-     * 
-     * Only has an effect with `mode` = `open` because regular downloads do not navigate the browser anyway.
-     * 
-     * @uxon-property open_in_new_window
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $value
-     * @return DownloadFile
-     */
-    protected function setOpenInNewWindow(bool $value) : DownloadFile
-    {
-        $this->openInNewWindow = $value;
         return $this;
     }
 }
