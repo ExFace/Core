@@ -2,8 +2,10 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Interfaces\Tasks\ResultInterface;
+use exface\Core\Interfaces\Tasks\ResultUriInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Factories\ResultFactory;
@@ -56,11 +58,26 @@ use exface\Core\CommonLogic\Model\Expression;
  * 
  * ```
  * 
+ * ### Open/embed a file instead of downloading it
+ * 
+ * ```
+ *  {
+ *      "alias": "exface.Core.DownloadFile",
+ *      "file_path_attribute": "PATHNAME_ABSOLUTE",
+ *      "mode": "open"
+ *  }
+ * 
+ * ```
+ * 
  * @author Andrej Kabachnik
  *
  */
 class DownloadFile extends AbstractAction
 {
+    const MODE_DOWNLOAD = 'download';
+    
+    const MODE_OPEN = 'open';
+    
     private $filePathAttributeAlias = null;
     
     private $fileContentAttributeAlias = null;
@@ -68,7 +85,9 @@ class DownloadFile extends AbstractAction
     private $fileTypeAttributeAlias = null;
     
     private $fileNameAttributeAlias = null;
-
+    
+    private $mode = self::MODE_DOWNLOAD;
+    
     /**
      * 
      * {@inheritDoc}
@@ -89,6 +108,7 @@ class DownloadFile extends AbstractAction
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
     {
         $data = $this->getInputDataSheet($task);
+        $download = $this->getMode() === self::MODE_DOWNLOAD;
         switch (true) {
             case $this->isFilePathInData():
                 $pathAttrAlias = $this->getPathAbsoluteAttributeAlias();
@@ -109,7 +129,7 @@ class DownloadFile extends AbstractAction
                     $path = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $path;
                 }
                 
-                $result = ResultFactory::createDownloadResultFromFilePath($task, $path);
+                $result = ResultFactory::createFileResultFromPath($task, $path, $download);
                 break;
             case $this->isFileContentInData():
                 $contentAttrAlias = $this->getFileContentAttributeAlias();
@@ -164,15 +184,24 @@ class DownloadFile extends AbstractAction
                 $fm = $this->getWorkbench()->filemanager();
                 $path = $fm->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'Downloads' . DIRECTORY_SEPARATOR . $filename;
                 $fm->dumpFile($path, $content);
-                $result = ResultFactory::createDownloadResultFromFilePath($task, $path);
+                $url = HttpFileServerFacade::buildUrlToViewFile($this->getWorkbench(), new LocalFileInfo($path));
+                $result = ResultFactory::createDownloadResultFromUrl($task, $url)->setDownload($download);
                 break;
             default:
                 if (! $data->hasUidColumn(true)) {
                     throw new ActionInputMissingError($this, 'Download of data not possible for data sheets without UID values!');
                 }
                 
-                $url = HttpFileServerFacade::buildUrlToDownloadData($data->getMetaObject(), $data->getUidColumn()->getValue(0));
-                $result = ResultFactory::createDownloadResultFromUrl($task, $url);
+                if ($download) {
+                    $url = HttpFileServerFacade::buildUrlToDownloadData($data->getMetaObject(), $data->getUidColumn()->getValue(0));
+                } else {
+                    $url = HttpFileServerFacade::buildUrlToViewData($data->getMetaObject(), $data->getUidColumn()->getValue(0));
+                }
+                $result = ResultFactory::createDownloadResultFromUrl($task, $url)->setDownload($download);
+        }
+        
+        if (!$download && $result instanceof ResultUriInterface) {
+            $result->setOpenInNewWindow(true);
         }
         
         return $result;
@@ -313,5 +342,37 @@ class DownloadFile extends AbstractAction
             throw new ActionConfigurationError($this, 'Cannot use `file_name_attribute` without `file_content_attribute` in action "' . $this->getAliasWithNamespace() . '"!');
         }
         return $alias;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    protected function getMode() : string
+    {
+        return $this->mode;
+    }
+    
+    /**
+     * Controls whether the file is prepared for download or opened/embedded directly.
+     * 
+     * - `download` (default) - the file will be sent as a download
+     * - `open` - the file will be opened/embedded inline (e.g. shown in the browser)
+     * 
+     * @uxon-property mode
+     * @uxon-type [download,open]
+     * @uxon-default download
+     * 
+     * @param string $value
+     * @return DownloadFile
+     */
+    protected function setMode(string $value) : DownloadFile
+    {
+        $mode = mb_strtolower($value);
+        if ($mode !== self::MODE_DOWNLOAD && $mode !== self::MODE_OPEN) {
+            throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for property `mode` of action "' . $this->getAliasWithNamespace() . '": expecting "download" or "open"!');
+        }
+        $this->mode = $mode;
+        return $this;
     }
 }
