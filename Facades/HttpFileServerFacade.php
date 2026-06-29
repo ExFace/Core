@@ -46,8 +46,9 @@ use Symfony\Component\Cache\Psr16Cache;
  *      - `api/files/thumb/160x100/my.App.OBJECT_ALIAS/0x5468789`
  *      - `api/files/thumb/x100/my.App.OBJECT_ALIAS/0x5468789`
  *      - `api/files/thumb/160x/my.App.OBJECT_ALIAS/0x5468789`
- * - Download a temp file
+ * - Download a temp file (and delete it after downloading)
  *      - `api/files/pickup/<path_relative_to_temp_folder>`
+ *      - `api/files/temp/<path_relative_to_temp_folder>`
  * - One-time links to get access without explicit authorization (e.g. for a PDF generators)
  *      - `api/files/otl/my.App.OBJECT_ALIAS/0x5468789>`
  * - Legacy URLs
@@ -94,6 +95,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
     const CACHE_POOL_OTL = '_onetimelink';
     
     const DEFAULT_THUMBNAIL_WIDTH = 120;
+    
+    private static ?string $pathToTemp = null;
 
     /**
      *
@@ -149,14 +152,8 @@ class HttpFileServerFacade extends AbstractHttpFacade
         switch (true) {
             // temp/path/to/file
             case $mode === self::URL_PATH_TEMP:
-            case $mode === self::URL_PATH_VIEW:
                 $filename = urldecode(implode('/', $pathParts));
-                $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $filename);
-                $noCache = true;
-                // Delete the temp file once it was downloaded
-                $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), function(OnBeforeStopEvent $event) use ($fileInfo) {
-                    @unlink($fileInfo->getPathAbsolute());
-                });
+                $fileInfo = new LocalFileInfo(self::getPathToTempFolder($this->getWorkbench()) . $filename);
                 break;
             // obj_alias/uid
             // TODO this is a bit too simple - what about files within a single folder? The would end up here too.
@@ -174,17 +171,34 @@ class HttpFileServerFacade extends AbstractHttpFacade
                         $uid = BinaryDataType::convertBase64ToText(substr($uid, 7));
                         break;
                 }
-                $fileInfo = DataSourceFileInfo::fromObjectSelectorAndUID($this->getWorkbench(), $objSel, $uid);
-                break;
+                try {
+                    $fileInfo = DataSourceFileInfo::fromObjectSelectorAndUID($this->getWorkbench(), $objSel, $uid);
+                    break;
+                } catch (MetaObjectNotFoundError $e) {
+                    
+                }
             // just path/to/file
             default:
-                $fileInfo = new LocalFileInfo($pathParts[0]);
-                $cachePath = $this->getWorkbench()->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . $pathParts[0];
-                // If the file cannot be found directly, see if it is in the temp/ folder
-                if (! $fileInfo->exists() && file_exists($cachePath)) {
-                    $fileInfo = new LocalFileInfo($cachePath);
+                $path = FilePathDataType::normalize(urldecode(implode('/', $pathParts)));
+                if (FilePathDataType::isAbsolute($path)) {
+                    $fileInfo = new LocalFileInfo($path);
+                } else {
+                    $fileInfo = new LocalFileInfo(FilePathDataType::normalize($this->getWorkbench()->getInstallationPath()) . '/' . $path);
+                    // If the file cannot be found directly, see if it is in the temp/ folder
+                    $pathInCacheFolder = FilePathDataType::normalize($this->getWorkbench()->filemanager()->getPathToCacheFolder()) . '/' . $path;
+                    if (! $fileInfo->exists() && file_exists($pathInCacheFolder)) {
+                        $fileInfo = new LocalFileInfo($pathInCacheFolder);
+                    }
                 }
                 break;
+        }
+        
+        if ($this->isTemp($fileInfo)) {
+            $noCache = true;
+            // Delete the temp file once it was downloaded
+            $this->getWorkbench()->eventManager()->addListener(OnBeforeStopEvent::getEventName(), function(OnBeforeStopEvent $event) use ($fileInfo) {
+                @unlink($fileInfo->getPathAbsolute());
+            });
         }
         
         if ($noCache === false && null !== $cacheInfo = $this->getCache($fileInfo, $options)) {
@@ -216,6 +230,45 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         
         return $response;        
+    }
+
+    /**
+     * Return TRUE if the given file is a temporary file created just for the download
+     * 
+     * Currently, this is considered to be the case if the file is located in the workbench cache folder.
+     * 
+     * @param FileInfoInterface $fileInfo
+     * @return bool
+     */
+    protected function isTemp(FileInfoInterface $fileInfo) : bool
+    {
+        $path = $fileInfo->getPathAbsolute();
+        if (
+            StringDataType::startsWith(
+                FilePathDataType::normalize($path, '/'), 
+                static::getPathToTempFolder($this->getWorkbench())
+            )
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the absolute path to the file server temp folder (workbench cache folder by default) ending with `/`.
+     * 
+     * The path is normalized to `/` directory separators and ends with `/`.
+     * 
+     * @param WorkbenchInterface $workbench
+     * @return string
+     */
+    protected static function getPathToTempFolder(WorkbenchInterface $workbench) : string
+    {
+        // Currently we have only one temp folder for all workbenches. Is it important to cache it per workbench???
+        if (self::$pathToTemp === null) {
+            self::$pathToTemp = FilePathDataType::normalize($workbench->filemanager()->getPathToCacheFolder()) . '/';
+        }
+        return self::$pathToTemp;
     }
     
     /**
@@ -451,7 +504,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         }
         $relativePath = StringDataType::substringAfter($absolutePath, $installationPath);
         $relativePath = ltrim($relativePath, "/");
-        $cachePath = FilePathDataType::normalize($workbench->filemanager()->getPathToCacheFolder()) . '/';
+        $cachePath = self::getPathToTempFolder($workbench);
 
         if (StringDataType::startsWith($absolutePath, $cachePath)) {
             $facade = FacadeFactory::createFromString(__CLASS__, $workbench);
