@@ -2,6 +2,7 @@
 namespace exface\Core\Facades;
 
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
 use exface\Core\Factories\PermalinkFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -148,6 +149,7 @@ class HttpFileServerFacade extends AbstractHttpFacade
         switch (true) {
             // temp/path/to/file
             case $mode === self::URL_PATH_TEMP:
+            case $mode === self::URL_PATH_VIEW:
                 $filename = urldecode(implode('/', $pathParts));
                 $fileInfo = new LocalFileInfo($this->getWorkbench()->filemanager()->getPathToCacheFolder() . '/' . $filename);
                 $noCache = true;

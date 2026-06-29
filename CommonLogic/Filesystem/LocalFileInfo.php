@@ -3,11 +3,11 @@ namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\DataTypes\FilePathDataType;
 use \DateTimeInterface;
+use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\Interfaces\Filesystem\FileStreamInterface;
-use Safe\Exceptions\FileinfoException;
 
 /**
  * Contains information about a single local file - similar to PHPs splFileInfo.
@@ -51,7 +51,7 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
                     $this->splFileInfo = new \SplFileInfo(FilePathDataType::makeAbsolute($pathOrSplFileInfo, $basePath, $directorySeparator));
                     break;
                 default:
-                    throw new FileinfoException("The path '{$pathOrSplFileInfo}' is not an absolut path and no base path was given!");
+                    throw new FileNotFoundError("The path '{$pathOrSplFileInfo}' is not an absolut path and no base path was given!");
             }
         }
         
