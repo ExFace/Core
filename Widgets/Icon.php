@@ -79,6 +79,8 @@ class Icon extends Display implements iHaveIcon
     
     private $iconsScale = null;
     
+    private $emptyIcon = null;
+    
     private $valueWidget = null;
     
     private $valueWidgetUxon = null;
@@ -180,6 +182,7 @@ class Icon extends Display implements iHaveIcon
      * 
      * - [Font Awesome 4 icons](https://fontawesome.com/v4/icons/)
      * - [SVG Material Design icons](https://pictogrammers.com/library/mdi/)
+     * - [SVG Repo](https://www.svgrepo.com/)
      * - [UI5 icon explorer (only for UI5!)](https://sapui5.hana.ondemand.com/sdk/test-resources/sap/m/demokit/iconExplorer/webapp/index.html#/overview/SAP-icons/?tab=grid)
      * 
      * The ability to use SVG icons offers a lot of flexibility as most icon sets include
@@ -312,5 +315,31 @@ class Icon extends Display implements iHaveIcon
         }
         
         return false;
+    }
+    
+    /**
+     * 
+     * @return string|NULL
+     */
+    public function getEmptyIcon() : ?string
+    {
+        return $this->emptyIcon;
+    }
+    
+    /**
+     * Icon to display when the value is empty/null.
+     * 
+     * This is useful when using icon_scale with dynamic values that may be null.
+     * 
+     * @uxon-property empty_icon
+     * @uxon-type icon|string
+     * 
+     * @param string $value
+     * @return Icon
+     */
+    public function setEmptyIcon(string $value) : Icon
+    {
+        $this->emptyIcon = $value;
+        return $this;
     }
 }
