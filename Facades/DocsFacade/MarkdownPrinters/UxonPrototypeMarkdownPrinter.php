@@ -98,12 +98,12 @@ class UxonPrototypeMarkdownPrinter
     private string $description = '';
 
     /**
-     * @var mixed|null
+     * @var DataSheetInterface|null
      */
     private $classDataSheet = null;
 
     /**
-     * @var mixed|null
+     * @var DataSheetInterface|null
      */
     private $propertyDataSheet = null;
 
@@ -241,41 +241,108 @@ MD;
         return $markdown;
     }
 
+    /**
+     * Returns the fully qualified PHP class name of the documented prototype.
+     *
+     * The value is resolved and stored during init() from the selector input: either directly from the given
+     * class name or by finding the class in the given vendor-relative PHP file path.
+     *
+     * @return string Fully qualified prototype class name, e.g. "\\exface\\Core\\Widgets\\DataTable".
+     */
     public function getPrototypeClass(): string
     {
         return $this->prototypeClass;
     }
 
+    /**
+     * Returns the vendor-relative PHP file path of the documented prototype.
+     *
+     * The value is resolved and stored during init() from the selector input: either by normalizing the given
+     * file path or by finding the file that contains the given PHP class.
+     *
+     * @return string Vendor-relative file path used for annotation lookups, e.g. "exface/core/Widgets/DataTable.php".
+     */
     public function getFilepathRelative(): string
     {
         return $this->filepathRelative;
     }
 
+    /**
+     * Returns the detected documentation component type of the prototype.
+     *
+     * The value is resolved and stored during init(). UXON prototypes use the schema name with an uppercase
+     * first letter, while formula classes return "Formula".
+     *
+     * @return string Component type used in the generated heading, e.g. "Widget", "Action", "DataSheet" or "Formula".
+     */
     public function getComponentType(): string
     {
         return $this->componentType;
     }
 
+    /**
+     * Returns the display alias of the documented prototype.
+     *
+     * The value is resolved and stored during init() from the CLASSNAME column of the class annotation DataSheet.
+     * If the annotation row does not contain CLASSNAME, the short PHP class name is used as fallback.
+     *
+     * @return string Alias printed in the generated heading after the component type.
+     */
     public function getAlias(): string
     {
         return $this->alias;
     }
 
+    /**
+     * Returns the annotation title of the documented prototype.
+     *
+     * The value is resolved and stored during init() from the TITLE column of the class annotation DataSheet.
+     * If TITLE is empty, NAME from the same annotation row is used as fallback.
+     *
+     * @return string Human-readable title printed below the generated heading.
+     */
     public function getTitle(): string
     {
         return $this->title;
     }
 
+    /**
+     * Returns the annotation description of the documented prototype.
+     *
+     * The value is resolved and stored during init() from the DESCRIPTION column of the class annotation DataSheet.
+     * It contains the Markdown description extracted from the prototype class docblock.
+     *
+     * @return string Markdown description printed before the generated properties section.
+     */
     public function getDescription(): string
     {
         return $this->description;
     }
 
+    /**
+     * Returns the DataSheet with the class-level UXON entity annotation used by this printer.
+     *
+     * The sheet is created and read during init() for object "exface.Core.UXON_ENTITY_ANNOTATION" and filtered by
+     * the resolved FILE path. It contains the columns CLASSNAME, NAME, TITLE and DESCRIPTION. The first row is used
+     * to fill getAlias(), getTitle() and getDescription().
+     *
+     * @return DataSheetInterface|null DataSheet containing the resolved class annotation row, or null before init().
+     */
     protected function getClassDataSheet()
     {
         return $this->classDataSheet;
     }
 
+    /**
+     * Returns the DataSheet with the UXON property annotations used for the generated properties section.
+     *
+     * The sheet is created and read during init() for object "exface.Core.UXON_PROPERTY_ANNOTATION" or, for query
+     * builder schemas, "exface.Core.UXON_QUERY_BUILDER_ANNOTATION". It is filtered by the resolved FILE path and
+     * sorted by PROPERTY. Rows contain PROPERTY, TYPE, TEMPLATE, DEFAULT, TITLE, REQUIRED and DESCRIPTION. Query
+     * builder annotation rows additionally contain TARGET and are filtered by the schema level.
+     *
+     * @return DataSheetInterface|null DataSheet containing property annotation rows, or null for prototypes without properties such as formulas.
+     */
     protected function getPropertyDataSheet()
     {
         return $this->propertyDataSheet;
@@ -348,6 +415,10 @@ MD;
         return '';
     }
 
+    /**
+     * Returns the workbench used to resolve prototype files, classes and annotation DataSheets.
+     * @return WorkbenchInterface Workbench instance passed to the selector when this printer was constructed.
+     */
     public function getWorkbench(): WorkbenchInterface
     {
         return $this->selector->getWorkbench();
