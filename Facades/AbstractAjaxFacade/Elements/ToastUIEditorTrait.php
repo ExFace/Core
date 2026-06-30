@@ -933,34 +933,34 @@ JS;
     public function buildJsValueSetter($value) : string
     {
         return <<<JS
-        
-        var oEditor = {$this->buildJsMarkdownVar()};
-        if({$value} === undefined || {$value} === null) {
-            {$value} = "";
+    (function(mVal, oEditor){    
+        if(mVal === undefined || mVal === null) {
+            mVal = "";
         }
         
-        {$this->buildJsImageDataSanitizer($value)}
+        {$this->buildJsImageDataSanitizer('mVal')}
 
-        if ("getMarkdown" in oEditor && {$value} === oEditor.getMarkdown()) {
+        if ("getMarkdown" in oEditor && mVal === oEditor.getMarkdown()) {
             return;
         } else {
             if (!("_lastSetValue" in oEditor)) {
                 oEditor._lastSetValue = null;
             }
             
-            if (oEditor._lastSetValue === {$value}) {
+            if (oEditor._lastSetValue === mVal) {
                 return;
             }
         }
         
-        oEditor.setMarkdown({$value});
-        oEditor._lastSetValue = {$value};
+        oEditor.setMarkdown(mVal);
+        oEditor._lastSetValue = mVal;
         
         if (oEditor.refreshMermaid) {
             setTimeout(function(){
                 oEditor.refreshMermaid();
             }, 0);
         }
+    })({$value}, {$this->buildJsMarkdownVar()})
 JS;
     }
 
