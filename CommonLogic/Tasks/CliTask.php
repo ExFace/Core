@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Tasks;
 
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
 use exface\Core\Interfaces\Facades\FacadeInterface;
@@ -168,17 +170,35 @@ class CliTask extends GenericTask implements CliTaskInterface
     }
 
     /**
-     * Maximum number of seconds for each command in this task to run
+     * Maximum time for each command in this task to run.
+     * 
+     * Can be set either as a plain number of seconds (e.g. `600`) or as a
+     * human-readable interval:
+     * 
+     * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`, `second(s)`.
+     * - Concatenate with `+`.
+     * - For example: `10 minutes`, `1 hour + 30 minutes`, but also `600` for 10 minutes.
      * 
      * @uxon-property timeout_per_command
-     * @uxon-type integer
+     * @uxon-type string
      * 
-     * @param int $timeout
+     * @param string|int $timeout
      * @return $this
+     * @throws \exface\Core\Exceptions\InvalidArgumentException
      */
-    protected function setCommandTimeout(int $timeout) : CliTask
+    protected function setCommandTimeout(string|int $timeout) : CliTask
     {
-        $this->timeoutPerCommand = $timeout;
+        if (is_int($timeout) || is_numeric($timeout)) {
+            $this->timeoutPerCommand = (int) $timeout;
+            return $this;
+        }
+        try {
+            $interval = DateDataType::castInterval($timeout);
+            $reference = new \DateTimeImmutable('@0');
+            $this->timeoutPerCommand = $reference->add($interval)->getTimestamp() - $reference->getTimestamp();
+        } catch (\Throwable $e) {
+            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `timeout_per_command` configuration', null, $e);
+        }
         return $this;
     }
 
