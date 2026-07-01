@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Tasks\ScheduledTask;
 use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\CliRuntimeException;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
@@ -123,9 +124,15 @@ class CliTaskQueue extends SyncTaskQueue
         // ever called directly without a queue-provided one.
         $logBook = $logBook ?? new MarkdownLogBook('CLI output');
 
+        // Remembers the command currently being executed so the catch block below can
+        // reference it (e.g. as the header of the CLI output tab), even if the failure
+        // happens inside assertCommandAllowed() before any output was produced.
+        $currentCommand = '';
+
         try {
             // Run every command one after another within this single queue run.
             foreach ($commands as $command) {
+                $currentCommand = $command;
                 $this->assertCommandAllowed($command);
 
                 // Start a new logbook section for this command.
@@ -165,17 +172,19 @@ class CliTaskQueue extends SyncTaskQueue
                 }
             }
         } catch (\Throwable $e) {
-            // Preserve the output gathered so far by attaching it to the error,
-            // otherwise everything collected in $allOutputs is lost on propagation.
-            $collected = implode(PHP_EOL, $allOutputs);
             // Record the failure in the living logbook. The queue still holds this same
             // logbook instance and will persist it via saveError() once the exception
             // propagates - so the failed run shows its full output in the queue.
             $logBook->addException($e);
-            if ($collected !== '') {
-                throw new QueueRuntimeError($this, $e->getMessage() . PHP_EOL . PHP_EOL . 'Output before failure:' . PHP_EOL . $collected, null, $e);
-            }
-            throw $e;
+
+            // Re-throw as a CliRuntimeException that keeps the collected CLI output in its
+            // own "CLI" tab instead of dumping it into the error message. This way the queue
+            // item shows only the actual error in its message, while the full CLI/Behat
+            // output stays readable in the CLI tab. We build a fresh exception (instead of
+            // rethrowing $e) so it carries the output of ALL commands run so far ($allOutputs)
+            // and the failing command - $e alone would only hold the last command's output.
+            $exitCode = ($e instanceof CliRuntimeException) ? $e->getExitCode() : null;
+            throw new CliRuntimeException($currentCommand, $allOutputs, $exitCode, $e->getMessage(), null, $e);
         } finally {
             // Always release the file handle, even if an exception propagates out of
             // the command loop above.
