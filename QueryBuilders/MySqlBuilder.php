@@ -133,8 +133,12 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
                 case $group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator():
-                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                    $uidAggregator = $this->isAggregatedBy($qpart)
+                        ? null
+                        : new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX);
+                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, $uidAggregator);
+                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ',
+                        $this->escapeName($this->getShortAlias($qpart->getColumnKey())));
                     break;
                 // Add to core query and mark as group-safe
                 // if we are not aggregating
