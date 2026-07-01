@@ -1,11 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic\Queue;
 
+use exface\Core\CommonLogic\Tasks\CliScriptTask;
 use exface\Core\CommonLogic\Tasks\ResultMessageStream;
+use exface\Core\CommonLogic\Tasks\ScheduledTask;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
@@ -25,7 +29,7 @@ class CliTaskQueue extends SyncTaskQueue
 {
     use TranslatablePropertyTrait;
 
-    private ?float $commandTimeout = null;
+    private ?int $commandTimeout = null;
     private array $environmentVars = [];
     private array $environmentVarsInherit = [];
     private array $allowedCommands = [];
@@ -56,29 +60,42 @@ class CliTaskQueue extends SyncTaskQueue
      * in IN_PROGRESS. The file handle is closed in a finally block, so it is released
      * even if an exception propagates out of the command loop.
      *
+     *
      * @param TaskInterface $task
+     * @param DataSheetInterface $queueItemData 
+     * @return ResultInterface
      *
      * @throws \exface\Core\Exceptions\Queues\QueueRuntimeError
      *      if the `cmd` parameter is neither a string, array nor UxonObject, or if a
      *      command is not matched by any of the configured `allowed_commands`.
      *
-     * @return ResultInterface
-     *
      * @see AbstractInternalTaskQueue::performTask()
      */
-    protected function performTask(TaskInterface $task) : ResultInterface
+    protected function performTask(TaskInterface $task, DataSheetInterface $queueItemData) : ResultInterface
     {
-        $commands = $this->normalizeCommands($task->getParameter('cmd'));
+        if ($task instanceof ScheduledTask) {
+            $task = $task->getTaskToRun();
+        }
+        
+        switch (true) {
+            case $task instanceof CliScriptTask:
+                $commands = $this->normalizeCommands($task->getCommands());
+                break;
+            
+            case $task instanceof CliTaskInterface:
+                $commands = [$task->getCliCommand()];
+                break;
+                
+            // Backwards compatibility to the times when any task was OK
+            default:
+                $commands = $task->getParameter('cmd') ?? [];
+        }
+        $commands = $this->normalizeCommands($commands);
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = $task->hasParameter('timeout')
-            ? (float) $task->getParameter('timeout')
-            : $this->getCommandTimeout();
-        // Normalize ignored_exit_codes — UXON delivers arrays as UxonObject, values as strings.
-        // runCliCommand() uses strict in_array(), so values must be integers.
-        $rawExitCodes = $task->hasParameter('ignored_exit_codes') ? $task->getParameter('ignored_exit_codes') : [];
-        $ignoredExitCodes = array_map('intval', $rawExitCodes instanceof UxonObject ? $rawExitCodes->toArray() : (array) $rawExitCodes);
+        $timeout = (float) $this->getCommandTimeout();
+        $ignoredExitCodes = ($task instanceof CliScriptTask) ? $task->getIgnoredExitCodes() : [];
 
         // Open a live output file so partial output survives even if the PHP process is
         // killed before performTask() returns (php-fpm/web server timeout). Returns null
@@ -96,6 +113,7 @@ class CliTaskQueue extends SyncTaskQueue
         $allOutputs = [];
 
         try {
+            $logSheet = $queueItemData->extractSystemColumns();
             // Run every command one after another within this single queue run.
             foreach ($commands as $command) {
                 $this->assertCommandAllowed($command);
@@ -105,8 +123,18 @@ class CliTaskQueue extends SyncTaskQueue
                     fflush($fh);
                 }
 
+                $loggingError = null;
                 foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false, $ignoredExitCodes) as $output) {
                     $allOutputs[] = $output;
+                    if ($loggingError !== null) {
+                        try {
+                            $logSheet->setCellValue('RESULT', 0, implode(PHP_EOL, $allOutputs));
+                            $logSheet->dataUpdate(false);
+                        } catch (\Throwable $e) {
+                            $this->getWorkbench()->getLogger()->logException(new QueueRuntimeError($this, 'Failed to update queue item RESULT cell after logging error: ' . $e->getMessage(), null, $e));
+                            $loggingError = $e;
+                        }
+                    }
                     if ($fh !== null) {
                         // Write each chunk and push it to the OS right away, so a process
                         // kill immediately afterwards cannot lose buffered output.
@@ -216,7 +244,7 @@ class CliTaskQueue extends SyncTaskQueue
         }
 
         // Always resolve relative to the current working directory.
-        $base = rtrim(getcwd(), '/\\');
+        $base = rtrim($this->getWorkbench()->getInstallationPath(), '/\\');
         $folder = $base . DIRECTORY_SEPARATOR . trim($folder, '/\\');
 
         $filename = 'cli_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 8) . '.log';
@@ -284,31 +312,30 @@ class CliTaskQueue extends SyncTaskQueue
     }
 
     /**
-     * Set timeout for the commands in seconds.
-     * Default is 600.
+     * Set timeout for the commands in seconds - 600 by default.
      *
      * @uxon-property command_timeout
      * @uxon-type integer
      * @uxon-default 600
      *
-     * @param string $timeout
+     * @param int $timeout
      * @return CliTaskQueue
      */
-    public function setCommandTimeout(string $timeout) : CliTaskQueue
+    public function setCommandTimeout(int $timeout) : CliTaskQueue
     {
-        $this->commandTimeout = floatval($timeout);
+        $this->commandTimeout = $timeout;
         return $this;
     }
 
     /**
      * Return the Timeout for the commands in seconds.
-     * To deactivate timeout set it to '0.0'.
+     * To deactivate timeout set it to '0'.
      *
-     * @return float
+     * @return int
      */
-    public function getCommandTimeout() : float
+    public function getCommandTimeout() : int
     {
-        return $this->commandTimeout ?? 600.0;
+        return $this->commandTimeout ?? 600;
     }
 
 

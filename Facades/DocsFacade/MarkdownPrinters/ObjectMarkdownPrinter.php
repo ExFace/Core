@@ -104,6 +104,7 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
         $attributesHeading = MarkdownDataType::buildMarkdownHeader("Attributes of \"{$metaObject->getName()}\"", $headingLevel + 1);
         $actionHeading = MarkdownDataType::buildMarkdownHeader("Actions", $headingLevel + 1);
         $groupHeading = MarkdownDataType::buildMarkdownHeader("Attributegroups of \"{$metaObject->getName()}\"", $headingLevel + 1);
+        $parentObjectLinks = $this->buildMdParentObjectLinks($metaObject);
 
         $markdown = <<<MD
 
@@ -111,6 +112,7 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
 
 - Alias: **{$metaObject->getAliasWithNamespace()}**
 - UID: `{$metaObject->getId()}`
+{$parentObjectLinks}
 - Data Source: **{$metaObject->getDataSource()->getName()}**, query builder: [{$queryBuilderClass}]($queryBuilderLink), connector: [{$connectorClass}]({$connectorLink})
 {$importantAttributes}
 
@@ -129,6 +131,27 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
 {$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
 MD;        
         return $markdown;
+    }
+
+    /**
+     * Builds a Markdown list item linking to all parent objects of the given meta object.
+     *
+     * @param MetaObjectInterface $metaObject
+     * @return string
+     */
+    protected function buildMdParentObjectLinks(MetaObjectInterface $metaObject) : string
+    {
+        $parents = $metaObject->getParentObjects();
+        if (empty($parents)) {
+            return '';
+        }
+
+        $links = [];
+        foreach ($parents as $parent) {
+            $links[] = $this->createLink($parent);
+        }
+
+        return '- Parent object' . (count($links) === 1 ? '' : 's') . ': ' . implode(', ', $links);
     }
 
     /**
@@ -187,6 +210,7 @@ MD;
 {$attr->getShortDescription()}
 
 - Alias: **{$this->escapeMarkdownText($attr->getAlias())}**
+{$this->buildMdInheritedFromListItem($attr)}
 - Properties: {$this->buildMdAttributeProperties($attr)}
 
 {$this->buildMdCodeblock($attr->getDataAddress(), 'Data address:')}
@@ -205,7 +229,7 @@ MD;
         $markdown = '';
         try{
             foreach ($obj->getActions() as $act) {
-                $actionPrinter = new ActionMarkdownPrinter($this->workbench, $act, $headingLevel);
+                $actionPrinter = new ActionMarkdownPrinter($act, $headingLevel);
                 $markdown .= $actionPrinter->getMarkdown();
             } 
         } catch (\Exception $e){
@@ -341,6 +365,41 @@ MD;
     }
 
     /**
+     * Builds Markdown text showing the object an attribute or relation was inherited from.
+     *
+     * @param MetaAttributeInterface|MetaRelationInterface $modelElement
+     * @return string
+     */
+    protected function buildMdInheritedFrom($modelElement) : string
+    {
+        if (! $modelElement->isInherited()) {
+            return 'Direct';
+        }
+
+        $parentObject = $modelElement->getObjectInheritedFrom();
+        if ($parentObject === null) {
+            return 'Yes';
+        }
+
+        return $this->createLink($parentObject);
+    }
+
+    /**
+     * Builds a Markdown list item for inherited model elements.
+     *
+     * @param MetaAttributeInterface|MetaRelationInterface $modelElement
+     * @return string
+     */
+    protected function buildMdInheritedFromListItem($modelElement) : string
+    {
+        if (! $modelElement->isInherited()) {
+            return '';
+        }
+
+        return '- Inherited from: ' . $this->buildMdInheritedFrom($modelElement);
+    }
+
+    /**
      * Returns a list of attribute strings in Markdown format.
      *| Name | Alias | Data Address | Data Type | Required | Relation |
      *
@@ -372,9 +431,11 @@ MD;
             }
 
             if ($attribute->isRelation()) {
-                $regRelList[] = "| {$name} | {$alias} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()} | {$dataType}";
+                $origin = $this->buildMdInheritedFrom($rel);
+                $regRelList[] = "| {$name} | {$alias} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()} | {$dataType} | {$origin}";
             } else {
-                $attributeList[] = "| {$name} | {$alias} | {$dataType} | {$attributeType->getLabelOfValue()}";
+                $origin = $this->buildMdInheritedFrom($attribute);
+                $attributeList[] = "| {$name} | {$alias} | {$dataType} | {$attributeType->getLabelOfValue()} | {$origin}";
             }
         }
         foreach ($relations as $rel) {
@@ -384,7 +445,8 @@ MD;
                 } catch (MetaRelationBrokenError $e) {
                     $relationText = 'Related object `' . $rel->getRightObjectId() . '` not found!';
                 }
-                $revRelList[] = "| {$rel->getName()} | {$rel->getAlias()} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()}";
+                $origin = $this->buildMdInheritedFrom($rel);
+                $revRelList[] = "| {$rel->getName()} | {$rel->getAlias()} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()} | {$origin}";
             }
         }
 
@@ -393,8 +455,8 @@ MD;
             $rows = implode("\n", $attributeList);
             $md = <<<MD
 
-| Attribute name | Alias | Data Type | Attribute type |
-|----------------|-------|-----------|----------------|
+| Attribute name | Alias | Data Type | Attribute type | Inherited from |
+|----------------|-------|-----------|----------------|----------------|
 {$rows}
 
 MD;
@@ -409,8 +471,8 @@ MD;
 The following attributes hold foreign keys. In UXON their aliases can be used to access attributes of related objects:
 e.g. `RELATION_ALIAS__LABEL`.
 
-| Relation/attribute name | Alias | Relation to | Cardinality | Data Type |
-|-------------------------|-------|-------------|-------------|-----------|
+| Relation/attribute name | Alias | Relation to | Cardinality | Data Type | Inherited from |
+|-------------------------|-------|-------------|-------------|-----------|----------------|
 {$rows}
 
 MD;
@@ -425,8 +487,8 @@ MD;
 Reverse relations (those from other object) can be used just like regular ones. Most of them point to multiple related
 objects, so use aggregators like `:SUM` or `:LIST` - e.g. `RELATION_ALIAS__UID:COUNT`.
 
-| Relation name | Relation alias | Relation from | Cardinality |
-|---------------|----------------|---------------|-------------|
+| Relation name | Relation alias | Relation from | Cardinality | Inherited from |
+|---------------|----------------|---------------|-------------|----------------|
 {$rows}
 
 MD;      
