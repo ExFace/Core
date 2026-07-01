@@ -666,13 +666,21 @@ class MsSqlBuilder extends AbstractSqlBuilder
         if ($qpart->hasAggregator() && ! $this->isAggregatedViaStuffXML($qpart)) {
             $aggr = $qpart->getAggregator();
             $aggrFunc = $aggr->getFunction()->__toString();
-            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
-                $listAllAggr = new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_ALL, $aggr->getArguments());
-                $qpart->setAggregator($listAllAggr);
-                // TODO applying the filter to aggregates does not work for some reason...
-                // A subselect with HAVING is being built then and EXFCOREQ cannot be resolved or is
-                // at the wrong place. Never found out, what exactly is wrong.
+            if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT || $aggrFunc === AggregatorFunctionsDataType::LIST_ALL) {
+                // LIST_DISTINCT must be replaced by LIST_ALL because STRING_AGG() does not support
+                // DISTINCT - the filter result is the same anyway. LIST_ALL can be used as-is.
+                if ($aggrFunc === AggregatorFunctionsDataType::LIST_DISTINCT) {
+                    $listAllAggr = new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::LIST_ALL, $aggr->getArguments());
+                    $qpart->setAggregator($listAllAggr);
+                }
+                
+                // Filter the raw (non-aggregated) values in the WHERE clause instead of the aggregated
+                // list in HAVING. This is required because list-aggregations are rendered as inline
+                // correlated subselects (`STUFF ... FOR XML`) without a GROUP BY, so a HAVING clause
+                // would produce invalid SQL. See checkFilterBelongsInHavingClause().
                 $qpart->getCondition()->setApplyToAggregates(false);
+
+
                 /* Not quite sure, if we can reliably change the aggregator of an instantiated qpart. Here is variant
                  * with a cloned $qpart, but it produces different results for some reason.
                  * Remove this if really not required.

@@ -2368,12 +2368,24 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * added to the where clause which - in turn - will normally contain the
      * HAVING clause
      *
+     * A condition, that is explicitly marked NOT to apply to aggregated values
+     * (`apply_to_aggregates: false`) must filter the raw rows in the WHERE clause
+     * and therefore never belongs in HAVING - even if its expression has an
+     * aggregator. This is also important to avoid generating a HAVING clause for
+     * a query that has no GROUP BY (e.g. when list-aggregations are rendered as
+     * inline correlated subselects like `STUFF ... FOR XML` in MS SQL), which
+     * would result in invalid SQL.
+     *
      * @param QueryPartFilter $qpart
      * @param boolean $rely_on_joins
      * @return boolean
      */
     protected function checkFilterBelongsInHavingClause(QueryPartFilter $qpart, $rely_on_joins = true)
     {
+        $condition = $qpart->getCondition();
+        if ($condition !== null && $condition->willApplyToAggregatedValues() === false) {
+            return false;
+        }
         return $qpart->getAggregator() && ! $qpart->getFirstRelation(RelationTypeDataType::REVERSE) ? true : false;
     }
 
