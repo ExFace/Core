@@ -133,6 +133,9 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
                 case $group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator():
+                    // If the query is already grouped by the UID itself, the UID is unique per group,
+                    // so MAX() is both redundant and harmful: on PostgreSQL it forces the UID through a
+                    // hex-text cast (no MAX for uuid), which then breaks the enrichment JOIN (text = uuid).
                     $uidAggregator = $this->isAggregatedBy($qpart)
                         ? null
                         : new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX);

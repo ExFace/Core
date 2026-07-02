@@ -106,6 +106,16 @@ class CliRuntimeException extends RuntimeException
     }
     
     /**
+     * Returns the exit code the CLI command terminated with or NULL if unknown.
+     * 
+     * @return int|NULL
+     */
+    public function getExitCode() : ?int
+    {
+        return $this->exitCode;
+    }
+    
+    /**
      * Returns the output type: SUCCESS, WARNING, ERROR or NULL if unknown.
      * 
      * @return string|NULL
