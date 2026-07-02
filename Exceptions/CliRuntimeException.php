@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\DebugMessage;
 
 /**
@@ -132,10 +133,11 @@ class CliRuntimeException extends RuntimeException
         // Only add the CLI tab once. When this exception wraps another CliRuntimeException
         // as `previous`, the parent createDebugWidget() recursively renders the previous
         // exception too - without this guard both would add their own "CLI" tab, resulting
-        // in duplicate tabs in the error details.
-        if ($debug_widget->findChildById('cli_tab') === false) {
+        // in duplicate tabs in the error details. Don't add a static id to the tab to avoid
+        // id clashes if multiple exceptions produce CLI tabs in different tabs or different
+        // dialogs
+        if (null === $debug_widget->findChild(fn(WidgetInterface $child) => $child->getCaption() === 'CLI')) {
             $tab = $debug_widget->createTab();
-            $tab->setId('cli_tab');
             $tab->setCaption('CLI');
             $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
                 'widget_type' => 'Markdown',

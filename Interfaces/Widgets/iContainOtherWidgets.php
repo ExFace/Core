@@ -185,6 +185,12 @@ interface iContainOtherWidgets extends WidgetInterface
      * @return WidgetInterface|boolean
      */
     public function findChildById($widget_id);
+
+    /**
+     * @param callable $filterCallback
+     * @return WidgetInterface|null
+     */
+    public function findChild(callable $filterCallback) : ?WidgetInterface;
     
     /**
      * Returns TRUE if the container is filled by a single large widget entirely.
