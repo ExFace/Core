@@ -129,14 +129,20 @@ class CliRuntimeException extends RuntimeException
     {
         $debug_widget = parent::createDebugWidget($debug_widget);
         
-        $tab = $debug_widget->createTab();
-        $tab->setCaption('CLI');
-        $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
-            'widget_type' => 'Markdown',
-            'value' => $this->buildMarkdown()
-        ])));
-        $debug_widget->addTab($tab);
-        
+        // Only add the CLI tab once. When this exception wraps another CliRuntimeException
+        // as `previous`, the parent createDebugWidget() recursively renders the previous
+        // exception too - without this guard both would add their own "CLI" tab, resulting
+        // in duplicate tabs in the error details.
+        if ($debug_widget->findChildById('cli_tab') === false) {
+            $tab = $debug_widget->createTab();
+            $tab->setId('cli_tab');
+            $tab->setCaption('CLI');
+            $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
+                'widget_type' => 'Markdown',
+                'value' => $this->buildMarkdown()
+            ])));
+            $debug_widget->addTab($tab);
+        }
         return $debug_widget;
     }
     
