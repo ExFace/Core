@@ -118,7 +118,7 @@ class CliCommandRunner
     {
         $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
         if ($isWindows) {
-            $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"], "microsoft-iis") !== false);
+            $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"] ?? '', "microsoft-iis") !== false);
             if ($isIIS) {
                 return false;
                 /* TODO solve remaining probelms with Symfony Process with IIS: it seems,
