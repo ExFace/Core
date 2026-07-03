@@ -17,7 +17,16 @@
         "object_alias": "exface.Core.USER",
         "filters": [
             {
-                "attribute_alias": "USERNAME"
+                "attribute_alias": "USERNAME",
+                "comparator": "[="
+            },
+            {
+                "attribute_alias": "FIRST_NAME",
+                "comparator": "[="
+            },
+            {
+                "attribute_alias": "LAST_NAME",
+                "comparator": "[="
             },
             {
                 "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
@@ -38,6 +47,9 @@
             },
             {
                 "attribute_alias": "POSITION"
+            },
+            {
+                "attribute_alias": "UID"
             }
         ],
         "columns": [
