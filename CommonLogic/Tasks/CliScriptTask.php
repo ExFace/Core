@@ -3,8 +3,10 @@ namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Tasks\TimeoutingTaskInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -13,7 +15,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * @author Andrej Kabachnik
  *
  */
-class CliScriptTask extends GenericTask
+class CliScriptTask extends GenericTask implements TimeoutingTaskInterface
 {    
     private array $commands;
     private ?int $commandTimeout = null;
@@ -175,5 +177,18 @@ class CliScriptTask extends GenericTask
             $uxon->setProperty('ignored_exit_codes', new UxonObject($this->getIgnoredExitCodes()));
         }
         return $uxon;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTimeoutInterval(): ?\DateInterval
+    {
+        if (null !== $cmdTimeout = $this->getCommandTimeout()) {
+            $timeout = $cmdTimeout * count($this->getCommands());
+            $interval = DateTimeDataType::castInterval($timeout);
+            return $interval;
+        }
+        return null;
     }
 }
