@@ -723,6 +723,18 @@ JS;
      * instead, so standard markdown newline rules apply. Explicit hard breaks (two trailing spaces
      * or `\`) keep producing `<br>` in both cases.
      * 
+     * ## Known limitation - DO NOT try to "fix" this!
+     * 
+     * This override only affects the Markdown **Preview** tab and the read-only **Viewer**, because
+     * ToastUI's `customHTMLRenderer` is consumed exclusively by the `MarkdownPreview` component.
+     * It intentionally does NOT (and can not) affect:
+     * 
+     * - the **Write** tab - that is the raw markdown source editor, so there is nothing to render
+     *   there. `enable_newlines` is a rendering option and has no meaning for the plain source text.
+     * - the **WYSIWYG** mode - that uses a separate ProseMirror-based pipeline with its own
+     *   markdown<->document convertors which never consult `customHTMLRenderer`. ToastUI exposes
+     *   no option to change softbreak handling there.
+     * 
      * @return string
      */
     protected function buildJsMarkdownRendererNewlines() : string
