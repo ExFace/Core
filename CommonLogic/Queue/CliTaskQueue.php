@@ -162,7 +162,7 @@ class CliTaskQueue extends SyncTaskQueue
                     // command's output would be missing from the logbook, leaving only the
                     // exception line. The outer catch adds the exception right after.
                     if (trim($commandOutput) !== '') {
-                        $logBook->addCodeBlock(rtrim($commandOutput));
+                        $logBook->addCodeBlock(rtrim($commandOutput), 'bash');
                     }
                 }
 
