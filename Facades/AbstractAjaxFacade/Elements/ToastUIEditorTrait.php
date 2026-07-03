@@ -3,6 +3,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
 use exface\Core\Widgets\Parts\TextMention;
@@ -78,6 +79,7 @@ trait ToastUIEditorTrait
                         }  
                     },
                     customHTMLRenderer: {
+                        {$this->buildJsMarkdownRendererNewlines()}
                         {$this->buildJsCustomHtmlRenderers()}
                     },
                     widgetRules: [
@@ -125,6 +127,7 @@ JS;
                         }    
                     },
                     customHTMLRenderer: {
+                        {$this->buildJsMarkdownRendererNewlines()}
                         {$this->buildJsCustomHtmlRenderers()}
                     },
                     widgetRules: [
@@ -708,6 +711,43 @@ JS;
               oMentionModel.currentMentionWidget = null;
             }
         }
+JS;
+    }
+
+    /**
+     * Builds a ToastUI `customHTMLRenderer` entry that aligns the editor's newline handling
+     * with the `enable_newlines` property of the widget's `MarkdownDataType`.
+     * 
+     * By default ToastUI renders every single newline (softbreak) as a `<br>`. If the data type
+     * has `enable_newlines` set to `false`, this override makes softbreaks emit a plain newline
+     * instead, so standard markdown newline rules apply. Explicit hard breaks (two trailing spaces
+     * or `\`) keep producing `<br>` in both cases.
+     * 
+     * ## Known limitation - DO NOT try to "fix" this!
+     * 
+     * This override only affects the Markdown **Preview** tab and the read-only **Viewer**, because
+     * ToastUI's `customHTMLRenderer` is consumed exclusively by the `MarkdownPreview` component.
+     * It intentionally does NOT (and can not) affect:
+     * 
+     * - the **Write** tab - that is the raw markdown source editor, so there is nothing to render
+     *   there. `enable_newlines` is a rendering option and has no meaning for the plain source text.
+     * - the **WYSIWYG** mode - that uses a separate ProseMirror-based pipeline with its own
+     *   markdown<->document convertors which never consult `customHTMLRenderer`. ToastUI exposes
+     *   no option to change softbreak handling there.
+     * 
+     * @return string
+     */
+    protected function buildJsMarkdownRendererNewlines() : string
+    {
+        $dataType = $this->getWidget()->getValueDataType();
+        if (! ($dataType instanceof MarkdownDataType) || $dataType->getEnableNewlines() === true) {
+            return '';
+        }
+        return <<<JS
+
+                        softbreak: function() {
+                            return { type: 'html', content: '\\n' };
+                        },
 JS;
     }
 

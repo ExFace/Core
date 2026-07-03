@@ -4,6 +4,7 @@ namespace exface\Core\Facades\DocsFacade;
 use GuzzleHttp\Psr7\Query;
 use kabachello\FileRoute\Interfaces\ContentInterface;
 use kabachello\FileRoute\FileReaders\MarkdownReader;
+use kabachello\FileRoute\Exceptions\PageNotFoundException;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -40,7 +41,18 @@ class MarkdownDocsReader extends MarkdownReader
             $filePath = $searchPath;
         }
         
-        return parent::readFile($filePath, $urlPath);
+        // Render markdown through the central MarkdownContent so the DocsFacade uses the same
+        // parser configuration (incl. the `enable_newlines` default) as the rest of the workbench.
+        if (! file_exists($filePath)) {
+            throw new PageNotFoundException('Page "' . $urlPath . '" not found at "' . $filePath . '"!');
+        }
+        $fileFolder = pathinfo($filePath, PATHINFO_DIRNAME);
+        $urlFolder = pathinfo($urlPath, PATHINFO_DIRNAME);
+        if ($urlFolder === '.') {
+            $urlFolder = '';
+        }
+        $folder = $this->readFolder($fileFolder, $urlFolder);
+        return new MarkdownContent($filePath, $urlPath, $folder, file_get_contents($filePath));
     }
     
     protected function buildMarkdownIndex()

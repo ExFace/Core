@@ -13,6 +13,38 @@ class MarkdownDataType
     extends TextDataType
     implements HtmlCompatibleDataTypeInterface
 {
+    private $enableNewlines = true;
+
+    /**
+     * Set to FALSE to follow strict markdown newline rules instead of converting every single newline to a `<br>`.
+     * 
+     * By default (`true`) every single newline (a simple line break created by hitting "enter") is rendered
+     * as a `<br>` tag. This matches the behavior of the markdown editor. If set to `false`, standard markdown
+     * rules apply: only a blank line starts a new paragraph and only lines ending with two trailing spaces
+     * produce a `<br>`.
+     * 
+     * @uxon-property enable_newlines
+     * @uxon-type boolean
+     * @uxon-default true
+     * 
+     * @param bool $value
+     * @return MarkdownDataType
+     */
+    public function setEnableNewlines(bool $value) : MarkdownDataType
+    {
+        $this->enableNewlines = BooleanDataType::cast($value);
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function getEnableNewlines() : bool
+    {
+        return $this->enableNewlines;
+    }
+
     public static function escapeString(string $text) : string
     {
         return str_replace([
@@ -155,9 +187,10 @@ class MarkdownDataType
      * @param string $markdown
      * @return string
      */
-    public static function convertMarkdownToHtml(string $markdown) : string
+    public static function convertMarkdownToHtml(string $markdown, bool $enableNewlines = true) : string
     {
         $parser = new GithubMarkdown();
+        $parser->enableNewlines = $enableNewlines;
         return $parser->parse(self::convertFrontMatterToMarkdown($markdown));
     }
 
@@ -227,7 +260,7 @@ class MarkdownDataType
     {
         $value = $value ?? $this->getValue();
         if($value) {
-            return self::convertMarkdownToHtml($value);
+            return self::convertMarkdownToHtml($value, $this->getEnableNewlines());
         } else {
             return '';
         }
