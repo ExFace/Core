@@ -98,7 +98,7 @@ class CliTaskQueue extends SyncTaskQueue
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = (float) $this->getCommandTimeout();
+        $timeout = ($task instanceof ScheduledTask) ? $task->getTimeoutInterval() : $this->getCommandTimeout();
         $ignoredExitCodes = ($task instanceof CliScriptTask) ? $task->getIgnoredExitCodes() : [];
 
         // Open a live output file so partial output survives even if the PHP process is
