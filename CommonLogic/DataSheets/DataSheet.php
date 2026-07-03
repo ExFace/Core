@@ -11,6 +11,7 @@ use exface\Core\Events\DataSheet\OnBeforeCreateDataWriteEvent;
 use exface\Core\Events\DataSheet\OnBeforeSaveDataEvent;
 use exface\Core\Events\DataSheet\OnBeforeUpdateDataWriteEvent;
 use exface\Core\Events\DataSheet\OnSaveDataEvent;
+use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
 use exface\Core\Interfaces\DataSheets\DataAggregationListInterface;
 use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetListInterface;
@@ -452,8 +453,21 @@ class DataSheet implements DataSheetInterface
      */
     public function importRows(DataSheetInterface $other_sheet, bool $calculateFormulas = true) : DataSheetInterface
     {
-        if (! $this->getMetaObject()->is($other_sheet->getMetaObject()->getAliasWithNamespace())) {
-            throw new DataSheetImportRowError($this, 'Cannot replace rows for object "' . $this->getMetaObject()->getAliasWithNamespace() . '" with rows from "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '": replacing rows only possible for compatible objects!', '6T5V1DR');
+        if (! $this->getMetaObject()->is($other_sheet->getMetaObject())) {
+            // If the other object is a extended version of this one, we still can import mutual columns
+            if ($other_sheet->getMetaObject()->is($this->getMetaObject())) {
+                $incompatibleExprs = [];
+                foreach ($this->getColumns() as $col) {
+                    if (! $other_sheet->getColumns()->getByExpression($col->getExpressionObj())) {
+                        $incompatibleExprs[] = $col->getExpressionObj()->__toString();
+                    }
+                }
+                if (! empty($incompatibleExprs)) {
+                    throw new DataSheetImportRowError($this, 'Cannot import rows of "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '" into "' . $this->getMetaObject()->getAliasWithNamespace() . '" - incompatible columns: `' . implode('`, `', $incompatibleExprs) . '`!', '6T5V1DR');
+                }
+            } else {
+                throw new DataSheetImportRowError($this, 'Cannot import rows of "' . $other_sheet->getMetaObject()->getAliasWithNamespace() . '" into "' . $this->getMetaObject()->getAliasWithNamespace() . '" - the target object must be the same as the replacing object or an extension of it!', '6T5V1DR');
+            }
         }
         
         // Make sure, the UID is present in the result if it is there in the other sheet
@@ -1143,6 +1157,38 @@ class DataSheet implements DataSheetInterface
         
         $filterVals = array_unique($relThisSheetKeyCol->getValues());
         $nestedSheet->getFilters()->addConditionFromValueArray($relPathFromNestedSheet->toString(), $filterVals);
+        
+        // Filter the nested data using filters from the parent sheet if
+        // - condition is not empty
+        // - condition has a relation path, and it starts with the relation to the nested sheet
+        // - condition has `apply_to_aggregates` set to TRUE
+        // IDEA should we somehow make this configurable? It is hard for the designer to understand, which filters
+        // will apply to nested data and which won't
+        // NOTE: right now only level-1 conditions are applied - no nested condition groups. It is unclear, how
+        // to apply nested groups relyably as they might include conditions, that cannot be rebased.
+        foreach ($this->getFilters()->getConditions() as $cond) {
+            if ($cond->isEmpty()) {
+                continue;
+            }
+            $condExpr = $cond->getExpression();
+            if (! $condExpr->isMetaAttribute()) {
+                continue;
+            }
+            $condAttr = $condExpr->getAttribute();
+            if (
+                $condAttr->isRelated()
+                && $condAttr->getRelationPath()->startsWith($relPathToNestedSheet)
+                && $cond->willApplyToAggregatedValues()
+            ) {
+                try {
+                    $nestedCond = $cond->rebase($relPathToNestedSheet);
+                    $nestedSheet->getFilters()->addCondition($nestedCond);
+                } catch (ExpressionRebaseImpossibleError $e) {
+                    continue;
+                }
+            }
+        }
+        
         $counter = $nestedSheet->dataRead();
         
         foreach ($relThisSheetKeyCol->getValues() as $rowIdx => $thisSheetKey) {
@@ -1441,12 +1487,13 @@ class DataSheet implements DataSheetInterface
                     continue 2;
                 // Update nested sheets - i.e. replace all rows in the data source, that are related to
                 // the each row of the main sheet with the nested rows here.
-                // NOTE: the attribute of a column with a subsheet will always have a
-                // relation because the attribute is the foreign keiy in the subsheet.
-                // Here we need to check, if it really is only one relation - if more,
-                // the column should go into a subsheet just like other related columns
+                // NOTE: the attribute of a column with a subsheet will always have a relation because the attribute
+                // is the foreign key in the subsheet. Here we need to check, if each row in that subsheet only belongs
+                // to exactly one row of this sheet. This is important because otherwise we cannot just replace the
+                // rows as they might belong elsewhere too! Technically this means, the relation from the subsheet to
+                // this sheet must be unambiguous or the relation from this to subsheet must be unambiguous in reverse.
                 // TODO this seems to work differently to dataCreate() - why?
-                case $col->isNestedData() && $columnAttr->getRelationPath()->countRelations() <= 1:
+                case $col->isNestedData() && ($columnAttr->getRelationPath()->isEmpty() || $columnAttr->getRelationPath()->isUnambiguousInReverse()):
                     $update_ds->dataUpdateNestedSheets($col, $create_if_uid_not_found, $transaction);
                     continue 2; 
                 // Update related columns, that the current query builder cannot write, as

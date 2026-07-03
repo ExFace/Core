@@ -1141,12 +1141,9 @@ JS;
         
         return <<<JS
 
-                        if ({$this->getInputElement()->buildJsValidator()}) {
-                            {$targetElement->buildJsDataSetter($jsRequestData)}
-                            {$this->buildJsTriggerActionEffects($action)}
-                            {$this->buildJsCloseDialog()}
-                        }
-
+                        {$targetElement->buildJsDataSetter($jsRequestData)}
+                        {$this->buildJsTriggerActionEffects($action)}
+                        {$this->buildJsCloseDialog()}
 JS;
     }
     

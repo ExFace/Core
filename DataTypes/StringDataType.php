@@ -144,7 +144,7 @@ class StringDataType extends AbstractDataType
             $lengthCond = ' ≥ ' . $length;
         }
         if (0 < $length = $this->getLengthMax()) {
-            $lengthFormatted = $length < 2048 ? $length : ByteSizeDataType::formatWithScale($length);
+            $lengthFormatted = $length < 10000 ? $length : ByteSizeDataType::formatWithScale($length);
             $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $lengthFormatted;
         }
         if ($lengthCond) {

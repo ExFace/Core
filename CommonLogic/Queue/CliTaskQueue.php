@@ -1,11 +1,18 @@
 <?php
 namespace exface\Core\CommonLogic\Queue;
 
+use exface\Core\CommonLogic\Tasks\CliScriptTask;
 use exface\Core\CommonLogic\Tasks\ResultMessageStream;
+use exface\Core\CommonLogic\Tasks\ScheduledTask;
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\CliRuntimeException;
 use exface\Core\Exceptions\Queues\QueueRuntimeError;
 use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 
@@ -25,7 +32,7 @@ class CliTaskQueue extends SyncTaskQueue
 {
     use TranslatablePropertyTrait;
 
-    private ?float $commandTimeout = null;
+    private ?int $commandTimeout = null;
     private array $environmentVars = [];
     private array $environmentVarsInherit = [];
     private array $allowedCommands = [];
@@ -56,29 +63,43 @@ class CliTaskQueue extends SyncTaskQueue
      * in IN_PROGRESS. The file handle is closed in a finally block, so it is released
      * even if an exception propagates out of the command loop.
      *
+     *
      * @param TaskInterface $task
+     * @param DataSheetInterface $queueItemData 
+     * @param LogBookInterface|null $logBook
+     * @return ResultInterface
      *
      * @throws \exface\Core\Exceptions\Queues\QueueRuntimeError
      *      if the `cmd` parameter is neither a string, array nor UxonObject, or if a
      *      command is not matched by any of the configured `allowed_commands`.
      *
-     * @return ResultInterface
-     *
      * @see AbstractInternalTaskQueue::performTask()
      */
-    protected function performTask(TaskInterface $task) : ResultInterface
+    protected function performTask(TaskInterface $task, DataSheetInterface $queueItemData, LogBookInterface $logBook = null) : ResultInterface
     {
-        $commands = $this->normalizeCommands($task->getParameter('cmd'));
+        if ($task instanceof ScheduledTask) {
+            $task = $task->getTaskToRun();
+        }
+        
+        switch (true) {
+            case $task instanceof CliScriptTask:
+                $commands = $this->normalizeCommands($task->getCommands());
+                break;
+            
+            case $task instanceof CliTaskInterface:
+                $commands = [$task->getCliCommand()];
+                break;
+                
+            // Backwards compatibility to the times when any task was OK
+            default:
+                $commands = $task->getParameter('cmd') ?? [];
+        }
+        $commands = $this->normalizeCommands($commands);
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = $task->hasParameter('timeout')
-            ? (float) $task->getParameter('timeout')
-            : $this->getCommandTimeout();
-        // Normalize ignored_exit_codes — UXON delivers arrays as UxonObject, values as strings.
-        // runCliCommand() uses strict in_array(), so values must be integers.
-        $rawExitCodes = $task->hasParameter('ignored_exit_codes') ? $task->getParameter('ignored_exit_codes') : [];
-        $ignoredExitCodes = array_map('intval', $rawExitCodes instanceof UxonObject ? $rawExitCodes->toArray() : (array) $rawExitCodes);
+        $timeout = (float) $this->getCommandTimeout();
+        $ignoredExitCodes = ($task instanceof CliScriptTask) ? $task->getIgnoredExitCodes() : [];
 
         // Open a live output file so partial output survives even if the PHP process is
         // killed before performTask() returns (php-fpm/web server timeout). Returns null
@@ -95,23 +116,53 @@ class CliTaskQueue extends SyncTaskQueue
         // being discarded when an exception propagates out of the loop.
         $allOutputs = [];
 
+        // The queue passes in a living logbook it owns for this run. We build it up here -
+        // one section per command with its output as a code block, plus the exception on
+        // failure. Because it is the queue's own object, the queue persists it via
+        // saveResult()/saveError() afterwards, even if this method throws - so there is no
+        // need to write to the DB from here. Fall back to a fresh logbook if this method is
+        // ever called directly without a queue-provided one.
+        $logBook = $logBook ?? new MarkdownLogBook('CLI output');
+
+        // Remembers the command currently being executed so the catch block below can
+        // reference it (e.g. as the header of the CLI output tab), even if the failure
+        // happens inside assertCommandAllowed() before any output was produced.
+        $currentCommand = '';
+
         try {
             // Run every command one after another within this single queue run.
             foreach ($commands as $command) {
+                $currentCommand = $command;
                 $this->assertCommandAllowed($command);
+
+                // Start a new logbook section for this command.
+                $logBook->addSection($command);
 
                 if ($fh !== null) {
                     fwrite($fh, PHP_EOL . '=== ' . date('Y-m-d H:i:s') . ' START: ' . $command . ' ===' . PHP_EOL);
                     fflush($fh);
                 }
 
-                foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false, $ignoredExitCodes) as $output) {
-                    $allOutputs[] = $output;
-                    if ($fh !== null) {
-                        // Write each chunk and push it to the OS right away, so a process
-                        // kill immediately afterwards cannot lose buffered output.
-                        fwrite($fh, $output);
-                        fflush($fh);
+                $commandOutput = '';
+                try {
+                    foreach (CliCommandRunner::runCliCommand($command, $envVars, $timeout, $projectRoot, false, $ignoredExitCodes) as $output) {
+                        $allOutputs[] = $output;
+                        $commandOutput .= $output;
+                        if ($fh !== null) {
+                            // Write each chunk and push it to the OS right away, so a process
+                            // kill immediately afterwards cannot lose buffered output.
+                            fwrite($fh, $output);
+                            fflush($fh);
+                        }
+                    }
+                } finally {
+                    // Add the command output as a code block to its section - also when the
+                    // command failed. The runner yields all output (incl. the "failed with
+                    // exit code" line) before throwing, so without this finally the failing
+                    // command's output would be missing from the logbook, leaving only the
+                    // exception line. The outer catch adds the exception right after.
+                    if (trim($commandOutput) !== '') {
+                        $logBook->addCodeBlock(rtrim($commandOutput));
                     }
                 }
 
@@ -121,13 +172,19 @@ class CliTaskQueue extends SyncTaskQueue
                 }
             }
         } catch (\Throwable $e) {
-            // Preserve the output gathered so far by attaching it to the error,
-            // otherwise everything collected in $allOutputs is lost on propagation.
-            $collected = implode(PHP_EOL, $allOutputs);
-            if ($collected !== '') {
-                throw new QueueRuntimeError($this, $e->getMessage() . PHP_EOL . PHP_EOL . 'Output before failure:' . PHP_EOL . $collected, null, $e);
-            }
-            throw $e;
+            // Record the failure in the living logbook. The queue still holds this same
+            // logbook instance and will persist it via saveError() once the exception
+            // propagates - so the failed run shows its full output in the queue.
+            $logBook->addException($e);
+
+            // Re-throw as a CliRuntimeException that keeps the collected CLI output in its
+            // own "CLI" tab instead of dumping it into the error message. This way the queue
+            // item shows only the actual error in its message, while the full CLI/Behat
+            // output stays readable in the CLI tab. We build a fresh exception (instead of
+            // rethrowing $e) so it carries the output of ALL commands run so far ($allOutputs)
+            // and the failing command - $e alone would only hold the last command's output.
+            $exitCode = ($e instanceof CliRuntimeException) ? $e->getExitCode() : null;
+            throw new CliRuntimeException($currentCommand, $allOutputs, $exitCode, $e->getMessage(), null, $e);
         } finally {
             // Always release the file handle, even if an exception propagates out of
             // the command loop above.
@@ -135,6 +192,7 @@ class CliTaskQueue extends SyncTaskQueue
                 fclose($fh);
             }
         }
+
 
         // Compute the message once and set it as a plain string so reading it again
         // downstream never triggers another execution of the commands.
@@ -216,7 +274,7 @@ class CliTaskQueue extends SyncTaskQueue
         }
 
         // Always resolve relative to the current working directory.
-        $base = rtrim(getcwd(), '/\\');
+        $base = rtrim($this->getWorkbench()->getInstallationPath(), '/\\');
         $folder = $base . DIRECTORY_SEPARATOR . trim($folder, '/\\');
 
         $filename = 'cli_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 8) . '.log';
@@ -284,31 +342,30 @@ class CliTaskQueue extends SyncTaskQueue
     }
 
     /**
-     * Set timeout for the commands in seconds.
-     * Default is 600.
+     * Set timeout for the commands in seconds - 600 by default.
      *
      * @uxon-property command_timeout
      * @uxon-type integer
      * @uxon-default 600
      *
-     * @param string $timeout
+     * @param int $timeout
      * @return CliTaskQueue
      */
-    public function setCommandTimeout(string $timeout) : CliTaskQueue
+    public function setCommandTimeout(int $timeout) : CliTaskQueue
     {
-        $this->commandTimeout = floatval($timeout);
+        $this->commandTimeout = $timeout;
         return $this;
     }
 
     /**
      * Return the Timeout for the commands in seconds.
-     * To deactivate timeout set it to '0.0'.
+     * To deactivate timeout set it to '0'.
      *
-     * @return float
+     * @return int
      */
-    public function getCommandTimeout() : float
+    public function getCommandTimeout() : int
     {
-        return $this->commandTimeout ?? 600.0;
+        return $this->commandTimeout ?? 600;
     }
 
 

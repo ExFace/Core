@@ -158,7 +158,7 @@ class MarkdownDataType
     public static function convertMarkdownToHtml(string $markdown) : string
     {
         $parser = new GithubMarkdown();
-        return $parser->parse($markdown);
+        return $parser->parse(self::convertFrontMatterToMarkdown($markdown));
     }
 
     /**
@@ -269,6 +269,22 @@ class MarkdownDataType
 ```
 MD;
     }
+
+    /**
+     * Wraps given text in a Markdown blockquote
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function escapeBlockquote(string $text) : string
+    {
+        $lines = preg_split('/\R/', $text) ?: [];
+        $quoted = array_map(function (string $line) : string {
+            return '> ' . $line;
+        }, $lines);
+
+        return implode(PHP_EOL, $quoted);
+    }
     
     public static function makeHorizontalLine() : string
     {
@@ -293,6 +309,117 @@ MD;
             $markdown
         );
 
+        return $markdown;
+    }
+
+    /**
+     * Parses the leading YAML-style front matter block of a markdown string into an associative array.
+     *
+     * Only simple `key: value` lines are supported (surrounding single or double quotes are stripped from
+     * values). Returns `null` if the string does not start with a `---` front matter block.
+     *
+     * @param string $markdown
+     * @return array<string,string>|null
+     */
+    public static function parseFrontMatter(string $markdown) : ?array
+    {
+        return static::parseFrontMatterLines(explode("\n", static::findFrontMatter($markdown)));
+    }
+
+    /**
+     * @param string $markdown
+     * @param bool $stripDelimiters
+     * @return string[]|null
+     */
+    public static function findFrontMatter(string $markdown, bool $stripDelimiters = true) : ?string
+    {
+        // Remove UTF-8 BOM if present
+        $markdown = preg_replace('/^\xEF\xBB\xBF/', '', $markdown);
+        if (! self::startsWith($markdown, '---') || ! preg_match('/\A---\R(.*?)\R---/s', $markdown, $matches)) {
+            return null;
+        }
+        return $stripDelimiters ? $matches[1] : $matches[0];
+    }
+
+    /**
+     * Reads only the leading YAML-style front matter block of a markdown file into an associative array.
+     *
+     * Reads the file line by line and stops at the closing `---`, so the body of the file is never loaded.
+     * Returns `null` if the file cannot be opened or does not start with a front matter block.
+     *
+     * @param string $filePath
+     * @return array<string,string>|null
+     */
+    public static function readFrontMatterFromFile(string $filePath) : ?array
+    {
+        $handle = @fopen($filePath, 'r');
+        if ($handle === false) {
+            return null;
+        }
+
+        $firstLine = fgets($handle);
+        if ($firstLine !== false) {
+            // Strip a possible UTF-8 BOM from the very first line
+            $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine);
+        }
+        if ($firstLine === false || rtrim($firstLine, "\r\n") !== '---') {
+            fclose($handle);
+            return null;
+        }
+
+        $lines = [];
+        while (($line = fgets($handle)) !== false) {
+            $line = rtrim($line, "\r\n");
+            if ($line === '---') {
+                break;
+            }
+            $lines[] = $line;
+        }
+        fclose($handle);
+
+        return static::parseFrontMatterLines($lines);
+    }
+
+    /**
+     * Parses an array of `key: value` front matter lines into an associative array.
+     *
+     * @param string[] $lines
+     * @return array<string,string>
+     */
+    protected static function parseFrontMatterLines(array $lines) : array
+    {
+        $data = [];
+        foreach ($lines as $line) {
+            $line = rtrim($line, "\r\n");
+            if (! preg_match('/^([A-Za-z0-9_-]+)\s*:\s*(.*)$/', $line, $matches)) {
+                continue;
+            }
+            $value = trim($matches[2]);
+            if (strlen($value) >= 2
+                && (($value[0] === '"' && substr($value, -1) === '"')
+                    || ($value[0] === "'" && substr($value, -1) === "'"))
+            ) {
+                $value = substr($value, 1, -1);
+            }
+            $data[$matches[1]] = $value;
+        }
+        return $data;
+    }
+
+    /**
+     * Converts YAML FrontMatter leading the given Markdown to a Blockquote to make sure it renders correctly
+     * 
+     * @param string $markdownWithFrontMatter
+     * @return string
+     */
+    public static function convertFrontMatterToMarkdown(string $markdownWithFrontMatter) : string
+    {
+        $frontMatter = static::findFrontMatter($markdownWithFrontMatter, false);
+        if ($frontMatter !== null) {
+            $markdown = static::escapeBlockquote(static::escapeCodeBlock($frontMatter, 'yaml-frontmatter')) . "\n" . static::stripFrontMatter($markdownWithFrontMatter);
+        } else {
+            $markdown = $markdownWithFrontMatter;
+        }
         return $markdown;
     }
 }

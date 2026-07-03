@@ -20,6 +20,8 @@ use exface\Core\DataTypes\LogLevelDataType;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 use exface\Core\Events\Queue\OnQueueRunEvent;
+use exface\Core\Interfaces\Debug\LogBookInterface;
+use exface\Core\CommonLogic\Debugger\LogBooks\MarkdownLogBook;
 
 /**
  * Base class for queue prototypes saving queues in the model DB.
@@ -194,13 +196,31 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     }
 
     /**
+     * Creates the logbook that accompanies one run of a queue item.
      * 
+     * The queue owns a single living logbook per run and hands it to `performTask()`, which
+     * can build it up (add sections, code blocks, exceptions, ...) while the task runs. Because
+     * it is one and the same object, the queue still holds the fully populated logbook after
+     * `performTask()` returns AND even after it throws - so `saveResult()`/`saveError()` can
+     * persist it into the LOGBOOK cell without the task needing to write to the DB itself.
+     * 
+     * @param TaskInterface $task
+     * @return LogBookInterface
+     */
+    protected function createLogBook(TaskInterface $task) : LogBookInterface
+    {
+        return new MarkdownLogBook($this->getName());
+    }
+
+    /**
+     *
      * @param DataSheetInterface $dataSheet
      * @param ResultInterface $result
-     * @throws QueueRuntimeError
+     * @param float|null $duration
+     * @param LogBookInterface|null $logBook
      * @return DataSheetInterface
      */
-    protected function saveResult(DataSheetInterface $dataSheet, ResultInterface $result, float $duration = null) : DataSheetInterface
+    protected function saveResult(DataSheetInterface $dataSheet, ResultInterface $result, float $duration = null, LogBookInterface $logBook = null) : DataSheetInterface
     {
         try {
             if ($dataSheet->getColumns()->hasSystemColumns()) {
@@ -208,15 +228,18 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
                 $dataSheet->dataRead();
             }
             
-            // Save the logbook if there is one
+            // Prefer the action's own logbook if the task has an action. Otherwise fall back
+            // to the logbook the queue built up for this run (e.g. a CLI task's output log).
             if ($result->getTask()->hasAction()) {
                 $task = $result->getTask();
-                $logbook = $task->getAction()->getLogBook($task);
-            } else {
-                $logbook = null;
+                $logBook = $task->getAction()->getLogBook($task);
             }
 
-            $dataSheet->setCellValue('LOGBOOK', 0,  $logbook !== null ? $logbook->__toString() : '');
+            // Only touch LOGBOOK if we actually have something to write - overwriting it with
+            // an empty string here would just discard content for no reason.
+            if ($logBook !== null && ($logBookStr = $logBook->__toString()) !== '') {
+                $dataSheet->setCellValue('LOGBOOK', 0, $logBookStr);
+            }
             $dataSheet->setCellValue('RESULT_CODE', 0, $result->getResponseCode());
             $dataSheet->setCellValue('RESULT', 0, $result->getMessage());
             $dataSheet->setCellValue('STATUS', 0, QueuedTaskStateDataType::STATUS_DONE);
@@ -236,10 +259,13 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
      * 
      * @param DataSheetInterface $dataSheet
      * @param ExceptionInterface $exception
+     * @param string $status
+     * @param float|null $duration
+     * @param LogBookInterface|null $logBook
      * @throws QueueRuntimeError
      * @return DataSheetInterface
      */
-    protected function saveError(DataSheetInterface $dataSheet, ExceptionInterface $exception, string $status = QueuedTaskStateDataType::STATUS_ERROR, float $duration = null) : DataSheetInterface
+    protected function saveError(DataSheetInterface $dataSheet, ExceptionInterface $exception, string $status = QueuedTaskStateDataType::STATUS_ERROR, float $duration = null, LogBookInterface $logBook = null) : DataSheetInterface
     {
         try {
             if ($dataSheet->getColumns()->hasSystemColumns()) {
@@ -260,6 +286,16 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             $dataSheet->setCellValue('DURATION_MS', 0, $duration);
             $dataSheet->setCellValue('QUEUE', 0, $this->getUid());
             $dataSheet->setCellValue('PID', 0, null);
+            // Persist the logbook the queue built up for this run (e.g. a CLI task's output
+            // log incl. the failing command's output and the exception). This is what makes
+            // a failed run show its full output in the queue - saveResult() is never reached
+            // on error, so the logbook can only be persisted here. The same content is written
+            // to RESULT, because a failed run would otherwise leave RESULT empty even though
+            // the task produced output.
+            if ($logBook !== null && ($logBookStr = $logBook->__toString()) !== '') {
+                $dataSheet->setCellValue('LOGBOOK', 0, $logBookStr);
+                $dataSheet->setCellValue('RESULT', 0, $logBookStr);
+            }
             $dataSheet->dataUpdate(false);
         } catch (\Throwable $e) {
             throw new QueueRuntimeError($this, 'Cannot save task result in queue "' . $this->getName() . '": ' . $e->getMessage(), null, $e);
@@ -449,16 +485,16 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
         if($task instanceof ScheduledTask) {
             $timeOutSheet = $sheet->copy()->removeRows();
             $now = new \DateTime();
-            $timeOutInterval = $task->getTimeOutInterval();
-            $maxTimeOutInterval = $task->getMaxTimeOutInterval();
+            $intervalToCheck = $task->getTimeToCheckInterval();
+            $intervalToTimeout = $task->getTimeoutInterval();
             
             foreach ($sheet->getRows() as $rowIdx => $row) {
                 $pid = $row['PID'];
                 $timeOutDate = new \DateTime($row['ENQUEUED_ON']);
-                $timeOutDate->add($timeOutInterval);
+                $timeOutDate->add($intervalToCheck);
                 
                 $maxTimeOutDate = new \DateTime($row['ENQUEUED_ON']);
-                $maxTimeOutDate->add($maxTimeOutInterval);
+                $maxTimeOutDate->add($intervalToTimeout);
                 
                 // Check if the run is timed out.
                 if( $maxTimeOutDate <= $now ||
@@ -560,23 +596,28 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             return;
         }
         
+        // The queue owns one living logbook per run and passes it into performTask() so the
+        // task can build it up. Declared here so it is still available in the catch block
+        // (fully populated) even if performTask() throws - saveError() then persists it.
+        $logBook = null;
         try {
             $start = Debugger::getTimeMsNow();
-            $ds = $this->reserve($event->getQueueItemUid(), ['MESSAGE_ID', 'PRODUCER']);
+            $queuedTaskData = $this->reserve($event->getQueueItemUid(), ['MESSAGE_ID', 'PRODUCER']);
+            $logBook = $this->createLogBook($event->getTask());
             
-            $messageId = $ds->getCellValue('MESSAGE_ID', 0);
-            $producer = $ds->getCellValue('PRODUCER', 0);
+            $messageId = $queuedTaskData->getCellValue('MESSAGE_ID', 0);
+            $producer = $queuedTaskData->getCellValue('PRODUCER', 0);
             
             try {
                 $this->verify($event->getTask(), $event->getQueueItemUid(), $messageId, $producer);
             } catch (QueueMessageDuplicateError $e) {
-                $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_DUPLICATE);
+                $this->saveError($queuedTaskData, $e, QueuedTaskStateDataType::STATUS_DUPLICATE);
                 $event->setResult(ResultFactory::createMessageResult($event->getTask(), 'Message id "' . $messageId . '" from producer "' . $producer . '" already enqueued - ignoring!'));
                 return;
             }
             
             $task = $event->getTask();
-            $result = $this->performTask($task);
+            $result = $this->performTask($task, $queuedTaskData, $logBook);
             
             // If the task is a stream, read it completely here to make sure all generators
             // are run. If they produce errors, they should be handled as task/action errors
@@ -585,8 +626,8 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
                 $result->getMessage();
             }
             
-            // Save he result if no errors up-to now
-            $this->saveResult($ds, $result, (Debugger::getTimeMsNow() - $start));
+            // Save the result if no errors up-to now
+            $this->saveResult($queuedTaskData, $result, (Debugger::getTimeMsNow() - $start), $logBook);
             $event->setResult($result);
         } catch (\Throwable $e) {
             if (! $e instanceof QueueRuntimeError) {
@@ -594,8 +635,11 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
             }
             
             $this->getWorkbench()->getLogger()->logException($e, $this->getErrorLogLevel($e->getLogLevel()));
-            
-            $this->saveError($ds, $e, QueuedTaskStateDataType::STATUS_ERROR, (Debugger::getTimeMsNow() - $start));
+            if (! $queuedTaskData) {
+                $queuedTaskData = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.QUEUED_TASK');
+                $queuedTaskData->setCellValue($queuedTaskData->getMetaObject()->getUidAttributeAlias(), 0, $event->getQueueItemUid());
+            }
+            $this->saveError($queuedTaskData, $e, QueuedTaskStateDataType::STATUS_ERROR, (Debugger::getTimeMsNow() - $start), $logBook);
             
             $result = ResultFactory::createErrorResult($task, $e);
             $result->setDataModified(true);
@@ -607,10 +651,17 @@ abstract class AbstractInternalTaskQueue extends AbstractTaskQueue
     /**
      * Perform the task - e.g. handle it via workbench by default.
      * 
+     * The `$logBook` is the living logbook the queue created for this run. Subclasses that
+     * produce their own diagnostics (e.g. CLI output) should build it up so it gets persisted
+     * to the queue item by `saveResult()`/`saveError()`. The default implementation does not
+     * use it, as the workbench handles the task and any action creates its own logbook.
+     * 
      * @param TaskInterface $task
+     * @param DataSheetInterface $queueItemData
+     * @param LogBookInterface|null $logBook
      * @return ResultInterface
      */
-    protected function performTask(TaskInterface $task) : ResultInterface
+    protected function performTask(TaskInterface $task, DataSheetInterface $queueItemData, LogBookInterface $logBook = null) : ResultInterface
     {
         return $this->getWorkbench()->handle($task);
     }

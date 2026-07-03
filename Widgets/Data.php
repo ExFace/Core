@@ -102,7 +102,7 @@ class Data
     use iHaveSidebarTrait;
 
     // properties
-    private $paginate = true;
+    private $paginate = null;
 
     private $paginate_page_size = null;
     
@@ -755,7 +755,7 @@ class Data
      */
     public function isPaged() : bool
     {
-        return $this->paginate;
+        return $this->paginate ?? ($this->getLazyLoading(true) && $this->getMetaObject()->isReadable());
     }
     
     /**
@@ -826,9 +826,9 @@ class Data
      *
      * @param boolean $value            
      */
-    public function setPaginate($value)
+    public function setPaginate(bool $value)
     {
-        $this->paginate = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->paginate = $value;
         return $this;
     }
 

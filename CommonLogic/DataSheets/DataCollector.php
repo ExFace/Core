@@ -4,11 +4,13 @@ namespace exface\Core\CommonLogic\DataSheets;
 
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\DataSheets\DataCollectorRuntimeError;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSheets\DataCollectorInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -37,6 +39,7 @@ class DataCollector implements DataCollectorInterface
     
     private bool                    $readMissingData = true;
     private bool                    $ignoreUnreadable = false;
+    private ?bool                    $readRelatedDataOnlyIfNoMissingKeys = null;
 
     /**
      * @var MetaAttributeInterface[]
@@ -141,6 +144,15 @@ class DataCollector implements DataCollectorInterface
                 break;
         }
         return $this;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see DataCollectorInterface::isLoaded()
+     */
+    public function isLoaded() : bool
+    {
+        return $this->resultSheet !== null;
     }
 
     /**
@@ -337,12 +349,16 @@ class DataCollector implements DataCollectorInterface
         $ignoreMissing = $this->willIgnoreUnreadableColumns();
         $refreshed = false;
         // The original from-data has no UIDs or was not fresh right from the beginning
-        // See if any attributes required for the missing columns are related in the way described above
-        // the if(). If so, load the data separately and put it into the from-sheet. This is mainly usefull
-        // for formulas.
+        // See if any attributes required for the missing columns can be read using just the
+        // available data without reading the main sheet again.
+        $formulas = [];
         foreach ($this->getRequiredExpressions() as $expr) {
             if ($dataSheet->getColumns()->getByExpression($expr)) {
                 continue;
+            }
+            // Remember formulas and recalculate them at the end.
+            if ($expr->isFormula()) {
+                $formulas[] = $expr;
             }
             foreach ($expr->getRequiredAttributes() as $reqAlias) {
                 // Only process requried attribute aliases, that are not present as columns yet and
@@ -368,7 +384,7 @@ class DataCollector implements DataCollectorInterface
                 foreach ($reqRelPath->getRelations() as $reqRel) {
                     if ($reqRel->isForwardRelation() || $reqAggr) {
                         $reqRelColPath = $reqRelColPath->appendRelation($reqRel);
-                        if (($keyCol = $dataSheet->getColumns()->getByExpression($reqRelColPath->toString())) && $keyCol->isEmpty(true) === false) {
+                        if (($keyCol = $dataSheet->getColumns()->getByExpression($reqRelColPath->toString())) && $this->canLoadRelatedDataFromColumn($keyCol)) {
                             $reqRelKeyCol = $keyCol;
                             $reqRelKeyColPath = $reqRelColPath->copy();
                         }
@@ -386,9 +402,16 @@ class DataCollector implements DataCollectorInterface
                     $targetCol = $dataSheet->getColumns()->addFromExpression($reqAlias);
                     $reqRelSheet = DataSheetFactory::createFromObject($reqRelKeyColPath->getEndObject());
                     $valCol = $reqRelSheet->getColumns()->addFromExpression(ExpressionFactory::createForObject($this->baseObject, $reqAlias)->rebase($reqRelKeyColPath->toString()));
-                    $keyCol = $reqRelSheet->getColumns()->addFromAttribute($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute());
-                    $reqRelSheet->getFilters()->addConditionFromValueArray($reqRelKeyColPath->getRelationLast()->getRightKeyAttribute()->getAliasWithRelationPath(), $reqRelKeyCol->getValues(), ComparatorDataType::IN);
-                    $reqRelSheet->dataRead();
+                    $rightKeyAttr = $reqRelKeyColPath->getRelationLast()->getRightKeyAttribute();
+                    $keyCol = $reqRelSheet->getColumns()->addFromAttribute($rightKeyAttr);
+                    // Read related data ONLY if there really are values to filter. If not - there will be no related
+                    // data, so no need to read anything.
+                    $keyVals = array_filter($reqRelKeyCol->getValues());
+                    $keyVals = array_unique($keyVals);
+                    if (! empty($keyVals)) {
+                        $reqRelSheet->getFilters()->addConditionFromValueArray($rightKeyAttr->getAliasWithRelationPath(), $keyVals, ComparatorDataType::IN);
+                        $reqRelSheet->dataRead();
+                    }
                     foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
                         $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
                         $refreshed = true;
@@ -404,12 +427,77 @@ class DataCollector implements DataCollectorInterface
             } // END foreach ($expr->getRequiredAttributes())
         } // END foreach($map->getRequiredExpressions($dataSheet))
 
+        // Recalculate all formulas, that rely on the newly added columns
+        foreach ($formulas as $expr) {
+            $dataSheet->getColumns()->getByExpression($expr)->setValuesByExpression($expr);
+        }
+
         // Make sure the data is marked as fresh now to prevent further unneeded refreshes
         if ($refreshed === true) {
             $dataSheet->setFresh(true);
         }
 
         return $dataSheet;
+    }
+
+    /**
+     * Returns TRUE if it is OK to read related data using the given column as foreign key (without reading the main object)
+     * 
+     * See `setReadRelatedDataOnlyIfNoMissingKeys()` for more details on the logic behind this.
+     * 
+     * @param DataColumnInterface $keyCol
+     * @return bool
+     * @see setReadRelatedDataOnlyIfNoMissingKeys()
+     */
+    protected function canLoadRelatedDataFromColumn(DataColumnInterface $keyCol) : bool
+    {
+        $requireForeignKeys = $this->readRelatedDataOnlyIfNoMissingKeys;
+        if ($requireForeignKeys === false) {
+            return true;
+        }
+        $hasEmptyValues = $keyCol->isEmpty(true);
+        $isRequiredAttribute = $keyCol->isAttribute() && $keyCol->getAttribute()->isRequired();
+        switch (true) {
+            // READ if all keys are there
+            case $hasEmptyValues === false:
+                return true;
+            // DO NOT read if key values are explicitly required - even if it is a non-required attribute!
+            case $requireForeignKeys === true:
+                return false;
+            // READ if the attribute is non-required or it is not an attribute at all
+            case $isRequiredAttribute === false:
+                return true;
+            // READ if the column is fresh
+            case $keyCol->isFresh():
+                return true;
+            // DO NOT read in all other cases
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Set FALSE to allow reading related data even if there are empty cells in the foreign key columns and 
+     * TRUE to produce an error in this case.
+     * 
+     * This option controls the collection logic if the base sheet does not have UIDs, and we attempt to read
+     * related data based onf foreign key values. If all foreign key rows have values, that is not a problem - but
+     * what to do if there are empty cells in the foreign key column? The corresponding row might simply not have
+     * a key, so any related data should also be NULL, but it also could mean, that we did not receive the key and
+     * there actually is some related data.
+     * 
+     * By default, the collector will load related data if
+     * - the foreign key column has no empty cells
+     * - the foreign key column has empty cells, but represents a non-required attribute
+     * - the foreign key column has empty cells, but is marked as fresh (has been freshly read)
+     * 
+     * @param bool $trueOrFalse
+     * @return DataCollectorInterface
+     */
+    public function setReadRelatedDataOnlyIfNoMissingKeys(bool $trueOrFalse) : DataCollectorInterface
+    {
+        $this->readRelatedDataOnlyIfNoMissingKeys = $trueOrFalse;
+        return $this;
     }
 
     /**
@@ -463,6 +551,9 @@ class DataCollector implements DataCollectorInterface
     public function addExpression($expressionOrString): DataCollectorInterface
     {
         $this->requiredExpressions = null;
+        if (is_object($expressionOrString) && ! $expressionOrString instanceof ExpressionInterface) {
+            throw new InvalidArgumentException('Cannot add "' . get_class($expressionOrString) . '" to a data collector as expression!');
+        }
         if (! in_array($expressionOrString, $this->addedExpressions,true)) {
             $this->addedExpressions[] = $expressionOrString;
         }
@@ -594,5 +685,14 @@ class DataCollector implements DataCollectorInterface
             }
         }
         return $copy;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see DataCollectorInterface::isEmpty()
+     */
+    public function isEmpty() : bool
+    {
+        return empty($this->getRequiredExpressions());
     }
 }

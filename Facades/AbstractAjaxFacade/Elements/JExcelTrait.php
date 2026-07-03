@@ -312,6 +312,7 @@ JS;
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
         $wrapCaptions = $this->escapeBool(!$widget->getNowrapCaptions());
+        $autoColumnWidth = $this->escapeBool($widget->getAutoColumnWidth());
         $stripeTable = $this->escapeBool($widget->getStriped());
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
 
@@ -342,6 +343,7 @@ JS;
         rowDrag: $allowDragRow,
         allowDeleteRow: $allowDeleteRow,
         wordWrap: $wordWrap,
+        tableOverflow: {$autoColumnWidth},
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
         text:{
@@ -577,6 +579,9 @@ JS;
             }
             if ({$stripeTable} === true) {
                 jqSelf.addClass('exf-stripe-table');
+            }
+            if ({$autoColumnWidth} === true) {
+                jqSelf.addClass('exf-auto-column-width');
             }
 
             // adding a custom onclick event to the table, in oder to open the editor of dropdowns with a single click

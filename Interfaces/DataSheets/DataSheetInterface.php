@@ -129,11 +129,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     ) : DataSheetInterface;
 
     /**
-     * Replaces data if this sheet with data in matching columns of the given sheet.
+     * Replaces values of this sheet with values in same columns of the other sheet for every row.
      * 
-     * This only works if all columns have the same amount of cells. 
+     * Both sheets must have a compatible number of rows:
+     * - If this sheet has no rows, it will get as many rows from as there are in the other sheet
+     * - If both sheets have the same number of rows, values will be copied per row
+     * - Otherwise there will be an error.
      * 
-     * Also keep in mind, that row UIDs are not checked. On the one hand, this allows to use this method on data
+     * **IMPORTANT:** row UIDs are also overwritten! On the one hand, this allows to use this method on data
      * sheets without UID columns, but on the other hand partial imports (if the "other" sheet does not have all the
      * columns of this sheet) will probably produce broken data if row order differs between the sheets.
      * 
@@ -143,7 +146,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * - other types columns will keep their values unchanged
      * 
      * If any of the imported columns are based on formulas, they will also be recalculated. However, you can
-     * disable this via $calculateFormulas if you just need the values. This may have side-effects though because
+     * disable this via $calculateFormulas if you just need the values. This may have side effects though because
      * the columns will still be based on their formulas and will probably get recalculated with the next read
      * operation.
      * 
