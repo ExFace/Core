@@ -3,6 +3,7 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\EmailDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
 use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
@@ -2368,12 +2369,24 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * added to the where clause which - in turn - will normally contain the
      * HAVING clause
      *
+     * A condition, that is explicitly marked NOT to apply to aggregated values
+     * (`apply_to_aggregates: false`) must filter the raw rows in the WHERE clause
+     * and therefore never belongs in HAVING - even if its expression has an
+     * aggregator. This is also important to avoid generating a HAVING clause for
+     * a query that has no GROUP BY (e.g. when list-aggregations are rendered as
+     * inline correlated subselects like `STUFF ... FOR XML` in MS SQL), which
+     * would result in invalid SQL.
+     *
      * @param QueryPartFilter $qpart
      * @param boolean $rely_on_joins
      * @return boolean
      */
     protected function checkFilterBelongsInHavingClause(QueryPartFilter $qpart, $rely_on_joins = true)
     {
+        $condition = $qpart->getCondition();
+        if ($condition !== null && $condition->willApplyToAggregatedValues() === false) {
+            return false;
+        }
         return $qpart->getAggregator() && ! $qpart->getFirstRelation(RelationTypeDataType::REVERSE) ? true : false;
     }
 
@@ -2521,23 +2534,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
             // the data type, but the separated parts should
             switch (true) {
+                // Do not do any parsing if the value is SQL
                 case $valueIsSQL === true:
                     break;
-                case $comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN:
-                    // If it's a single value, cast it to the data type to make sure, it's a valid value.
-                    switch (true) {
-
-                        case ($data_type instanceof DateDataType):
-                        case ($data_type instanceof NumberDataType):
-                        case ($data_type instanceof BooleanDataType):
-                            $value = $data_type::cast($value);
-                            break;
-                        default:
-                            $value = $data_type::cast($value);
-                    }
-                    break;
-
-                default:
+                
+                // In case of list comparators, the value might be a list, so split it into single
+                // values first.
+                // NOTE in case of lists we need to cast every value separately! Single values are not casted in this
+                // CASE{} block, but further down the code for every comparator separately (ony if needed!)
+                case $comparator === ComparatorDataType::IN:
+                case $comparator === ComparatorDataType::NOT_IN:
                     $values = explode($value_list_delimiter, $value ?? '');
                     $value = '';
                     $valueNullChecks = [];
@@ -2589,6 +2595,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             break;
                     }
                     break;
+                    
+                // If it's a single value, DO NOT cast it here - further down we will cast values depending on
+                // the requirements of specific comparators.
+                default:
+                    break;
             }
         } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
@@ -2611,12 +2622,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
         // If everything is OK, build the SQL
         switch (true) {
+            
+            // IN() and NOT IN() can use the $value as-is because it was already split and each part was casted
             case $comparator === EXF_COMPARATOR_IN:
                 $output = "(" . $subject . " IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
             case $comparator === EXF_COMPARATOR_NOT_IN:
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
+            
+            // Strict comparators need to cast their values
             case $comparator === EXF_COMPARATOR_EQUALS:
                 $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
@@ -2629,6 +2644,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $comparator === EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
                 $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
+                
+            // For non-strict comparators, casting depends on how exactly the value is used.
             case $comparator === EXF_COMPARATOR_IS_NOT:
             case $comparator === EXF_COMPARATOR_IS:
                 if (stripos($value, 'sql:') !== false) {
@@ -2643,6 +2660,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $output .= "'%{$this->escapeString(mb_strtoupper($value))}%'";
                 }
                 break;
+                
             // If the query builder cannot deal with the comparator, but the comparator can be transformed into other (atomic)
             // comparators, try building a query with the atomized version of the comparator
             case ! ComparatorDataType::isAtomic($comparator) && $qpart instanceof QueryPartFilter:
@@ -2696,12 +2714,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         switch (true) {
             case $data_type instanceof BooleanDataType:
-                $output = $value ? 1 : 0;
+                $output = BooleanDataType::cast($value) ? 1 : 0;
                 break;
             case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
                 return EXF_LOGICAL_NULL;
-            // No need to check if the value is valid JSON to search for it - any string is OK
+            // No need to check if structured string types have valid structure or not - we can filter over
+            // partial structure too
             case $data_type instanceof JsonDataType:
+            case $data_type instanceof EmailDataType:
                 $output =  "'" . $this->escapeString($value) . "'";
                 break;
             // In most cases apply the same checks and formatting as for INSERT/UPDATE statements
