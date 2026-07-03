@@ -133,15 +133,25 @@ class CliRuntimeException extends RuntimeException
         // as `previous`, the parent createDebugWidget() recursively renders the previous
         // exception too - without this guard both would add their own "CLI" tab, resulting
         // in duplicate tabs in the error details.
-        if ($debug_widget->findChildById('cli_tab') === false) {
+        // If the tab already exists (rendered by a previous/inner exception), override its
+        // content with the output of this (outer) exception, which is the most recent one.
+        $existingTab = $debug_widget->findChildById('cli_tab');
+        if ($existingTab === false) {
             $tab = $debug_widget->createTab();
             $tab->setId('cli_tab');
             $tab->setCaption('CLI');
             $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
                 'widget_type' => 'Markdown',
+                'id' => 'cli_tab_markdown',
                 'value' => $this->buildMarkdown()
             ])));
             $debug_widget->addTab($tab);
+        } else {
+            // Override the existing markdown content with the latest output.
+            $markdown = $existingTab->findChildById('cli_tab_markdown');
+            if ($markdown !== false) {
+                $markdown->setValue($this->buildMarkdown(), false);
+            }
         }
         return $debug_widget;
     }
