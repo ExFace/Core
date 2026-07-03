@@ -67,9 +67,13 @@ use exface\Core\CommonLogic\UxonObject;
  * - isDisabled() : bool
  * - refreshDropdown(iColIdx) : Promise
  * - updateDependantColumns(iColIdx, iRowIdx, mValue) : void
+ * - lockDropdownColumnWidth(iColIdx, domCell) : void // Locks the column width while a dropdown is opened (only active if auto-column-width mode is enabled.)
+ * - unlockDropdownColumnWidth(iColIdx) : void
+ * - unlockAllDropdownColumnWidths() : void
  * - success(data, textStatus, jqXHR)
  * - error(jqXHR, textStatus, errorThrown)
  * - bLoaded: bool // true after all constructors ran
+ * - _autoColumnWidth: bool 
  * 
  * ### ColumnModel
  * 
@@ -597,6 +601,9 @@ JS;
                     var iRowIdx = $(this).data("y");
 
                     if (iColIdx !== undefined && iRowIdx !== undefined) {
+                        // lock the current dropdown column width while the editor is open
+                        // to avoid temporary collapse when dropdown content is re-rendered.
+                        instance.exfWidget.lockDropdownColumnWidth(iColIdx, this);
                         instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
                     }
                 }
@@ -721,8 +728,17 @@ JS;
             return mValidated;
         },
         oncreateeditor: function(el, cell, x, y, value) {
-            // only request data if column type is autocomplete, everything is fully rendered, lazy loading is true for column
             let columnType = el.jexcel.options.columns[x].type;
+
+            // when opening a dropdown, the previous content int he cell is removed.
+            // this causes layout collapse issues if we are using auto-column width mode, 
+            // where the width of the column is determined based on the content 
+            // solution: we briefly lock the column width to a a fixed pixel value while the dropdown is openend
+            if (x !== undefined && x !== null && columnType === 'autocomplete') {
+                el.exfWidget.lockDropdownColumnWidth(x, cell);
+            }
+
+            // only request data if column type is autocomplete, everything is fully rendered, lazy loading is true for column
             if (columnType === 'autocomplete' && el.exfWidget.bLoaded && el.exfWidget.getColumnModel(x).lazyLoading && !el.exfWidget.getColumnModel(x).wasLazyLoaded && !el.isLazyLoadingInProgress) {
                 
                 let colName = el.exfWidget.getColumnName(x);
@@ -768,6 +784,14 @@ JS;
             }  
             
         },
+        oncloseeditor: function(el, cell, x, y, value, save) {
+            let columnType = el.jexcel.options.columns[x].type;
+
+            // after closing the dropdown we can use the auto width again
+            if (x !== undefined && x !== null && columnType === 'autocomplete') {
+                el.exfWidget.unlockDropdownColumnWidth(x);
+            }
+        },
         onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the subsequent logic runs. This is
             // important for value/data getters to work properly as they will ignore spare rows
@@ -782,6 +806,8 @@ JS;
                 // also re-add the hitbox for single-click, as they get cleared when selcting a value
                 let sColumnType = instance.jexcel.options.columns[col].type;
                 if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete') { 
+                    // reset the column with to auto/previous mode 
+                    instance.exfWidget.unlockDropdownColumnWidth(col);
 
                     // update the related cols
                     if (instance.exfWidget.getColumnModel(col).dependantCols.length > 0){
@@ -826,6 +852,9 @@ JS;
             if (oSel.x1 !== null) {
                 $(el).jspreadsheet('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
             }
+
+            // unlock column widths, in case dropdown wasnt closed properly
+            el.exfWidget.unlockAllDropdownColumnWidths();
         },
         onundo: function(el, historyRecord) {
             el.exfWidget.validateAll();
@@ -1033,6 +1062,8 @@ JS;
         _rowNumberColName: $rowNumberColNameJs,
         _initData: [],
         _disabled: $disabledJs,
+        _autoColumnWidth: {$autoColumnWidth},
+        _dropdownColWidthLocks: {},
         _valueGetterRow: null,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
         getDoNotValidate: function(){
@@ -1074,6 +1105,79 @@ JS;
         },
         getColumnModel: function(iColIdx) {
             return (this._cols[this.getColumnName(iColIdx)] || {});
+        },
+        lockDropdownColumnWidth: function(iColIdx, domCell) {
+            // only needed in auto column width mode
+            if (this._autoColumnWidth !== true || iColIdx === undefined || iColIdx === null) {
+                return;
+            }
+
+            iColIdx = parseInt(iColIdx);
+            if (Number.isNaN(iColIdx) || this._dropdownColWidthLocks[iColIdx] !== undefined) {
+                return;
+            }
+
+            // get the current width of the header cell of this colmun
+            var jqSelf = $(this.getDom());
+            var jqHeaderCell = jqSelf.find('thead > tr:first-child > td[data-x="' + iColIdx + '"]').first();
+            var oMeasureCell = jqHeaderCell[0];
+            var iColWidth = oMeasureCell ? Math.ceil(oMeasureCell.getBoundingClientRect().width) : 0;
+
+            if (!iColWidth || iColWidth < 1) {
+                return;
+            }
+
+            // save the old width to restore it later and set the current width as a fixed px width
+            var oCellToLock = jqHeaderCell[0];
+            if (!oCellToLock || !oCellToLock.style) {
+                return;
+            }
+
+            var oCellStyle = {
+                el: oCellToLock,
+                width: oCellToLock.style.width,
+                minWidth: oCellToLock.style.minWidth,
+                maxWidth: oCellToLock.style.maxWidth
+            };
+
+            oCellToLock.style.width = iColWidth + 'px';
+            oCellToLock.style.minWidth = iColWidth + 'px';
+            oCellToLock.style.maxWidth = iColWidth + 'px';
+
+            this._dropdownColWidthLocks[iColIdx] = oCellStyle;
+        },
+        unlockDropdownColumnWidth: function(iColIdx) {
+            // only needed in auto column width mode
+            if (this._autoColumnWidth !== true || iColIdx === undefined || iColIdx === null) {
+                return;
+            }
+
+            // get stored col width for this column
+            iColIdx = parseInt(iColIdx);
+            if (Number.isNaN(iColIdx)) {
+                return;
+            }
+            var oCellStyle = this._dropdownColWidthLocks[iColIdx];
+            if (!oCellStyle || !oCellStyle.el || !oCellStyle.el.style) {
+                return;
+            }
+
+            // Restore the original sizing to the column header cell
+            oCellStyle.el.style.width = oCellStyle.width;
+            oCellStyle.el.style.minWidth = oCellStyle.minWidth;
+            oCellStyle.el.style.maxWidth = oCellStyle.maxWidth;
+
+            delete this._dropdownColWidthLocks[iColIdx];
+        },
+        unlockAllDropdownColumnWidths: function() {
+            if (this._autoColumnWidth !== true) {
+                return;
+            }
+
+            var oWidget = this;
+            Object.keys(this._dropdownColWidthLocks).forEach(function(iColIdx) {
+                oWidget.unlockDropdownColumnWidth(iColIdx);
+            });
         },
         getInitValue: function(iCol, iRow) {
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
