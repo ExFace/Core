@@ -498,36 +498,26 @@ SQL;
     }
 
     /**
-     * Normalize static-formula values used in JOIN placeholders for PostgreSQL.
+     * PostgreSQL has no MAX()/MIN() aggregate for the `uuid` type, which is the SQL type of
+     * all OID (binary) columns here. When the query builder makes the UID group-safe by
+     * wrapping it in MAX() (see buildSqlQuerySelect()), a raw `MAX(uuid)` is produced and
+     * PostgreSQL throws "function max(uuid) does not exist". To avoid this, binary/uuid
+     * columns are first converted to their `0x...` hex text representation (the same form
+     * used for UIDs elsewhere) so that MAX()/MIN() operates on text instead of uuid.
      *
-     * PostgreSQL may interpret values like `0x...` or bare hex strings as numeric literals,
-     * causing type-mismatch errors when compared to uuid columns. To avoid this, we quote
-     * common hex/UUID representations. If a value matches the hyphenated UUID format, append
-     * an explicit `::uuid` cast which is commonly used in PostgreSQL.
-     *
-     * @see AbstractSqlBuilder::preparePlaceholderValue()
+     * @see AbstractSqlBuilder::buildSqlSelectGrouped()
      */
-    protected function preparePlaceholderValue($value, ?DataTypeInterface $dataType = null, array $dataAddressProps = [])
+    protected function buildSqlSelectGrouped(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null): string
     {
-        if (!is_string($value)) {
-            return $value;
+        $aggregator = $aggregator ?? $qpart->getAggregator();
+        $aggrFunc = $aggregator->getFunction()->__toString();
+
+        if ($this->isBinaryColumn($qpart) && ($aggrFunc === AggregatorFunctionsDataType::MAX || $aggrFunc === AggregatorFunctionsDataType::MIN)) {
+            $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
+            $select = $this->buildSqlSelectBinaryAsHEX($select);
+            return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
         }
 
-        // 0x... hex literal -> strip 0x and quote
-        if (preg_match('/^0x[0-9a-fA-F]+$/', $value)) {
-            return "'" . substr($value, 2) . "'";
-        }
-
-        // 32-char hex (no 0x) -> quote
-        if (preg_match('/^[0-9a-fA-F]{32}$/', $value)) {
-            return "'" . $value . "'";
-        }
-
-        // UUID with hyphens -> quote and cast to uuid
-        if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $value)) {
-            return "'" . $value . "'::uuid";
-        }
-
-        return $value;
+        return parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
     }
 }

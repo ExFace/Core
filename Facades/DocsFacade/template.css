@@ -40,3 +40,4 @@
     border-color: transparent;
     border: red;
 }
+pre > code.language-mermaid > svg {max-height: 500px}

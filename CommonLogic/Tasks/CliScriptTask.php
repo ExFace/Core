@@ -2,7 +2,11 @@
 namespace exface\Core\CommonLogic\Tasks;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Tasks\TimeoutingTaskInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -11,7 +15,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * @author Andrej Kabachnik
  *
  */
-class CliScriptTask extends GenericTask
+class CliScriptTask extends GenericTask implements TimeoutingTaskInterface
 {    
     private array $commands;
     private ?int $commandTimeout = null;
@@ -65,18 +69,51 @@ class CliScriptTask extends GenericTask
     }
 
     /**
-     * Maximum number of seconds for each command in this task to run
+     * Maximum time for each command in this task to run.
+     * 
+     * Can be set either as a plain number of seconds (e.g. `600`) or as a
+     * human-readable interval:
+     * 
+     * - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`, `second(s)`.
+     * - Concatenate with `+`.
+     * - For example: `10 minutes`, `1 hour + 30 minutes`, but also `600` for 10 minutes.
      * 
      * @uxon-property timeout_per_command
-     * @uxon-type integer
+     * @uxon-type string
      * 
-     * @param int $timeout
+     * @param string|int $timeout
      * @return $this
+     * @throws \exface\Core\Exceptions\InvalidArgumentException
      */
-    protected function setCommandTimeout(int $timeout) : CliScriptTask
+    protected function setCommandTimeout(string|int $timeout) : CliScriptTask
     {
-        $this->commandTimeout = $timeout;
+        $this->commandTimeout = $this->parseTimeoutToSeconds($timeout);
         return $this;
+    }
+
+    /**
+     * Converts a timeout value into a number of seconds.
+     * 
+     * Plain integers (or numeric strings) are treated as seconds directly. Any
+     * other string is parsed as a human-readable interval (e.g. `10 minutes`)
+     * via DateDataType::castInterval() and converted into seconds.
+     * 
+     * @param string|int $timeout
+     * @return int
+     * @throws InvalidArgumentException
+     */
+    protected function parseTimeoutToSeconds(string|int $timeout) : int
+    {
+        if (is_int($timeout) || is_numeric($timeout)) {
+            return (int) $timeout;
+        }
+        try {
+            $interval = DateDataType::castInterval($timeout);
+            $reference = new \DateTimeImmutable('@0');
+            return $reference->add($interval)->getTimestamp() - $reference->getTimestamp();
+        } catch (\Throwable $e) {
+            throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `timeout_per_command` configuration', null, $e);
+        }
     }
 
     /**
@@ -140,5 +177,18 @@ class CliScriptTask extends GenericTask
             $uxon->setProperty('ignored_exit_codes', new UxonObject($this->getIgnoredExitCodes()));
         }
         return $uxon;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTimeoutInterval(): ?\DateInterval
+    {
+        if (null !== $cmdTimeout = $this->getCommandTimeout()) {
+            $timeout = $cmdTimeout * count($this->getCommands());
+            $interval = DateTimeDataType::castInterval($timeout);
+            return $interval;
+        }
+        return null;
     }
 }

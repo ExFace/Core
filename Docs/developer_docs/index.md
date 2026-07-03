@@ -15,9 +15,55 @@
 
 ## Technical overview
 
-In a nutshell the platform acts as command bus behind a changable facade:
+In a nutshell the platform acts as command bus behind an interchangeable facade. Here is an overview of a typical web request:
 
-![Processing a request](diagrams/sequence_overview.png)
+```mermaid
+sequenceDiagram
+    participant Web
+    box ExFace Platform
+        participant Router AS PSR-7 Router
+        participant Facade AS HTTP Facade
+        participant Workbench
+        participant App
+        participant Action
+    end
+
+    Web->>Router: Send request
+    Router->>Workbench: Start instance, init facade
+
+    Router->>Facade: PSR-7 ServerRequest
+
+    activate Facade
+    Facade->>Facade: Apply middleware, transform request to task
+
+    Facade->>Workbench: handle(task)
+    activate Workbench
+
+    Workbench->>Workbench: find handler app
+
+    Workbench->>App: handle(task)
+    activate App
+
+    App->>Action: handle(task)
+    activate Action
+
+    Action-->>App: Result
+    deactivate Action
+
+    App-->>Workbench: Result
+    deactivate App
+
+    Workbench-->>Facade: Result
+    deactivate Workbench
+
+    Facade->>Facade: render Result
+
+    Facade->>Router: Rendered response (HTML, JSON, etc.)
+    deactivate Facade
+
+    Router->>Workbench: stop
+    Router->>Web: publish response
+```
 
 Regardless of where it is called from (a web service endpoint, a console application, some plugin in another system or anything else), the caller talks to a facade, which actually defines what sort of input it accepts and what the output will be. This input data can be anything, but in most cases it must contain some kind of reference to the action that is to be performed. 
 

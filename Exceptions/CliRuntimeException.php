@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\DebugMessage;
 
 /**
@@ -106,6 +107,16 @@ class CliRuntimeException extends RuntimeException
     }
     
     /**
+     * Returns the exit code the CLI command terminated with or NULL if unknown.
+     * 
+     * @return int|NULL
+     */
+    public function getExitCode() : ?int
+    {
+        return $this->exitCode;
+    }
+    
+    /**
      * Returns the output type: SUCCESS, WARNING, ERROR or NULL if unknown.
      * 
      * @return string|NULL
@@ -119,14 +130,21 @@ class CliRuntimeException extends RuntimeException
     {
         $debug_widget = parent::createDebugWidget($debug_widget);
         
-        $tab = $debug_widget->createTab();
-        $tab->setCaption('CLI');
-        $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
-            'widget_type' => 'Markdown',
-            'value' => $this->buildMarkdown()
-        ])));
-        $debug_widget->addTab($tab);
-        
+        // Only add the CLI tab once. When this exception wraps another CliRuntimeException
+        // as `previous`, the parent createDebugWidget() recursively renders the previous
+        // exception too - without this guard both would add their own "CLI" tab, resulting
+        // in duplicate tabs in the error details. Don't add a static id to the tab to avoid
+        // id clashes if multiple exceptions produce CLI tabs in different tabs or different
+        // dialogs
+        if (null === $debug_widget->findChild(fn(WidgetInterface $child) => $child->getCaption() === 'CLI')) {
+            $tab = $debug_widget->createTab();
+            $tab->setCaption('CLI');
+            $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
+                'widget_type' => 'Markdown',
+                'value' => $this->buildMarkdown()
+            ])));
+            $debug_widget->addTab($tab);
+        }
         return $debug_widget;
     }
     

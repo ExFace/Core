@@ -6,6 +6,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\TimeoutingTaskInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -23,7 +24,7 @@ use exface\Core\CommonLogic\UxonObject;
  * @author Andrej Kabachnik
  *
  */
-class ScheduledTask extends GenericTask
+class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
 {
     public const DEFAULT_TIMEOUT = '6 hours';
     public const DEFAULT_MAX_TIMEOUT = '1 day';
@@ -66,7 +67,7 @@ class ScheduledTask extends GenericTask
      *
      * @return string|null
      */
-    public function getTimeToCheck() : ?string
+    protected function getTimeToCheck() : ?string
     {
         return $this->timeToCheckRaw;
     }
@@ -78,7 +79,7 @@ class ScheduledTask extends GenericTask
      *
      * @return string|null
      */
-    public function getTimeout() : ?string
+    protected function getTimeout() : ?string
     {
         return $this->timeoutRaw;
     }
@@ -131,7 +132,7 @@ class ScheduledTask extends GenericTask
     }
 
     /**
-     * Time to mark the queue item as timeouted even if the process is still running.
+     * Time to mark the queue item as timed out even if the process is still running.
      * 
      * If a task is marked as running for longer than this interval, it will be marked as timed out, regardless of whether
      * the process is still alive. Set this value conservatively to avoid unintentional parallel execution.
@@ -162,10 +163,10 @@ class ScheduledTask extends GenericTask
     }
 
     /**
-     * @return \DateInterval
-     * @throws \Exception
+     * {@inheritDoc}
+     * @see TimeoutingTaskInterface::getTimeoutInterval()
      */
-    public function getTimeoutInterval() : \DateInterval
+    public function getTimeoutInterval() : ?\DateInterval
     {
         if($this->maxTimeOutInterval === null) {
             $this->setTimeout(self::DEFAULT_MAX_TIMEOUT);
