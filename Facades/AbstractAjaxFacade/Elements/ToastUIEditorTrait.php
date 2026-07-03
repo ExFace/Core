@@ -3,6 +3,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
 use exface\Core\Widgets\Parts\TextMention;
@@ -78,6 +79,7 @@ trait ToastUIEditorTrait
                         }  
                     },
                     customHTMLRenderer: {
+                        {$this->buildJsMarkdownRendererNewlines()}
                         {$this->buildJsCustomHtmlRenderers()}
                     },
                     widgetRules: [
@@ -125,6 +127,7 @@ JS;
                         }    
                     },
                     customHTMLRenderer: {
+                        {$this->buildJsMarkdownRendererNewlines()}
                         {$this->buildJsCustomHtmlRenderers()}
                     },
                     widgetRules: [
@@ -708,6 +711,31 @@ JS;
               oMentionModel.currentMentionWidget = null;
             }
         }
+JS;
+    }
+
+    /**
+     * Builds a ToastUI `customHTMLRenderer` entry that aligns the editor's newline handling
+     * with the `enable_newlines` property of the widget's `MarkdownDataType`.
+     * 
+     * By default ToastUI renders every single newline (softbreak) as a `<br>`. If the data type
+     * has `enable_newlines` set to `false`, this override makes softbreaks emit a plain newline
+     * instead, so standard markdown newline rules apply. Explicit hard breaks (two trailing spaces
+     * or `\`) keep producing `<br>` in both cases.
+     * 
+     * @return string
+     */
+    protected function buildJsMarkdownRendererNewlines() : string
+    {
+        $dataType = $this->getWidget()->getValueDataType();
+        if (! ($dataType instanceof MarkdownDataType) || $dataType->getEnableNewlines() === true) {
+            return '';
+        }
+        return <<<JS
+
+                        softbreak: function() {
+                            return { type: 'html', content: '\\n' };
+                        },
 JS;
     }
 
