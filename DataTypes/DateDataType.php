@@ -692,7 +692,7 @@ class DateDataType extends AbstractDataType
     {
         // Many other UXON properties use seconds, so we have a fallback here just to support the seconds too
         if (is_int($intervalString)) {
-            $timeout = $intervalString . ' seconds';
+            $intervalString = $intervalString . ' seconds';
         }
         return \DateInterval::createFromDateString($intervalString);
     }
