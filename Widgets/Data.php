@@ -1514,7 +1514,7 @@ class Data
         foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
             $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
         }
-        return array_unique($colNames);
+        return array_filter(array_unique($colNames));
     }
 
     /**
