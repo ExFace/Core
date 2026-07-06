@@ -104,13 +104,13 @@ class UxonObject implements \IteratorAggregate
     private $array = [];
     
     private $childUxons = [];
+    private array $unresolvedChildUxons = [];
 
     private $snippetsAdded = [];
 
     private $snippetResolver = null;
     
     private array $path = [];
-    private mixed $unresolvedChildUxons;
 
     public function __construct(array $properties = [], array $path = [])
     {
@@ -251,7 +251,7 @@ class UxonObject implements \IteratorAggregate
         if (is_array($val) === true) {
             $cache = $this->childUxons[$name] ?? null;
 
-            if(key_exists($name, $this->unresolvedChildUxons) && $this->snippetResolver !== null) {
+            if(array_key_exists($name, $this->unresolvedChildUxons) && $this->snippetResolver !== null) {
                 $cache = null;
             }
 
