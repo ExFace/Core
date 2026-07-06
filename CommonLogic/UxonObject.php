@@ -110,7 +110,8 @@ class UxonObject implements \IteratorAggregate
     private $snippetResolver = null;
     
     private array $path = [];
-    
+    private mixed $unresolvedChildUxons;
+
     public function __construct(array $properties = [], array $path = [])
     {
         $this->array = $this->stripComments($properties);
@@ -249,12 +250,23 @@ class UxonObject implements \IteratorAggregate
         $val = $this->array[$name] ?? null;
         if (is_array($val) === true) {
             $cache = $this->childUxons[$name] ?? null;
-            if (null === $cache) {
-                $val = $this->resolveSnippetsInArray($val);
+
+            if(key_exists($name, $this->unresolvedChildUxons) && $this->snippetResolver !== null) {
+                $cache = null;
+            }
+
+            if ($cache === null) {
+                if($this->snippetResolver !== null) {
+                    $val = $this->resolveSnippetsInArray($val);
+                    unset($this->unresolvedChildUxons[$name]);
+                } else {
+                    $this->unresolvedChildUxons[$name] = $name;
+                }
+
                 $path = $this->path;
                 $path[] = $name;
                 $cache = $this->childUxons[$name] = new self($val, $path);
-            } 
+            }
             return $cache;
         }
         return $val;
