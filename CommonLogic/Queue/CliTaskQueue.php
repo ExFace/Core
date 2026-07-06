@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Tasks\CliTaskInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
+use exface\Core\Interfaces\Tasks\TimeoutingTaskInterface;
 
 /**
  * Performs CLI command(s) from the task parameter `cmd` - similar to the WebConsoleFacade.
@@ -98,7 +99,7 @@ class CliTaskQueue extends SyncTaskQueue
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = (float) $this->getCommandTimeout();
+        $timeout = ($task instanceof TimeoutingTaskInterface) ? $task->getTimeoutInterval() : (float) $this->getCommandTimeout();
         $ignoredExitCodes = ($task instanceof CliScriptTask) ? $task->getIgnoredExitCodes() : [];
 
         // Open a live output file so partial output survives even if the PHP process is
