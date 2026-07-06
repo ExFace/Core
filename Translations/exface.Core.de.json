@@ -456,6 +456,7 @@
     "WIDGET.JEXCEL.PASTE": "Einfügen ...",
     "WIDGET.JEXCEL.SAVE_AS": "Speichern als ...",
     "WIDGET.JEXCEL.CONFIRM_DELETE_ROWS": "Sind Sie sicher, dass Sie die ausgewählten Zeilen löschen möchten?",
+    "WIDGET.JEXCEL.CANNOT_DELETE_LAST_ROW": "Die letzte Zeile kann nicht gelöscht werden.",
     "WIDGET.JEXCEL.CONFIRM_DELETE_COLUMNS": "Sind Sie sicher, dass Sie die ausgewählten Spalten löschen möchten?",
     "WIDGET.JEXCEL.CONFIRM_DESTROY_MERGED_CELLS": "Diese Aktion wird alle vorhandenen verbundenen Zellen zerstören. Sind Sie sicher?",
     "WIDGET.JEXCEL.CONFIRM_CLEAR_SEARCH": "Diese Aktion wird Ihre Suchergebnisse löschen. Sind Sie sicher?",
