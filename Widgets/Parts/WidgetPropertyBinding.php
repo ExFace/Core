@@ -198,9 +198,32 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     }
 
     /**
+     *
+     * {@inheritDoc}
+     * @see WidgetPropertyBindingInterface::getBindingExpression()
+     */
+    public function getBindingExpression() : ExpressionInterface
+    {
+        $str = null;
+        switch (true) {
+            case $this->valueExpr !== null:
+                return $this->valueExpr;
+            case $this->valueExprString !== null:
+                return $this->getValueExpression();
+            case $this->attributeAlias !== null:
+                $str = $this->attributeAlias;
+                break;
+            case $this->dataColumnName !== null:
+                $str = self::BINDING_TYPE_COLUMN;
+                break;
+        }
+        return ExpressionFactory::createForObject($this->getMetaObject(), $str);
+    }
+
+    /**
      * 
      * {@inheritDoc}
-     * @see WidgetPropertyBindingInterface::isBoundToAttribute
+     * @see WidgetPropertyBindingInterface::isBoundToAttribute()
      */
     public function isBoundToAttribute() : bool
     {
