@@ -348,6 +348,7 @@ JS;
         allowDeleteRow: $allowDeleteRow,
         wordWrap: $wordWrap,
         tableOverflow: {$autoColumnWidth},
+        allowDeletingAllRows: true, 
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
         text:{
@@ -823,6 +824,27 @@ JS;
             }, 0);
         },
         oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
+        },
+        onbeforedeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
+            // deleting the last row isnt allowed within Jexcel (by default), because otherwise the users have no way
+            // of adding new rows again. see https://github.com/jspreadsheet/ce/issues/1244
+            // Usually this fails slilently (JS console error), but normal user cant see those
+            // as a workaround, we allow it programatically, (allowDeletingAllRows: true), 
+            // so we can throw an explicit alert here (and return false to cancel the deletion)
+            
+            var aAllRows = (el && el.jexcel && typeof el.jexcel.getData === 'function') ? (el.jexcel.getData() || []) : [];
+            var bIsDeletingAllMultiselect = (aAllRows.length === numOfRows) && aAllRows.length > 1;
+            if ((aAllRows.length === 1 && rowNumber === 0) || bIsDeletingAllMultiselect) {
+                window.alert('{$translator->translate('WIDGET.JEXCEL.CANNOT_DELETE_LAST_ROW')}');
+
+                if (bIsDeletingAllMultiselect){
+                    // if we have all/multiple rows selected, the default behaviour would be to delete all except hte last row
+                    // so we try and recreate that by removing all rows except the last one here 
+                   el.jexcel.setData([aAllRows[aAllRows.length - 1] || []]); 
+                }
+
+                return false;
+            }
         },
         ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
