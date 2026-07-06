@@ -470,6 +470,7 @@
     "WIDGET.JEXCEL.PASTE": "Paste ...",
     "WIDGET.JEXCEL.SAVE_AS": "Save as ...",
     "WIDGET.JEXCEL.CONFIRM_DELETE_ROWS": "Are you sure you want to delete the selected rows?",
+    "WIDGET.JEXCEL.CANNOT_DELETE_LAST_ROW": "Cannot delete the last row.",
     "WIDGET.JEXCEL.CONFIRM_DELETE_COLUMNS": "Are you sure you want to delete the selected columns?",
     "WIDGET.JEXCEL.CONFIRM_DESTROY_MERGED_CELLS": "This action will destroy any existing merged cells. Are you sure?",
     "WIDGET.JEXCEL.CONFIRM_CLEAR_SEARCH": "This action will clear your search results. Are you sure?",
