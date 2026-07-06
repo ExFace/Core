@@ -99,7 +99,13 @@ class CliTaskQueue extends SyncTaskQueue
 
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
-        $timeout = ($task instanceof TimeoutingTaskInterface) ? $task->getTimeoutInterval() : (float) $this->getCommandTimeout();
+        $intervalTimeout = ($task instanceof TimeoutingTaskInterface) ? $task->getTimeoutInterval() : null;
+        if($intervalTimeout !== null) {
+            // Reference date required because month/year lengths vary
+            $reference = new \DateTimeImmutable('@0');
+            $timeout = (float) ($reference->add($intervalTimeout)->getTimestamp() - $reference->getTimestamp());
+        }
+        $timeout = $timeout ?? (float) $this->getCommandTimeout();
         $ignoredExitCodes = ($task instanceof CliScriptTask) ? $task->getIgnoredExitCodes() : [];
 
         // Open a live output file so partial output survives even if the PHP process is
