@@ -253,7 +253,12 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
      */
     public function getValueDataType()
     {
-        return $this->getBindings()[0]->getDataType();
+        $bindings = $this->getBindings();
+        if (empty($bindings)) {
+            // if there are no bindings, return string datatype, and assume its just html (?)
+            return DataTypeFactory::createFromPrototype($this->getWorkbench(), StringDataType::class);
+        }
+        return $bindings[0]->getDataType();
     }
     
     /**
@@ -407,7 +412,15 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
      */
     public function getValueExpression() : ?ExpressionInterface
     {
-        return $this->getBindings()[0]->getValueExpression();
+        // Return the first non-null expression across all bindings, similar to hasValue()
+        // If we only return binding[0]->getValueExpression(), this causes issues with mixed template (alias and formulas)
+        // attribute-first mixed template would return null while hasValue() returns true, which causes reference issues
+        foreach ($this->getBindings() as $binding) {
+            if (null !== $expr = $binding->getValueExpression()) {
+                return $expr;
+            }
+        }
+        return null;
     }
     
     /**
@@ -461,6 +474,15 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
      * @return bool
      */
     public function hasAggregator() : bool
+    {
+        return false;
+    }
+
+    /**
+     * TODO do we need this? Why was this not part of any interfaces?
+     * @return bool
+     */
+    public function hasColorScale() : bool
     {
         return false;
     }
