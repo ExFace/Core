@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Widgets\iSupportAggregators;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
@@ -67,7 +68,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * @author Andrej Kabachnik
  *
  */
-class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn
+class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iHaveMultipleBindings
 {
     use AttributeCaptionTrait;
     
