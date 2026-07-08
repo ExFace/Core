@@ -487,4 +487,15 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
     {
         return false;
     }
+
+    /**
+     * TODO, was needed for DataColumn methods in Matrix??
+     * @param mixed $value
+     * @return static
+     */
+    public function setAttributeAlias($value)
+    {
+        return $this;
+    }
+    
 }
