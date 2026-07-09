@@ -1,6 +1,5 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
-
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetMapperInterface;
@@ -10,6 +9,7 @@ use exface\Core\Interfaces\Exceptions\DataMappingExceptionInterface;
 use exface\Core\Interfaces\DataSheets\DataMappingInterface;
 use exface\Core\Widgets\DebugMessage;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Debug\LogBookInterface;
 
 /**
  * Exception thrown if a data mapping fails.
@@ -24,6 +24,8 @@ class DataMappingFailedError extends RuntimeException implements DataMappingExce
     private $fromSheet = null;
     
     private $toSheet = null;
+
+    private $logbook;
     
     /**
      * 
@@ -34,12 +36,13 @@ class DataMappingFailedError extends RuntimeException implements DataMappingExce
      * @param string|NULL $alias
      * @param \Throwable|NULL $previous
      */
-    public function __construct(DataMappingInterface $mapping, DataSheetInterface $fromSheet, DataSheetInterface $toSheet, $message, $alias = null, $previous = null)
+    public function __construct(DataMappingInterface $mapping, DataSheetInterface $fromSheet, DataSheetInterface $toSheet, $message, $alias = null, $previous = null, LogBookInterface $logbook = null)
     {
         parent::__construct($message, $alias, $previous);
         $this->mapping = $mapping;
         $this->fromSheet = $fromSheet;
         $this->toSheet = $toSheet;
+        $this->logbook = $logbook;
     }
     
     /**
@@ -112,6 +115,9 @@ class DataMappingFailedError extends RuntimeException implements DataMappingExce
             ]
         ]));
         $debug_widget->addTab($tab);
+        if ($this->logbook !== null) {
+            $debug_widget = $this->logbook->createDebugWidget($debug_widget);
+        }
         return $debug_widget;
     }
 
