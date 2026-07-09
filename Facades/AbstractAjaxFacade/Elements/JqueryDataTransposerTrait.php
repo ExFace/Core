@@ -6,6 +6,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 
 /**
  * Provides methods to generate JS code to transpose data columns in DataMatrix widgets
@@ -40,6 +41,7 @@ trait JqueryDataTransposerTrait {
      *      aTransposedDataKeys: [],
      *      sTransposedLabelKey: '', // name of the original label column for generated data columns
      *      aReplacedWithColumnKeys: [], // names of columns that replace this (label) column after transposing
+     *      aMultipleBindingAttrs: [], // for iHaveMultipleBindings cell widgets: data column names of all bound attributes
      *   }
      *   
      * ```
@@ -77,10 +79,39 @@ trait JqueryDataTransposerTrait {
             aTransposedDataKeys: [],
             sTransposedLabelKey: '',
             aReplacedWithColumnKeys: [],
+            aMultipleBindingAttrs: {$this->buildJsMultipleBindingAttrs($col)},
         },";
         };
         $colModelsJs = '{' . $colModelsJs . '}';
         return $colModelsJs;
+    }
+
+    /**
+     * Returns the JSON-encoded array of data column names required by a multi-binding cell widget.
+     *
+     * Returns `[]` for regular (single-binding) columns.
+     *
+     *
+     * @param \exface\Core\Widgets\DataColumn $col
+     * @return string JSON-encoded array, e.g. `["colName1","colName2"]` or `[]`
+     */
+    protected function buildJsMultipleBindingAttrs(\exface\Core\Widgets\DataColumn $col) : string
+    {
+        if (! ($col instanceof DataColumnTransposed)) {
+            return '[]';
+        }
+        $cellWidget = $col->getCellWidget();
+        if (! ($cellWidget instanceof iHaveMultipleBindings)) {
+            return '[]';
+        }
+        $attrs = [];
+        foreach ($cellWidget->getBindings() as $binding) {
+            $colName = $binding->getDataColumnName();
+            if ($colName !== null && $colName !== '') {
+                $attrs[] = $colName;
+            }
+        }
+        return json_encode($attrs);
     }
     
     /**
@@ -291,7 +322,22 @@ trait JqueryDataTransposerTrait {
 					oRowKeys[sRowKey]['_subRowEmpty'] = false;
 				}
 				oRowKeys[sRowKey]['_subRowHidden'] = oColOrig['bHideRowIfEmpty'] === true && oRowKeys[sRowKey]['_subRowEmpty'] === true;
-    			oRowKeys[sRowKey][newColId] = oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
+    			oRowKeys[sRowKey][newColId] = (function(){
+                        // For multi-binding cell widgets (e.g. DisplayTemplate), put all required keys/values
+                        // in a (sub) JOSN-object so binding paths like {colData/placeHolderKey} resolve correctly.
+                        if (oColOrig.aMultipleBindingAttrs && oColOrig.aMultipleBindingAttrs.length > 0) {
+                            var oBundled = {};
+                            oColOrig.aMultipleBindingAttrs.forEach(function(sAttr){
+                                oBundled[sAttr] = oRow[sAttr];
+                            });
+
+                            // return JSON object: { "key": { placeholderKey1: value, placeholderKey2: value, placeholderKey1: value } }
+                            return oBundled;
+                        }
+
+                        // default: return single scalar key/value { "key": value } 
+                        return oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
+                    })();
                 oRowKeys[sRowKey][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
     			if (oDataColsTotals[fld] != undefined){
                     var sTotalColName = newColGroup+'_'+oDataColsTotals[fld];

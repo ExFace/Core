@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Actions\ServiceParameter;
+use exface\Core\CommonLogic\Debugger\LogBooks\ActionLogBook;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Actions\iCanBeCalledFromCLI;
@@ -17,7 +18,6 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\CommonLogic\Tasks\ResultError;
 use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
 use exface\Core\Interfaces\Actions\iModifyData;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Exceptions\Queues\SchedulerError;
 use exface\Core\DataTypes\BooleanDataType;
 
@@ -53,7 +53,7 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
             $taskNames[] = $task->getParameter('task');
             $ignoreSchedule = true;
         }
-        return [$taskNames, $ignoreSchedule ];
+        return [$taskNames, $ignoreSchedule, $this->getLogBook($task)];
     }
     
     /**
@@ -61,17 +61,22 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractActionDeferred::performDeferred()
      */
-    protected function performDeferred(array $taskNames = [], bool $ignoreSchedule = false) : \Generator
+    protected function performDeferred(array $taskNames = [], bool $ignoreSchedule = false, ?ActionLogBook $logbook = null) : \Generator
     {
         yield 'Running the scheduler at ' . DateTimeDataType::formatDateLocalized((new \DateTime()), $this->getWorkbench()) . ':' . PHP_EOL;
         $scheduledDs = $this->getScheduledTasks($taskNames);
         $cnt = 0;
         $router = new TaskQueueBroker($this->getWorkbench());
+        $logbook?->addLine('Checking `' . $scheduledDs->countRows() . '` scheduled tasks');
+        $logbook?->addIndent(+1);
         foreach ($scheduledDs->getRows() as $rowNo => $row) {
-            yield PHP_EOL . 'Task "' . $row['NAME'] . '": ';
+            $msg = 'Task "' . $row['NAME'] . '": ';
+            yield PHP_EOL . $msg;
+                $logbook?->addLine('Task "' . $row['NAME'] . '": ');
             
             if (BooleanDataType::cast($row['ENABLED']) !== true) {
                 yield 'disabled.' . PHP_EOL;
+                $logbook?->continueLine('disabled');
                 continue;
             }
             
@@ -97,16 +102,20 @@ class RunScheduler extends AbstractActionDeferred implements iCanBeCalledFromCLI
                     $task = new ScheduledTask($this->getWorkbench(), $taskUxon, $row['UID']);
                     $result = $router->handle($task, explode(',', $row['QUEUE_TOPICS']), $row['UID'], UUIDDataType::generateShortId(8, $rowNo), 'Scheduler');
                     if ($result instanceof ResultError) {
-                        yield 'failed. ' . $result->getMessage();
+                        $msg = 'failed. ' . $result->getMessage();
                     } else {
-                        yield $result->getMessage() ?: 'done.';
+                        $msg = $result->getMessage() ?: 'done.';
                     }
                 } catch (\Throwable $e) {
                     $this->getWorkbench()->getLogger()->logException(new SchedulerError('Error in scheduled task "' . $row['NAME'] . '": ' . $e->getMessage(), null, $e));
-                    yield 'failed. ' . $e->getMessage() . ' in ' . $e->getFile() . ' at line ' . $e->getLine();
-                } 
+                    $msg = 'failed. ' . $e->getMessage() . ' in ' . $e->getFile() . ' at line ' . $e->getLine();
+                }
+                $logbook->continueLine($msg);
+                yield $msg;
             } else {
-                yield 'not due (next run at ' . DateTimeDataType::formatDateLocalized(CronDataType::findNextRunTime($row['SCHEDULE'], $lastRunTime), $this->getWorkbench()) . ').';
+                $msg = 'not due (next run at ' . DateTimeDataType::formatDateLocalized(CronDataType::findNextRunTime($row['SCHEDULE'], $lastRunTime), $this->getWorkbench()) . ').';
+                yield $msg;
+                $logbook?->continueLine($msg);
             }
             
             yield PHP_EOL;

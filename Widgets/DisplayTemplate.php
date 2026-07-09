@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Widgets\iSupportAggregators;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
@@ -67,7 +68,7 @@ use exface\Core\CommonLogic\DataSheets\DataColumn;
  * @author Andrej Kabachnik
  *
  */
-class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn
+class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iHaveValue, iShowDataColumn, iHaveMultipleBindings
 {
     use AttributeCaptionTrait;
     
@@ -253,7 +254,12 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
      */
     public function getValueDataType()
     {
-        return $this->getBindings()[0]->getDataType();
+        $bindings = $this->getBindings();
+        if (empty($bindings)) {
+            // if there are no bindings, return string datatype, and assume its just html (?)
+            return DataTypeFactory::createFromPrototype($this->getWorkbench(), StringDataType::class);
+        }
+        return $bindings[0]->getDataType();
     }
     
     /**
@@ -407,7 +413,15 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
      */
     public function getValueExpression() : ?ExpressionInterface
     {
-        return $this->getBindings()[0]->getValueExpression();
+        // Return the first non-null expression across all bindings, similar to hasValue()
+        // If we only return binding[0]->getValueExpression(), this causes issues with mixed template (alias and formulas)
+        // attribute-first mixed template would return null while hasValue() returns true, which causes reference issues
+        foreach ($this->getBindings() as $binding) {
+            if (null !== $expr = $binding->getValueExpression()) {
+                return $expr;
+            }
+        }
+        return null;
     }
     
     /**
@@ -464,4 +478,24 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
     {
         return false;
     }
+
+    /**
+     * TODO do we need this? Why was this not part of any interfaces?
+     * @return bool
+     */
+    public function hasColorScale() : bool
+    {
+        return false;
+    }
+
+    /**
+     * TODO, was needed for DataColumn methods in Matrix??
+     * @param mixed $value
+     * @return static
+     */
+    public function setAttributeAlias($value)
+    {
+        return $this;
+    }
+    
 }
