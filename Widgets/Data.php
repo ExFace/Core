@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
@@ -269,12 +270,15 @@ class Data
                 // If we do not need ALL column, see if the column is requested - search for matching 
                 // data column names and attribute aliases. If none of them match, stop here as the column
                 // was not requested.
+                // Exception: cell widgets that bind to multiple data columns (e.g. DisplayTemplate) must
+                // always be allowed to add their required attributes, otherwise the user would have to
+                // manually add hidden columns for every placeholder attribute.
                 if (! $needAllCols && ! $widgetCol->isSystem()) {
                     $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
                     if (! $dataCol && $widgetCol->isBoundToAttribute()) {
                         $dataCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
                     }
-                    if (! $dataCol) {
+                    if (! $dataCol && ! ($cellWidget instanceof iHaveMultipleBindings)) {
                         continue;
                     }
                 }
