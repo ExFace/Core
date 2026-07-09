@@ -1507,6 +1507,14 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     }
 
     /**
+     * @inheritdocs 
+     */
+    public function importUxonObject(UxonObject $uxon, array $skip_property_names = array())
+    {
+        $this->importUxonObjectWithOrder($uxon, $skip_property_names, [], ['groups']);
+    }
+
+    /**
      * {@inheritDoc}
      * @see iCanBeConvertedToUxon::exportUxonObject()
      */
