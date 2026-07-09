@@ -7,6 +7,7 @@
 
     // css-color -> {r,g,b,a} via offscreen element + getComputedStyle
     _cssColorToRgba: function(color) {
+      if (!color) return null;
       const el = document.createElement('span');
       el.style.color = color;
       // the element must be in the DOM for getComputedStyle to be reliable

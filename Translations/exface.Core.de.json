@@ -430,6 +430,8 @@
     "WIDGET.GANTT_CHARD.VIEW_MODE_WEEK_DESCRIPTION": "Stellt die Ansicht in Wochen da.",
     "WIDGET.GANTT_CHARD.VIEW_MODE_CALENDAR_WEEKS": "Kalenderwoche",
     "WIDGET.GANTT_CHARD.VIEW_MODE_CALENDAR_WEEKS_DESCRIPTION": "Stellt die Ansicht in Kalenderwochen da.",
+    "WIDGET.GANTT_CHARD.POPUP_CAPTION_DAYS": "Tage",
+    "WIDGET.GANTT_CHARD.POPUP_CAPTION_EXCLUDED": "ausgeschlossen",
     "WIDGET.GANTT_CHARD.VIEW_MODE_YEAR": "Jahr",
     "WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION": "Zeilen hinzufügen",
     "WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT": "Wie viele Zeilen möchten Sie hinzufügen?",
