@@ -413,7 +413,17 @@ class DataCollector implements DataCollectorInterface
                         $reqRelSheet->dataRead();
                     }
                     foreach ($reqRelKeyCol->getValues() as $fromRowIdx => $key) {
-                        $targetCol->setValue($fromRowIdx, $valCol->getValue($keyCol->findRowByValue($key)));
+                        if ($key === null) {
+                            $relatedVal = null;
+                        } else {
+                            $relatedRowIdx = $keyCol->findRowByValue($key);
+                            if ($relatedRowIdx === false || $relatedRowIdx === null) {
+                                $relatedVal = null;
+                            } else {
+                                $relatedVal = $valCol->getValue($relatedRowIdx);
+                            }
+                        }
+                        $targetCol->setValue($fromRowIdx, $relatedVal);
                         $refreshed = true;
                     }
 

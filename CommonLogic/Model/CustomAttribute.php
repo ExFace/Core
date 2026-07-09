@@ -169,7 +169,7 @@ class CustomAttribute extends Attribute
             if (mb_substr($relatedKeyAttrSelector, 0, 2) === '0x') {
                 $relatedKeyAttrId = $relatedKeyAttrSelector;
             } else {
-                $relatedKeyAttrId = $rightObj->getAttribute($relatedKeyAttrSelector);
+                $relatedKeyAttrId = $rightObj->getAttribute($relatedKeyAttrSelector)->getId();
             }
         }
         
