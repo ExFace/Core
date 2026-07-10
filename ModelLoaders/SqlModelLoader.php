@@ -1682,6 +1682,10 @@ SQL;
             foreach ($rows as $row) {
                 try {
                     $rootNode = $this->loadPageTreeCreateNodeFromDbRow($row);
+                    if(!$rootNode->isVisible()) {
+                        continue;
+                    }
+                    
                     $nodes[] = $rootNode;
                     $this->nodes_loaded[$rootNode->getUid] = $rootNode;
                 } catch (AccessDeniedError $e) {
@@ -1730,6 +1734,7 @@ SQL;
         $node->setCreatedByUserSelector($row['created_by_user_oid']);
         $node->setModifiedOn($row['modified_on']);
         $node->setModifiedByUserSelector($row['modified_by_user_oid']);
+        $node->setMenuVisible($row['menu_visible']);
 
         $this->getWorkbench()->eventManager()->dispatch(new OnUiMenuItemLoadedEvent($node));
 
@@ -1770,7 +1775,11 @@ SQL;
                         } else {
                             try {
                                 $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
-                                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                                if($parentNode->isVisible()) {
+                                    $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                                } else {
+                                    $parentNode = null;
+                                }
                             } catch (AccessDeniedError $e) {
                                 // $this->getWorkbench()->getLogger()->logException($e, \exface\Core\Interfaces\Log\LoggerInterface::ERROR);
                                 $parentNode = null;
@@ -1795,6 +1804,9 @@ SQL;
                         } else {
                             try {
                                 $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
+                                if(!$childNode->isVisible()) {
+                                    continue;
+                                }
                             } catch (AccessDeniedError $e) {
                                 //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
                                 continue;
@@ -1899,6 +1911,9 @@ SQL;
                     } else {
                         try {
                             $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);
+                            if(!$childNode->isVisible()) {
+                                continue;
+                            }
                             $childIds[] = $childNode->getUid();
                             $node->addChildNode($childNode);
                             $this->nodes_loaded[$childNode->getUid()] = $childNode;
@@ -1927,6 +1942,9 @@ SQL;
                     } else {
                         try {
                             $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
+                            if(!$childChildNode->isVisible()) {
+                                continue;
+                            }
                         } catch (AccessDeniedError $e) {
                             //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
                             continue;
@@ -1982,6 +2000,7 @@ SQL;
                 p.icon_set,
                 p.published,
                 p.menu_index,
+                p.menu_visible,
                 p.created_on,
                 {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
                 p.modified_on,

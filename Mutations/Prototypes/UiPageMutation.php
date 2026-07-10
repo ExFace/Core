@@ -90,6 +90,9 @@ class UiPageMutation extends AbstractMutation
             if (null !== $val = ($changes['intro'] ?? null)) {
                 $menuItem->setIntro($val);
             }
+            if (null !== $val = ($changes['menu_visible'] ?? null)) {
+                $menuItem->setMenuVisible($val);
+            }
 
             $stateBefore = $stateArrayBefore;
             $stateAfter = array_merge($stateArrayBefore, $changes);
@@ -216,6 +219,21 @@ class UiPageMutation extends AbstractMutation
     protected function setChangeIntro(string $changedIntro) : UiPageMutation
     {
         $this->changesForMenuItems['intro'] = $changedIntro;
+        return $this;
+    }
+
+    /**
+     * Changes the visibility of the page.
+     *
+     * @uxon-property change_menu_visible
+     * @uxon-type boolean
+     *
+     * @param bool $menuVisible
+     * @return $this
+     */
+    protected function setChangeMenuVisible(bool $menuVisible) : UiPageMutation
+    {
+        $this->changesForMenuItems['menu_visible'] = $menuVisible;
         return $this;
     }
 }
