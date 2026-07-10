@@ -106,7 +106,7 @@ trait ImportUxonObjectTrait {
                 'No setter method found for UXON property "' . $propertyName . '" in prototype "' . get_class($this) . '"!',
                 null,
                 null,
-                $value
+                $propertyName
             );
         }
     }
