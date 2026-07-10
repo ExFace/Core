@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Security\Authorization;
 
 use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Model\ExistsCondition;
+use exface\Core\CommonLogic\Security\Authorization\Obligations\DataRowPermissionsObligation;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Security\AuthorizationPolicyInterface;
 use exface\Core\Interfaces\Security\PermissionInterface;
@@ -320,7 +321,6 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             // Match apply_if... of all sorts
             
             $hasInputData = $task !== null && $task->hasInputData() === true;
-            $inputData = null;
             $inputDataMapped = null;
             $requiredCols = $this->getApplyIfInputColumnsExist();
             $applyIfExists = $this->getApplyIfExists();
@@ -330,7 +330,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             if ($hasInputData === true && $needsInputData === true) {
                 $inputData = $task->getInputData();
                 $explainInputData = ' ' . $inputData->getMetaObject()->__toString();
-                if ($action !== null && null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
+                if (null !== $mapper = $action->getInputMapper($inputData->getMetaObject())) {
                     $inputDataMapped = $mapper->map($inputData);
                     $explainInputData = ' ' . $inputData->getMetaObject()->__toString() . ' mapped from' . $explainInputData;
                 } else {
@@ -466,7 +466,7 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
             
             if ($applied === false) {
                 return PermissionFactory::createNotApplicable($this, 'No targets or conditions matched');
-            }
+            } 
         } catch (AuthorizationExceptionInterface | AccessDeniedError $e) {
             $action->getWorkbench()->getLogger()->logException($e);
             return PermissionFactory::createDenied($this, $e->getMessage());
@@ -476,7 +476,20 @@ class ActionAuthorizationPolicy implements AuthorizationPolicyInterface
         }
         
         // If all targets are applicable, the permission is the effect of this condition.
-        return PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $appliedExplanation);
+        $decision = PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $appliedExplanation);
+        /* TODO combine row-specific results with an algorithm like deny unless permit
+         * TODO add obligations to let outside code understand, which of the input rows are allowed and which are not
+         * See ActionAuthorizationPoint::authorizePerRow() for more details
+         * */
+        /*
+        if (count($appliedToRows) > 0) {
+            $rowPermissions = [];
+            foreach ($appliedToRows as $rowIdx) {
+                $rowPermissions[$rowIdx] = PermissionFactory::createFromPolicyEffect($this->getEffect(), $this, $appliedExplanation);
+            }
+            $decision->addObligation(new DataRowPermissionsObligation($rowPermissions));
+        }*/
+        return $decision;
     }
     
     /**
