@@ -7,7 +7,6 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
-use exface\Core\DataTypes\IntegerDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\ListDataType;
 use exface\Core\DataTypes\NumberDataType;
@@ -100,7 +99,7 @@ class PostgreSqlBuilder extends MySqlBuilder
                  * is treated as an SQL statement. 
                  */
                 try {
-                    $data_type::cast($value);
+                    $value = $data_type::cast($value);
                     if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
                         $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                     }
@@ -111,7 +110,7 @@ class PostgreSqlBuilder extends MySqlBuilder
                 break;
             case $data_type instanceof DateDataType:
                 try {
-                    $data_type::cast($value);
+                    $value = $data_type::cast($value);
                     $output = "'" . $value . "'";
                 } catch (DataTypeValidationError $e) {
                     $output = $this->escapeString($value);

@@ -1192,12 +1192,12 @@ class DataSheet implements DataSheetInterface
                 case $condAttr->isRelated()
                 && $condAttr->getRelationPath()->startsWith($relPathToNestedSheet)
                 && $cond->willApplyToAggregatedValues():
-                    try {
-                        $nestedCond = $cond->rebase($relPathToNestedSheet);
-                        $nestedSheet->getFilters()->addCondition($nestedCond);
-                    } catch (ExpressionRebaseImpossibleError $e) {
+                try {
+                    $nestedCond = $cond->rebase($relPathToNestedSheet);
+                    $nestedSheet->getFilters()->addCondition($nestedCond);
+                } catch (ExpressionRebaseImpossibleError $e) {
                         continue 2;
-                    }
+                }
                     break;
                 // Ignore any other conditions
                 default:

@@ -177,6 +177,7 @@ class DataTimeline implements WidgetPartInterface
     private ?UxonObject $viewsUxon = null;
     
     private $granularity = null;
+    private $initial_view_name = null;
     private $workday_start_time = null;
     private $workday_end_time = null;
     
@@ -205,6 +206,7 @@ class DataTimeline implements WidgetPartInterface
     
     /**
      * Initial zoom level: `hours`, `days`, `weeks`, `months`, `years` or `all`
+     * In Gantt please use the "initial_view_name" property instead.
      * 
      * @uxon-property granularity
      * @uxon-type [hours,days,quarter_days,half_day,days_per_week,days_per_month,weeks,months,years,all]
@@ -216,6 +218,31 @@ class DataTimeline implements WidgetPartInterface
     public function setGranularity(string $value) : DataTimeline
     {
         $this->granularity = $this->formatGranularity($value);
+        return $this;
+    }
+
+    /**
+     * View with the given name will be selected initially. If not set, the first view will be used.
+     * Used in views with custom names.
+     * 
+     * @param string|null $default
+     * @return string|null
+     */
+    public function getInitialViewName(string $default = null) : ?string
+    {
+        return $this->initial_view_name ?? $default;
+    }
+
+    /**
+     * @uxon-property initial_view_name
+     * @uxon-type string
+     * 
+     * @param string $value
+     * @return $this
+     */
+    public function setInitialViewName(string $value) : DataTimeline
+    {
+        $this->initial_view_name = $value;
         return $this;
     }
     
