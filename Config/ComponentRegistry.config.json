@@ -86,7 +86,7 @@
       }
     ]
   },
-  "action": {
+  "page": {
     "name": "UI page",
     "description": "Pages in the main menu of the app",
     "uxon_properties": [
