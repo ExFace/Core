@@ -1160,19 +1160,12 @@ class DataSheet implements DataSheetInterface
         
         // Filter the nested data using filters from the parent sheet if
         // - condition is not empty
-        // - AND (
-        //  - condition is based on the nested object (e.g. special filters, that are explicitly based not on the object
-        //  of their data widget)
-        //  - OR (
-        //      - condition has a relation path, and it starts with the relation to the nested sheet
-        //      - AND condition has `apply_to_aggregates` set to TRUE
-        //  )
-        // )
+        // - condition has a relation path, and it starts with the relation to the nested sheet
+        // - condition has `apply_to_aggregates` set to TRUE
         // IDEA should we somehow make this configurable? It is hard for the designer to understand, which filters
         // will apply to nested data and which won't
         // NOTE: right now only level-1 conditions are applied - no nested condition groups. It is unclear, how
-        // to apply nested groups reliably as they might include conditions, that cannot be rebased.
-        $nestedObj = $nestedSheet->getMetaObject();
+        // to apply nested groups relyably as they might include conditions, that cannot be rebased.
         foreach ($this->getFilters()->getConditions() as $cond) {
             if ($cond->isEmpty()) {
                 continue;
@@ -1182,26 +1175,17 @@ class DataSheet implements DataSheetInterface
                 continue;
             }
             $condAttr = $condExpr->getAttribute();
-            switch (true) {
-                // If the condition is already based on the object of the nested data, use it as-is
-                case $nestedObj->is($condExpr->getMetaObject()):
-                    $nestedSheet->getFilters()->addCondition($cond);
-                    break;
-                // If the condition has a relation and that relation "goes through" the object of the nested data,
-                // rebase it and use it
-                case $condAttr->isRelated()
+            if (
+                $condAttr->isRelated()
                 && $condAttr->getRelationPath()->startsWith($relPathToNestedSheet)
-                && $cond->willApplyToAggregatedValues():
-                    try {
-                        $nestedCond = $cond->rebase($relPathToNestedSheet);
-                        $nestedSheet->getFilters()->addCondition($nestedCond);
-                    } catch (ExpressionRebaseImpossibleError $e) {
-                        continue 2;
-                    }
-                    break;
-                // Ignore any other conditions
-                default:
-                    continue 2;
+                && $cond->willApplyToAggregatedValues()
+            ) {
+                try {
+                    $nestedCond = $cond->rebase($relPathToNestedSheet);
+                    $nestedSheet->getFilters()->addCondition($nestedCond);
+                } catch (ExpressionRebaseImpossibleError $e) {
+                    continue;
+                }
             }
         }
         
