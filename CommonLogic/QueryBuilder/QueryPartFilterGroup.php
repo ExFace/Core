@@ -148,7 +148,12 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
     {
         $qpart = new QueryPartFilterGroup('', $query, $parentQueryPart);
         $qpart->setOperator($group->getOperator());
+        $queryObj = $query->getMainObject();
         foreach ($group->getConditions() as $c) {
+            $conditionObj = $c->getExpression()->getMetaObject();
+            if ($conditionObj !== null && ! $queryObj->is($conditionObj)) {
+                continue;
+            }
             $qpart->addCondition($c);
         }
         foreach ($group->getNestedGroups() as $g) {
