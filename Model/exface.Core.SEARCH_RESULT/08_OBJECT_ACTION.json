@@ -67,7 +67,7 @@
         {
             "_EXPORT_SUMMARY": "Search result: Usage in model [ShowModelSearchDialog]",
             "CREATED_ON": "2025-11-28 09:21:08",
-            "MODIFIED_ON": "2026-01-20 11:33:01",
+            "MODIFIED_ON": "2026-06-10 13:57:55",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f08a973138cd908a97025041000001",
@@ -97,6 +97,16 @@
                         "column_to_column_mappings": [
                             {
                                 "from": "=Concatenate('\"', ALIAS_WITH_NS, '\"')",
+                                "to": "_search_query"
+                            }
+                        ]
+                    },
+                    {
+                        "from_object_alias": "exface.Core.PAGE",
+                        "to_object_alias": "exface.Core.SEARCH_RESULT",
+                        "column_to_column_mappings": [
+                            {
+                                "from": "=Concatenate('\"', ALIAS, '\"')",
                                 "to": "_search_query"
                             }
                         ]

@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Page [exface.Core.PAGE]",
             "CREATED_ON": "2018-05-29 07:48:36",
-            "MODIFIED_ON": "2026-05-29 16:57:28",
+            "MODIFIED_ON": "2026-06-10 13:58:03",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e86314af5caf7f971b0205857feb80",
@@ -453,6 +453,12 @@
                                 ]
                             }
                         ]
+                    }
+                ],
+                "buttons": [
+                    {
+                        "action_alias": "exface.Core.ShowModelSearchDialog",
+                        "close_dialog": false
                     }
                 ]
             },

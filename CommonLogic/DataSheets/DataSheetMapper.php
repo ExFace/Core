@@ -262,10 +262,21 @@ class DataSheetMapper implements DataSheetMapperInterface
         if (self::INHERIT_NONE !== $inheritMode = $this->getInheritFilters()){
             $logbook->addLine("Filters (mode `{$inheritMode}`): `{$fromSheet->getFilters()->__toString()}`");
             try {
-                if ($inheritMode === self::INHERIT_MATCHING_ATTRIBUTES) {
-                    $toSheet->setFilters($fromSheet->getFilters()->rebaseWithMatchingAttributesOnly($toSheet->getMetaObject()));
-                } else {
-                    $toSheet->setFilters($fromSheet->getFilters());
+                switch (true) {
+                    // Rebase filters to new object if inheriting matching attribute aliases
+                    case $inheritMode === self::INHERIT_MATCHING_ATTRIBUTES:
+                        $toSheet->setFilters($fromSheet->getFilters()->rebaseWithMatchingAttributesOnly($toSheet->getMetaObject()));
+                        break;
+                    // Reuse filters as-is if it is the very same object
+                    // TODO should we copy the filters here? Really reusing will create a reference!
+                    case $toSheet->getMetaObject() === $fromSheet->getMetaObject():
+                        $toSheet->setFilters($fromSheet->getFilters());
+                        break;
+                    // Otherwise reuse the UXON removing the base object, so the base object will become the one of the data sheet
+                    default:
+                        $fromFiltersUxon = $fromSheet->getFilters()->exportUxonObject();
+                        $toFiltersUxon = $fromFiltersUxon->withPropertiesRemoved(['base_object_alias']);
+                        $toSheet->getFilters()->removeAll()->importUxonObject($toFiltersUxon);
                 }
             } catch (\Throwable $e) {
                 $logbook->addLine('**ERROR**: ' . $e->getMessage());

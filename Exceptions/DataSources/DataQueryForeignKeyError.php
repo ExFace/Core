@@ -7,11 +7,19 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * Exception thrown if a query fails due to a foreign key violation within the data source.
+ * 
+ * FK violations always involve two tables: the directly affected one and the
+ * referencing/referenced one, stored in $referencingObject.
  *
  * @author Andrej Kabachnik
  */
 class DataQueryForeignKeyError extends DataQueryConstraintError
 {
+    /**
+     * The other table's metaobject involved in the FK relation, or null if unresolvable.
+     * 
+     * @var MetaObjectInterface|null
+     */
     private ?MetaObjectInterface $referencingObject = null;
 
     public function __construct(DataQueryInterface $query, DataConnectionInterface $connection, $message, $alias = null, $previous = null, ?MetaObjectInterface $obj = null, ?array $attributeValues = null, ?MetaObjectInterface $referencingObject = null) 

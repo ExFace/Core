@@ -160,16 +160,23 @@ class FilePathDataType extends StringDataType
         
         return static::normalize($path, $directorySeparator);
     }
-    
+
     /**
      * Returns the longest common base path for all given paths or NULL if there is no common base.
+     * 
+     * The directory separator 
      *
      * @param array $paths
+     * @param string $directory_separator
      * @return string|NULL
      */
-    public static function findCommonBase(array $paths) : ?string
+    public static function findCommonBase(array $paths, $directory_separator = '/') : ?string
     {
-        return Path::getLongestCommonBasePath($paths);
+        $base = Path::getLongestCommonBasePath($paths);
+        if ($base !== null && $directory_separator !== '/') {
+            $base = str_replace('/', $directory_separator, $base);
+        }
+        return $base;
     }
     
     /**

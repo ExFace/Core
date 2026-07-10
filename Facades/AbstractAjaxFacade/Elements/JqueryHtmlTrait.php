@@ -34,9 +34,13 @@ trait JqueryHtmlTrait {
             $style .= 'display: inline-block;';
         }
         
-        $valueHtml = $widget->getHtml();
-        if (null !== $tpl = $widget->getHtmlTemplate()) {
-            $valueHtml = str_replace('[#~value#]', $valueHtml, $tpl);
+        if (null !== $widget->getValueWidgetLink()) {
+            $valueHtml = '';
+        } else {
+            $valueHtml = $widget->getHtml();
+            if (null !== $tpl = $widget->getHtmlTemplate()) {
+                $valueHtml = str_replace('[#~value#]', $valueHtml, $tpl);
+            }
         }
         
         $output .= '<div id="' . $this->getId() . '" style="' . $style . '" class="' . $this->buildCssElementClass() . '">' . $valueHtml . '</div>';

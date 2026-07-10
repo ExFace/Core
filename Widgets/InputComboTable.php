@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
@@ -226,9 +227,20 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
             $table->importUxonObject($table_uxon);
         }
         
+        // A combo bound to the LABEL attribute should behave like a relation: show the objects
+        // default-display columns, and dont aggreagate over the values like for normal attributes.
+        // see ShowLookupDialog->enrichDataWidget() for the lookup dialogue handling
+        // NOTE sah: double check with object label alias, because $attr->isLabelForObject() might sometimes return false for historical reasons
+        $bIsBoundToLabelAttribute = $this->isRelation() === false
+            && $this->isBoundToAttribute() === true
+            && (
+                $this->getAttribute()->isLabelForObject() === true
+                || $this->getAttribute()->getAliasWithRelationPath() === MetaAttributeInterface::OBJECT_LABEL_ALIAS
+            );
+        
         // Add default attributes
         if (! $table_uxon->hasProperty('columns') || $table_uxon->getProperty('columns')->isEmpty()) {
-            if ($this->isRelation()) {
+            if ($this->isRelation() || $bIsBoundToLabelAttribute) {
                 foreach ($table->createDefaultColumns() as $col) {
                     $table->addColumn($col);
                 }
@@ -250,7 +262,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
             }
         }
         
-        if (! $this->isRelation()) {
+        if (! $this->isRelation() && ! $bIsBoundToLabelAttribute) {
             $table->setAggregateByAttributeAlias($this->getAttributeAlias());
         }
         

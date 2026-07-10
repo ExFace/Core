@@ -5,8 +5,8 @@ use exface\Core\Actions\ShowWidget;
 use exface\Core\CommonLogic\Debugger\WidgetDebugger;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Facades\DocsFacade;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -15,7 +15,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * 
  * @author Andrej Kabachnik
  */
-class UiWidgetMarkdownPrinter
+class UiWidgetMarkdownPrinter implements MarkdownPrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
@@ -88,6 +88,9 @@ MD;
         // Page chapter
         $pagePrinter = new UiPageMarkdownPrinter($widget->getPage(), $this->headingLevel + 1);
         
+        // Object link
+        $widgetObjectLink = DocsFacade::buildUrlToDocsForMetaObject($widget->getMetaObject()->getAliasWithNamespace());
+        
         // Put it all together
         return <<<MD
 {$headingWidget}
@@ -95,6 +98,7 @@ MD;
 {$widgetDebugger->getBreadcrumbs(true, true, false)}
 
 - Widget type: {$prototypeLink}
+- Widget object: [{$widget->getMetaObject()->__toString()}]({$widgetObjectLink})
 - Widget ID: `{$widget->getId()}`
 - Rendered by action: {$renderingActionInfo}
 

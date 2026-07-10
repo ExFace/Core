@@ -3,8 +3,10 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\EmailDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\SqlDataType;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartFilterGroup;
@@ -17,6 +19,7 @@ use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
@@ -556,7 +559,23 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $q->setDialect($this->getSqlDialectDefault());
             $q->setSql($query);
             // first do the main query
-            $qr = $data_connection->query($q);
+            try {
+                $qr = $data_connection->query($q);
+            } catch (DataQueryConstraintError $e) {
+                // Constraint errors include a human-friendly message, that describes the cause. This needs to know, 
+                // which object was involved. The corresponding exception classes can determine the object themselves
+                // from data addresses, but this is inaccurate if multiple objects are based on the same data address.
+                // This code attempt to detect these situations and to regenerate the error message based on the
+                // correct object.
+                $eObj = $e->getMetaObject();
+                $qObj = $this->getMainObject();
+                // TODO compare data addresses instead? Or in addition?
+                // TODO what if the error happened in a JOIN - look through all relations in attributes?
+                if ($qObj->isExtendedFrom($eObj)) {
+                    $e->replaceMetaObject($qObj);
+                }
+                throw $e;
+            }
             $rows = $this->getReadResultRows($qr);
             // If the query already includes a total row counter, use it!
             $result_total_count = $qr->getResultRowCounter();
@@ -1744,7 +1763,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
         // path we rebase to matches the beginning of the condition's relation path.
         $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
-            if(($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator() && !$condition->appliesToAggregatedValues()) {
+            if(($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator() && !$condition->willApplyToAggregatedValues()) {
                 return false;
             }
 
@@ -2017,7 +2036,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // the core query again, after pagination, so possible back references within the custom select can
                 // still be resolved.
                 $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($this->getMainObject())) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->getMainObject()->getUidAttributeAlias() . ' = ' . $this->buildSqlJoinSide($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), $right_table_alias);
+                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($this->getMainObject())) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->escapeName($this->getMainObject()->getUidAttributeAlias()) . ' = ' . $this->buildSqlJoinSide($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), $right_table_alias);
             } else {
                 // In most cases we will build joins for attributes of related objects.
                 $left_table_alias = ($left_table_alias ? $left_table_alias : $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getQueryId());
@@ -2356,6 +2375,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      */
     protected function checkFilterBelongsInHavingClause(QueryPartFilter $qpart, $rely_on_joins = true)
     {
+        // There will be no HAVING if there is no GROUP BY
+        if (! $this->isAggregated() && ! $this->isAggregatedToSingleRow()) {
+            return false;
+        }
         return $qpart->getAggregator() && ! $qpart->getFirstRelation(RelationTypeDataType::REVERSE) ? true : false;
     }
 
@@ -2503,23 +2526,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
             // the data type, but the separated parts should
             switch (true) {
+                // Do not do any parsing if the value is SQL
                 case $valueIsSQL === true:
                     break;
-                case $comparator != EXF_COMPARATOR_IN && $comparator != EXF_COMPARATOR_NOT_IN:
-                    // If it's a single value, cast it to the data type to make sure, it's a valid value.
-                    switch (true) {
-
-                        case ($data_type instanceof DateDataType):
-                        case ($data_type instanceof NumberDataType):
-                        case ($data_type instanceof BooleanDataType):
-                            $value = $data_type::cast($value);
-                            break;
-                        default:
-                            $value = $data_type::cast($value);
-                    }
-                    break;
-
-                default:
+                
+                // In case of list comparators, the value might be a list, so split it into single
+                // values first.
+                // NOTE in case of lists we need to cast every value separately! Single values are not casted in this
+                // CASE{} block, but further down the code for every comparator separately (ony if needed!)
+                case $comparator === ComparatorDataType::IN:
+                case $comparator === ComparatorDataType::NOT_IN:
                     $values = explode($value_list_delimiter, $value ?? '');
                     $value = '';
                     $valueNullChecks = [];
@@ -2571,6 +2587,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                             break;
                     }
                     break;
+                    
+                // If it's a single value, DO NOT cast it here - further down we will cast values depending on
+                // the requirements of specific comparators.
+                default:
+                    break;
             }
         } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
@@ -2593,12 +2614,16 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
         // If everything is OK, build the SQL
         switch (true) {
+            
+            // IN() and NOT IN() can use the $value as-is because it was already split and each part was casted
             case $comparator === EXF_COMPARATOR_IN:
                 $output = "(" . $subject . " IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
             case $comparator === EXF_COMPARATOR_NOT_IN:
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
+            
+            // Strict comparators need to cast their values
             case $comparator === EXF_COMPARATOR_EQUALS:
                 $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
@@ -2611,6 +2636,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             case $comparator === EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
                 $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
                 break;
+                
+            // For non-strict comparators, casting depends on how exactly the value is used.
             case $comparator === EXF_COMPARATOR_IS_NOT:
             case $comparator === EXF_COMPARATOR_IS:
                 if (stripos($value, 'sql:') !== false) {
@@ -2625,6 +2652,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $output .= "'%{$this->escapeString(mb_strtoupper($value))}%'";
                 }
                 break;
+                
             // If the query builder cannot deal with the comparator, but the comparator can be transformed into other (atomic)
             // comparators, try building a query with the atomized version of the comparator
             case ! ComparatorDataType::isAtomic($comparator) && $qpart instanceof QueryPartFilter:
@@ -2678,12 +2706,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         switch (true) {
             case $data_type instanceof BooleanDataType:
-                $output = $value ? 1 : 0;
+                $output = BooleanDataType::cast($value) ? 1 : 0;
                 break;
             case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
                 return EXF_LOGICAL_NULL;
-            // No need to check if the value is valid JSON to search for it - any string is OK
+            // No need to check if structured string types have valid structure or not - we can filter over
+            // partial structure too
             case $data_type instanceof JsonDataType:
+            case $data_type instanceof EmailDataType:
                 $output =  "'" . $this->escapeString($value) . "'";
                 break;
             // In most cases apply the same checks and formatting as for INSERT/UPDATE statements
@@ -2846,7 +2876,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Otherwise just add a regular filter
                 default:
                     $relFilter = $relq->addFilterFromString($rel_filter_alias, $qpart->getCompareValue(), $relqFilterComp);
-                    $relFilter->getCondition()->setApplyToAggregates($qpart->getCondition()->appliesToAggregatedValues());
+                    $relFilter->getCondition()->setApplyToAggregates($qpart->getCondition()->willApplyToAggregatedValues());
                     break;
             }
 
@@ -3257,8 +3287,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     if ($formula->isStatic() === false) {
                         throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in SQL JOIN `' . $sqlJoin . '`: the used formula is not static! Only static formulas are supported in data address placeholders!');
                     }
-                    $phVals[$ph] = $formula->evaluate();
-                    continue;
+                    $val = $formula->evaluate();
+                    // Delegate engine-specific normalization of static formula values used in JOIN placeholders
+                    // to allow database-specific builders (e.g. PostgreSQL) to adjust quoting/casting.
+                    $phVals[$ph] = $this->preparePlaceholderValue($val, $formula->getDataType());
+                    break;
                     
                 // Left-side placeholders like `[#~left:MY_ATTR#]` can be replaced using the same logic as for regular data addresses
                 case StringDataType::startsWith($ph, '~left:'):
@@ -3591,6 +3624,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function buildSqlComment(string $text) : string
     {
         return '/* ' . str_replace(['/*', '*/'], '', $text) . ' */';
+    }
+
+    /**
+     * Normalize a static formula value that is used as a placeholder inside a SQL JOIN clause.
+     *
+     * Default implementation returns the original value unchanged. Engine-specific builders
+     * can override this method to provide proper quoting/casting for their SQL dialect
+     * (for example, PostgreSQL should quote hex/uuid-like values to avoid numeric interpretation).
+     *
+     * @param mixed $value Value returned by the evaluated formula
+     * @return mixed Normalized value to be substituted into the SQL JOIN
+     */
+    protected function preparePlaceholderValue($value, ?DataTypeInterface $dataType = null, array $dataAddressProps = [])
+    {
+        switch (true) {
+            case StringDataType::startsWith($value, '0x', false) && $dataType->isExactly(StringDataType::class):
+                $dataType = DataTypeFactory::createFromPrototype($this->getWorkbench(), HexadecimalNumberDataType::class);
+                break;
+        }
+        return $this->prepareWhereValue($value, $dataType, $dataAddressProps);
     }
 
     /**

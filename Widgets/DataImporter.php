@@ -155,6 +155,8 @@ class DataImporter extends AbstractWidget implements
 
     private bool $nowrapCaptions = true;
 
+    private bool $auto_column_width = false;
+
     private ?bool $allowFilteringLoadedData = null;
     private ?bool $allowSortingLoadedData = null;
     
@@ -241,6 +243,32 @@ class DataImporter extends AbstractWidget implements
     public function getNowrapCaptions() : bool
     {
         return $this->nowrapCaptions;
+    }
+    
+    /**
+     * Set to TRUE to automatically adjust column widths to fit content. This might make the spreadsheet extend horizontally, and enable horizontal scrolling.
+     * 
+     * Might be used in combination with nowrap:false, to also allow text wrap within the columns.
+     * 
+    * @uxon-property auto_column_width
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataImporter
+     */
+    public function setAutoColumnWidth(bool $value) : DataImporter
+    {
+        $this->auto_column_width = $value;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getAutoColumnWidth() : bool
+    {
+        return $this->auto_column_width;
     }
     
     /**

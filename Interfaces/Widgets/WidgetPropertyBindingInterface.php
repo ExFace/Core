@@ -15,7 +15,12 @@ use exface\Core\Interfaces\DataTypes\DataTypeInterface;
  *        
  */
 interface WidgetPropertyBindingInterface extends WidgetPartInterface, iCanBeBoundToAttribute, iCanBeBoundToDataColumn
-{    
+{
+    /**
+     * @return ExpressionInterface
+     */
+    public function getBindingExpression() : ExpressionInterface;
+    
     /**
      * Returns TRUE if this binding points to a attribute.
      * 

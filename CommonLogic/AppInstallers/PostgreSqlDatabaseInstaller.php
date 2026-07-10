@@ -5,6 +5,7 @@ use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\DataConnectors\PostgreSqlConnector;
+use exface\Core\Interfaces\SqlSchemaComparatorInterface;
 
 /**
  * Database installer for PostgreSQL databases.
@@ -163,37 +164,9 @@ SQL;
      */
     public function performComparison(string $currentSchema, string $previousSchema) : array
     {
-        $diffs = [];
-        $currentLines = $this->normalizeSchemaLines($currentSchema);
-        $previousLines = $this->normalizeSchemaLines($previousSchema);
+        $compartor = new SqlSchemaComparator();
 
-        foreach (array_diff($currentLines, $previousLines) as $line) {
-            $diffs[] = "Only in current schema: " . $line;
-        }
-        foreach (array_diff($previousLines, $currentLines) as $line) {
-            $diffs[] = "Only in previous schema: " . $line;
-        }
-        return $diffs;
-    }
-
-    /**
-     * Normalizes a schema dump into a comparable array of non-empty trimmed lines.
-     *
-     * @param string $schema
-     * @return string[]
-     */
-    protected function normalizeSchemaLines(string $schema) : array
-    {
-        $lines = preg_split('/\r\n|\r|\n/', $schema);
-        $result = [];
-        foreach ($lines as $line) {
-            $trimmed = trim($line, " \t,");
-            if ($trimmed === '' || $trimmed === '(' || $trimmed === ')' || $trimmed === ');') {
-                continue;
-            }
-            $result[] = $trimmed;
-        }
-        return $result;
+        return $compartor->compare($currentSchema, $previousSchema);
     }
 
     /**

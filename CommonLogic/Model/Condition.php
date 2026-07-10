@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Interfaces\Model\ConditionInterface;
@@ -19,6 +20,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -897,17 +899,33 @@ class Condition implements ConditionInterface
     }
 
     /**
-     * Returns TRUE if this condition applies to aggregated values.
-     *
-     * @return bool
+     * {@inheritDoc}
+     * @see ConditionInterface::willApplyToAggregatedValues()
      */
-    public function appliesToAggregatedValues() : bool
+    public function willApplyToAggregatedValues() : bool
     {
         return $this->applyToAggregates;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see ConditionalExpressionInterface::getRequiredExpressions()
+     */
     public function getRequiredExpressions(?MetaObjectInterface $object = null) : array
     {
         return [$this->getExpression()];
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionInterface::rebase()
+     */
+    public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject) : ConditionInterface
+    {
+        $pathStr = $relationPathToNewBaseObject instanceof MetaRelationPathInterface ? $relationPathToNewBaseObject->toString() : $relationPathToNewBaseObject;
+        $new_expression = $this->getExpression()->rebase($pathStr);
+        $new_condition = ConditionFactory::createFromExpression($this->exface, $new_expression, $this->getValue(), $this->getComparator(), $this->willIgnoreEmptyValues());
+        $new_condition->setApplyToAggregates($this->willApplyToAggregatedValues());
+        return $new_condition;
     }
 }
