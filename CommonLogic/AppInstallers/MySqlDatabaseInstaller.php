@@ -657,8 +657,339 @@ SQL;
         }
         return $connection;
     }
+
+    /**
+     * Not used in MySQL: the schema dump is built directly in {@see buildSqlSchema()}
+     * from `information_schema` so that auto-generated names (constraints, indexes,
+     * `AUTO_INCREMENT` values) can be omitted. `SHOW CREATE TABLE` would embed all of
+     * these host-specific details and is therefore not used here.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::getTableDumpSchema()
+     */
     protected function getTableDumpSchema(string $tableName) : string
     {
         return "";
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::canDumpSchema()
+     */
+    protected function canDumpSchema() : bool
+    {
+        return true;
+    }
+
+    /**
+     * Builds a normalized, deterministic schema dump for all tables of this installer.
+     *
+     * Only the structure (columns, types, nullability, defaults, primary
+     * keys, foreign keys and non-PK indexes) is included so that schemas built on
+     * different hosts can be compared reliably.
+     * 
+     * Determinism / name-omission decisions (so dumps match across hosts):
+     * 
+     * - Constraint, FK and index names are never emitted — only column lists, uniqueness and referential actions.
+     * - Columns, FKs and indexes are all sorted; output uses double-quoted identifiers like the PostgreSQL dump so the 
+     * comparator's column-detection works.
+     * - The AUTO_INCREMENT table counter is excluded, while the column-level AUTO_INCREMENT attribute (structural) is
+     * kept.
+     * - FK RESTRICT/NO ACTION (the equivalent MySQL defaults) are normalized to "omitted" so servers reporting either
+     * value produce identical dumps.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::buildSqlSchema()
+     */
+    protected function buildSqlSchema() : string
+    {
+        $tables = $this->getTables();
+        $dump = '';
+        foreach ($tables as $table) {
+            $dump .= $this->buildSqlSchemaForTable($table['DATA_ADDRESS']);
+        }
+        $this->getDataConnection()->disconnect();
+        return $dump;
+    }
+
+    /**
+     * Compares two schema dumps produced by {@see buildSqlSchema()}.
+     *
+     * Since the dumps are deterministic (sorted, no auto-generated names), a plain
+     * line-based comparison is sufficient. The returned array contains one entry per
+     * structural difference. An empty array means the schemas are equivalent.
+     *
+     * @param string $currentSchema
+     * @param string $previousSchema
+     * @return array
+     */
+    public function performComparison(string $currentSchema, string $previousSchema) : array
+    {
+        $comparator = new SqlSchemaComparator();
+
+        return $comparator->compare($currentSchema, $previousSchema);
+    }
+
+    /**
+     * Builds the dump fragment for a single table including columns, PK, FKs and indexes.
+     *
+     * @param string $tableAddress
+     * @return string
+     */
+    protected function buildSqlSchemaForTable(string $tableAddress) : string
+    {
+        list($schema, $table) = $this->splitTableName($tableAddress);
+        $connection = $this->getDataConnection();
+        $quoted = '"' . $table . '"';
+        $schemaEsc = $connection->escapeString($schema);
+        $tableEsc = $connection->escapeString($table);
+
+        // Skip addresses that are not real base tables (e.g. views or custom SQL
+        // expressions referenced by the metamodel) to keep the dump robust.
+        $existsSql = "SELECT 1 AS x FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}' AND TABLE_TYPE = 'BASE TABLE'";
+        $existsRows = $connection->runSql($existsSql, true)->getResultArray();
+        if (empty($existsRows)) {
+            return '';
+        }
+
+        $columns = $this->fetchColumns($schemaEsc, $tableEsc);
+        if (empty($columns)) {
+            return '';
+        }
+        $pkCols = $this->fetchPrimaryKey($schemaEsc, $tableEsc);
+        $fks = $this->fetchForeignKeys($schemaEsc, $tableEsc);
+        $indexes = $this->fetchIndexes($schemaEsc, $tableEsc);
+
+        $out = "CREATE TABLE {$quoted} (" . PHP_EOL;
+        $colLines = [];
+        foreach ($columns as $col) {
+            $colLines[] = '    ' . $this->buildColumnDefinition($col);
+        }
+        if (! empty($pkCols)) {
+            $quotedCols = array_map(function ($c) { return '"' . $c . '"'; }, $pkCols);
+            $colLines[] = '    PRIMARY KEY (' . implode(', ', $quotedCols) . ')';
+        }
+        $out .= implode(',' . PHP_EOL, $colLines) . PHP_EOL;
+        $out .= ');' . PHP_EOL;
+
+        foreach ($fks as $fk) {
+            $localCols = array_map(function ($c) { return '"' . $c . '"'; }, $fk['columns']);
+            $refCols = array_map(function ($c) { return '"' . $c . '"'; }, $fk['ref_columns']);
+            $line = 'ALTER TABLE ' . $quoted
+                . ' ADD FOREIGN KEY (' . implode(', ', $localCols) . ')'
+                . ' REFERENCES "' . $fk['ref_table'] . '" (' . implode(', ', $refCols) . ')';
+            if ($fk['on_delete'] !== '') {
+                $line .= ' ON DELETE ' . $fk['on_delete'];
+            }
+            if ($fk['on_update'] !== '') {
+                $line .= ' ON UPDATE ' . $fk['on_update'];
+            }
+            $out .= $line . ';' . PHP_EOL;
+        }
+
+        foreach ($indexes as $idx) {
+            $cols = array_map(function ($c) { return '"' . $c . '"'; }, $idx['columns']);
+            $out .= ($idx['unique'] ? 'CREATE UNIQUE INDEX' : 'CREATE INDEX')
+                . ' ON ' . $quoted
+                . ' (' . implode(', ', $cols) . ');' . PHP_EOL;
+        }
+
+        return $out . PHP_EOL;
+    }
+
+    /**
+     * Splits a table data address into schema (database) and table parts.
+     *
+     * If the address does not contain a database prefix, the database of the current
+     * connection is used.
+     *
+     * @param string $tableAddress
+     * @return array [schema, table]
+     */
+    protected function splitTableName(string $tableAddress) : array
+    {
+        $clean = str_replace(['`', '"'], '', $tableAddress);
+        if (strpos($clean, '.') !== false) {
+            list($schema, $table) = explode('.', $clean, 2);
+        } else {
+            $schema = (string) $this->getDataConnection()->getDbase();
+            $table = $clean;
+        }
+        return [$schema, $table];
+    }
+
+    /**
+     * Reads column definitions for the given table ordered by column name.
+     *
+     * @param string $schemaEsc
+     * @param string $tableEsc
+     * @return array
+     */
+    protected function fetchColumns(string $schemaEsc, string $tableEsc) : array
+    {
+        $sql = "SELECT COLUMN_NAME AS column_name, COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, EXTRA AS extra"
+            . " FROM information_schema.COLUMNS"
+            . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}'"
+            . " ORDER BY COLUMN_NAME";
+        return $this->getDataConnection()->runSql($sql, true)->getResultArray();
+    }
+
+    /**
+     * Reads the primary key column names for the given table in PK ordinal order.
+     *
+     * @param string $schemaEsc
+     * @param string $tableEsc
+     * @return string[]
+     */
+    protected function fetchPrimaryKey(string $schemaEsc, string $tableEsc) : array
+    {
+        $sql = "SELECT COLUMN_NAME AS column_name"
+            . " FROM information_schema.KEY_COLUMN_USAGE"
+            . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}' AND CONSTRAINT_NAME = 'PRIMARY'"
+            . " ORDER BY ORDINAL_POSITION";
+        $rows = $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        $cols = [];
+        foreach ($rows as $row) {
+            $cols[] = $row['column_name'];
+        }
+        return $cols;
+    }
+
+    /**
+     * Reads foreign key definitions for the given table.
+     *
+     * Foreign keys are grouped by constraint so that multi-column keys are kept
+     * together, but the constraint name itself is intentionally not exported.
+     *
+     * @param string $schemaEsc
+     * @param string $tableEsc
+     * @return array
+     */
+    protected function fetchForeignKeys(string $schemaEsc, string $tableEsc) : array
+    {
+        $sql = "SELECT k.CONSTRAINT_NAME AS cname,"
+            . " k.ORDINAL_POSITION AS ord,"
+            . " k.COLUMN_NAME AS column_from,"
+            . " k.REFERENCED_TABLE_NAME AS ref_table,"
+            . " k.REFERENCED_COLUMN_NAME AS column_to,"
+            . " r.DELETE_RULE AS on_delete,"
+            . " r.UPDATE_RULE AS on_update"
+            . " FROM information_schema.KEY_COLUMN_USAGE k"
+            . " JOIN information_schema.REFERENTIAL_CONSTRAINTS r"
+            . " ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME"
+            . " WHERE k.TABLE_SCHEMA = '{$schemaEsc}' AND k.TABLE_NAME = '{$tableEsc}' AND k.REFERENCED_TABLE_NAME IS NOT NULL"
+            . " ORDER BY k.CONSTRAINT_NAME, k.ORDINAL_POSITION";
+        $rows = $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        $grouped = [];
+        foreach ($rows as $row) {
+            $key = $row['cname'];
+            if (! isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'columns' => [],
+                    'ref_columns' => [],
+                    'ref_table' => $row['ref_table'],
+                    'on_delete' => $this->mapFkAction($row['on_delete']),
+                    'on_update' => $this->mapFkAction($row['on_update']),
+                ];
+            }
+            $grouped[$key]['columns'][] = $row['column_from'];
+            $grouped[$key]['ref_columns'][] = $row['column_to'];
+        }
+        // Sort deterministically by serialized signature.
+        usort($grouped, function ($a, $b) {
+            return strcmp(
+                implode(',', $a['columns']) . '->' . $a['ref_table'] . '(' . implode(',', $a['ref_columns']) . ')',
+                implode(',', $b['columns']) . '->' . $b['ref_table'] . '(' . implode(',', $b['ref_columns']) . ')'
+            );
+        });
+        return $grouped;
+    }
+
+    /**
+     * Reads non-PK indexes for the given table.
+     *
+     * Index names are not exported, only the column list and uniqueness flag.
+     *
+     * @param string $schemaEsc
+     * @param string $tableEsc
+     * @return array
+     */
+    protected function fetchIndexes(string $schemaEsc, string $tableEsc) : array
+    {
+        $sql = "SELECT INDEX_NAME AS idxname,"
+            . " COLUMN_NAME AS column_name,"
+            . " SEQ_IN_INDEX AS ord,"
+            . " NON_UNIQUE AS non_unique"
+            . " FROM information_schema.STATISTICS"
+            . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}'"
+            . " AND INDEX_NAME <> 'PRIMARY'"
+            . " ORDER BY INDEX_NAME, SEQ_IN_INDEX";
+        $rows = $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        $grouped = [];
+        foreach ($rows as $row) {
+            $key = $row['idxname'];
+            if (! isset($grouped[$key])) {
+                $grouped[$key] = [
+                    'columns' => [],
+                    'unique' => ((int) $row['non_unique']) === 0,
+                ];
+            }
+            $grouped[$key]['columns'][] = $row['column_name'];
+        }
+        usort($grouped, function ($a, $b) {
+            return strcmp(
+                ($a['unique'] ? 'U:' : 'I:') . implode(',', $a['columns']),
+                ($b['unique'] ? 'U:' : 'I:') . implode(',', $b['columns'])
+            );
+        });
+        return $grouped;
+    }
+
+    /**
+     * Renders the column definition portion of a `CREATE TABLE` statement.
+     *
+     * The `AUTO_INCREMENT` counter (a table option) is never part of the output, but the
+     * column attribute itself is preserved as it is a structural property.
+     *
+     * @param array $col
+     * @return string
+     */
+    protected function buildColumnDefinition(array $col) : string
+    {
+        $line = '"' . $col['column_name'] . '" ' . strtolower($col['column_type']);
+        if (strcasecmp($col['is_nullable'], 'NO') === 0) {
+            $line .= ' NOT NULL';
+        }
+        $default = $col['column_default'];
+        if ($default !== null && $default !== '') {
+            $line .= ' DEFAULT ' . $default;
+        }
+        if (stripos((string) $col['extra'], 'auto_increment') !== false) {
+            $line .= ' AUTO_INCREMENT';
+        }
+        return $line;
+    }
+
+    /**
+     * Maps a `REFERENTIAL_CONSTRAINTS` referential action to its normalized SQL form.
+     *
+     * The MySQL defaults `RESTRICT` and `NO ACTION` are treated as equivalent and
+     * omitted, so dumps are not affected by which of the two a given server reports.
+     *
+     * @param string $rule
+     * @return string
+     */
+    protected function mapFkAction(string $rule) : string
+    {
+        switch (strtoupper(trim($rule))) {
+            case 'CASCADE': return 'CASCADE';
+            case 'SET NULL': return 'SET NULL';
+            case 'SET DEFAULT': return 'SET DEFAULT';
+            case 'RESTRICT':
+            case 'NO ACTION':
+            default:
+                return '';
+        }
     }
 }

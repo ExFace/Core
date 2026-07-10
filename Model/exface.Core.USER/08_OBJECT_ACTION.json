@@ -276,7 +276,15 @@
                             "filters": [
                                 {
                                     "attribute_alias": "USERNAME",
-                                    "comparator": "["
+                                    "comparator": "[="
+                                },
+                                {
+                                    "attribute_alias": "FIRST_NAME",
+                                    "comparator": "[="
+                                },
+                                {
+                                    "attribute_alias": "LAST_NAME",
+                                    "comparator": "[="
                                 },
                                 {
                                     "attribute_alias": "USER_ROLE_USERS__USER_ROLE"
@@ -287,10 +295,6 @@
                                 },
                                 {
                                     "attribute_alias": "DISABLED_FLAG"
-                                },
-                                {
-                                    "attribute_alias": "LAST_NAME",
-                                    "comparator": "["
                                 },
                                 {
                                     "attribute_alias": "LOCALE"
@@ -314,6 +318,10 @@
                                 },
                                 {
                                     "attribute_alias": "USER_ROLE_USERS__USER_ROLE__LABEL:LIST_DISTINCT"
+                                },
+                                {
+                                    "attribute_alias": "USER_AUTHENTICATOR__LAST_AUTHENTICATED_ON:MAX",
+                                    "caption": "=Translate('exface.Core', 'PAGE.USERS.LAST_LOGIN')"
                                 }
                             ],
                             "sorters": [

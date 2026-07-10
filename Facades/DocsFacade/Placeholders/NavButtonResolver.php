@@ -78,8 +78,8 @@ class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements P
     function getRelativePath(string $from, string $to): string 
     {
         $from = is_dir($from) ? rtrim($from, '/') . '/' : dirname($from) . '/';
-        $from = FilePathDataType::normalize(realpath($from));
-        $to   = FilePathDataType::normalize(realpath($to));
+        $from = FilePathDataType::normalize($from);
+        $to   = FilePathDataType::normalize($to);
     
         $fromParts = explode('/', trim($from, '/'));
         $toParts   = explode('/', trim($to, '/'));

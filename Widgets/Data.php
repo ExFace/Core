@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
+use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
@@ -102,7 +103,7 @@ class Data
     use iHaveSidebarTrait;
 
     // properties
-    private $paginate = true;
+    private $paginate = null;
 
     private $paginate_page_size = null;
     
@@ -269,12 +270,15 @@ class Data
                 // If we do not need ALL column, see if the column is requested - search for matching 
                 // data column names and attribute aliases. If none of them match, stop here as the column
                 // was not requested.
+                // Exception: cell widgets that bind to multiple data columns (e.g. DisplayTemplate) must
+                // always be allowed to add their required attributes, otherwise the user would have to
+                // manually add hidden columns for every placeholder attribute.
                 if (! $needAllCols && ! $widgetCol->isSystem()) {
                     $dataCol = $data_sheet->getColumns()->get($widgetCol->getDataColumnName());
                     if (! $dataCol && $widgetCol->isBoundToAttribute()) {
                         $dataCol = $data_sheet->getColumns()->getByExpression($widgetCol->getAttributeAlias());
                     }
-                    if (! $dataCol) {
+                    if (! $dataCol && ! ($cellWidget instanceof iHaveMultipleBindings)) {
                         continue;
                     }
                 }
@@ -755,7 +759,7 @@ class Data
      */
     public function isPaged() : bool
     {
-        return $this->paginate;
+        return $this->paginate ?? ($this->getLazyLoading(true) && $this->getMetaObject()->isReadable());
     }
     
     /**
@@ -826,9 +830,9 @@ class Data
      *
      * @param boolean $value            
      */
-    public function setPaginate($value)
+    public function setPaginate(bool $value)
     {
-        $this->paginate = \exface\Core\DataTypes\BooleanDataType::cast($value);
+        $this->paginate = $value;
         return $this;
     }
 
@@ -1514,7 +1518,7 @@ class Data
         foreach ($this->getMetaObject()->getAttributes()->getSystem() as $sysAttr) {
             $colNames[] = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($sysAttr->getAlias());
         }
-        return array_unique($colNames);
+        return array_filter(array_unique($colNames));
     }
 
     /**

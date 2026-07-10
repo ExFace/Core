@@ -384,10 +384,9 @@ class Container extends AbstractWidget implements iContainOtherWidgets, iHaveSid
     }
 
     /**
-     * Returns the first direct child of this widget, that matches the given filter callback
-     * 
-     * @param callable $filterCallback
-     * @return WidgetInterface|null
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iContainOtherWidgets::findChild()
      */
     public function findChild(callable $filterCallback) : ?WidgetInterface
     {

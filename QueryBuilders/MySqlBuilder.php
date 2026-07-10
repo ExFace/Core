@@ -133,8 +133,15 @@ class MySqlBuilder extends AbstractSqlBuilder
                 // Otherwise the enrichment joins won't work! Be carefull to apply this rule only to the plain UID column, not to columns
                 // using the UID with aggregate functions
                 case $group_by && $qpartAttr->getObject()->hasUidAttribute() && $qpartAttr->isExactly($qpartAttr->getObject()->getUidAttribute()) && ! $qpart->getAggregator():
-                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX));
-                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ', $this->getShortAlias($qpart->getColumnKey()));
+                    // If the query is already grouped by the UID itself, the UID is unique per group,
+                    // so MAX() is both redundant and harmful: on PostgreSQL it forces the UID through a
+                    // hex-text cast (no MAX for uuid), which then breaks the enrichment JOIN (text = uuid).
+                    $uidAggregator = $this->isAggregatedBy($qpart)
+                        ? null
+                        : new Aggregator($this->getWorkbench(), AggregatorFunctionsDataType::MAX);
+                    $selects[] = $this->buildSqlSelect($qpart, null, null, null, $uidAggregator);
+                    $enrichment_selects[] = $this->buildSqlSelect($qpart, 'EXFCOREQ',
+                        $this->escapeName($this->getShortAlias($qpart->getColumnKey())));
                     break;
                 // Add to core query and mark as group-safe
                 // if we are not aggregating
@@ -325,7 +332,7 @@ class MySqlBuilder extends AbstractSqlBuilder
          */
         if ($data_type instanceof DateDataType) {
             try {
-                $data_type::cast($value);  
+                $value = $data_type::cast($value);  
                 if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
                     $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
                 }
