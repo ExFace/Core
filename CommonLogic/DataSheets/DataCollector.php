@@ -110,6 +110,8 @@ class DataCollector implements DataCollectorInterface
                 // to keep columns, that are not required explicitly, but are needed for required formulas - if
                 // these have changes, the formula would have a different result from what we would read from the
                 // data source.
+                // TODO the extract required columns might remove the UID attribute column, how should we reading with UID then?
+                // Maybe we should check that again before calling the read with uid function?
                 $this->resultSheet = $this->extractRequiredColumns($dataSheet);
                 $this->readMissingDataWithUid($this->resultSheet, $logBook);
                 break;
@@ -437,9 +439,14 @@ class DataCollector implements DataCollectorInterface
             } // END foreach ($expr->getRequiredAttributes())
         } // END foreach($map->getRequiredExpressions($dataSheet))
 
-        // Recalculate all formulas, that rely on the newly added columns
+        // Adds and calculate formulas that are required by the collector after we added their necessary attributes
         foreach ($formulas as $expr) {
-            $dataSheet->getColumns()->getByExpression($expr)->setValuesByExpression($expr);
+            // double check that this formula does not exist yet and add it to the datasheet
+            $column = $dataSheet->getColumns()->getByExpression($expr);            
+            if ($column === false) {
+                $column = $dataSheet->getColumns()->addFromExpression($expr);
+            }            
+            $column->setValuesByExpression($expr);
         }
 
         // Make sure the data is marked as fresh now to prevent further unneeded refreshes
