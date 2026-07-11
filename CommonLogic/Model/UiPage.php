@@ -789,29 +789,6 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuVisible()
-     */
-    public function getMenuVisible()
-    {
-        return $this->menuVisible;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuVisible()
-     */
-    public function setMenuVisible($menuVisible)
-    {
-        if (! is_null($menuVisible)) {
-            $this->menuVisible = BooleanDataType::cast($menuVisible);
-        }
-        return $this;
-    }
-
-    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getUid()
@@ -1097,7 +1074,7 @@ class UiPage implements UiPageInterface
         }
         $uxon->setProperty('menu_parent_page_selector', $this->isMenuHome() || ! $this->hasParent() ? null : $this->getParentPageSelector()->toString());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
-        $uxon->setProperty('menu_visible', $this->getMenuVisible());
+        $uxon->setProperty('menu_visible', $this->isVisible());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('intro', $this->getIntro());
@@ -1448,7 +1425,7 @@ class UiPage implements UiPageInterface
             'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
             'MENU_POSITION' => $this->getMenuIndex(),
-            'MENU_VISIBLE' => $this->getMenuVisible(),
+            'MENU_VISIBLE' => $this->isVisible(),
             'NAME' => $this->getName(),
             'REPLACE_PAGE' => $this->getReplacesPageSelector() !== null ? $this->getPageUidFromSelector($this->getReplacesPageSelector()) : null,
             'PUBLISHED' => $this->isPublished(),
