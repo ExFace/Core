@@ -712,4 +712,26 @@ class DataCollector implements DataCollectorInterface
     {
         return empty($this->getRequiredExpressions());
     }
+    
+    public function hasUidColumn() : bool
+    {
+        return $this->getUidColumn() !== null;
+    }
+
+    public function getUidColumn() : ?DataColumnInterface
+    {
+        if ($this->isLoaded()) {
+            if ($this->getRequiredData()->hasUidColumn()) {
+                return $this->getRequiredData()->getUidColumn();
+            } else {
+                return null;
+            }
+        }
+        foreach ($this->getRequiredColumns() as $col) {
+            if ($col->isAttribute() && $col->getAttribute()->isUidForObject() && ! $col->getAttribute()->isRelated()) {
+                return $col;
+            }
+        }
+        return null;
+    }
 }
