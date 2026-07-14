@@ -135,13 +135,17 @@ class GoToPage extends ShowWidget
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AbstractAction::isAuthorized()
      */
-    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null, bool $silent = true) : bool
     {
-        if (parent::isAuthorized($userOrToken)) {
+        if (parent::isAuthorized($userOrToken, $silent)) {
             try {
                 $pageAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(UiPageAuthorizationPoint::class);
                 $pageAP->authorize($this->getPage());
             } catch (AuthorizationExceptionInterface $e) {
+                if(!$silent) {
+                    throw $e;
+                }
+                
                 return false;
             }
             return true;
