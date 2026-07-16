@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Traits;
 
+use exface\Core\CommonLogic\Traits\TranslatablePropertyTrait;
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Interfaces\Widgets\iHaveVisibility;
 
@@ -11,6 +12,8 @@ use exface\Core\Interfaces\Widgets\iHaveVisibility;
  *
  */
 trait iHaveVisibilityTrait {
+    use TranslatablePropertyTrait;
+    
     private $visibility = null;
     /**
      *
@@ -28,7 +31,7 @@ trait iHaveVisibilityTrait {
      * Sets the visibility of the widget: normal, hidden, optional, promoted.
      *
      * @uxon-property visibility
-     * @uxon-type [normal,promoted,optional,hidden]
+     * @uxon-type [normal,promoted,optional,hidden]|metamodel:formula
      * @uxon-default normal
      *
      * {@inheritdoc}
@@ -39,6 +42,7 @@ trait iHaveVisibilityTrait {
         if (is_int($value)){
             $this->visibility = $value;
         } else {
+            $value = $this->evaluatePropertyExpression($value);
             if (! defined('EXF_WIDGET_VISIBILITY_' . mb_strtoupper($value))) {
                 throw new WidgetPropertyInvalidValueError($this, 'Invalid visibility value "' . $value . '" for widget "' . $this->getWidgetType() . '"!', '6T90UH3');
             }
