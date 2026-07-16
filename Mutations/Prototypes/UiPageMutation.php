@@ -93,6 +93,12 @@ class UiPageMutation extends AbstractMutation
             if (null !== $val = ($changes['menu_visible'] ?? null)) {
                 $menuItem->setMenuVisible($val);
             }
+            if (null !== $val = ($changes['icon'] ?? null)) {
+                $menuItem->setIcon($val);
+            }
+            if (null !== $val = ($changes['icon_set'] ?? null)) {
+                $menuItem->setIconSet($val);
+            }
 
             $stateBefore = $stateArrayBefore;
             $stateAfter = array_merge($stateArrayBefore, $changes);
@@ -234,6 +240,36 @@ class UiPageMutation extends AbstractMutation
     protected function setChangeMenuVisible(bool $menuVisible) : UiPageMutation
     {
         $this->changesForMenuItems['menu_visible'] = $menuVisible;
+        return $this;
+    }
+
+    /**
+     * Changes the icon of the page.
+     * 
+     * @uxon-property change_icon
+     * @uxon-type string
+     * 
+     * @param string $icon
+     * @return $this
+     */
+    protected function setChangeIcon(string $icon) : UiPageMutation
+    {
+        $this->changesForMenuItems['icon'] = $icon;
+        return $this;
+    }
+
+    /**
+     * Changes the icon_set of the page.
+     * 
+     * @uxon-property change_icon_set
+     * @uxon-type string
+     * 
+     * @param string $iconSet
+     * @return $this
+     */
+    protected function setChangeIconSet(string $iconSet) : UiPageMutation
+    {
+        $this->changesForMenuItems['icon_set'] = $iconSet;
         return $this;
     }
 }
