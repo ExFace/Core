@@ -1146,6 +1146,16 @@ class OrderingBehavior extends AbstractBehavior
             // Create a filter that checks across all parent columns, whether at least one of them matches our parent.
             $subGroup = ConditionGroupFactory::createOR($metaObject);
             foreach ($parentAliases as $columnToCheck) {
+                $column = $dataSheet->getColumns()->getByExpression($columnToCheck);
+                if($column === false) {
+                    $column = $dataSheet->getColumns()->addFromExpression($columnToCheck);
+                }
+                
+                // Ensure filter compatibility.
+                if(!$column->getDataType()->isValidValue($parent)) {
+                    continue;
+                }
+                
                 if ($parent === null) {
                     // If the parent information is null, we need to add a special filter.
                     $subGroup->addConditionFromString($columnToCheck, EXF_LOGICAL_NULL, ComparatorDataType::EQUALS);

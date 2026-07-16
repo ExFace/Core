@@ -251,21 +251,6 @@ interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iC
     public function isMoved();
 
     /**
-     * Returns if the page is visible in the menu.
-     * 
-     * @return boolean
-     */
-    public function getMenuVisible();
-
-    /**
-     * Sets if the page is shown in the menu. (Default: true)
-     * 
-     * @param boolean $menuVisible
-     * @return UiPageInterface
-     */
-    public function setMenuVisible($menuVisible);
-
-    /**
      * 
      * @param string $uid
      * @return UiPageInterface
