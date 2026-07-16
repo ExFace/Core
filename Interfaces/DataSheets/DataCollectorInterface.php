@@ -120,4 +120,17 @@ interface DataCollectorInterface extends WorkbenchDependantInterface
      * @return bool
      */
     public function isLoaded() : bool;
+
+    /**
+     * Returns TRUE if the required columns/expressions include a UID column of the main object
+     * @return bool
+     */
+    public function hasUidColumn() : bool;
+
+    /**
+     * Returns the UID column if loaded data, if there is one
+     * 
+     * @return DataColumnInterface|null
+     */
+    public function getUidColumn() : ?DataColumnInterface;
 }

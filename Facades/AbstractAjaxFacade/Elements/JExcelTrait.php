@@ -2315,7 +2315,7 @@ JS;
     protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget, ?DataColumn $dataCol = null) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
-            throw new FacadeLogicError('TODO');
+            throw new FacadeLogicError('Dropdowns that are used in a DataSpreadSheet must be bound to an attribute.');
         }
         $filterJs = '';
 
