@@ -467,13 +467,22 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function getRowsDiff(DataSheetInterface $otherSheet, array $exclude = [], bool $ignoreEmptyCols = false) : array;
 
     /**
-     * Returns the specified row as an associative array (e.g.
-     * [col1 => val1, col2 => val2, ...])
+     * Returns the specified row as an associative array (e.g. [col1 => val1, col2 => val2, ...]).
      *
-     * @param number $row_number
+     * NOTE: Row indices do not have to be contiguous, nor do they have to start from 0.
+     * If no row with the specified index exists, `null` is returned instead.
+     *
+     * @param int $row_number
      * @return array|null
      */
     public function getRow(int $row_number = 0) : ?array;
+
+    /**
+     * Returns the row with the lowest index in this datasheet ( if any).
+     * 
+     * @return array|null
+     */
+    public function getRowFirst() : ?array;
 
     /**
      * Returns the first row, that contains a given value in the specified column.
