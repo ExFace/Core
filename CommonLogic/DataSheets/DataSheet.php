@@ -2674,7 +2674,7 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     * @return array|null
+     * @inheritdocs 
      */
     public function getRowFirst() : ?array
     {
