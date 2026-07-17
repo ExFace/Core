@@ -2674,6 +2674,14 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
+     * @return array|null
+     */
+    public function getRowFirst() : ?array
+    {
+        return empty($this->rows) ? null : $this->rows[min(array_keys($this->rows))];
+    }
+
+    /**
      * Returns the first row, that contains a given value in the specified column.
      * Returns NULL if no row matches.
      *
