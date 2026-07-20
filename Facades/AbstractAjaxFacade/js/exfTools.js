@@ -877,6 +877,21 @@
 							bResult = ! bResult;
 						}
 	                    break;
+					case '[=':		// ComparatorDataType::IS_IN
+	                case '![=':		// ComparatorDataType::NOT_IS_IN
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+			                    if (exfTools.data.compareValues(mLeft, rightValues[i].trim(), '=', sMultiValDelim)) {
+			                        return true;
+			                    }
+			                }
+			                return false;
+			            }();
+						if (sComparator === '![=') {
+							bResult = ! bResult;
+						}
+	                    break;
 					case '][': 		// ComparatorDataType::LIST_INTERSECTS
 	                case '!][':		// ComparatorDataType::LIST_NOT_INTERSECTS
 	                    bResult = function() {
@@ -925,7 +940,6 @@
 	                case '[<=': 	// ComparatorDataType::LIST_EACH_LESS_THAN_OR_EQUALS
 	                case '[>': 		// ComparatorDataType::LIST_EACH_GREATER_THAN
 	                case '[>=': 	// ComparatorDataType::LIST_EACH_GREATER_THAN_OR_EQUALS
-	                case '[=': 		// ComparatorDataType::LIST_EACH_IS
 	                case '[!=': 	// ComparatorDataType::LIST_EACH_IS_NOT
 						if (mLeft === '' || mLeft === null || mLeft === undefined) {
 							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
