@@ -1433,13 +1433,17 @@ abstract class AbstractAction implements ActionInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Actions\ActionInterface::isAuthorized()
      */
-    public function isAuthorized(UserImpersonationInterface $userOrToken = null) : bool
+    public function isAuthorized(UserImpersonationInterface $userOrToken = null, bool $silent = true) : bool
     {
         $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
         try {
             $actionAP->authorize($this, null, $userOrToken);
             return true;
         } catch (AuthorizationExceptionInterface $e) {
+            if(!$silent) {
+                throw $e;
+            }
+            
             $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             return false;
         }
