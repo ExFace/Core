@@ -21,7 +21,7 @@ use exface\Core\Widgets\DebugMessage;
  * This exception wraps driver specific details (SQLSTATE, error code and message)
  * and provides helper methods to resolve affected metaobjects and attributes.
  *
- * @author Andrej Kabachnik
+ * @author Brooklyn Fraenzschky
  */
 class MySqlError extends RuntimeException implements DataConnectorExceptionInterface
 {
