@@ -58,7 +58,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
     
     private $policies = null;
     
-    private $active = true;
+    private $disabled = true;
     
     private $combinationAlgorithm = null;
     
@@ -124,7 +124,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      */
     public function setDisabled(bool $trueOrFalse): AuthorizationPointInterface
     {
-        $this->active = $trueOrFalse;
+        $this->disabled = $trueOrFalse;
         return $this;
     }
     
@@ -135,7 +135,7 @@ abstract class AbstractAuthorizationPoint implements AuthorizationPointInterface
      */
     public function isDisabled(): bool
     {
-        return $this->active;
+        return $this->disabled;
     }
     
     /**
