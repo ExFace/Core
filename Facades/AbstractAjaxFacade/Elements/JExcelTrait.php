@@ -1280,8 +1280,14 @@ JS;
 
             if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
-            }            
-            return fnValidator(mValue);
+            }
+            // Provide row context so self-referencing conditional validation
+            // (e.g. invalid_if in table cells) can resolve values from the same row.
+            this.setValueGetterRow(iRow);
+            var mResult = fnValidator(mValue);
+            this.setValueGetterRow(null);
+            
+            return mResult;
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
             var mValidationResult;
