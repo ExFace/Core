@@ -185,6 +185,9 @@ class DownloadFile extends AbstractAction
                 $path = $fm->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'Downloads' . DIRECTORY_SEPARATOR . $filename;
                 $fm->dumpFile($path, $content);
                 $url = HttpFileServerFacade::buildUrlToViewFile($this->getWorkbench(), new LocalFileInfo($path));
+                if (! $download) {
+                    $url = $this->addCacheBuster($url);
+                }
                 $result = ResultFactory::createDownloadResultFromUrl($task, $url)->setDownload($download);
                 break;
             default:
@@ -196,6 +199,7 @@ class DownloadFile extends AbstractAction
                     $url = HttpFileServerFacade::buildUrlToDownloadData($data->getMetaObject(), $data->getUidColumn()->getValue(0));
                 } else {
                     $url = HttpFileServerFacade::buildUrlToViewData($data->getMetaObject(), $data->getUidColumn()->getValue(0));
+                    $url = $this->addCacheBuster($url);
                 }
                 $result = ResultFactory::createDownloadResultFromUrl($task, $url)->setDownload($download);
         }
@@ -210,6 +214,26 @@ class DownloadFile extends AbstractAction
     protected function isFilePathInData() : bool
     {
         return $this->filePathAttributeAlias !== null;
+    }
+    
+    /**
+     * Appends a unique parameter to an inline view-URL to prevent the browser from
+     * opening a cached (stale) version of a previously requested file.
+     * 
+     * With `mode` = `open` the generated view-URL is otherwise identical for every
+     * request of the same file/record. Browsers - and especially environments with
+     * strict caching or security policies - may then reuse the response of an earlier
+     * request instead of loading the current file, showing a stale version (typically
+     * the one from the last request) or nothing at all. A unique parameter forces the
+     * browser to issue a fresh request every time.
+     * 
+     * @param string $url
+     * @return string
+     */
+    protected function addCacheBuster(string $url) : string
+    {
+        $param = 'nocache=' . uniqid();
+        return $url . (mb_strpos($url, '?') === false ? '?' : '&') . $param;
     }
     
     /**
