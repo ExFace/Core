@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
