@@ -1280,8 +1280,14 @@ JS;
 
             if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
-            }            
-            return fnValidator(mValue);
+            }
+            // Provide row context so self-referencing conditional validation
+            // (e.g. invalid_if in table cells) can resolve values from the same row.
+            this.setValueGetterRow(iRow);
+            var mResult = fnValidator(mValue);
+            this.setValueGetterRow(null);
+            
+            return mResult;
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
             var mValidationResult;
@@ -1289,6 +1295,7 @@ JS;
             var bRequired = oCol.checkRequired(iRow);
             var bDisabled = $(cell).children('input').prop('disabled');
             var bEmpty = false;
+            var mValueRaw = mValue;
             if (mValue === '\u0000') {
                 mValue = '';
             }
@@ -1307,7 +1314,13 @@ JS;
             }
             bEmpty = (mValue === '' || mValue === null || mValue === undefined);
 
-            mValidationResult = this.validateValue(iCol, iRow, mValue);
+            // If parsing collapses invalid text to empty/null, validate the raw value,
+            // similar to handling in onbeforechange 
+            if ((mValue === '' || mValue === null) && mValue !== mValueRaw) {
+                mValidationResult = this.validateValue(iCol, iRow, mValueRaw);
+            } else {
+                mValidationResult = this.validateValue(iCol, iRow, mValue);
+            }
             if (mValidationResult === true && bRequired === true && bDisabled !== true && bEmpty) {
                 mValidationResult = {$this->escapeString($this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.INPUT.VALIDATION_REQUIRED'))};
             }
