@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
@@ -74,11 +75,7 @@ class ActionInputValidator
                 
                 $error->setUseExceptionMessageAsTitle(true);
                 $error->addIssue(ActionTaskInvalidException::ISSUE_INVALID_OBJECT, $taskAlias);
-                if ($this->action->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
-                    throw $error;
-                } else {
-                    $this->action->getWorkbench()->getLogger()->logException($error);
-                }
+                $this->handleValidationError($error);
             }
         }
     }
@@ -233,12 +230,34 @@ class ActionInputValidator
             foreach (array_keys($unexpectedColumns) as $unexpectedColumn) {
                 $error->addIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN, $unexpectedColumn);
             }
-            if ($this->action->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED') === true) {
-                throw $error;
-            } else {
-                $this->action->getWorkbench()->getLogger()->logException($error);
-            }
+            $this->handleValidationError($error);
         }
+    }
+    
+    protected function handleValidationError(ActionTaskInvalidException $error) : void
+    {
+        switch ($this->getValidationConfig()) {
+            // Throw.
+            case 'error':
+                throw $error;
+            // Log ERROR.
+            case 'log':
+                $this->action->getWorkbench()->getLogger()->logException($error);
+                break;
+            // Ignore.
+            default:
+                break;
+        }
+    }
+    
+    protected function getValidationConfig() : string
+    {
+        $cfgValue = $this->action->getWorkbench()->getConfig()->getOption('SECURITY.ACTION_INPUT.VALIDATION_ENABLED');
+        return match ($cfgValue) {
+            true => 'error',
+            false => 'ignore',
+            default => $cfgValue,
+        };
     }
 
     /**
