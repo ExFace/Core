@@ -328,6 +328,11 @@ class ExportJSON extends ReadData implements iExportData
             } else {
                 $exportSheet = $pageSheet;
             }
+
+            // if we format enums, also format booleans to their labels yes/no
+            if ($this->willFormatEnumsAsLabels()) {
+                $this->formatBooleanColumnsAsLabels($exportSheet);
+            }
             
             if ($lazyExport) {
                 $this->writeRows($exportSheet, $columnNames);
@@ -553,6 +558,28 @@ class ExportJSON extends ReadData implements iExportData
                 fwrite($this->getWriter(), json_encode($outRow, JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_QUOT));
                 $this->firstRowWritten = true;
             }
+        }
+    }
+
+    /**
+     * Formats boolean data columns using their data type formatter (e.g. Yes/No).
+     *
+     * @param DataSheetInterface $sheet
+     * @return void
+     */
+    protected function formatBooleanColumnsAsLabels(DataSheetInterface $sheet) : void
+    {
+        foreach ($sheet->getColumns() as $col) {
+            $type = $col->getDataType();
+            if (! $type instanceof BooleanDataType) {
+                continue;
+            }
+            $values = $col->getValues();
+            $newValues = [];
+            foreach ($values as $val) {
+                $newValues[] = $type->format($val);
+            }
+            $col->setValues($newValues);
         }
     }
     
