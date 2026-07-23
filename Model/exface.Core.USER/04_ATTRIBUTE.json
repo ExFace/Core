@@ -852,7 +852,7 @@
             "DATA_ADDRESS": "disable_date",
             "OBJECT": "0x31343400000000000000000000000000",
             "FORMATTER": "",
-            "DISPLAYORDER": 5,
+            "DISPLAYORDER": null,
             "LABELFLAG": 0,
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
