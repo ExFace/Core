@@ -152,7 +152,7 @@
                                             "attribute_alias": "USER__LABEL"
                                         },
                                         {
-                                            "attribute_alias": "CREATED_ON",
+                                            "attribute_alias": "MODIFIED_ON",
                                             "caption": "Shared on"
                                         }
                                     ],
