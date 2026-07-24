@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
 use exface\Core\Widgets\Parts\TextMention;
@@ -67,6 +68,11 @@ trait ToastUIEditorTrait
                             var oEditor = {$this->buildJsMarkdownVar()};
                             if (oEditor._exfIgnoreChanges === true) {
                                 return;
+                            }
+
+                            // if we have a character counter, refresh it on every change
+                            if (oEditor.refreshCharCounter) {
+                                oEditor.refreshCharCounter();
                             }
                             
                             {$this->getOnChangeScript()} 
@@ -161,6 +167,28 @@ JS;
             $additionalWidgetsCode.= <<<JS
               
             {$this->buildJsMentionsWidgetComponents()}
+JS;
+        }
+
+        // if its an inputmarkdown, and the max length is set, add code to refresh the character counter
+        if ($this->getWidget() instanceof InputMarkdown && null !== $this->getMarkdownCharCounterMaxLength()) {
+            $maxLength = $this->getMarkdownCharCounterMaxLength();
+            $additionalWidgetsCode .= <<<JS
+
+                (function(oEditor){
+                    if (oEditor.options.viewer === true) return;
+                    oEditor.refreshCharCounter = function() {
+                        var jqCounter = $('#{$this->getCharCounterId()}');
+                        if (jqCounter.length === 0 || oEditor.getMarkdown === undefined) {
+                            return;
+                        }
+                        var sMarkdown = oEditor.getMarkdown() || '';
+                        jqCounter.text(sMarkdown.length + '/{$maxLength}');
+                    };
+                    setTimeout(function(){
+                        oEditor.refreshCharCounter();
+                    }, 0);
+                })($editorJs);
 JS;
         }
         
@@ -803,9 +831,54 @@ JS;
                   ['hr', 'quote'],
                   ['ul', 'ol', 'task', 'indent', 'outdent'],
                   ['table', {$image} 'link', {$this->buildJsToolbarItemsForStencils()}],
-                  ['code', 'codeblock',]],
+                  ['code', 'codeblock' {$this->buildJsToolbarItemCharacterCounter()}]],
 JS;
 
+    }
+
+    /**
+     * Builds a read-only toolbar item used to show the live character count.
+     *
+     * @return string
+     */
+    protected function buildJsToolbarItemCharacterCounter() : string
+    {
+        $maxLength = $this->getMarkdownCharCounterMaxLength();
+        if ($maxLength === null) {
+            return '';
+        }
+        return <<<JS
+                ,{
+                    name: 'Character count',
+                    tooltip: 'Character count',
+                    el: (function (){
+                        var span = $('<span id="{$this->getCharCounterId()}" style="display: inline-block; text-align: right; font-size: 12px; opacity: .85; padding: 0 4px; user-select: none;">0/{$maxLength}</span>')[0];
+                        return span;
+                    })()
+                }
+JS;
+    }
+
+    /**
+     * Returns max length for the markdown counter if a string-length constraint exists.
+     *
+     * @return int|null
+     */
+    protected function getMarkdownCharCounterMaxLength() : ?int
+    {
+        $widget = $this->getWidget();
+        if (! $widget instanceof InputMarkdown) {
+            return null;
+        }
+        $dataType = $widget->getValueDataType();
+        if (! $dataType instanceof StringDataType) {
+            return null;
+        }
+        $maxLength = $dataType->getLengthMax();
+        if ($maxLength === null || $maxLength <= 0) {
+            return null;
+        }
+        return (int) $maxLength;
     }
     
     protected function buildJsToolbarItemsForStencils() : string
@@ -945,6 +1018,14 @@ JS;
     protected function getFullScreenToggleId() : string
     {
         return $this->getId().'_tuiFullScreenToggle';
+    }
+
+    /**
+     * @return string
+     */
+    protected function getCharCounterId() : string
+    {
+        return $this->getId() . '_tuiCharCounter';
     }
 
     /**
