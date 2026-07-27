@@ -284,6 +284,11 @@ class NotificationContext extends AbstractContext
                     ]
                 ]));
                 $dialog = $btn->getAction()->getWidget();
+                // Force the dialog to be non-cacheable so it is destroyed on close and its view (and controller)
+                // are rebuilt on every open. This ensures the Markdown element starts without a live editor
+                // instance, which the facade element relies on to detect and discard stale preserved DOM
+                // (see UI5Markdown::buildJsConstructorForMainControl()).
+                $dialog->setCacheable(false);
                 $this->fillMessageDialog($dialog, $row, $translator);
             } catch (\Throwable $e) {
                 $this->getWorkbench()->getLogger()->logException(
