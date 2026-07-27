@@ -90,7 +90,7 @@ class InputCode extends Input
     {
         if (!$this->hasCodeFormatter()) {
             if ($this->codeFormatterUxon === null) {
-                $this->codeFormatter = $this->createDefaultCodeFormatter($this->language);
+                $this->codeFormatter = $this->createDefaultCodeFormatter($this->getLanguage());
             } else {
                 $this->codeFormatter = new CodeFormatter($this, $this->codeFormatterUxon);
             }
