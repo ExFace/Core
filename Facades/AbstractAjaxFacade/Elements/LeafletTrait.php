@@ -717,16 +717,7 @@ JS;
 
                 $exfRefreshJs = <<<JS
 function() {
-                    var oParams = {
-                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
-                        element: "{$dataWidget->getId()}",
-                        object: "{$dataWidget->getMetaObject()->getId()}",
-                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
-                        data: {
-                            oId: "{$dataWidget->getMetaObject()->getId()}"
-                        },
-                        _layer: {$layer->getIndex()}
-                    };
+                    {$this->buildJsLeafletParamsForWidget($dataWidget, $layer->getIndex())};
                     
                     {$this->buildJsLeafletDataLoader($layer, 'oParams', 'aRows', "{$loaderJs}")}
                 }
@@ -876,16 +867,8 @@ JS;
                 // data differently for different layers.
                 $exfRefreshJs = <<<JS
 function() {
-                    var oParams = {
-                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
-                        element: "{$dataWidget->getId()}",
-                        object: "{$dataWidget->getMetaObject()->getId()}",
-                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
-                        data: {
-                            oId: "{$dataWidget->getMetaObject()->getId()}"
-                        },
-                        _layer: {$layer->getIndex()}
-                    };
+                    {$this->buildJsLeafletParamsForWidget($dataWidget, $layer->getIndex())};
+                    
                     {$this->buildJsLeafletDataLoader($layer, 'oParams', 'aRows', "{$dataToLeafletJs}")}
                 }
 JS;
@@ -1337,16 +1320,7 @@ JS;
                 $exfRefreshJs = <<<JS
                 
                 (function() {
-                    var oParams = {
-                        resource: "{$dataWidget->getPage()->getAliasWithNamespace()}",
-                        element: "{$dataWidget->getId()}",
-                        object: "{$dataWidget->getMetaObject()->getId()}",
-                        action: "{$dataWidget->getLazyLoadingActionAlias()}",
-                        data: {
-                            oId: "{$dataWidget->getMetaObject()->getId()}"
-                        },
-                        _layer: {$layer->getIndex()}
-                    };
+                    {$this->buildJsLeafletParamsForWidget($dataWidget, $layer->getIndex())};
                     
                     {$this->buildJsLeafletDataLoader($layer, 'oParams', 'aRows', "{$dataToLeafletJs}")}
                 })();
@@ -1594,6 +1568,37 @@ JS;
                         })
 
 JS;
+    }
+
+    /**
+     * Builds an inline snippet that assigns Leaflet parameters for a widget to `$oParamsJs`.
+     * 
+     * @param WidgetInterface $widget
+     * @param int             $layerIndex
+     * @param string          $oParamsJs
+     * @return string
+     */
+    protected function buildJsLeafletParamsForWidget(
+        WidgetInterface $widget,
+        int $layerIndex,
+        string $oParamsJs = 'oParams'
+    ) : string
+    {
+        return <<<JS
+
+var {$oParamsJs} = {
+    resource: "{$widget->getPage()->getAliasWithNamespace()}",
+    element: "{$widget->getId()}",
+    object: "{$widget->getMetaObject()->getId()}",
+    action: "{$widget->getLazyLoadingActionAlias()}",
+    data: {
+        oId: "{$widget->getMetaObject()->getId()}",
+        alias: "{$widget->getMetaObject()->getAliasWithNamespace()}"
+    },
+    _layer: {$layerIndex}
+}
+JS;
+
     }
 
     /**
