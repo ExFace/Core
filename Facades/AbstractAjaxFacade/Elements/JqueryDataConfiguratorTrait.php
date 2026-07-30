@@ -125,7 +125,15 @@ trait JqueryDataConfiguratorTrait
                     $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
                     $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
                 } else {
-                    $filter_value = '"' . $filter->getValue() . '"';
+                    // RangeFilter needs special handling in unrendered mode:
+                    // getValue() concatenates "from..to", resulting in ".." when both are empty,
+                    // so if the from/to values are not set (and theres no widget link), we need to pass an empty string instead
+                    if ($filter instanceof \exface\Core\Widgets\RangeFilter && $filter->hasValue() === false) {
+                        $filter_value = '""';
+                    }
+                    else {
+                        $filter_value = '"' . $filter->getValue() . '"';
+                    }
                 }
                 
                 if ($filter->hasCustomConditionGroup() === true) {
