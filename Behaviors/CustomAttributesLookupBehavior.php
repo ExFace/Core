@@ -517,13 +517,15 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
                     $logBook
                 );
             }
-            $val = $eventSheet->getCellValue($customAttrAlias, $eventRowIdx);
-            $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
+            
             if ($relPathToEventRequired) {
                 $valEventColName = $customAttrAlias;
             } else {
                 $valEventColName = RelationPath::join($relPathEventToBehavior->__toString(), $customAttrAlias);
             }
+            
+            $val = $eventSheet->getCellValue($valEventColName, $eventRowIdx);
+            $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
             $eventSheet->setCellValue($valEventColName, $eventRowIdx, $val);
 
             foreach ($additionalCols as $i => $additionalCol) {
