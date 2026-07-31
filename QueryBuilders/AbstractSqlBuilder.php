@@ -2603,6 +2603,21 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
 
         if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $data_type, $dataAddressProps) === EXF_LOGICAL_NULL)){
+            // If the subject is a SELECT subquery (an attribute whose data address is a correlated
+            // subquery, e.g. "(SELECT ... FROM ... WHERE ... = [#~alias#].id)"), it may return more
+            // than one row. Testing such a subquery directly - "(SELECT ...) IS NULL" - makes the
+            // database raise "Subquery returned more than 1 value". EXISTS/NOT EXISTS is the correct
+            // set-based test for "has any value" / "has no value" and works no matter how many rows
+            // the subquery returns.
+            if ($this->isSqlSelectStatement($subject)) {
+                switch ($comparator) {
+                    case EXF_COMPARATOR_EQUALS:
+                    case EXF_COMPARATOR_IS:
+                        return 'NOT EXISTS ' . $subject;
+                    default:
+                        return 'EXISTS ' . $subject;
+                }
+            }
             switch ($comparator) {
                 case EXF_COMPARATOR_EQUALS:
                 case EXF_COMPARATOR_IS:
@@ -2625,10 +2640,25 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             
             // Strict comparators need to cast their values
             case $comparator === EXF_COMPARATOR_EQUALS:
-                $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+                // A SELECT subquery subject (attribute data address is a correlated subquery) can
+                // return more than one row for a given main row. "(SELECT ...) = value" then fails
+                // with "Subquery returned more than 1 value". "value IN (SELECT ...)" is equivalent
+                // for single-row subqueries and correct ("value is among the returned rows") for
+                // multi-row ones, so use it whenever the subject is a subquery.
+                if ($this->isSqlSelectStatement($subject)) {
+                    $output = ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps)) . " IN " . $subject;
+                } else {
+                    $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+                }
                 break;
             case $comparator === EXF_COMPARATOR_EQUALS_NOT:
-                $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+                // See the EQUALS case above: use "value NOT IN (SELECT ...)" for subquery subjects so
+                // a multi-row subquery does not blow up "(SELECT ...) != value".
+                if ($this->isSqlSelectStatement($subject)) {
+                    $output = ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps)) . " NOT IN " . $subject;
+                } else {
+                    $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+                }
                 break;
             case $comparator === EXF_COMPARATOR_GREATER_THAN:
             case $comparator === EXF_COMPARATOR_LESS_THAN:
