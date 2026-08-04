@@ -2361,7 +2361,9 @@ class DataSheet implements DataSheetInterface
         }
         
         if ($cascading === true && $eventBefore->isPreventDeleteCascade() === false) {
-            // Check if there are dependent object, that require cascading deletes
+            // Check if there are dependent object, that require cascading deletes. If so we gather all necessary data and do the delete afterwards.
+            // Else it can causes errors when there are dependencies, especially via permissions.      
+            $dataSheetsToDelete = [];
             foreach ($this->getSubsheetsForCascadingDelete() as $ds) {
                 try {
                     // Just perform the delete if there really is some data to delete. This sure means an extra data source connection, but
@@ -2379,14 +2381,14 @@ class DataSheet implements DataSheetInterface
                     if ($ds->getColumns()->isEmpty()) {
                         $ds->getColumns()->addFromSystemAttributes();
                     }
-                    
+                                            
                     // If the there can be data, but there are no rows, read the data
                     switch (true) {
                         // If there are no columns, delete without reading current data. This still can happen
                         // even after we added system columns a few lines ago - there may not be any system columns
                         // - e.g. for a SQL view which was accidently marked as writable in the metamodel
                         case $ds->getColumns()->isEmpty():
-                            $ds->dataDelete($transaction, $cascading);
+                            $dataSheetsToDelete[] = $ds;
                             break;
                         // Read current data to double-check there is something to delete
                         case $ds->dataRead() > 0:                    
@@ -2405,15 +2407,24 @@ class DataSheet implements DataSheetInterface
                                 // Add an IN-filter for the UID column
                                 $ds->getFilters()->addConditionFromColumnValues($ds->getUidColumn());
                             }
-                            $ds->dataDelete($transaction, $cascading);
+                            $dataSheetsToDelete[] = $ds;
                             break;
                     }
                 } catch (MetaObjectHasNoDataSourceError $e) {
-                    // Just ignore objects without data sources - there is nothing to delete there!
+            // Just ignore objects without data sources - there is nothing to delete there!
                 } catch (\Throwable $e) {
                     throw new DataSheetDeleteError($ds, 'Cannot delete related data for ' . $this->getMetaObject()->__toString() . ': ' . rtrim($e->getMessage(), ".!") . '. Please remove related ' . $ds->getMetaObject()->__toString() . ' manually and try again.', '6ZISUAJ', $e);
-                }
+                }                      
             }
+            foreach ($dataSheetsToDelete as $ds) {
+                try {
+                    $ds->dataDelete($transaction, $cascading);
+                } catch (MetaObjectHasNoDataSourceError $e) {
+                // Just ignore objects without data sources - there is nothing to delete there!
+                } catch (\Throwable $e) {
+                    throw new DataSheetDeleteError($ds, 'Cannot delete related data for ' . $this->getMetaObject()->__toString() . ': ' . rtrim($e->getMessage(), ".!") . '. Please remove related ' . $ds->getMetaObject()->__toString() . ' manually and try again.', '6ZISUAJ', $e);
+                }                    
+            }            
         }
         
         if ($eventBefore->isPreventDelete() === false) {
@@ -2671,6 +2682,14 @@ class DataSheet implements DataSheetInterface
     function getRow(int $row_number = 0) : ?array
     {
         return $this->rows[$row_number];
+    }
+
+    /**
+     * @inheritdocs 
+     */
+    public function getRowFirst() : ?array
+    {
+        return empty($this->rows) ? null : $this->rows[min(array_keys($this->rows))];
     }
 
     /**

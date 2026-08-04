@@ -715,6 +715,19 @@ JS;
                 return;
             }
 
+            /*
+                Note sah: this whole setup seems to work based on a number of somewhat odd side-effects, im not sure if that behaviour was indended:
+                - the formatter/parser functions return empty strings for illegal values.
+                - those are then fed into the validator, which return the original value of the cell, if the value is invalid. For empty spreadsheet cells that are being filled, this is 'undefined'
+                - this 'undefined' is then returned as the mValidated value here, which is mean to override the value that was entered into the cell (return value of onbeforechange overrides value)
+                - however, the library/jexcel doesnt seem to do that properly with undefined (empty string however, DO work, they set the cell to empty), so the illegal value stays
+                - the illegal value stays in the spreadsheet and is marked as invalid by the validator (red, with the error message as tooltip) which is the intended user experience (i assume?)
+
+                If we move the validation logic into the onchange event (which would fix some issues with self-referencing cells), and return the formatted/parsed value here, the return value for illegal 
+                values would be an empty string, which clears the cell. In that case, the spreadsheet would instantly delete illegal values, not giving the user a chance to correct their entry, which is 
+                not a good user experience. So instead we re-validate self-referencing cells in onchange now, as a workaround to not change the UX here.
+            */
+
             mValueParsed = fnParser ? fnParser(value) : value;
             if ((mValueParsed === '' || mValueParsed === null) && mValueParsed !== value) {
                 mValidated = instance.exfWidget.validateCell(cell, x, y, value);
@@ -797,7 +810,16 @@ JS;
             // setTimeout ensures, the minSpareRows are always added before the subsequent logic runs. This is
             // important for value/data getters to work properly as they will ignore spare rows
             {$this->buildJsOnUpdateApplyValuesFromWidgetLinks('instance', 'col', 'row')};
+
             setTimeout(function(){
+
+                // If we have a self-referencing column, we need to validate it again after the value has been committed to the spreadsheet, 
+                // otherwise the validation will lag behind, because the validation uses the valueGetter, which is still the old value in onbeforechange
+                // This is only relevant for self-referencing columns, as they depend on the current value of the cell to validate themselves.
+                if (instance.exfWidget.bLoaded && instance.exfWidget.getColumnModel(col).isSelfReferencing === true) {
+                    instance.exfWidget.validateCell(cell, col, row, value, true);
+                }
+
                 // Calculate footer
                 {$this->buildJsFixedFootersSpread()}
 
@@ -1280,8 +1302,14 @@ JS;
 
             if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
-            }            
-            return fnValidator(mValue);
+            }
+            // Provide row context so self-referencing conditional validation
+            // (e.g. invalid_if in table cells) can resolve values from the same row.
+            this.setValueGetterRow(iRow);
+            var mResult = fnValidator(mValue);
+            this.setValueGetterRow(null);
+            
+            return mResult;
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
             var mValidationResult;
@@ -1289,6 +1317,7 @@ JS;
             var bRequired = oCol.checkRequired(iRow);
             var bDisabled = $(cell).children('input').prop('disabled');
             var bEmpty = false;
+            var mValueRaw = mValue;
             if (mValue === '\u0000') {
                 mValue = '';
             }
@@ -1297,7 +1326,11 @@ JS;
             var aData = this.getJExcel().getData() || [];
             var iSpareRows = {$this->getMinSpareRows()}; 
 
-            if (this.getDoNotValidate() === true || (iRow >= aData.length - iSpareRows)) {
+            // spare rows do not need to be validated, however if a new value is entered into that otherwise empty (spare) row, we still need to validate it. 
+            // the issue here is that jexcel adds a new spare rows AFTER this validation has run, so we would otherwise skip the validation for the new value.
+            var bIsSpareRow = (iRow >= aData.length - iSpareRows);
+            var bValueEmpty = (mValue === '' || mValue === null || mValue === undefined);
+            if (this.getDoNotValidate() === true || (bIsSpareRow && bValueEmpty)) {
                 return mValue;
             }
 
@@ -1307,7 +1340,13 @@ JS;
             }
             bEmpty = (mValue === '' || mValue === null || mValue === undefined);
 
-            mValidationResult = this.validateValue(iCol, iRow, mValue);
+            // If parsing collapses invalid text to empty/null, validate the raw value,
+            // similar to handling in onbeforechange 
+            if ((mValue === '' || mValue === null) && mValue !== mValueRaw) {
+                mValidationResult = this.validateValue(iCol, iRow, mValueRaw);
+            } else {
+                mValidationResult = this.validateValue(iCol, iRow, mValue);
+            }
             if (mValidationResult === true && bRequired === true && bDisabled !== true && bEmpty) {
                 mValidationResult = {$this->escapeString($this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.INPUT.VALIDATION_REQUIRED'))};
             }
@@ -1735,6 +1774,30 @@ JS;
 
             $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
             $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
+
+            // Check for self-referencing conditions in invalid_if, disabled_if, required_if
+            $hasSelfReference = false;
+            
+            // Check invalid_if on cell widget
+            if ($cellWidget instanceof Input && ($condProp = $cellWidget->getInvalidIf())) {
+                if ($this->hasSelfReference($condProp)) {
+                    $hasSelfReference = true;
+                }
+            }
+            
+            // Check disabled_if on column
+            if (null !== $condProp = $col->getDisabledIf()) {
+                if ($this->hasSelfReference($condProp)) {
+                    $hasSelfReference = true;
+                }
+            }
+            
+            // Check required_if on cell widget
+            if ($cellWidget instanceof Input && ($condProp = $cellWidget->getRequiredIf())) {
+                if ($this->hasSelfReference($condProp)) {
+                    $hasSelfReference = true;
+                }
+            }
 
             // Disabling conditions
             $conditionsJs = '';
@@ -2315,7 +2378,7 @@ JS;
     protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget, ?DataColumn $dataCol = null) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
-            throw new FacadeLogicError('TODO');
+            throw new FacadeLogicError('Dropdowns that are used in a DataSpreadSheet must be bound to an attribute.');
         }
         $filterJs = '';
 

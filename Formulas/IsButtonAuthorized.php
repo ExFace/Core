@@ -115,6 +115,7 @@ class IsButtonAuthorized extends Formula
 
         // Create fake input data for a single row
         $row = $mappedData->getRow($this->getCurrentRowNumber());
+        $mappedData->getSorters()->removeAll();
         $currentRowData = $mappedData->copy()->removeRows()->addRow($row, false, false);
         if ($mapByRow === true) {
             $currentRowData = $mapper->map($currentRowData);
