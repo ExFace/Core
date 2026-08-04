@@ -33,7 +33,7 @@ use exface\Core\Interfaces\Selectors\PWASelectorInterface;
  * @author Andrej Kabachnik
  *
  */
-interface UiPageInterface extends UiMenuItemInterface, iCanBeConvertedToUxon, iCanBeCopied
+interface UiPageInterface extends UiMenuItemInterface, UiScreenInterface, iCanBeConvertedToUxon, iCanBeCopied
 {
     /**
      * 

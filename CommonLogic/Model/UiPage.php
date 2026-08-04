@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Actions\ShowWidget;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
@@ -18,15 +20,18 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
@@ -1507,5 +1512,14 @@ class UiPage implements UiPageInterface
             $this->pwaSelector = new PWASelector($this->getWorkbench(), $this->pwaSelector);
         }
         return $this->pwaSelector;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getSlug()
+     */
+    public function getSlug() : string
+    {
+        return $this->getAliasWithNamespace();
     }
 }
