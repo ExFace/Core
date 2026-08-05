@@ -8,7 +8,24 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
+ * A Gantt widget will show a DataTable (or Tree) next to a gantt chart (horizontal timeline bars)
  * 
+ * ## Examples
+ * 
+ * ### Some new features
+ * 
+ * By default, the Gantt chart will react to changes to the data widget immediately and will completely redraw the 
+ * timeline. Thus, if you filter or paginate the table side, you will immediately see corresponding timeline bars 
+ * "jump" into view. However, if you want to keep the horizontal scrolling on the chart when filtering or paging, set 
+ * `keep_scroll_position` to TRUE.
+ * 
+ * ```
+ * {
+ *     "widget_type": "Gantt",
+ *     "keep_scroll_position": true
+ * }
+ * 
+ * ```
  * 
  * @author Andrej Kabachnik
  *
@@ -18,8 +35,6 @@ class Gantt extends DataTree
     private $timelinePart = null;
     
     private $taskPart = null;
-    
-    private $schedulerResourcePart = null;
     
     private $startDate = null;
     
