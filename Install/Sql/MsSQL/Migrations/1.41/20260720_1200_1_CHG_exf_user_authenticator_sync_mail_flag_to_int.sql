@@ -13,7 +13,6 @@
  * @author AI
  */
 -- UP
--- BATCH-DELIMITER GO
 
 ALTER TABLE exf_user_authenticator
 ADD sync_mail_flag_tmp SMALLINT NOT NULL
@@ -30,6 +29,10 @@ FROM exf_user_authenticator eua;
 GO
 
 ALTER TABLE exf_user_authenticator
+DROP CONSTRAINT DF_exf_user_authenticator_sync_mail_flag;
+GO
+
+ALTER TABLE exf_user_authenticator
 DROP COLUMN sync_mail_flag;
 GO
 
@@ -39,8 +42,16 @@ EXEC sp_rename
     'COLUMN';
 GO
 
+ALTER TABLE exf_user_authenticator
+DROP CONSTRAINT DF_exf_user_auth_sync_mail_flag_tmp;
+GO
+
+ALTER TABLE exf_user_authenticator
+ADD CONSTRAINT DF_exf_user_authenticator_sync_mail_flag
+    DEFAULT (0) FOR sync_mail_flag;
+GO
+
 -- DOWN
--- BATCH-DELIMITER GO
 
 ALTER TABLE exf_user_authenticator
 ADD sync_mail_flag_tmp BIT NULL
@@ -56,6 +67,10 @@ FROM exf_user_authenticator eua;
 GO
 
 ALTER TABLE exf_user_authenticator
+DROP CONSTRAINT DF_exf_user_auth_sync_mail_flag_tmp;
+GO
+
+ALTER TABLE exf_user_authenticator
 DROP COLUMN sync_mail_flag;
 GO
 
@@ -63,4 +78,13 @@ EXEC sp_rename
     'exf_user_authenticator.sync_mail_flag_tmp',
     'sync_mail_flag',
     'COLUMN';
+GO
+
+ALTER TABLE exf_user_authenticator
+DROP CONSTRAINT DF_exf_user_auth_sync_mail_flag_tmp_down;
+GO
+
+ALTER TABLE exf_user_authenticator
+ADD CONSTRAINT DF_exf_user_authenticator_sync_mail_flag
+    DEFAULT (1) FOR sync_mail_flag;
 GO
