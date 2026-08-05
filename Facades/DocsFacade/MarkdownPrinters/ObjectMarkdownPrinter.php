@@ -1,16 +1,19 @@
 <?php
-
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
-
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\MetaAttributeTypeDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\RelationTypeDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\Model\MetaRelationBrokenError;
+use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
+use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
@@ -25,7 +28,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * optionally walk through relation attributes to print child objects up to a
  * configurable depth.
  */
-class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
+class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownInstancePrinterInterface
 {
     protected WorkbenchInterface $workbench;
     
@@ -58,6 +61,18 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see MarkdownInstancePrinterInterface::constructForInstance()
+     */
+    public static function constructForInstance(object $instance) : MarkdownPrinterInterface
+    {
+        if (! $instance instanceof MetaObjectInterface) {
+            throw new InvalidArgumentException('Cannot use ObjectMarkdownPrinter on ' . get_class($instance));
+        }
+        return new self($instance->getWorkbench(), $instance->getId());
+    }
+
+    /**
      * Builds and returns the complete Markdown for the current object
      * and all related objects up to the configured depth.
      */
@@ -87,12 +102,17 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
         $importantAttributes = trim($importantAttributes);
         
         $attributesHeading = MarkdownDataType::buildMarkdownHeader("Attributes of \"{$metaObject->getName()}\"", $headingLevel + 1);
-        
+        $actionHeading = MarkdownDataType::buildMarkdownHeader("Actions", $headingLevel + 1);
+        $groupHeading = MarkdownDataType::buildMarkdownHeader("Attributegroups of \"{$metaObject->getName()}\"", $headingLevel + 1);
+        $parentObjectLinks = $this->buildMdParentObjectLinks($metaObject);
+
         $markdown = <<<MD
 
 {$heading} 
 
 - Alias: **{$metaObject->getAliasWithNamespace()}**
+- UID: `{$metaObject->getId()}`
+{$parentObjectLinks}
 - Data Source: **{$metaObject->getDataSource()->getName()}**, query builder: [{$queryBuilderClass}]($queryBuilderLink), connector: [{$connectorClass}]({$connectorLink})
 {$importantAttributes}
 
@@ -100,15 +120,38 @@ class ObjectMarkdownPrinter //implements MarkdownPrinterInterface
 
 {$attributesHeading}
 
-{$this->buildMdAttributesTable($metaObject->getAttributes())}
+{$this->buildMdAttributesTable($metaObject->getAttributes(), $metaObject->getRelations())}
 
 {$this->buildMdAttributesSections($metaObject, $headingLevel+2)}
 
-{$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
+{$this->buildMdActionSection($actionHeading, $metaObject, $headingLevel+2 )}
 
-{$this->buildMdRelatedObjects($metaObject->getRelations(), 'Related objects', $headingLevel)}
+{$this->buildMdAttributeGroupSection($groupHeading, $metaObject, $headingLevel+2 )}
+
+{$this->buildMdBehaviorsSections($metaObject, 'Behaviors of "' . $metaObject->getName() . '"', $headingLevel+1)}
 MD;        
         return $markdown;
+    }
+
+    /**
+     * Builds a Markdown list item linking to all parent objects of the given meta object.
+     *
+     * @param MetaObjectInterface $metaObject
+     * @return string
+     */
+    protected function buildMdParentObjectLinks(MetaObjectInterface $metaObject) : string
+    {
+        $parents = $metaObject->getParentObjects();
+        if (empty($parents)) {
+            return '';
+        }
+
+        $links = [];
+        foreach ($parents as $parent) {
+            $links[] = $this->createLink($parent);
+        }
+
+        return '- Parent object' . (count($links) === 1 ? '' : 's') . ': ' . implode(', ', $links);
     }
 
     /**
@@ -131,6 +174,10 @@ MD;
                     continue;
                 }
                 $relObj = $relation->getRightObject();
+                // Skip objects in other apps - very often relations to core objects
+                if ($relObj->getApp() !== $relation->getLeftObject()->getApp()) {
+                    continue;
+                }
                 static::$printedObjects[] = $relObj;
                 $childPrinter = new ObjectMarkdownPrinter($this->workbench, $relObj, ($depth - 1), $headingLevel+1);
                 $markdown .= $childPrinter->getMarkdown();
@@ -146,12 +193,12 @@ MD;
     {
         $markdown = '';
         foreach ($obj->getAttributes() as $attr) {
-            $markdown .= $this->buildMarkDownAttributeSection($attr, $headingLevel);
+            $markdown .= $this->buildMdAttributeSection($attr, $headingLevel);
         }
         return $markdown;
     }
     
-    protected function buildMarkDownAttributeSection(MetaAttributeInterface $attr, int $headingLevel = 3) : string
+    protected function buildMdAttributeSection(MetaAttributeInterface $attr, int $headingLevel = 3) : string
     {
         $heading = MarkdownDataType::buildMarkdownHeader($attr->getName(), $headingLevel);
         $dataType = $attr->getDataType();
@@ -162,9 +209,9 @@ MD;
 
 {$attr->getShortDescription()}
 
-Alias: **{$attr->getAlias()}**
-
-Properties: {$this->buildMdAttributeProperties($attr)}
+- Alias: **{$this->escapeMarkdownText($attr->getAlias())}**
+{$this->buildMdInheritedFromListItem($attr)}
+- Properties: {$this->buildMdAttributeProperties($attr)}
 
 {$this->buildMdCodeblock($attr->getDataAddress(), 'Data address:')}
 
@@ -172,6 +219,46 @@ Properties: {$this->buildMdAttributeProperties($attr)}
 
 {$this->buildMdUxonCodeblock($attr->getCustomDataTypeUxon(), 'Configuration of data type [' . $dataType->getAliasWithNamespace() . '](' . $dataTypeLink . '):')}
 
+MD;
+
+    }
+
+    protected function buildMdActionSection(string $header, MetaObjectInterface $obj, int $headingLevel = 3) : string
+    {
+       
+        $markdown = '';
+        try{
+            foreach ($obj->getActions() as $act) {
+                $actionPrinter = new ActionMarkdownPrinter($act, $headingLevel);
+                $markdown .= $actionPrinter->getMarkdown();
+            } 
+        } catch (\Exception $e){
+            $markdown .= 'Cannot print action details: ' . $e->getMessage();
+            $this->workbench->getLogger()->logException(new RuntimeException('Cannot print object action. ' . $e->getMessage(), null, $e));
+        }
+        
+        return <<<MD
+{$header}
+
+{$markdown}
+MD;
+
+    }
+    
+    protected function buildMdAttributeGroupSection(string $header, MetaObjectInterface $obj, int $headingLevel = 3) : string
+    {
+        $markdown = '';
+        
+        $groups = $obj->getAttributeGroups();
+        foreach ($groups as $group) {
+            $groupPrinter = new AttributeGroupMarkdownPrinter($this->workbench, $group, $headingLevel);
+            $markdown .= $groupPrinter->getMarkdown();
+        }
+        
+        return <<<MD
+{$header}
+
+{$markdown}
 MD;
 
     }
@@ -276,24 +363,64 @@ MD;
         $propertiesPills = '`' . implode('`, `', $properties) . '`';
         return $propertiesPills;
     }
-    
+
+    /**
+     * Builds Markdown text showing the object an attribute or relation was inherited from.
+     *
+     * @param MetaAttributeInterface|MetaRelationInterface $modelElement
+     * @return string
+     */
+    protected function buildMdInheritedFrom($modelElement) : string
+    {
+        if (! $modelElement->isInherited()) {
+            return 'Direct';
+        }
+
+        $parentObject = $modelElement->getObjectInheritedFrom();
+        if ($parentObject === null) {
+            return 'Yes';
+        }
+
+        return $this->createLink($parentObject);
+    }
+
+    /**
+     * Builds a Markdown list item for inherited model elements.
+     *
+     * @param MetaAttributeInterface|MetaRelationInterface $modelElement
+     * @return string
+     */
+    protected function buildMdInheritedFromListItem($modelElement) : string
+    {
+        if (! $modelElement->isInherited()) {
+            return '';
+        }
+
+        return '- Inherited from: ' . $this->buildMdInheritedFrom($modelElement);
+    }
+
     /**
      * Returns a list of attribute strings in Markdown format.
      *| Name | Alias | Data Address | Data Type | Required | Relation |
-     * 
-     * @param MetaObjectInterface $metaObject
-     * @return string[]  
+     *
+     * @param MetaAttributeListInterface $attributes
+     * @param MetaRelationInterface[] $relations
+     * @return string
      */
-    protected function buildMdAttributesTable(MetaAttributeListInterface $attributes): string
+    protected function buildMdAttributesTable(MetaAttributeListInterface $attributes, array $relations): string
     {        
-        $list = [];
-        foreach ($attributes->getAll() as  $attribute ) {
-            $name = $this->escapeCell($attribute->getName());
-            $alias = $this->escapeCell($attribute->getAlias());
-            //$dataAddress = $this->escapeCell($attribute->getDataAddress());
+        $attributeList = [];
+        $regRelList = [];
+        $revRelList = [];
+        /* @var $attribute \exface\Core\Interfaces\Model\MetaAttributeInterface */
+        foreach ($attributes->getAll() as  $attribute) {
+            $name = $this->escapeMarkdownCell($attribute->getName());
+            $alias = $this->escapeMarkdownCell($attribute->getAlias());
             $dataTypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($attribute->getDataType());
-            $dataType = $this->escapeCell("[{$attribute->getDataType()->getAliasWithNamespace()}]($dataTypeLink)");
+            $dataType = $this->escapeMarkdownCell("[{$attribute->getDataType()->getAliasWithNamespace()}]($dataTypeLink)");
+            $attributeType = MetaAttributeTypeDataType::fromValue($this->workbench, $attribute->getType());
             $relationText = "";
+            $rel = null;
             if ($attribute->isRelation()) {
                 $rel = $attribute->getRelation();
                 try {
@@ -303,18 +430,70 @@ MD;
                 }
             }
 
-
-            $list[] = "| {$name} | {$alias} | {$relationText} | {$dataType} |";
+            if ($attribute->isRelation()) {
+                $origin = $this->buildMdInheritedFrom($rel);
+                $regRelList[] = "| {$name} | {$alias} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()} | {$dataType} | {$origin}";
+            } else {
+                $origin = $this->buildMdInheritedFrom($attribute);
+                $attributeList[] = "| {$name} | {$alias} | {$dataType} | {$attributeType->getLabelOfValue()} | {$origin}";
+            }
+        }
+        foreach ($relations as $rel) {
+            if ($rel->isReverseRelation()) {
+                try {
+                    $relationText = $this->createLink($rel->getRightObject());
+                } catch (MetaRelationBrokenError $e) {
+                    $relationText = 'Related object `' . $rel->getRightObjectId() . '` not found!';
+                }
+                $origin = $this->buildMdInheritedFrom($rel);
+                $revRelList[] = "| {$rel->getName()} | {$rel->getAlias()} | {$relationText} | {$rel->getCardinality()->getLabelOfValue()} | {$origin}";
+            }
         }
 
-        $rows = implode("\n", $list);
-        return <<<MD
+        $md = '';
+        if (! empty($attributeList)) {
+            $rows = implode("\n", $attributeList);
+            $md = <<<MD
 
-| Name | Alias | Relation to | Data Type |
-|------|-------|-------------|-----------|
+| Attribute name | Alias | Data Type | Attribute type | Inherited from |
+|----------------|-------|-----------|----------------|----------------|
 {$rows}
 
-MD;        
+MD;
+        }
+
+        if (! empty($regRelList)) {
+            $rows = implode("\n", $regRelList);
+            $md .= <<<MD
+
+### Relations to other objects
+
+The following attributes hold foreign keys. In UXON their aliases can be used to access attributes of related objects:
+e.g. `RELATION_ALIAS__LABEL`.
+
+| Relation/attribute name | Alias | Relation to | Cardinality | Data Type | Inherited from |
+|-------------------------|-------|-------------|-------------|-----------|----------------|
+{$rows}
+
+MD;
+        }
+
+        if (! empty($revRelList)) {
+            $rows = implode("\n", $revRelList);
+            $md .= <<<MD
+        
+### Relations from other to this object
+
+Reverse relations (those from other object) can be used just like regular ones. Most of them point to multiple related
+objects, so use aggregators like `:SUM` or `:LIST` - e.g. `RELATION_ALIAS__UID:COUNT`.
+
+| Relation name | Relation alias | Relation from | Cardinality | Inherited from |
+|---------------|----------------|---------------|-------------|----------------|
+{$rows}
+
+MD;      
+        }  
+        return $md;
     }
 
     /**
@@ -328,22 +507,9 @@ MD;
      */
     protected function createLink(MetaObjectInterface $metaObject): string
     {
-        $alias = $this->escapeCell($metaObject->getAlias());
+        $alias = $this->escapeMarkdownCell($metaObject->getAlias());
         $link = DocsFacade::buildUrlToDocsForMetaObject($metaObject);
         return "[$alias]({$link})";
-    }
-
-
-    /**
-     * Escapes a value so that it can be safely used inside a Markdown table cell.
-     *
-     * Line breaks are converted to HTML line breaks and pipe characters are escaped.
-     */
-    protected function escapeCell(string $value): string
-    {
-        $value = str_replace(["\r\n", "\r", "\n"], '<br>', $value);
-        $value = str_replace('|', '\|', $value);
-        return $value;
     }
 
     /**

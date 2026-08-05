@@ -1,0 +1,234 @@
+<?php
+namespace exface\Core\Facades\ConsoleFacade;
+
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\ServerSoftwareDataType;
+use exface\Core\Exceptions\CliRuntimeException;
+use Symfony\Component\Process\Process;
+use Symfony\Component\Console\Input\StringInput;
+
+class CliCommandRunner
+{
+    /**
+     * Runs a CLI command and streams its output as a generator.
+     *
+     * By default any non-zero exit code is treated as a failure. Use
+     * $ignoredExitCodes to suppress specific codes that are expected and should
+     * not be considered errors. For example, Behat exits with code 1 when at
+     * least one test fails — this is normal and expected behaviour; pass [1] to
+     * prevent CliCommandRunner from treating it as a hard failure while still
+     * letting exit code 2 (Behat internal error / crash) surface as an error.
+     *
+     * @param string   $cmd
+     * @param array    $envVars
+     * @param float    $timeout
+     * @param string|null $cwd
+     * @param bool     $silent          If false, a non-ignored failure throws a RuntimeException.
+     * @param int[]    $ignoredExitCodes Exit codes that are treated as success even when non-zero.
+     * @return \Generator
+     * @throws \Throwable
+     */
+    public static function runCliCommand(
+        string  $cmd,
+        array   $envVars = [],
+        float   $timeout = 60,
+        ?string $cwd = null,
+        bool    $silent = true,
+        array   $ignoredExitCodes = []
+    ) : \Generator {
+        if (static::canUseSymfonyProcess()) {
+            $process = Process::fromShellCommandline($cmd, $cwd, $envVars, null, $timeout);
+            $process->start();
+
+            $generator = function (Process $process, bool $silent, array $ignoredExitCodes) : \Generator {
+                // Keep copies because iterating over $process consumes incremental buffers
+                $stdout = '';
+                $stderr = '';
+
+                foreach ($process as $type => $buffer) {
+                    if ($buffer !== '') {
+                        if ($type === Process::OUT) {
+                            $stdout .= $buffer;
+                        } else {
+                            $stderr .= $buffer;
+                        }
+                        yield $buffer;
+                    }
+                }
+                $process->wait(); // ensure completion
+                
+                // opt-in failure signaling
+                if (! $process->isSuccessful()) {
+                    $exitCode = $process->getExitCode();
+                    // Ignored exit codes are expected non-zero results (e.g. Behat exit 1
+                    // when tests fail) — treat them as success and do not emit an error line.
+                    if (in_array($exitCode, $ignoredExitCodes, true)) {
+                        return;
+                    }
+                    yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . '.';
+                    // If caller wants hard failure, throw AFTER emitting the error marker
+                    if (! $silent) {
+                        $errorMessage = '';
+                        if (preg_match('/LogID:\s*([A-Z0-9]+)/', $stdout, $matches)) {
+                            $logId = $matches[1];
+                            $errorMessage = "LogID: $logId\n";
+                        } else {
+                            $errorMessage = "no error output.\n";
+                        }
+                        throw new CliRuntimeException($process->getCommandLine(), ($stderr !== '' ? $stderr : $stdout), $exitCode, $errorMessage);
+                    }
+                }
+            };
+            return $generator($process, $silent, $ignoredExitCodes);
+        } else {
+            $generator = function() use ($cmd, $envVars, $silent, $ignoredExitCodes) {
+                $result = null;
+                $code = 0;
+                foreach ($envVars as $var => $val) {
+                    putenv($var . '=' . $val);
+                }
+                exec($cmd . ' 2>&1', $result, $code);
+                $resultStr = implode("\n", $result);
+                yield $resultStr;
+                if ($code !== 0) {
+                    // Ignored exit codes are expected non-zero results — skip error handling.
+                    if (in_array($code, $ignoredExitCodes, true)) {
+                        return;
+                    }
+                    yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
+                    if (! $silent) {
+                        // $resultStr contains both stdout and stderr (merged via 2>&1)
+                        throw new CliRuntimeException($cmd, $resultStr, $code);
+                    }
+                }
+            };
+            return $generator();
+        }
+    }
+
+    /**
+     * Returns TRUE if Symfony process should work on the current server setup
+     *
+     * Currently known systems not compatible with Symfony process:
+     * - Some IIS versions on Windows
+     *
+     * @return bool
+     */
+    protected static function canUseSymfonyProcess() : bool
+    {
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        if ($isWindows) {
+            $isIIS = (stripos($_SERVER["SERVER_SOFTWARE"] ?? '', "microsoft-iis") !== false);
+            if ($isIIS) {
+                return false;
+                /* TODO solve remaining probelms with Symfony Process with IIS: it seems,
+                // it cannot read errors now. So the below check should be a command, that
+                // produces an error. Successful commands seem fine now (01.2025)
+                // Check, if symfony process will return non-empty output: 
+                // `whoami` should always return something
+                $process = new Process(['whoami']);
+                $process->run();                
+                if (! $process->isSuccessful() || $process->getOutput() === '') {
+                    return false;
+                }*/
+            }
+        }
+        return true;
+    }
+
+    public static function setPermissionsForPath(string $path, string $user) : array
+    {
+        if (ServerSoftwareDataType::isOsWindows()) {
+            // Grant Modify (M) to user. (Closer to old CACLS ":c" change permission.)
+            // /T optional (propagate through subfolders). /C continue on errors.
+            // $cmd = "CACLS {$path} /e /p {$user}:c";
+            // CACLS is deprecated (use icacls on Windows instead) - but for now it works and is battle-tested
+            $cmd = 'icacls ' . escapeshellarg($path) . ' /grant ' . escapeshellarg($user . ':(M)') . ' /C';
+        } else {
+            // Linux / Unix
+            // Prefer ACLs: give rwX (X applies execute only to dirs / already-executable files)
+            // -m modifies ACL; -R would be recursive (only if you need it!)
+            $setfacl = trim((string)@shell_exec('command -v setfacl 2>/dev/null'));
+            if ($setfacl !== '') {
+                $cmd = 'setfacl -m ' . escapeshellarg('u:' . $user . ':rwX') . ' ' . escapeshellarg($path);
+            } else {
+                // Fallback: basic chmod. This does NOT target a specific user—only adjusts mode bits.
+                // Choose something sensible for your use case; here: add user rwX.
+                $cmd = 'chmod u+rwX ' . escapeshellarg($path);
+            }
+        }
+
+        $output = [];
+        exec($cmd . ' 2>&1', $output, $exitCode);
+
+        if ($exitCode !== 0) {
+            $filename = FilePathDataType::findFileName($path, true);
+            throw new CliRuntimeException(
+                $cmd,
+                $output,
+                $exitCode,
+                "Permission for the user '{$user}' and folder/file '{$filename}' could not be changed! "
+            );
+        }
+
+        return $output;
+    }
+
+    /**
+     * Parses the given CLI command into an array of components: command name, arguments and options.
+     * 
+     * ```
+     * [
+     *  $commandName,
+     *  $args,
+     *  $opts,
+     * ]
+     * ```
+     * 
+     * @param string $command
+     * @return array
+     */
+    public static function parseCommand(string $command): array
+    {
+        $input = new StringInput($command);
+
+        // without definition → raw parsing only
+        $commandName = $input->getFirstArgument();
+
+        // raw tokens (not yet mapped)
+        $tokens = [];
+        preg_match_all('/"([^"]*)"|\'([^\']*)\'|\S+/', $command, $matches);
+        $tokens = array_map(
+            fn($t) => trim($t, "\"'"),
+            $matches[0]
+        );
+
+        // simple split logic (if you DON’T have a definition)
+        $args = [];
+        $opts = [];
+
+        foreach ($tokens as $i => $token) {
+            if ($i === 0) {
+                continue; // command already extracted
+            }
+
+            if (str_starts_with($token, '--')) {
+                $parts = explode('=', substr($token, 2), 2);
+                $opts[$parts[0]] = $parts[1] ?? true;
+            } elseif (str_starts_with($token, '-')) {
+                $flags = substr($token, 1);
+                foreach (str_split($flags) as $flag) {
+                    $opts[$flag] = true;
+                }
+            } else {
+                $args[] = $token;
+            }
+        }
+
+        return [
+            $commandName,
+            $args,
+            $opts,
+        ];
+    }
+}

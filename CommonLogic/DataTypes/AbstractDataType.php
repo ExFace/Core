@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\DataTypes;
 
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\DataTypes\DataTypeFormattingError;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -9,6 +10,8 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\AppInterface;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
 use exface\Core\Interfaces\ValueObjectInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
@@ -256,6 +259,17 @@ abstract class AbstractDataType implements DataTypeInterface
             $e->setUseExceptionMessageAsTitle(true);
         }
         
+        return $e;
+    }
+
+    /**
+     * @param mixed|null $value
+     * @param \Throwable $previous
+     * @return DataTypeFormattingError
+     */
+    protected function createFormatterError($value, \Throwable $previous) : DataTypeFormattingError
+    {
+        $e = new DataTypeFormattingError($this, 'Cannot format "' . $value . '" as "' . $this->getAliasWithNamespace() . '". ' . $previous->getMessage(), null, $previous, $value);
         return $e;
     }
 
@@ -706,9 +720,26 @@ abstract class AbstractDataType implements DataTypeInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataTypes\DataTypeInterface::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, bool $silent = true) : string
     {
-        $val = $value !== null ? $this->parse($value) : $this->getValue();
+        try {
+            if ($value !== null) {
+                $val = $value;
+                // Parse in a separate step to make sure $val is set even if there is an exception
+                $val = $this->parse($val);
+            } else {
+                $val = $this->getValue();   
+            }
+        } catch (DataTypeExceptionInterface $e) {
+            // When formatting, casting/parsing/validation errors should not break the operation
+            $e = $this->createFormatterError($val, $e);
+            if ($silent) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+                return $val ?? '';
+            } else {
+                throw $e;
+            }
+        }
         if ($val === null || $val === EXF_LOGICAL_NULL) {
             return '';
         }

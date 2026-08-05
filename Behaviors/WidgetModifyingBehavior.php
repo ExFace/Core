@@ -2,11 +2,10 @@
 namespace exface\Core\Behaviors;
 
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
+use exface\Core\DataTypes\RegularExpressionDataType;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Events\Widget\OnUiActionWidgetInitEvent;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Actions\iShowWidget;
-use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\WidgetEventInterface;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -15,8 +14,8 @@ use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
 use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
+use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Widgets\DataTableConfigurator;
-use exface\Core\Widgets\Dialog;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -44,6 +43,7 @@ use exface\Core\Widgets\Dialog;
 class WidgetModifyingBehavior extends AbstractBehavior
 {    
     private ?array $onlyOnPages = null;
+    private ?array $onlyOnPagesRegex = null;
     private ?array $onlyWidgetIds = null;
     private bool $onlyPageRoot = false;
     private ?array $onlyForActions = null;
@@ -105,6 +105,12 @@ class WidgetModifyingBehavior extends AbstractBehavior
                 return true;
             }
         }
+        foreach ($this->onlyOnPagesRegex as $pattern) {
+            $pageAlias = $page->getAliasWithNamespace();
+            if (preg_match($pattern, $pageAlias) === 1) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -151,7 +157,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
     {
         // TODO avoid infinite loops here when there are no optional columns to add
         // For example, adding ` && $this->propertiesToSet === null ` caused infinite loops when opening LOG_ENTRY in the
-        // logs. The behavior added a DialogSidebar with an AiChat widget, but no optional columns. No idea, why
+        // logs. The behavior added a Sidebar with an AiChat widget, but no optional columns. No idea, why
         // that caused trouble, but for now `change_properties` simply only works for regular widgets, not for
         // configurators.
         if ($this->columnsToAddUxon === null) {
@@ -210,7 +216,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
             $this->addButtonsToWidget($widget, $this->buttonsToAddUxon);
         }
 
-        if ($this->sideBarToAdd !== null && $widget instanceof Dialog) {
+        if ($this->sideBarToAdd !== null && $widget instanceof iHaveSidebar) {
             $widget->setSidebar($this->sideBarToAdd);
         }
         
@@ -278,7 +284,7 @@ class WidgetModifyingBehavior extends AbstractBehavior
      * Add a sidebar to the widgets if they support sidebars
      * 
      * @uxon-property add_sidebar
-     * @uxon-type \exface\Core\Widgets\DialogSidebar
+     * @uxon-type \exface\Core\Widgets\Sidebar
      * @uxon-template {"widgets": [{"widget_type": ""}]}
      * 
      * @param \exface\Core\CommonLogic\UxonObject $sidebarUxon
@@ -302,7 +308,13 @@ class WidgetModifyingBehavior extends AbstractBehavior
      */
     protected function setOnlyOnPages(UxonObject $aliasOrUids) : WidgetModifyingBehavior
     {
-        $this->onlyOnPages = $aliasOrUids->toArray();
+        foreach ($aliasOrUids->toArray() as $alias) {
+            if (RegularExpressionDataType::isRegex($alias)) {
+                $this->onlyOnPagesRegex[] = $alias;
+            } else {
+                $this->onlyOnPages[] = $alias;
+            }
+        }
         return $this;
     }
 

@@ -26,7 +26,7 @@
                 '/* Inner shadow highlight (no size change) */\n' +
                 '.' + _sCssHighlight + ' {' +
                 '  position: relative;' +
-                '  box-shadow: inset 0 0 0 3px rgba(0, 149, 255, 0.8), inset 0 0 12px rgba(0, 149, 255, 0.35);' +
+                '  box-shadow: 0 0 0 3px rgba(0, 149, 255, 0.8), inset 0 0 12px rgba(0, 149, 255, 0.55);' +
                 '  transition: box-shadow 120ms ease-in-out;' +
                 '}\n' +
 
@@ -89,8 +89,31 @@
             }
             return 'Unknown';
         }
+        
+        function getWidgetId($el) {
+            const str = $el.attr('id');
+            if (!str) return '';
 
-        function createLabel(typeText) {
+            const idx = str.indexOf('__');
+            if (idx === -1) return '';
+
+            const after = str.slice(idx + 2);
+            const dashIdx = after.indexOf('-');
+            let result = dashIdx === -1 ? after : after.slice(0, dashIdx);
+
+            if (result.toLowerCase().endsWith('wrapper')) {
+                const lastUnderscoreIdx = result.lastIndexOf('_');
+                if (lastUnderscoreIdx !== -1) {
+                    result = result.slice(0, lastUnderscoreIdx);
+                }
+            }
+
+            return result;
+        }
+
+        function createLabel($w) {
+            var typeText = getWidgetType($w);
+            var sWidgetId = getWidgetId($w);
             var $label = $('<div/>', {'class': _sCssLabel});
             var $type = $('<span/>', {text: typeText});
 
@@ -101,7 +124,9 @@
             $info.on('click' + _sCssNS, function (ev) {
                 ev.stopPropagation();
                 ev.preventDefault();
-                alert('Widget type: ' + typeText + '\n(More info coming soon…)');
+                var sPageAlias = exfLauncher ? exfLauncher.getPageId() : 'TODO';
+                var sUrl = 'api/jeasyui?action=exface.Core.CallContext&context=exface.Core.DebugContext&scope=window&operation=showWidgetInfo&pageAlias=' + sPageAlias + '&widget=' + sWidgetId;
+                openPopup(sUrl);
             });
 
             $label.append($type, $info);
@@ -114,8 +139,7 @@
 
             // Add label once
             if ($w.children('.' + _sCssLabel).length === 0) {
-                var typeText = getWidgetType($w);
-                var $label = createLabel(typeText);
+                var $label = createLabel($w);
                 $w.append($label);
             }
         }
@@ -156,6 +180,12 @@
             if (!_bHighlightingOn) return;
             _bHighlightingOn = false;
             detachHandlersAndCleanup();
+        }
+        
+        function openPopup(sUrl, iWidth, iHeight) {
+            iWidth = iWidth || 800;
+            iHeight = iHeight || 800;
+            window.open(sUrl, 'window', 'width=' + iWidth + ' height=' + iHeight + ' toolbar=no, menubar=no, resizable=yes');
         }
 
         return {

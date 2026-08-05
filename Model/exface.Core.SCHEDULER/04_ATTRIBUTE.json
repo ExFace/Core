@@ -343,9 +343,9 @@
         {
             "_EXPORT_SUMMARY": "Description [DESCRIPTION]",
             "CREATED_ON": "2021-01-27 21:33:37",
-            "MODIFIED_ON": "2021-10-13 10:51:26",
+            "MODIFIED_ON": "2026-03-10 16:33:40",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11eb990cef6580e4990c847beb4a5184",
             "SORTABLEFLAG": 1,
             "FILTERABLEFLAG": 1,
@@ -364,9 +364,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ICON": null,
-            "ICON_SET": null,
-            "ABBREVIATION": null,
+            "ICON": "",
+            "ICON_SET": "",
+            "ABBREVIATION": "",
             "ALIAS": "DESCRIPTION",
             "DATATYPE": "0x31310000000000000000000000000000",
             "DATA_ADDRESS": "description",
@@ -387,7 +387,7 @@
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
             "CUSTOM_DATA_TYPE": {
-                "length_max": 200
+                "length_max": 400
             }
         },
         {

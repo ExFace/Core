@@ -21,9 +21,9 @@ use exface\Core\DataTypes\JsonDataType;
 /**
  * This creates and manages SQL databases and performs SQL updates.
  *
- * If the app has it's own SQL database (= is not built on top of an existing
+ * If the app has its own SQL database (= is not built on top of an existing
  * data source), changes to the SQL schema must go hand-in-hand with changes of
- * the meta model and the code. This installer takes care of migrating the schema
+ * the metamodel and the code. This installer takes care of migrating the schema
  * by performing SQL scripts stored in a special folder within the app (by
  * default "install/Sql/%Database_Version").
  * 
@@ -34,7 +34,7 @@ use exface\Core\DataTypes\JsonDataType;
  * 1. Create a database according to the given data connection (if it does not exist)
  * 2. Execute migrations, that were not applied to the DB schema yet and take down those,
  * that were applied, but are not required anymore.
- * 3. Execute any SQL within files in specified folders - in constrast to migrations,
+ * 3. Execute any SQL within files in specified folders - in contrast to migrations,
  * this SQL will be executed on every install, regardless of whether it was executed
  * before or not.
  * 
@@ -124,20 +124,23 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
     public function install(string $source_absolute_path) : \Iterator
     {
         $indent = $this->getOutputIndentation();
+        $indent2 = $indent . $this->getOutputIndentation();
+
+        yield $indent . 'SQL database installer:' . PHP_EOL;
+
         if ($this->isDisabled() === true) {
-            yield $indent . 'SQL installer disabled' . PHP_EOL;
-            return;
+            yield $indent2 . 'Migrations disabled' . PHP_EOL;
         } else {
-            yield $indent . 'SQL installer:' . PHP_EOL;
+            yield from $this->installDatabase($this->getDataConnection(), $indent2);
+            yield from $this->installMigrations($source_absolute_path, $indent2);
+            yield from $this->installStaticSql($source_absolute_path, $indent2);
+            // TODO make schema compare work
         }
-        
-        yield from $this->installDatabase($this->getDataConnection(), $indent.$indent);
-        yield from $this->installMigrations($source_absolute_path, $indent.$indent);
-        yield from $this->installStaticSql($source_absolute_path, $indent.$indent);
-        // TODO make schema compare work
 
         if($this->getConfigOption('COMPARE_SCHEMAS') === true){
-            yield from $this->compareSchemas($source_absolute_path, $indent . $indent);
+            yield from $this->compareSchemas($source_absolute_path, $indent2);
+        } else {
+            yield $indent2 . 'Schema compare disabled' . PHP_EOL;
         }
         
         return;
@@ -160,27 +163,31 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      */
     protected function compareSchemas(string $source_absolute_path, string $indent = '') : \Iterator
     {
+        $indent2 = $indent . $this->getOutputIndentation();
+        yield $indent . 'Schema compare:' . PHP_EOL;
         if ($this->canDumpSchema() === false) {
-            yield $indent . 'SQL dumps currently not supported in ' . PhpClassDataType::findClassNameWithoutNamespace(self::class);
+            yield $indent2 . 'SQL dumps currently not supported in ' . PhpClassDataType::findClassNameWithoutNamespace(self::class) . PHP_EOL;
             return;
         }
         $sqlFolder = $this->getSqlFolderAbsolutePath($source_absolute_path);
         $schemaFile = $sqlFolder . DIRECTORY_SEPARATOR . 'schema.sql';
         if(!file_exists($schemaFile)) {
-            yield $indent . 'No comparison possible Schema dump not found.';
+            yield $indent2 . 'No comparison possible Schema dump not found.' . PHP_EOL;
             return;
         }
+        //Soll Local (app)
         $schema = file_get_contents($schemaFile);
+        //Ist Server
         $tmpSchema = $this->buildSqlSchema();
         
         $diffs = $this->performComparison($tmpSchema, $schema);
         
         if (empty($diffs)) {
-            yield "The schemas matches fully";
+            yield $indent2 . 'The schemas matches fully' . PHP_EOL;
         } else {
-            echo "Differences found:\n";
+            yield $indent2 . "Differences found:" . PHP_EOL;
             foreach ($diffs as $line) {
-                echo "- $line\n";
+                yield $indent2 . $line . PHP_EOL;
             }
         }
     }
@@ -453,9 +460,9 @@ abstract class AbstractSqlDatabaseInstaller extends AbstractAppInstaller impleme
      * installer.
      * 
      * @param string $name
-     * @return string
+     * @return string|int|float|bool|null
      */
-    protected function getConfigOption(string $name) : ?string
+    protected function getConfigOption(string $name) : string|int|float|bool|null
     {
         $config = $this->getApp()->getConfig();
         $option = $this->configOptionNamePrefix . $name;

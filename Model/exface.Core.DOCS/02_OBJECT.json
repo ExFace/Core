@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Docs [exface.Core.DOCS]",
             "CREATED_ON": "2017-10-23 10:07:15",
-            "MODIFIED_ON": "2022-02-14 10:04:55",
+            "MODIFIED_ON": "2026-03-10 10:48:14",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11e7b7d9e1203963995b0205857feb80",
@@ -99,23 +99,29 @@
             "INHERIT_DATA_SOURCE_BASE_OBJECT": 1,
             "DATA_SOURCE": "0x11e6afd8d2fa47e78943e4b318306b9a",
             "APP": "0x31000000000000000000000000000000",
-            "SHORT_DESCRIPTION": "",
+            "SHORT_DESCRIPTION": "Markdown files in app/Docs folder",
             "PARENT_OBJECT": null,
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_EDITOR_UXON": {
                 "widget_type": "Dialog",
                 "widgets": [
                     {
-                        "attribute_alias": "PATHNAME_RELATIVE",
+                        "attribute_alias": "CONTENTS",
+                        "widget_type": "InputMarkdown",
+                        "hide_caption": true,
+                        "editor_mode": "wysiwyg",
+                        "height": "max",
+                        "width": "max"
+                    },
+                    {
+                        "attribute_alias": "PATH_RELATIVE",
                         "width": "max",
                         "disabled": false
                     },
                     {
-                        "attribute_alias": "CONTENTS",
-                        "widget_type": "InputMarkdown",
-                        "hide_caption": true,
-                        "height": "max",
-                        "width": "max"
+                        "attribute_alias": "FILENAME",
+                        "width": "max",
+                        "disabled": false
                     }
                 ]
             },

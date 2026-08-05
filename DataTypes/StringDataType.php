@@ -2,12 +2,15 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\CommonLogic\TemplateRenderer\AbstractPlaceholderModifier;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
-use exface\Core\Exceptions\RangeException;
+use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
-use Random\RandomException;
+use exface\Core\Factories\FormulaFactory;
+use exface\Core\Interfaces\WorkbenchInterface;
 use Transliterator;
 
 /**
@@ -139,7 +142,7 @@ class StringDataType extends AbstractDataType
             $lengthCond = ' ≥ ' . $length;
         }
         if (0 < $length = $this->getLengthMax()) {
-            $lengthFormatted = $length < 2048 ? $length : ByteSizeDataType::formatWithScale($length);
+            $lengthFormatted = $length < 10000 ? $length : ByteSizeDataType::formatWithScale($length);
             $lengthCond .= ($lengthCond ? ' ' . $and . ' ' : '') . ' ≤ ' . $lengthFormatted;
         }
         if ($lengthCond) {
@@ -490,13 +493,26 @@ class StringDataType extends AbstractDataType
      * 
      * @return string
      */
-    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false) : string
+    public static function replacePlaceholders(string $string, array $placeholders, bool $strict = true, bool $recursive = false, WorkbenchInterface $evaluateFormulasViaWorkbench = null) : string
     {
         $phs = static::findPlaceholders($string);
         $search = [];
         $replace = [];
         foreach ($phs as $ph) {
             $phKey = '[#' . ($ph ?? '') . '#]';
+            
+            // If the placeholder is a formula, AND we have a workbench to evaluate it, handle it here
+            if ($evaluateFormulasViaWorkbench !== null && Expression::detectCalculation($ph)) {
+                $formula = FormulaFactory::createFromString($evaluateFormulasViaWorkbench, $ph);
+                if ($formula->isStatic() === false) {
+                    throw new QueryBuilderException('Cannot use placeholder [#' . $ph . '#] in "' . $search . '": the used formula is not static! Only static formulas can be used in placeholders in this case!');
+                }
+                $search[] = $phKey;
+                $replace[] = $formula->evaluate();
+                continue;
+            }
+            
+            // All other placeholders are replace by their respecitve values
             if ($strict === true && array_key_exists($ph, $placeholders) === false) {
                 throw new PlaceholderNotFoundError($phKey, 'Missing value for placeholder "' . $phKey . '"!');
             }
@@ -516,6 +532,18 @@ class StringDataType extends AbstractDataType
         }
         
         return $replaced;
+    }
+
+    /**
+     * Removes modifiers from a given placenolder name: e.g. `myph|??NULL` -> `myph`
+     * 
+     * @param string $expression
+     * @param string $delimiter
+     * @return string#
+     */
+    public static function stripPlaceholderModifiers(string $expression, string $delimiter = AbstractPlaceholderModifier::DELIMITER) : string
+    {
+        return StringDataType::substringBefore($expression, $delimiter, $expression);
     }
     
     /**
@@ -539,7 +567,7 @@ class StringDataType extends AbstractDataType
     }
     
     /**
-     * Returns the part of the given string ($haystack) preceeding the first occurrence of $needle.
+     * Returns the part of the given string ($haystack) preceding the first occurrence of $needle.
      * 
      * Examples:
      * - substringBefore('one, two, three', ',') => 'one'
@@ -547,7 +575,7 @@ class StringDataType extends AbstractDataType
      * - substringBefore('one, two, three', ';') => false
      * - substringBefore('one, two, three', ';', 'one, two, three') => 'one, two, three'
      * 
-     * Using the optional parameters you can make the search case sensitive and
+     * Using the optional parameters you can make the search case-sensitive and
      * search for the last occurrence instead of the first one.
      * 
      * Returns $default if the $needle was not found.
@@ -597,7 +625,7 @@ class StringDataType extends AbstractDataType
     /**
      * Returns the part of the given string ($haystack) following the first occurrence of $needle.
      * 
-     * Using the optional parameters you can make the search case sensitive and
+     * Using the optional parameters you can make the search case-sensitive and
      * search for the last occurrence instead of the first one.
      * 
      * @param string $haystack
@@ -712,14 +740,36 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Splits a string into an array of lines using any type of line break.
+     * 
+     * Line breaks are detected via the `\R` regex escape, so `\r\n`, `\n` and `\r`
+     * are all recognized. Use `$limit` to restrict the number of resulting lines -
+     * the last element will then contain the remaining unsplit text.
+     * 
+     * If the string contains invalid UTF-8 (which makes the unicode-aware split
+     * fail), the split is retried without the unicode modifier as a fallback so
+     * that this method always returns an array unless the input is unsplittable
+     * even as raw bytes.
      * 
      * @param string $string
      * @param int $limit
+     * @throws DataTypeCastingError
      * @return string[]
      */
     public static function splitLines(string $string, int $limit = null) : array
     {
-        return preg_split("/\R/u", $string, ($limit > 0 ? $limit : -1));
+        $max = ($limit > 0 ? $limit : -1);
+        $result = preg_split("/\R/u", $string, $max);
+        // preg_split() returns false on error - e.g. when the string contains
+        // invalid UTF-8 and the unicode modifier `u` cannot be applied. In that
+        // case retry without the modifier before giving up.
+        if ($result === false) {
+            $result = preg_split("/\R/", $string, $max);
+        }
+        if ($result === false) {
+            throw new DataTypeCastingError('Cannot split string into lines - invalid characters detected!');
+        }
+        return $result;
     }
     
     /**

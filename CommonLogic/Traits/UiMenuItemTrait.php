@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Traits;
 
+use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Interfaces\Selectors\UiPageGroupSelectorInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\DataTypes\StringDataType;
@@ -257,5 +258,33 @@ trait UiMenuItemTrait
     public function hasIcon() : bool
     {
         return $this->getIcon() !== null && $this->getIcon() !== '';
+    }
+    
+    public function __toString() : string
+    {
+        return $this->getName() . ' [' . $this->getAliasWithNamespace() . ']';
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::isVisible()
+     */
+    public function isVisible() : bool
+    {
+        return $this->menuVisible;
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuVisible()
+     */
+    public function setMenuVisible(?bool $menuVisible) : UiMenuItemInterface
+    {
+        if (! is_null($menuVisible)) {
+            $this->menuVisible = BooleanDataType::cast($menuVisible);
+        }
+        return $this;
     }
 }

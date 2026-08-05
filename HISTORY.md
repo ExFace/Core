@@ -1,5 +1,148 @@
 # Release history
 
+## 1.39 - 04.06.2026
+
+Big points
+
+- New navigation controls in UI5 facade. Much improved side navigation and 
+tiles with more interactivity, search, etc.
+- All new Cloud IDE with Monaco Code editor, Toast UI markdown editor, image 
+  preview, Side-by-side diffs and more.
+
+New features
+
+- [axenox.Deployer](https://github.com/axenox/deployer) can now deploy to
+  mutiple hosts at once and also build+deploy in one step.
+- AI in [axenox.GenAI app](https://github.com/axenox/genai)
+  - Much improved agent editor with a dedicated markdown editor for the instructuons
+  - New AI tools: `ReadFileTool`, `ReadFolderTool`, `WriteFileTool`, 
+    `ReadDataSheetTool`, `ImportTool`, `FindObjectTool`, `GetTimeTool`
+  - Now displaying errors and warnings directly in the conversation logs
+  - Built-in agents
+    - The SQL assistant from axenox.IDE can now create migration file automatically
+    - Custom Formula generator agent to create formulas in any project
+- Added data flow mutations in [axenox.ETL](https://github.com/axenox/etl) app
+- UI5 facade - [exface.UI5Facade](https://github.com/exface/ui5facade)
+  - Tours
+    - Fully preconfigured tours with all steps defined in the tour as an 
+      alternative to waypoint-driven tours
+    - Support for auto-starting tours
+    - Binding widget function to the "Next" button of a tour step
+  - Improved functionality of widget setups
+    - Users can now make their setups public
+    - Setups now include header filters
+- New health check facade at `api/health` to check if system is up
+- New formulas: `=CaseWhen()`, `=VersionIncrease()`, `=JsonList()`
+- New human-friendly error messages for SQL errors in MS SQL and PostgreSQL - in 
+  particular, constraint errors. This reduces the need for 
+  `PreventDuplicatesBehavior` for many tables with unique constraints.
+- Advanced "techie" mode for SQL filters: e.g. `sql:like:%[0-9]`
+- New `StaticEventListenerInstaller` to register static event listeners in
+  apps other than the Core.
+- Background user-sync in [axenox.Microsoft365Connector](https://github.com/axenox/microsoft365connector/)
+- `examples` property in service parameter models
+- Placeholders in function `run_command` of `Console` widgets allowing to 
+  use input data in CLI commands
+
+Improvements
+
+- Improved DataCarousel widget in UI5 - now keeps table setups, filter and 
+  sorting when moving the carousel
+- PostgreSQL database installer now support schema compare
+- Customizable filter for tasks in `Gantt` widget via `data` property in 
+  `tasks` model
+- Improved action `CustomDataSourceQuery` to run only once for multiple 
+  input rows if possible
+- Added `skip_action_if_input_invalid` to `ActionChain`
+- Added `required` property for `ImageGallery` widget
+- Many improvements in [axenox.BDT](https://github.com/axenox/bdt) app for automated tests
+
+## 1.38 - 16.04.2026
+
+Big Points:
+
+- All new usage analytics app [axenox.Analytics](https://github.com/axenox/analytics) 
+- Visually improved `DataSpreadSheet` widget with lots of improvements and
+  clear separation between editable and non-editable areas.
+- Metrics framework for automated tests in [axenox.BDT](https://github.
+  com/axenox/bdt) app
+
+New features:
+
+- AI in [axenox.GenAI app](https://github.com/axenox/genai)
+  - File uploads to the AI chat
+  - New agent versions will automatically inherit connections from previous 
+    versions
+  - New AI tool `MockTool` for testing prompts with tools
+- New data mapper `column_dictionary_mapping`
+- `wrap_lines` property for `InputCode` widget
+- Action `DownloadFile` no automatically converts file contents to binary if 
+  needed
+
+Improvements:
+
+- Support `[#placeholders#]` in data addresses of file query builders
+- Validating behaviors now support `only_if_data_matches_conditions` - e.g. 
+  `ValidatingBehavior` and `ChecklistingBehavior`
+- `CalculatingBehavior` now supports `only_if_attributes_change`
+
+## 1.37 - 19.03.2026
+
+New features:
+
+- [SAP OpenUI5 facade](https://github.com/ExFace/UI5Facade/):
+  - Big Update to OpenUI5 version 1.144
+  - New Theme `Fiori 4 (Horizon)` now supported
+  - JavaScript errors are now sent to the main server log and available for administrators (if front-end tracing is on!)
+  - Widget highlight mode in debug context for app designers (highlights widgets when hovering over them)
+  - Support for colored SVG icons (icon set `svg_colored`)
+- Attributes can now have icons and abbrevations, that will be used as captions for narrow data colums
+- Dedicated log for app install/repair operation
+- New features for [axenox.GenAI](https://github.com/axenox/genai/) app
+  - Support for ChatGPT 5 and OpenAI "responses API"
+  - Universal chat page in AI administration to try/test any agent - even inactive or unpublished versions
+- New formulas `=Right()`, `=Substring()`, `=TimeFromSeconds()` and `=JsonPrettify()`
+
+Experimental features:
+
+- New authenticator for Microsoft Azure AppRegistration tokens in the [axenox.Microsoft365Connector](https://github.
+  com/axenox/microsoft365connector/) app
+- Tours to guide users through the app and its features (experimental!)
+- New docs editor in Administration > Docs with a tree structure for better organization of documentation (experimental!)
+
+Improvements:
+
+- Export actions (e.g. `exface.Core.ExportXLSX`) now include optional columns and other configurator options of their data widget.
+- Behaviors can now be `disabled_if_app_not_installed`
+- Improved admininistration UI:
+  - List of attributes for attribute groups now includes custom attributes and inherited attributes
+- Improved logs
+  - More links to related documentation and other log messages
+- New option `exclude_options` for `InputSelect` and similar widgets to exclude certain options from being shown
+- Improved widget `DataCarousel`: added `details_title_column` and improved prefill handling
+- New option `hidden_if_no_columns` for data widgets
+- Many improvements in the `Map` widget
+- New option `call_after_all_actions_complete` for `CallActionBehavior` to postone action execution until all other actions, chains, behaviors, etc. are done
+- Completely reworked monitoring long running requests, improved configuration
+- Many improvements for PostgreSQL - in particular improved error handling
+- Custom `lookup_sheet` template for `LookupMapping`s
+- Improvements in the SAP OpenUI5 facade:
+  - Widgets `DataTree` and `Gantt` now supports `freeze_columns`
+
+## 1.36 - 09.02.2026
+
+New features:
+
+- Long running action log
+
+Improvements:
+
+- Property to hide tables without visible columns
+- Config option to block tracing on a system
+- Input row count check for `CallActionBehavior`
+
+## 1.35 - 23.01.2026
+
 ## 1.34 - 10.12.2025
 
 New features:

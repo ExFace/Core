@@ -9,6 +9,15 @@ use exface\Core\Exceptions\RuntimeException;
 class SqlDataType extends CodeDataType
 {
     /**
+     * {@inheritDoc}
+     * @see CodeDataType::getLanguage()
+     */
+    public function getLanguage(): ?string
+    {
+        return parent::getLanguage() ?? 'sql';
+    }
+    
+    /**
      * @param string $sql
      * @param string[] $dialects
      * @return string

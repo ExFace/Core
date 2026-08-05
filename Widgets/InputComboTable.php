@@ -19,6 +19,7 @@ use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
@@ -176,12 +177,6 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
     
     private $tableDataSheet = null;
     
-    /**
-     * 
-     * @var WidgetLinkInterface[]
-     */
-    private $incomingLinks = [];
-    
     private $autosearch_single_suggestion = false;
     
     /**
@@ -232,9 +227,20 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
             $table->importUxonObject($table_uxon);
         }
         
+        // A combo bound to the LABEL attribute should behave like a relation: show the objects
+        // default-display columns, and dont aggreagate over the values like for normal attributes.
+        // see ShowLookupDialog->enrichDataWidget() for the lookup dialogue handling
+        // NOTE sah: double check with object label alias, because $attr->isLabelForObject() might sometimes return false for historical reasons
+        $bIsBoundToLabelAttribute = $this->isRelation() === false
+            && $this->isBoundToAttribute() === true
+            && (
+                $this->getAttribute()->isLabelForObject() === true
+                || $this->getAttribute()->getAliasWithRelationPath() === MetaAttributeInterface::OBJECT_LABEL_ALIAS
+            );
+        
         // Add default attributes
         if (! $table_uxon->hasProperty('columns') || $table_uxon->getProperty('columns')->isEmpty()) {
-            if ($this->isRelation()) {
+            if ($this->isRelation() || $bIsBoundToLabelAttribute) {
                 foreach ($table->createDefaultColumns() as $col) {
                     $table->addColumn($col);
                 }
@@ -256,7 +262,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
             }
         }
         
-        if (! $this->isRelation()) {
+        if (! $this->isRelation() && ! $bIsBoundToLabelAttribute) {
             $table->setAggregateByAttributeAlias($this->getAttributeAlias());
         }
         
@@ -886,28 +892,7 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
      */
     public function getValueLinksToThisWidget() : array
     {
-        return $this->incomingLinks;
-    }
-    
-    /**
-     * 
-     * @param WidgetLinkEventInterface $event
-     * @return void
-     */
-    public function handleWidgetLinkedEvent(WidgetLinkEventInterface $event)
-    {
-        $link = $event->getWidgetLink();
-        if ($link->getTargetWidgetId() !== $this->getId()) {
-            return;
-        }
-        
-        foreach ($this->incomingLinks as $existing) {
-            if ($link->getSourceWidget() === $existing->getSourceWidget() && $link->getTargetColumnId() === $existing->getTargetColumnId()) {
-                return;
-            }
-        }
-        
-        $this->incomingLinks[] = $event->getWidgetLink();
+        return $this->getLinksToThisWidget();
     }
     
     public function findRelationPathFromObject(MetaObjectInterface $object) : ?MetaRelationPathInterface

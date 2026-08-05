@@ -872,7 +872,7 @@ class TranslatableBehavior extends AbstractBehavior
         $dataType = $attribute->getDataType();
         
         if (! $dataType instanceof UxonDataType) {
-            throw new BehaviorRuntimeError($this, 'Cannot translate UXON properties in attribute "' . $attribute->getAliasWithRelationPath() . '" of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
+            throw new BehaviorRuntimeError($this, 'Cannot translate UXON properties in attribute `' . $attribute->getAliasWithRelationPath() . '` of object "' . $attribute->getObject()->getAliasWithNamespace() . '": attribute is not a UXON!');
         }
         
         $schemaName = $dataType->getSchema();

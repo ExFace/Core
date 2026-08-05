@@ -91,5 +91,19 @@ interface ConditionInterface extends ConditionalExpressionInterface
      * @return bool
      */
     public function willIgnoreEmptyValues() : bool;
-}
 
+    /**
+     * Returns TRUE if this condition applies to aggregated values.
+     * 
+     * @return bool
+     */
+    public function willApplyToAggregatedValues() : bool;
+
+    /**
+     * Rebases the expressions in this condition to the object at the end of the given relation path
+     * 
+     * @param MetaRelationPathInterface|string $relationPathToNewBaseObject
+     * @return ConditionInterface
+     */
+    public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject) : ConditionInterface;
+}

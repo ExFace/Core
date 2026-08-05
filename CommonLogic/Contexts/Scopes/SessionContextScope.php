@@ -550,7 +550,7 @@ class SessionContextScope extends AbstractContextScope
      * @param string $value            
      * @return SessionContextScope
      */
-    protected function setSessionLocale(string $value) : SessionContextScope
+    public function setSessionLocale(string $value) : SessionContextScope
     {
         $this->session_locale = $value;
         return $this;

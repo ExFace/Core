@@ -676,6 +676,48 @@
 		 * 
 		 */
 		data: {
+			
+			/**
+			 * Compares two JSON objects for equality. (Regardless of the order of the keys in the objects)
+			 * @param {*} obj1 
+			 * @param {*} obj2 
+			 * @param {string[]} [excludeKeys] Keys to ignore during comparison
+			 * @returns {boolean}
+			 */
+			compareJSONObjects: function(obj1, obj2, excludeKeys) {
+				excludeKeys = Array.isArray(excludeKeys) ? excludeKeys : [];
+				if (obj1 === obj2) return true;
+
+				if (obj1 === null || obj2 === null) return obj1 === obj2;
+				if (typeof obj1 !== "object" || typeof obj2 !== "object") return false;
+
+				// Arrays
+				const aIsArr = Array.isArray(obj1);
+				const bIsArr = Array.isArray(obj2);
+				if (aIsArr || bIsArr) {
+					if (!aIsArr || !bIsArr || obj1.length !== obj2.length) return false;
+					for (let i = 0; i < obj1.length; i++) {
+					if (!this.compareJSONObjects(obj1[i], obj2[i], excludeKeys)) return false;
+					}
+					return true;
+				}
+
+				// Objects (ignore key order)
+				const aKeys = Object.keys(obj1).filter(function(key) {
+					return excludeKeys.indexOf(key) === -1;
+				});
+				const bKeys = Object.keys(obj2).filter(function(key) {
+					return excludeKeys.indexOf(key) === -1;
+				});
+				if (aKeys.length !== bKeys.length) return false;
+
+				for (const key of aKeys) {
+					if (!Object.prototype.hasOwnProperty.call(obj2, key)) return false;
+					if (!this.compareJSONObjects(obj1[key], obj2[key], excludeKeys)) return false;
+				}
+
+				return true;
+			},
 
 			/**
 			 * Returns TRUE if two data rows arrays contain exactly the same rows (possibly in different order)
@@ -835,6 +877,21 @@
 							bResult = ! bResult;
 						}
 	                    break;
+					case '[=':		// ComparatorDataType::IS_IN
+	                case '![=':		// ComparatorDataType::NOT_IS_IN
+	                    bResult = function() {
+			                var rightValues = ((mRight || '').toString()).split(sMultiValDelim);
+			                for (var i = 0; i < rightValues.length; i++) {
+			                    if (exfTools.data.compareValues(mLeft, rightValues[i].trim(), '=', sMultiValDelim)) {
+			                        return true;
+			                    }
+			                }
+			                return false;
+			            }();
+						if (sComparator === '![=') {
+							bResult = ! bResult;
+						}
+	                    break;
 					case '][': 		// ComparatorDataType::LIST_INTERSECTS
 	                case '!][':		// ComparatorDataType::LIST_NOT_INTERSECTS
 	                    bResult = function() {
@@ -883,7 +940,6 @@
 	                case '[<=': 	// ComparatorDataType::LIST_EACH_LESS_THAN_OR_EQUALS
 	                case '[>': 		// ComparatorDataType::LIST_EACH_GREATER_THAN
 	                case '[>=': 	// ComparatorDataType::LIST_EACH_GREATER_THAN_OR_EQUALS
-	                case '[=': 		// ComparatorDataType::LIST_EACH_IS
 	                case '[!=': 	// ComparatorDataType::LIST_EACH_IS_NOT
 						if (mLeft === '' || mLeft === null || mLeft === undefined) {
 							bResult = exfTools.data.compareValues(mLeft, mRight, sComparator.substring(1), sMultiValDelim);
@@ -1160,6 +1216,69 @@
 				}
 				return await navigator.clipboard.readText();
 			}*/
+		},
+
+		/**
+		 * Filter operator tools for column header filters
+		 * 
+		 * Extracts operator prefixes typed into column header filter inputs.
+		 * 
+		 * Supported prefixes (longest match wins):
+		 * - `!==` (not equals)
+		 * - `==`  (equals)
+		 * - `!=`  (not contains)
+		 * - `>=`  (greater than or equal)
+		 * - `<=`  (less than or equal)
+		 * - `>`   (greater than)
+		 * - `<`   (less than)
+		 * - `=`   (equals/contains)
+		 * 
+		 * If no known prefix is found, defaults to no operator.
+		 */
+		filter: {
+
+			/**
+			 * Raw operator prefixes for filtering 
+			 * Order matters: longer prefixes must come first to avoid partial matches.
+			 */
+			_operatorMap: [
+				'!==',
+				'==',
+				'!=',
+				'>=',
+				'<=',
+				'>',
+				'<',
+				'='
+			],
+
+			/**
+			 * Extracts an operator prefix from a header filter input value.
+			 * 
+			 * Returns an object `{ operator: string, value: string }` where `operator` is the
+			 * raw operator prefix (e.g., '==', '!=', '>=') and `value` is the remaining 
+			 * filter value after stripping the prefix. If no prefix matches, `operator` is empty string
+			 * and `value` is the original input unchanged.
+			 * 
+			 * @param {string} sInput - Raw value including operator
+			 * @returns {{ operator: string, value: string }}
+			 */
+			parseOperator: function(sInput) {
+				if (typeof sInput !== 'string') {
+					return { operator: '', value: sInput };
+				}
+				var aMap = this._operatorMap;
+				for (var i = 0; i < aMap.length; i++) {
+					var sPrefix = aMap[i];
+					if (sInput.indexOf(sPrefix) === 0) {
+						return {
+							operator: sPrefix,
+							value: sInput.slice(sPrefix.length)
+						};
+					}
+				}
+				return { operator: '', value: sInput };
+			}
 		},
 		
 		/**

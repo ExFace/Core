@@ -32,7 +32,7 @@ class User extends \exface\Core\CommonLogic\Model\Formula
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\Model\Formula::run()
      */
-    public function run($property = null)
+    public function run($property = null, bool $noCache = false)
     {
         // If looking for the username, get it from the authenticated token without
         // loading user data, etc.
@@ -57,9 +57,9 @@ class User extends \exface\Core\CommonLogic\Model\Formula
                 if ($userObj->hasAttribute($property)) {
                     $attr = $userObj->getAttribute($property);
                     if ($attr->getDataType()->isSensitiveData()) {
-                        throw new FormulaError($this, 'Cannot show user property "' . $property . '" - it is concidered sensitive data!');
+                        throw new FormulaError($this, 'Cannot show user property "' . $property . '" - it is considered sensitive data!');
                     }
-                    return $user->getAttribute($property);
+                    return $user->getAttribute($property, $noCache);
                 } else {
                     $getter ='get' . StringDataType::convertCaseUnderscoreToPascal($property);
                     if (method_exists($user, $getter)) {

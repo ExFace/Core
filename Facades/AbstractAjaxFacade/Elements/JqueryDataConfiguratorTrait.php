@@ -41,6 +41,54 @@ trait JqueryDataConfiguratorTrait
         }
         return;
     }
+
+    /**
+     * Returns the filters of a data object, and adds a hidden flag, indicating whether the filter is hidden or not. 
+     * This only works for rendered filters, as it gets the current JS values of the filters.
+     *
+     * @return string 
+     */
+    public function buildJsFilterGetter() : string
+    {
+        $widget = $this->getWidget();
+        $filters = [];
+        $nestedGroups = [];
+
+        foreach ($widget->getFilters() as $filter) {
+            $filterElement = $this->getFacade()->getElement($filter);
+            if ($filter->hasCustomConditionGroup() === true) {
+                $nestedGroups[] = preg_replace(
+                    '/\}\s*$/',
+                    ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                    preg_replace('/,\s*\}\s*$/', '}', $filterElement->buildJsCustomConditionGroup())
+                );
+            } else {
+                $conditionJsRaw = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
+                if ($filter instanceof \exface\Core\Widgets\RangeFilter) {
+                    // range filters return both from and to conditions, so we need to add the hidden flag to both of them. 
+                    $conditionJs = preg_replace('/,\s*\}\s*(?=,|$)/', '}', $conditionJsRaw);
+                    $filters[] = preg_replace(
+                        '/\}\s*(?=,|$)/',
+                        ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                        $conditionJs
+                    );
+                } else {
+                    $filters[] = preg_replace(
+                        '/\}\s*$/',
+                        ', "hidden" : ' . $this->escapeBool($filter->isHidden() === true) . '}',
+                        preg_replace('/,\s*\}\s*$/', '}', $conditionJsRaw)
+                    );
+                }
+            }
+        }
+
+        $filters = array_filter($filters);
+        if (empty($filters) === false || empty($nestedGroups) === false) {
+            return '{operator: "AND", ignore_empty_values: true, conditions: [' . implode(",\n", $filters) . '], nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
+        }
+
+        return '';
+    }
     
     /**
      * The data JS-object of a configurator widget contains filters, sorters, etc., that are
@@ -77,7 +125,15 @@ trait JqueryDataConfiguratorTrait
                     $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
                     $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
                 } else {
-                    $filter_value = '"' . $filter->getValue() . '"';
+                    // RangeFilter needs special handling in unrendered mode:
+                    // getValue() concatenates "from..to", resulting in ".." when both are empty,
+                    // so if the from/to values are not set (and theres no widget link), we need to pass an empty string instead
+                    if ($filter instanceof \exface\Core\Widgets\RangeFilter && $filter->hasValue() === false) {
+                        $filter_value = '""';
+                    }
+                    else {
+                        $filter_value = '"' . $filter->getValue() . '"';
+                    }
                 }
                 
                 if ($filter->hasCustomConditionGroup() === true) {

@@ -41,7 +41,7 @@ trait DataPointLayerTrait
      * 
      * @return string
      */
-    public function getLatitudeAttributeAlias() : string
+    public function getLatitudeAttributeAlias() : ?string
     {
         return $this->latitudeAttributeAlias;
     }
@@ -101,7 +101,7 @@ trait DataPointLayerTrait
      * 
      * @return string
      */
-    public function getLongitudeAttributeAlias() : string
+    public function getLongitudeAttributeAlias() : ?string
     {
         return $this->longitudeAttributeAlias;
     }

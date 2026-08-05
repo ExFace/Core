@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 use exface\Core\Exceptions\UxonSyntaxError;
+use exface\Core\Interfaces\ComponentRegistryInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'autoload.php';
@@ -73,6 +74,8 @@ class Workbench implements WorkbenchInterface
     private $mutator = null;
     
     private $startTime = null;
+    
+    private ?ComponentRegistryInterface $componentRegistry = null;
 
     public function __construct(array $config = null)
     {   
@@ -460,26 +463,6 @@ class Workbench implements WorkbenchInterface
         }
         return $this->getApp($task->getActionSelector()->getAppAlias())->handle($task);
     }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\WorkbenchInterface::getAppFolder()
-     */
-    public function getAppFolder(AppSelectorInterface|string $selector) : string 
-    {
-        $alias = is_string($selector) ? $selector : $selector->getAppAlias();
-        $pathInVendor = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, DIRECTORY_SEPARATOR, $alias);
-        $pathInVendorLC = mb_strtolower($pathInVendor);
-        $pathToVendor = $this->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR;
-        switch (true) {
-            case is_dir($pathToVendor . $pathInVendorLC):
-                return $pathInVendorLC;
-            case is_dir($pathToVendor . $pathInVendor):
-                return $pathInVendor;
-        }
-        return $pathInVendorLC;         
-    }
 
     /**
      * 
@@ -529,5 +512,13 @@ class Workbench implements WorkbenchInterface
             $this->mutator = new Mutator($this);
         }
         return $this->mutator;
+    }
+    
+    public function getComponentRegistry() : ComponentRegistryInterface
+    {
+        if ($this->componentRegistry === null) {
+            $this->componentRegistry = new ComponentRegistry($this);
+        }
+        return $this->componentRegistry;
     }
 }

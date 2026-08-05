@@ -170,5 +170,12 @@ interface EntityListInterface extends iCanBeConvertedToUxon, \IteratorAggregate
      * @return EntityListInterface
      */
     public function sort(callable $callback) : EntityListInterface;
+
+    /**
+     * Returns a copy of this list, containing only those entities, that are not present in the given other list.
+     * 
+     * @param EntityListInterface $other_list
+     * @return EntityListInterface
+     */
+    public function diff(EntityListInterface $other_list) : EntityListInterface;
 }
-?>

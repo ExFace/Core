@@ -515,4 +515,9 @@ class MimeTypeDataType extends StringDataType implements EnumDataTypeInterface
         
         return array_key_exists(mb_strtolower($mime), $mime_map) === true ? $mime_map[$mime] : null;
     }
+    
+    public static function findeMimeType(string $mime): string
+    {
+        return static::getMimeTypesByExtension()[$mime] ?? $mime;
+    }
 }

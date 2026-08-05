@@ -822,13 +822,13 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     public function getHiddenIf() : ?ConditionalProperty
     {
-        // If there is a disabled_if already, use it
+        // If there is a 'normal' hidden_if already, get it
         $ownProperty = parent::getHiddenIf();
-        if ($ownProperty !== null) {
-            return $ownProperty;
-        }
+
         // Otherwise see if we can generate one from the action
-        if (! $this->hasAction()) {
+        if (! $this->hasAction() && $ownProperty === null) {
+            // only return null here if there is no 'normal' hidden_if 
+            // otherwise hidden_ifs on buttons without actions (for example MenuButtons) do not work anymore
             return null;
         }
 
@@ -863,13 +863,27 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         }
 
         switch (true) {
+            case $hiddenIfInvalid !== null && $hiddenIfUnauthorized !== null && $ownProperty !== null:
+                // normal hidden_if & hidden_if_input_invalid && hidden_if_unauthorized
+                return $ownProperty->mergeWithOR($hiddenIfInvalid, $hiddenIfUnauthorized);
+            case $hiddenIfInvalid !== null && $hiddenIfUnauthorized === null && $ownProperty !== null:
+                // normal hidden_if & hidden_if_input_invalid
+                return $ownProperty->mergeWithOR($hiddenIfInvalid);
+            case $hiddenIfInvalid === null && $hiddenIfUnauthorized !== null && $ownProperty !== null:
+                // normal hidden_if & hidden_if_unauthorized
+                return $ownProperty->mergeWithOR($hiddenIfUnauthorized);
             case $hiddenIfInvalid !== null && $hiddenIfUnauthorized === null:
+                // hidden_if_input_invalid
                 $this->setHiddenIf($hiddenIfInvalid);
                 break;
             case $hiddenIfUnauthorized !== null && $hiddenIfInvalid === null:
+                // hidden_if_unauthorized
                 $this->setHiddenIf($hiddenIfUnauthorized);
                 break;
             case $hiddenIfInvalid !== null && $hiddenIfUnauthorized !== null:
+                // hidden_if_input_invalid && hidden_if_unauthorized
+
+                // TODO: could at some point also be rewritten to mergewithOR?
                 $this->setHiddenIf(new UxonObject([
                     'operator' => EXF_LOGICAL_OR,
                     'condition_groups' => [
@@ -877,6 +891,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                         $hiddenIfUnauthorized->toArray()
                     ]
                 ]));
+
                 break;
         }
 
@@ -890,7 +905,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      */
     protected function getConditionalPropertyFromAction(ActionInterface $action) : ?UxonObject
     {
-        // If there the input is not going to be used, don't bother at all
+        // If the input is not going to be used, don't bother at all
         if (($action instanceof iPrefillWidget) && $action->getPrefillWithInputData() === false) {
             return null;
         }
@@ -898,7 +913,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
         $inputWidget = $this->getInputWidget();
         $inputWidgetObject = $inputWidget->getMetaObject();
 
-        // Generate an xxx_if property for every check, that is applicable to the input widgets object
+        // Generate a xxx_if property for every check, that is applicable to the input widgets object
         // If there will be multiple checks, we gather them into an array and use them in a nested
         // OR condition later
         $uxons = [];
@@ -1025,6 +1040,9 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                         $col = $dataWidget->createColumnFromUxon($colUxon);
                         $dataWidget->addColumn($col);
                     }
+                    // Mark the column as system-required to make sure it is always read - even if removed from the 
+                    // users setup
+                    $col->setSystem(true);
 
                     $comp = $cond->getComparator();
                     // Multi-select data widget can only handle list-comparators properly as their
@@ -1131,11 +1149,25 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                     break;
                 // Non-static (data driven) formulas
                 case $expr->isFormula():
+                    //if the container already has a input widget that is representing a required attribute of the formula, dont add a widget for the formula
+                    //as we guess the formula should be live calculated with the NEW input data of the required attributes widgets
+                    $reqAttrAlias = $expr->getRequiredAttributes();
+                    foreach ($reqAttrAlias as $attrAlias) {
+                        $matches = $containerWidget->findChildrenRecursive(function($child) use ($attrAlias, $containerWidget) {
+                            return ($child instanceof Value)
+                                && $child->isBoundToAttribute() === true
+                                && $child->getAttributeAlias() === $attrAlias;
+                        });
+                        if (!empty($matches)) {
+                            return null;
+                        }
+                    }
                     $matches = $containerWidget->findChildrenRecursive(function($child) use ($expr, $containerWidget) {
                         return ($child instanceof Value)
                             && $child->getCalculationExpression() !== null
                             && $child->getCalculationExpression()->__toString() === $expr->__toString();
                     });
+                    
                     if (null === $w = ($matches[0] ?? null)) {
                         // Try to add an InputHidden for the missing attribute
                         // Only do this for containers, that all InputHidden widgets
@@ -1243,14 +1275,18 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
         if ($this->hasAction()) {
-            // Make sure autogenerated disabled_if and hidden_if are generated here because they
-            // might need extra data
-            if (parent::getDisabledIf() === null) {
-                $this->getDisabledIf();
-            }
-            if (parent::getHiddenIf() === null) {
-                $this->getHiddenIf();
-            }
+            // Make sure disabled_if and hidden_if are fully instantiated here because they might need extra data.
+            // Most importantly, they all widget links must be instantiated to make sure `OnWidgetLinked` events
+            // are fired. This will allow linked widgets to auto-add required columns.
+            /* @var $condProp \exface\Core\Widgets\Parts\ConditionalProperty */
+            foreach (array_filter([$this->getDisabledIf(), $this->getHiddenIf()]) as $condProp) {
+                // IDEA: need a nicer way to make sure, all links are instantiated here
+                foreach ($condProp->getConditionGroup()->getConditionsRecursive() as $cond) {
+                    $cond->getValueLeftLink();
+                    $cond->getValueRightLink();
+                }
+            } 
+
             // If the buttons logic has added new widgets to the input widget, make sure they are
             // prefilled!
             // @see getConditionPropertyFromAction() for details

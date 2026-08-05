@@ -33,13 +33,14 @@ class JsBooleanFormatter extends AbstractJsDataTypeFormatter
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFormatter()
      */
-    public function buildJsFormatter($jsInput)
+    public function buildJsFormatter($jsInput, bool $allowHtml = true)
     {
         $jsFalsy = implode(' || ', $this->getFalsyValues('val === '));
         $jsTruthy = implode(' || ', $this->getTruthyValues('val === '));
-        
-        $str =  <<<JS
-function(val){
+        $formattedTrueJs = json_encode($allowHtml ? $this->getHtmlChecked() : $this->getDataType()->format(true), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $formattedFalseJs = json_encode($allowHtml ? $this->getHtmlUnchecked() : $this->getDataType()->format(false), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        return <<<JS
+function(val, sTrue, sFalse){
     if (val === undefined || val === null) {
         val = {$this->getJsEmptyText('val')};
     }
@@ -48,12 +49,11 @@ function(val){
         val = val.toLowerCase();
     }
     
-    if ({$jsFalsy}) return '{$this->getHtmlUnchecked()}';
-    if ({$jsTruthy}) return '{$this->getHtmlChecked()}';
+    if ({$jsFalsy}) return sFalse;
+    if ({$jsTruthy}) return sTrue;
     return val;
-}({$jsInput})
+}({$jsInput}, {$formattedTrueJs}, {$formattedFalseJs})
 JS;
-        return $str;
     }
     
     /**

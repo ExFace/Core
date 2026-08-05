@@ -138,6 +138,7 @@ use exface\Core\CommonLogic\DataSheets\PivotSheet;
  */
 class DataMatrix extends DataTable
 {
+    private ?bool $formatValuesOnTranspose = null;
 
     /**
      * 
@@ -150,6 +151,7 @@ class DataMatrix extends DataTable
         $this->setPaginate(false);
         $this->setShowRowNumbers(false);
         $this->setMultiSelect(false);
+        $this->setConfiguratorSetupsEnabled(false);
     }
 
     /**
@@ -209,13 +211,49 @@ class DataMatrix extends DataTable
                 $pivotSheet->importUxonObject($data_sheet->exportUxonObject());
             }
             $pivotSheet = parent::prepareDataSheetToRead($pivotSheet);
+            // Make sure, the transposed columns are always present - even if not requested from outside
+            // TODO actually, why not allow users to unselect transposed columns in the configurator?
             foreach ($this->getColumnsTransposed() as $valuesWidgetCol) {
-                $valuesSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getDataColumnName());
-                $headerSheetCol = $pivotSheet->getColumns()->get($valuesWidgetCol->getLabelColumn()->getDataColumnName());
+                $labelWidgetCol = $valuesWidgetCol->getLabelColumn();
+                // Since none of the columns will be passed to any actions (because they currently cannot be "un-transposed")
+                // we do not need calculation and attribute_alias both. If it is a calculated column, we take the
+                // calculation expression, otherwise the attribute_alias expression.
+                $valuesSheetCol = $pivotSheet->getColumns()->addFromExpression($valuesWidgetCol->getCalculationExpression() ?? $valuesWidgetCol->getExpression());
+                $headerSheetCol = $pivotSheet->getColumns()->addFromExpression($labelWidgetCol->getCalculationExpression() ?? $labelWidgetCol->getExpression());
                 $pivotSheet->addColumnToTranspose($valuesSheetCol, $headerSheetCol);
             }
             return $pivotSheet;
         }
         return parent::prepareDataSheetToRead($data_sheet);
+    }
+
+    /**
+     * Returns TRUE to format transposed values in JavaScript and FALSE to keep raw values.
+     *
+     * If not set explicitly, facades can apply their own default behavior.
+     *
+     * @param bool $default
+     * @return bool
+     */
+    public function getFormatValuesOnTranspose(bool $default = true) : bool
+    {
+        return $this->formatValuesOnTranspose ?? $default;
+    }
+
+    /**
+     * Set to TRUE/FALSE to control if transposed values are formatted by datatype formatters, or if they use raw values.
+     *
+     * If not set, facades can apply their own default (e.g. UI5 defaults to FALSE).
+     *
+     * @uxon-property format_values_on_transpose
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return DataMatrix
+     */
+    public function setFormatValuesOnTranspose(bool $value) : DataMatrix
+    {
+        $this->formatValuesOnTranspose = $value;
+        return $this;
     }
 }

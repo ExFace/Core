@@ -75,7 +75,7 @@
       - [SubPageList Placeholder](documentation/placeholders/SubPageListPlaceholder.md)
     - [The "Docs" folder](documentation/docs_structure.md)
   - [Getting started](Getting_started/index.md)
-    - [Introduction \& key concepts](Getting_started/Introduction.md)
+    - [Platform introduction \& key concepts](Getting_started/Introduction.md)
     - [Welcome\!](Getting_started/Welcome.md)
   - [Installation](Installation/index.md)
     - [IIS with SQL Server](Installation/IIS_with_SQL_Server.md)
@@ -95,6 +95,7 @@
       - [Authentication via LDAP and LDAPS](Security/Authentication/LDAP.md)
       - [Single\-Sign\-On via SQL](Security/Authentication/SSO_via_SQL.md)
       - [Single\-Sign\-On with data connections](Security/Authentication/SSO_with_any_data_connection.md)
+      - [Two\-factor authentication](Security/Authentication/Two-factor_authentication.md)
     - [Authorization and permissions](Security/Authorization/index.md)
       - Authorization points
         - [Action authorization point](Security/Authorization/Authorization_points/Action_AP.md)

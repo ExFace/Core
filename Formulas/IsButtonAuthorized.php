@@ -2,6 +2,7 @@
 
 namespace exface\Core\Formulas;
 
+use exface\Core\CommonLogic\DataSheets\DataReadPrefetcher;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
@@ -114,23 +115,48 @@ class IsButtonAuthorized extends Formula
 
         // Create fake input data for a single row
         $row = $mappedData->getRow($this->getCurrentRowNumber());
-        $inputData = $mappedData->copy()->removeRows()->addRow($row, false, false);
+        $mappedData->getSorters()->removeAll();
+        $currentRowData = $mappedData->copy()->removeRows()->addRow($row, false, false);
         if ($mapByRow === true) {
-            $inputData = $mapper->map($inputData);
+            $currentRowData = $mapper->map($currentRowData);
         }
 
         // Create a fake task
-        $task = TaskFactory::createFromDataSheet($inputData);
+        $task = TaskFactory::createFromDataSheet($currentRowData);
+        
+        // Listen to data reads on the object of the data sheet we are filling and remember read column, that were
+        // not there yet. The observer will add these column to the $mappedData and fill them for ALL rows when they
+        // are read for the first time - this will prevent these column from bein read separately for every row this
+        // formula is calculating
+        /* TODO test #DataReadPrefetcher here
+        $observer = new DataReadPrefetcher($mappedData->getMetaObject(), $mappedData);
+        $observer->setPrefetchOnEveryRead(true);
+        $observer->addDataSheetToEnrich($currentRowData);
+        $observer->start();
+        */
 
         // See if the action is authorized for this input data
         try {
             $actionAP->authorize($action, $task);
             $result = true;
+            /* TODO pass ALL rows to the authorization point at once instead of the current row only
+             * This should be much faster as any additional data required for policies will only need to be loaded once
+             * and not once per row! A prefetcher does not always help here, because input mapper eventually evaluated
+             * by the policies themselves still are applied per-row as the policy does not know, that originally there
+             * were multiple rows.
+             *//*
+            $task = TaskFactory::createFromDataSheet($allData);
+            $decisions = $actionAP->authorizePerRow($action, $task);
+            $result = $decisions[$this->getCurrentRowNumber()]->getPermitted();
+            */
         } catch (AccessPermissionDeniedError $e) {
             $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             $result = false;
         }
 
+        /* TODO test #DataReadPrefetcher here
+        $observer->stop();
+        */
         // Stop blocking recursion
         unset($this->inProgressFor[$cacheKey]);
 

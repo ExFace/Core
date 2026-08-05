@@ -74,6 +74,8 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private ?string $relationPathToParent = null;
     private ?DataColumnGroup $columnGroup = null;
     private string $hideIfMissingDate = self::CFG_HIDE_IF_MISSING_BOTH;
+    
+    private ?UxonObject $nestedDataTemplate = null;
 
     /**
      * @see ImportUxonObjectTrait::importUxonObject()
@@ -779,12 +781,41 @@ JS;
                 $dw->addColumn($this->nestedDataColumn);
             }
             
-            $this->nestedDataColumn->setNestedData(new UxonObject([
-                'object_alias' => $this->objectAlias,
-                'columns' => []
-            ]));
+            $nestedDataTemplate = $this->nestedDataTemplate ?? new UxonObject();
+            $nestedDataTemplate->setProperty('object_alias', $this->objectAlias);
+            if (! $nestedDataTemplate->hasProperty('columns')) {
+                $nestedDataTemplate->setProperty('columns', []);
+            }
+            $this->nestedDataColumn->setNestedData($nestedDataTemplate);
         }
         
         return $this->nestedDataColumn;
+    }
+
+    /**
+     * Custom definition for the calendar item data in case it needs to be read from a different object
+     * 
+     * When using a different `object_alias` for the calendar items, their data will be read separately
+     * using subsheets inside the main widgets read data. For example, if you have `Gantt` or `Scheduler`
+     * widget based on PERSON and you specify TASK as `object_alias` for the calendar items, your data
+     * will contain a subsheets with TASKs for every PERSON. That subsheet can be customized here by
+     * adding filters, sorters, additional columns, etc. 
+     * 
+     * If not set, the subsheet structure will be generated automatically to contain all information required
+     * to render the calendar items.
+     * 
+     * If the calendar items are based on the same object as the main widget, this property will have no effect.
+     * 
+     * @uxon-property data
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\DataSheet
+     * @uxon-template {"filters": {"operator": "AND","conditions":[{"expression": "","comparator": "==","value": ""}]}}
+     * 
+     * @param UxonObject $nestedDataTemplate
+     * @return $this
+     */
+    protected function setData(UxonObject $nestedDataTemplate) : DataCalendarItem
+    {
+        $this->nestedDataTemplate = $nestedDataTemplate;
+        return $this;
     }
 }

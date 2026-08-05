@@ -24,7 +24,7 @@ class IfNullModifier extends AbstractPlaceholderModifier
         $this->default = $default;
     }
     
-    public static function stripFilter(string $expression, string $filterDelimiter = '|') : string
+    public static function stripFilter(string $expression, string $filterDelimiter = AbstractPlaceholderModifier::DELIMITER) : string
     {
         return StringDataType::substringBefore($expression, $filterDelimiter . '??', $expression);
     }

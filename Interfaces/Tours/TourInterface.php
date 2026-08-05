@@ -23,5 +23,5 @@ interface TourInterface
      * 
      * @return string
      */
-    public function getWaypointRoute() : string;
+    public function getWaypointsRoute() : string;
 }

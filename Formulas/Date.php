@@ -11,7 +11,7 @@ use exface\Core\CommonLogic\Model\Formula;
  * Parses (almost) any value into a date in the internal format or a given ICU format.
  * 
  * The first parameter is the value to parse, while the second (optional) parameter is
- * the ICU date format or `locale` for the current language format. Additionall the source 
+ * the ICU date format or `locale` for the current language format. Additionally, the source 
  * format can be defined in the third parameter if it cannot be parsed automatically.
  * 
  * Examples:

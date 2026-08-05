@@ -509,15 +509,23 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
             }
             $customAttrAlias = $row[$lookupAliasName];
             if ($customAttrAlias === null) {
-                throw new BehaviorRuntimeError($this, 'Cannot lookup custom attribute values for ' . $thisObj->__toString() . '. Empty values detected in `' . $lookupAliasName . '` column of ' . $lookupSheet->getMetaObject()->__toString() . ', but these values are required by the CustomAttributesLookupBehavior as `values_attribute_alias_column`!');
+                throw new BehaviorRuntimeError(
+                    $this, 
+                    'Cannot lookup custom attribute values for ' . $thisObj->__toString() . '. Empty values detected in `' . $lookupAliasName . '` column of ' . $lookupSheet->getMetaObject()->__toString() . ', but these values are required by the CustomAttributesLookupBehavior as `values_attribute_alias_column`!',
+                    null,
+                    null,
+                    $logBook
+                );
             }
-            $val = $eventSheet->getCellValue($customAttrAlias, $eventRowIdx);
-            $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
+            
             if ($relPathToEventRequired) {
                 $valEventColName = $customAttrAlias;
             } else {
                 $valEventColName = RelationPath::join($relPathEventToBehavior->__toString(), $customAttrAlias);
             }
+            
+            $val = $eventSheet->getCellValue($valEventColName, $eventRowIdx);
+            $val .= ($val !== null ? $delim : '') . $row[$lookupContentName];
             $eventSheet->setCellValue($valEventColName, $eventRowIdx, $val);
 
             foreach ($additionalCols as $i => $additionalCol) {

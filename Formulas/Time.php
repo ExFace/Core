@@ -11,7 +11,7 @@ use exface\Core\CommonLogic\Model\Formula;
  * Extracts the time from (almost) any date-related value.
  *
  * The first parameter is the value to parse, while the second (optional) parameter is
- * the ICU date format. Additionally you can specify a custom input-format in ICU syntax
+ * the ICU date format. Additionally, you can specify a custom input-format in ICU syntax
  * if the automatic parser does not work properly for your date.
  *
  * Examples:

@@ -302,9 +302,9 @@ trait EnumStaticDataTypeTrait {
      * {@inheritdoc}
      * @see AbstractDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, bool $silent = true) : string
     {
-        $value = parent::format($value);
+        $value = parent::format($value, $silent);
         if ($value === '') {
             return '';
         }

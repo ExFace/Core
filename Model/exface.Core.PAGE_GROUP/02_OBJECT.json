@@ -87,7 +87,7 @@
         {
             "_EXPORT_SUMMARY": "Page Group [exface.Core.PAGE_GROUP]",
             "CREATED_ON": "2020-02-08 21:31:18",
-            "MODIFIED_ON": "2025-11-21 15:43:02",
+            "MODIFIED_ON": "2026-05-29 16:58:10",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11ea4aba4bb25832b2cfe4b318306b9a",
@@ -169,7 +169,14 @@
                                                                 "attribute_alias": "PAGE__MENU_VISIBLE"
                                                             },
                                                             {
-                                                                "attribute_alias": "APP__LABEL"
+                                                                "attribute_alias": "APP__ALIAS",
+                                                                "caption": "Assignment app",
+                                                                "hint": "App of the page-to-group assignment"
+                                                            },
+                                                            {
+                                                                "attribute_alias": "PAGE__APP__ALIAS",
+                                                                "caption": "Page app",
+                                                                "hint": "App of the page"
                                                             },
                                                             {
                                                                 "attribute_alias": "PAGE__TEMPLATE__LABEL"

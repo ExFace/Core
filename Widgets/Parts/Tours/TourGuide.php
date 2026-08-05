@@ -4,6 +4,7 @@ namespace exface\Core\Widgets\Parts\Tours;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tours\TourGuideInterface;
+use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Traits\iHaveCaptionTrait;
 
@@ -31,7 +32,7 @@ class TourGuide implements TourGuideInterface
 
     /**
      * Defines the UI tours. If at least one tour is defined, a tour guide menu dropdown will be shown at the top toolbar and will contain all the defined tours.
-     * waypoints: defines witch waypoints this tour will visit.
+     * waypoints_route: defines witch waypoints this tour will visit.
      * 
      *  Examples:
      * 
@@ -41,7 +42,7 @@ class TourGuide implements TourGuideInterface
      * 
      * @uxon-property tours
      * @uxon-type \exface\Core\Widgets\Parts\Tours\Tour
-     * @uxon-template [{"title": "", "waypoints": "~all"}]
+     * @uxon-template [{"title": "", "waypoints_route": "~all"}]
      * 
      * @param UxonObject $arrayOfTourDefs
      * @return TourGuideInterface
@@ -60,6 +61,18 @@ class TourGuide implements TourGuideInterface
     public function getTours() : array
     {
         return $this->tours;
+    }
+
+    /**
+     * Adds a tour to the tour guide.
+     * 
+     * @param TourInterface $tour
+     * @return TourGuideInterface
+     */
+    public function addTour(TourInterface $tour) : TourGuideInterface
+    {
+        $this->tours[] = $tour;
+        return $this;
     }
 
     /**

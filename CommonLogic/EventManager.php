@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic;
 
+use exface\Core\Interfaces\ConfigurationInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Events\EventInterface;
@@ -17,15 +18,16 @@ use exface\Core\Interfaces\AppInterface;
  */
 class EventManager implements EventManagerInterface
 {
-
+    public const FILE_STATIC_LISTENERS = 'EventListeners.config.json';
+    public const CFG_STATIC_LISTENERS = 'STATIC_LISTENERS';
+    
     private $exface = null;
+    private ?ConfigurationInterface $config;
 
     private $dispatcher = null;
 
     private $priorityMinVals = [];
     private $priorityMaxVals = [];
-    
-    private $oneTimeListeners = [];
 
     /**
      * 
@@ -35,6 +37,21 @@ class EventManager implements EventManagerInterface
     {
         $this->exface = $exface;
         $this->dispatcher = new EventDispatcher();
+        
+        // Load events config from installation config folder
+        $configFile = $exface->filemanager()->getPathToConfigFolder() . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS;
+        $config = new Configuration($exface);
+        $config->loadConfigFile($configFile, AppInterface::CONFIG_SCOPE_SYSTEM);
+        // Just in case something went wrong with the installation configs, load the template config file from the core
+        if ($config->isEmpty()) {
+            $config->loadConfigFile(
+                $exface->getCoreApp()->getDirectoryAbsolutePath() 
+                . DIRECTORY_SEPARATOR . 'Config' 
+                . DIRECTORY_SEPARATOR . self::FILE_STATIC_LISTENERS
+            );
+        }
+        $this->config = $config;
+        
         $this->registerStaticListeners();
     }
 
@@ -138,8 +155,8 @@ class EventManager implements EventManagerInterface
             throw new InvalidArgumentException('Invalid static event callable "' . print_r($listener_callable, true) . '"!');
         }
         
-        $config = $this->getWorkbench()->getConfig();
-        $listeners = $config->getOption('EVENTS.STATIC_LISTENERS')->toArray();
+        $config = $this->config;
+        $listeners = $config->getOption(self::CFG_STATIC_LISTENERS)->toArray();
         $eventListeners = $listeners[$eventName];
         if ($eventListeners) {
             $existingPrio = array_search($listener_callable, $eventListeners, true);
@@ -158,7 +175,7 @@ class EventManager implements EventManagerInterface
             }
         }
         
-        $config->setOption('EVENTS.STATIC_LISTENERS', new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
+        $config->setOption(self::CFG_STATIC_LISTENERS, new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
         
         return $this;
     }
@@ -170,8 +187,8 @@ class EventManager implements EventManagerInterface
      */
     public function removeStaticListener(string $eventName, callable $listener_callable) : EventManagerInterface
     {
-        $config = $this->getWorkbench()->getConfig();
-        $listeners = $config->getOption('EVENTS.STATIC_LISTENERS')->toArray();
+        $config = $this->config;
+        $listeners = $config->getOption(self::CFG_STATIC_LISTENERS)->toArray();
         
         if ($listeners[$eventName] === null || ($prio = array_search($listener_callable, $listeners[$eventName], true)) === false) {
             return $this;
@@ -179,7 +196,7 @@ class EventManager implements EventManagerInterface
         
         unset($listeners[$eventName][$prio]);
         
-        $config->setOption('EVENTS.STATIC_LISTENERS', new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
+        $config->setOption(self::CFG_STATIC_LISTENERS, new UxonObject($listeners), AppInterface::CONFIG_SCOPE_SYSTEM);
         return $this;
     }
     
@@ -190,7 +207,17 @@ class EventManager implements EventManagerInterface
      */
     public function getStaticListeners(string $eventName) : array
     {
-        return $this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray()[$eventName] ?? [];
+        return $this->getStaticListenersEvents()[$eventName] ?? [];
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Events\EventManagerInterface::getStaticListenersEvents()
+     */
+    public function getStaticListenersEvents() : array
+    {
+        return $this->config->getOption(self::CFG_STATIC_LISTENERS)->toArray();
     }
     
     /**
@@ -198,11 +225,20 @@ class EventManager implements EventManagerInterface
      */
     protected function registerStaticListeners()
     {
-        foreach ($this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray() as $event => $callables) {
-            foreach ($callables as $priority => $callable)
-            $this->addListener($event, $callable, $priority);
+        $listeners = [];
+        if ($this->config->hasOption('STATIC_LISTENERS')) {
+            $listeners = $this->config->getOption('STATIC_LISTENERS')->toArray();
+        } else {
+            $this->getWorkbench()->getConfig()->getOption('EVENTS.STATIC_LISTENERS')->toArray();
         }
-        return;
+        foreach ($listeners as $event => $callables) {
+            foreach ($callables as $priority => $callable) {
+                if (! is_callable($callable)) {
+                    throw new InvalidArgumentException('Invalid static event configuration: `' . $callable . '` is not a callable!');
+                }
+                $this->addListener($event, $callable, $priority);
+            }
+        }
     }
     
     /**
@@ -215,7 +251,7 @@ class EventManager implements EventManagerInterface
         return ! empty($this->getStaticListeners($eventName));
     }
 
-    protected function sanitizePriority(string $evenName, int $priority = null) : ?int
+    protected function sanitizePriority(string $eventName, int $priority = null) : ?int
     {
         if ($priority === EventManagerInterface::PRIORITY_MIN) {
             $priority = ($this->priorityMinVals[$eventName] ?? $priority) - 1;

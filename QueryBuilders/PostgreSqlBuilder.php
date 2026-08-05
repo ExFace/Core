@@ -4,9 +4,14 @@ namespace exface\Core\QueryBuilders;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
+use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\JsonDataType;
+use exface\Core\DataTypes\ListDataType;
+use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\TextDataType;
+use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
@@ -15,6 +20,7 @@ use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
+use Respect\Validation\Rules\Number;
 
 /**
  * A query builder for PostgreSQL.
@@ -85,24 +91,36 @@ class PostgreSqlBuilder extends MySqlBuilder
      */
     protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
-        /* Date values are wrapped in the ODBC syntax {ts 'value'}. This only should happen
-         * if the value is an actual date and not an SQL statement like 'DATE_DIMENSION.date'.
-         * Therefor the value is tried to parse as a date in the DateDataType, if that fails the value
-         * is treated as an SQL statement. 
-         */
-        if ($data_type instanceof DateDataType) {
-            try {
-                $data_type::cast($value);  
-                if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
-                    $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+        switch (true) {
+            case $data_type instanceof DateTimeDataType:
+                /* Date values are wrapped in the ODBC syntax {ts 'value'}. This only should happen
+                 * if the value is an actual date and not an SQL statement like 'DATE_DIMENSION.date'.
+                 * Therefore, the value is tried to parse as a date in the DateDataType, if that fails, the value
+                 * is treated as an SQL statement. 
+                 */
+                try {
+                    $value = $data_type::cast($value);
+                    if (null !== $tz = $this->getTimeZoneInSQL($data_type::getTimeZoneDefault($this->getWorkbench()), $this->getTimeZone(), $dataAddressProps[static::DAP_SQL_TIME_ZONE] ?? null)) {
+                        $value = $data_type::convertTimeZone($value, $data_type::getTimeZoneDefault($this->getWorkbench()), $tz);
+                    }
+                    $output = "'" . $value . "'";
+                } catch (DataTypeValidationError $e) {
+                    $output = $this->escapeString($value);
                 }
-                $output = "'" . $value . "'";
-            } catch (DataTypeValidationError $e) {
-                $output = $this->escapeString($value);
-            }
-        } else {
-            $output = parent::prepareWhereValue($value, $data_type, $dataAddressProps);
+                break;
+            case $data_type instanceof DateDataType:
+                try {
+                    $value = $data_type::cast($value);
+                    $output = "'" . $value . "'";
+                } catch (DataTypeValidationError $e) {
+                    $output = $this->escapeString($value);
+                }
+                break;
+            default:
+                $output = parent::prepareWhereValue($value, $data_type, $dataAddressProps);
+                break;
         }
+        
         return $output;
     }
     
@@ -383,6 +401,25 @@ SQL;
             case AggregatorFunctionsDataType::LIST_DISTINCT:
             case AggregatorFunctionsDataType::LIST_ALL:
                 $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
+                
+                // Cast non-string column to text
+                $dataType = $qpart->getDataType();
+                if ($dataType instanceof ListDataType) {
+                    $dataType = $dataType->getValuesDataType();
+                }
+                $sqlType = $qpart->getDataAddressProperty(self::DAP_SQL_DATA_TYPE);
+                switch (true) {
+                    case $dataType instanceof NumberDataType:
+                    case $dataType instanceof DateDataType:
+                    case $dataType instanceof TimeDataType:
+                    case $dataType instanceof BooleanDataType:
+                        $sql = "($sql)::text";
+                        break;
+                    case $sqlType === self::DAP_SQL_DATA_TYPE_BINARY:
+                        $sql = $this->buildSqlSelectBinaryAsHEX($sql);
+                        break;
+                }
+                
                 $output = "STRING_AGG(" . ($function_name == 'LIST_DISTINCT' ? 'DISTINCT ' : '') . $sql . ", '{$this->escapeString($delim)}')";
                 $qpart->getQuery()->addAggregation($qpart->getAttribute()->getAliasWithRelationPath());
                 break;
@@ -405,14 +442,20 @@ SQL;
         return $output;
     }
 
-    /**
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeAlias()
-     */
+    
     protected function escapeAlias(string $tableOrPredicateAlias) : string
     {
         return '"' . $tableOrPredicateAlias . '"';
+    }
+    
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\AbstractSqlBuilder::escapeName()
+     */
+    protected function escapeName(string $tableOrColumnName) : string
+    {
+        return '"' . $tableOrColumnName . '"';
     }
 
     /**
@@ -451,5 +494,29 @@ SQL;
         $string = str_replace("'", "''", $string );
 
         return $string;
+    }
+
+    /**
+     * PostgreSQL has no MAX()/MIN() aggregate for the `uuid` type, which is the SQL type of
+     * all OID (binary) columns here. When the query builder makes the UID group-safe by
+     * wrapping it in MAX() (see buildSqlQuerySelect()), a raw `MAX(uuid)` is produced and
+     * PostgreSQL throws "function max(uuid) does not exist". To avoid this, binary/uuid
+     * columns are first converted to their `0x...` hex text representation (the same form
+     * used for UIDs elsewhere) so that MAX()/MIN() operates on text instead of uuid.
+     *
+     * @see AbstractSqlBuilder::buildSqlSelectGrouped()
+     */
+    protected function buildSqlSelectGrouped(QueryPartAttribute $qpart, $select_from = null, $select_column = null, $select_as = null, AggregatorInterface $aggregator = null): string
+    {
+        $aggregator = $aggregator ?? $qpart->getAggregator();
+        $aggrFunc = $aggregator->getFunction()->__toString();
+
+        if ($this->isBinaryColumn($qpart) && ($aggrFunc === AggregatorFunctionsDataType::MAX || $aggrFunc === AggregatorFunctionsDataType::MIN)) {
+            $select = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false);
+            $select = $this->buildSqlSelectBinaryAsHEX($select);
+            return $this->buildSqlGroupByExpression($qpart, $select, $aggregator);
+        }
+
+        return parent::buildSqlSelectGrouped($qpart, $select_from, $select_column, $select_as, $aggregator);
     }
 }

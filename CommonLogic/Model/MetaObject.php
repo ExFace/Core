@@ -200,7 +200,7 @@ class MetaObject implements MetaObjectInterface
                 $alias = substr($alias, 0, $start);
                 return $this->getRelation($alias, $modifier);
             } else {
-                throw new MetaRelationNotFoundError($this, 'Relation "' . $aliasWithModifier . '" not found for object "' . $this->getAliasWithNamespace() . '": no relations with alias "' . $alias . '" exist!');
+                throw new MetaRelationNotFoundError($this, 'Relation `' . $aliasWithModifier . '` not found for object "' . $this->getAliasWithNamespace() . '": no relations with alias "' . $alias . '" exist!');
             }
         }
         

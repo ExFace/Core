@@ -2,8 +2,11 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\AbstractAction;
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\SqlDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Actions\iRunDataSourceQuery;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -24,7 +27,6 @@ use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\TaskParamsPlaceholders;
 use exface\Core\Templates\Placeholders\TranslationPlaceholders;
-use exface\Core\Templates\Placeholders\ExcludedPlaceholders;
 use exface\Core\Templates\Placeholders\DataRowPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 
@@ -34,10 +36,15 @@ use exface\Core\Templates\Placeholders\FormulaPlaceholders;
  * Allows to run custom queries on supporting data sourcers like SQL, OLAP, etc. The data
  * connection MUST implement the interface `TextualQueryConnectorInterface` for this to work!
  * 
+ * Queries can include placeholders, that will be filled from input data. If this is the case,
+ * all queries will be run for every input row separately. If they have no placeholders or only
+ * placeholders with static formulas, the queries will only be run once - regardless of the
+ * input data.
+ * 
  * **NOTE:** Since this action is mainly used trigger some internal functionality in the data
- * source (e.g. database stored procedures, etc.), it is generally concidered as a data
+ * source (e.g. database stored procedures, etc.), it is generally considered as a data
  * changing action. In particular, it will automatically have `effects` on its object and
- * possibly other meta objects - just like the action `UpdateData` would do.
+ * possibly other metaobjects - just like the action `UpdateData` would do.
  *
  * ## Placeholders
  * 
@@ -132,6 +139,8 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
 {
     private $queries = [];
     private $queryAttributeAlias = null;
+    
+    private ?bool $performQueriesForEveryInputRows = null;
     
     private $data_connection = null;
     private $dataSource = null;
@@ -327,6 +336,30 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         
         $logbook->addIndent(+1);
         $inputRowNos = array_keys($data_sheet->getRows());
+
+        // See if we need to run the queries once or once per input row
+        $runPerRow = false;
+        foreach ($queries as $query) {
+            $phs = StringDataType::findPlaceholders($query);
+            foreach ($phs as $ph) {
+                if (! Expression::detectFormula($ph)) {
+                    $runPerRow = true;
+                    break;
+                } else {
+                    $expr = ExpressionFactory::createFromString($this->getWorkbench(), $ph);
+                    if (! $expr->isStatic()) {
+                        $runPerRow = true;
+                        break;
+                    }
+                }
+            }
+        }
+        // Make sure we have input rows if we really need some
+        if ($runPerRow && count($inputRowNos) === 0) {
+            throw new ActionRuntimeError($this, 'Cannot perform action ' . $this->getAliasWithNamespace() . ' without input rows: the queries seem to have placeholders, that need input data!');
+        }
+        
+        // Run the queries
         foreach ($queries as $query) {
             if ($connection instanceof SqlDataConnectorInterface) {
                 $query = SqlDataType::findSqlDialect($query, [$connection->getSqlDialect(), AbstractSqlBuilder::SQL_DIALECT_OTHER]);
@@ -339,7 +372,7 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
             $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
             $renderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench()));
             $renderer->addPlaceholder(new TaskParamsPlaceholders($task));
-            if (! empty($inputRowNos)) {
+            if ($this->willRunQueriesForEveryInputRows($runPerRow) === true) {
                 foreach ($inputRowNos as $rowNo) {
                     $rowRenderer = clone $renderer;
                     // [#~input:#]
@@ -399,5 +432,36 @@ class CustomDataSourceQuery extends AbstractAction implements iRunDataSourceQuer
         
         $result = ResultFactory::createDataResult($task, $data_sheet, $message);
         return $result;
+    }
+
+    /**
+     * Force performing all queries for every input row (TRUE) or only once (FALSE)
+     * 
+     * By default, the queries will be run per row if at least one query has data-driven placeholders: e.g.
+     * `[#~input:MY_ATTRIBUTE#]`, `[#DATA_COLUMN_NAME#]` or non-static formulas. If the queries have no placeholders 
+     * or placeholders with static formulas only, they will be run once regardless of the number of input rows.
+     * 
+     * Setting this property manually will override the auto-detection. However, all placeholders till need to be
+     * filled, so you will get an error if you turn this off and use data placeholders at the same time.
+     * 
+     * @uxon-property run_queries_for_every_input_rows
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    protected function setRunQueriesForEveryInputRow(bool $trueOrFalse) : CustomDataSourceQuery
+    {
+        $this->performQueriesForEveryInputRows = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @param bool $default
+     * @return bool
+     */
+    protected function willRunQueriesForEveryInputRows(bool $default) : bool
+    {
+        return $this->performQueriesForEveryInputRows ?? $default;
     }
 }

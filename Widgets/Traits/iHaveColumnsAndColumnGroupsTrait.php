@@ -22,6 +22,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
  */
 trait iHaveColumnsAndColumnGroupsTrait 
 {
+    use iTrackIncomingLinksTrait;
+    
     /** @var DataColumnGroup[] */
     private $column_groups = array();
     
@@ -160,7 +162,7 @@ trait iHaveColumnsAndColumnGroupsTrait
         
         $columns = array();
         if (count($this->getColumnGroups()) == 1) {
-            return $this->getColumnGroupMain()->getColumns();
+            $columns = $this->getColumnGroupMain()->getColumns();
         } else {
             $thisObj = $this->getMetaObject();
             foreach ($this->getColumnGroups() as $group) {
@@ -168,6 +170,24 @@ trait iHaveColumnsAndColumnGroupsTrait
                     $columns = array_merge($columns, $group->getColumns());
                 }
             }
+        }
+        
+        
+        $newIncomingLinks = $this->getLinksToThisWidgetAddedSinceLastCall('getColumns');
+        foreach ($newIncomingLinks as $link) {
+            $targetColId = $link->getTargetColumnId();
+            if ($targetColId === null || $targetColId === '') {
+                continue;
+            }
+            foreach ($columns as $col) {
+                if ($targetColId === $col->getAttributeAlias() || $targetColId === $col->getDataColumnName()) {
+                    $col->setSystem(true);
+                    continue 2;
+                }
+            }
+            // FIXME auto-add missing columns here?
+            // Currently this is already done in the Button class for the buttons disabled_if and hidden_if,
+            // but it only seems to work for auto-generated conditions, not those directly defined in the button.
         }
         
         return $columns;

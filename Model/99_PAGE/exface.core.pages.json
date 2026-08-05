@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2018-05-29 11:42:56",
-    "modified_by_user_selector": "0x11edb424effd2980b424025041000001",
-    "modified_on": "2024-03-12 09:47:37",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2026-03-19 20:24:32",
     "icon": "file-code-o",
     "contents": {
         "object_alias": "exface.Core.PAGE",
@@ -58,6 +58,9 @@
             },
             {
                 "attribute_alias": "PUBLISHED"
+            },
+            {
+                "attribute_alias": "TEMPLATE"
             }
         ],
         "columns": [

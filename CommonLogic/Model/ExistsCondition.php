@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\CommonLogic\DataSheets\DataCache;
 use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
@@ -10,6 +11,7 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Interfaces\DataSheets\DataCacheInterface;
 use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
@@ -37,6 +39,7 @@ class ExistsCondition implements ConditionalExpressionInterface
     private bool                    $baseSheetCacheable = false;
     private ?string                 $baseSheetLabelColName = null;
     private array                   $decisionsHistory = [];
+    private static ?DataCacheInterface $dataCache = null;
 
     /**
      * @deprecated use ConditionFactory instead
@@ -51,6 +54,9 @@ class ExistsCondition implements ConditionalExpressionInterface
         $this->uxon = $uxon;
         $this->importUxonObject($uxon);
         $this->invert = $ifNotExists;
+        if (static::$dataCache === null) {
+            static::$dataCache = new DataCache($this->getWorkbench());
+        }
     }
 
     /**
@@ -95,6 +101,8 @@ class ExistsCondition implements ConditionalExpressionInterface
 
             // If we can cache values, read once and peform all filtering in-memory
             if ($this->baseSheetCacheable === true) {
+                // $base = static::$dataCache->getOrReadData($base);
+                // TODO use the data cache after testing
                 $base->dataRead();
             }
 

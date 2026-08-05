@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\DataTypes\FilePathDataType;
 use \DateTimeInterface;
+use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
 use exface\Core\Interfaces\Filesystem\FileInterface;
 use exface\Core\DataTypes\MimeTypeDataType;
@@ -42,7 +43,16 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
         if ($pathOrSplFileInfo instanceof \SplFileInfo) {
             $this->splFileInfo = $pathOrSplFileInfo;
         } else {
-            $this->splFileInfo = new \SplFileInfo($pathOrSplFileInfo);
+            switch (true) {
+                case FilePathDataType::isAbsolute($pathOrSplFileInfo):
+                    $this->splFileInfo = new \SplFileInfo($pathOrSplFileInfo);
+                    break;
+                case $basePath !== NULL:
+                    $this->splFileInfo = new \SplFileInfo(FilePathDataType::makeAbsolute($pathOrSplFileInfo, $basePath, $directorySeparator));
+                    break;
+                default:
+                    throw new FileNotFoundError("The path '{$pathOrSplFileInfo}' is not an absolut path and no base path was given!");
+            }
         }
         
         $this->directorySeparator = $directorySeparator;        

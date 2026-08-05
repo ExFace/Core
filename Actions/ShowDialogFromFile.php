@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\DataSheets\DataCollector;
 use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\CommonLogic\Filemanager;
@@ -164,20 +165,13 @@ class ShowDialogFromFile extends ShowDialog
             return $this->file_path_relative;
         }
         
+        // Get the file path from the input data (read it if necessary)
         $inputSheet = $this->getInputDataSheet($task);
-        if (! $fileCol = $inputSheet->getColumns()->getByExpression($this->getFilePathAttributeAlias())) {
-            if ($inputSheet->hasUidColumn(true)) {
-                $fileSheet = DataSheetFactory::createFromObject($inputSheet->getMetaObject());
-                $fileSheet->getColumns()->addFromUidAttribute();
-                $fileCol = $inputSheet->getColumns()->addFromExpression($this->getFilePathAttributeAlias());
-                $fileSheet->getFilters()->addConditionFromColumnValues($inputSheet->getUidColumn());
-                $fileSheet->dataRead();
-            } else {
-                throw new ActionInputMissingError($this, 'Column "' . $this->getFilePathAttributeAlias() . '" not found in input data!');
-            }
-        }
-        $filename = $fileCol->getCellValue(0);
-
+        $collector = new DataCollector($this->getMetaObject());
+        $collector->addAttributeAlias($this->getFilePathAttributeAlias());
+        $collector->collectFrom($inputSheet);
+        $fileCol = $collector->getRequiredColumns()[$this->getFilePathAttributeAlias()];
+        $filename = $fileCol->getValue(0);
 
         if (empty(trim($filename ?? ''))) {
             throw new ActionInputMissingError($this, 'No file name found in input column "' . $this->getFilePathAttributeAlias() . '" for action "' . $this->getAliasWithNamespace() . '"!');

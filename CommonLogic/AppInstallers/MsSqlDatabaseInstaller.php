@@ -182,7 +182,7 @@ SQL;
      */
     protected function escapeSqlStringValue(string $value) : string
     {
-        return str_replace("'", "''", $value);
+        return "N'" . $this->getDataConnection()->escapeString($value) . "'";
     }
     
     /**

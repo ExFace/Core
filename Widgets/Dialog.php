@@ -1,6 +1,11 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Actions\ShowWidget;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -10,9 +15,12 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\iHaveHeader;
+use exface\Core\Interfaces\Widgets\IHaveTourGuideInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Widgets\Traits\iHaveSidebarTrait;
+use exface\Core\Widgets\Traits\IHaveTourGuideTrait;
 use exface\Core\Widgets\Traits\PopupTrait;
 
 /**
@@ -34,9 +42,10 @@ use exface\Core\Widgets\Traits\PopupTrait;
  * 
  * @author Andrej Kabachnik
  */
-class Dialog extends Form implements iAmClosable, iHaveHeader
+class Dialog extends Form implements UiScreenInterface, iAmClosable, iHaveHeader, IHaveTourGuideInterface
 {
     use PopupTrait;
+    use IHaveTourGuideTrait;
     
     private $maximizable = true;
 
@@ -45,8 +54,6 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     private $header = null;
     
     private $hide_header = null;
-
-    private $sidebar = null;
     
     private $cacheable = true;
 
@@ -302,46 +309,6 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
     }
     
     /**
-     * Gives the dialog a sidebar for secondary content like an AI chat, comments or similar
-     * 
-     * @uxon-property sidebar
-     * @uxon-type \exface\Core\Widgets\DialogSidebar
-     * @uxon-template {"widgets": [{"": ""}]}
-     * 
-     * @param UxonObject|DialogSidebar $uxon_or_widget
-     * @throws WidgetConfigurationError
-     * @return \exface\Core\Widgets\Dialog
-     */
-    public function setSidebar($uxon_or_widget)
-    {
-        if ($uxon_or_widget instanceof UxonObject) {
-            $this->sidebar = WidgetFactory::createFromUxon($this->getPage(), $uxon_or_widget, $this, 'DialogSidebar');
-        } elseif ($uxon_or_widget instanceof DialogSidebar) {
-            $this->sidebar = $uxon_or_widget;
-        } else {
-            throw new WidgetConfigurationError($this, 'Invalid definiton of dialog sidebar given!');
-        }
-        return $this;
-    }
-    
-    /**
-     * @return DialogSidebar
-     */
-    public function getSidebar() : DialogSidebar
-    {
-        return $this->sidebar;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function hasSidebar() : bool
-    {
-        return is_null($this->sidebar) ? false : true;
-    }
-    
-    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Form::getHideHelpButton()
@@ -466,5 +433,19 @@ class Dialog extends Form implements iAmClosable, iHaveHeader
             $objects = array_merge($objects, $this->getHeader()->getMetaObjectsEffectingThisWidget());
         }
         return array_unique($objects);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getSlug()
+     */
+    public function getSlug() : string
+    {
+        $parent = $this->getParent();
+        if (($parent instanceof iTriggerAction) && $parent->getAction() instanceof iShowWidget) {
+            return $parent->getAction()->getAliasWithNamespace();
+        } else {
+            return $this->getPage()->getAliasWithNamespace();
+        }
     }
 }

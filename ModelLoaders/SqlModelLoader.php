@@ -261,7 +261,9 @@ SQL;
                 throw $e;
             }
         }
-        if ($res = $query->getResultArray()) {
+        $res = $query->getResultArray();
+        $query->freeResult();
+        if ($res) {
             $row = $res[0];
 
             if ($row['app_alias'] === null) {
@@ -355,7 +357,9 @@ SQL;
 					o.object_alias as rev_relation_alias
 				FROM exf_attribute a LEFT JOIN exf_object o ON a.object_oid = o.oid
 				WHERE a.object_oid = ' . $this->buildSqlEscapedUid($objectUid) . ' OR a.related_object_oid = ' . $this->buildSqlEscapedUid($objectUid));
-        if ($res = $query->getResultArray()) {
+        $res = $query->getResultArray();
+        $query->freeResult();
+        if ($res) {
             $relation_attrs = [];
             // use a for here instead of foreach because we want to extend the array from within the loop on some occasions
             $l = count($res);
@@ -554,7 +558,9 @@ SQL;
                     {$this->buildSqlUuidSelector('behavior_app_oid')} AS behavior_app_oid
                 FROM exf_object_behaviors 
                 WHERE object_oid = {$this->buildSqlEscapedUid($objectUid)}");
-            if ($res = $query->getResultArray()) {
+            $res = $query->getResultArray();
+            $query->freeResult();
+            if ($res) {
                 foreach ($res as $row) {
                     $configUxon = UxonObject::fromJson($row['config_uxon'] ? $row['config_uxon'] : '{}');
                     $configUxon->setProperty('name', $row['name']);
@@ -778,6 +784,8 @@ SQL;
 
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
+        $query->freeResult();
+        
         if (count($ds) > 1) {
             throw new RangeException('Multiple user credentials found for data source "' . $ds[0]['data_connection_alias'] . '" and user "' . $user_name . '"!', '6T4R8UM');
         } elseif (count($ds) != 1) {
@@ -922,6 +930,8 @@ SQL;
 			WHERE ' . $filter;
         $query = $this->getDataConnection()->runSql($sql);
         $ds = $query->getResultArray();
+        $query->freeResult();
+        
         if (count($ds) > 1) {
             throw new RangeException('Multiple user credentials found for data connection "' . $selector . '" and user "' . $user_name . '"!', '6T4R8UM');
         } elseif (count($ds) != 1) {
@@ -1034,7 +1044,9 @@ SQL;
 					a.app_alias
 				FROM exf_object_action oa LEFT JOIN exf_app a ON a.oid = oa.action_app_oid
 				WHERE ' . $sql_where);
-        if ($res = $query->getResultArray()) {
+        $res = $query->getResultArray();
+        $query->freeResult();
+        if ($res) {            
             foreach ($res as $row) {
                 $action_uxon = UxonObject::fromAnything($row['config_uxon'] ?? '{}');
                 $app = $action_list->getWorkbench()->getApp($row['app_alias']);
@@ -1135,6 +1147,7 @@ SQL;
                 $row['value_suffix'] ?? ''
             );
         }
+        $query->freeResult();
         return $attribute;
     }
 
@@ -1245,6 +1258,7 @@ SQL;
             $this->data_types_by_uid[$row['oid']] = $row;
             $this->data_type_uids[$this->addNamespace($row['app_alias'], $row['data_type_alias'])] = $row['oid'];
         }
+        $query->freeResult();
         return $this;
     }
 
@@ -1336,7 +1350,9 @@ WHERE
     {$sqlWhere}
 SQL;
 
-        $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+        $query = $this->getDataConnection()->runSql($sql);
+        $rows = $query->getResultArray();
+        $query->freeResult();
 
         switch (count($rows)) {
             case 0:
@@ -1397,7 +1413,9 @@ FROM
     exf_auth_point apt
 SQL;
 
-        $result = $this->getDataConnection()->runSql($sql)->getResultArray();
+        $query = $this->getDataConnection()->runSql($sql);
+        $result = $query->getResultArray();
+        $query->freeResult();
         $array = [];
         foreach ($result as $row) {
             $authPoint = AuthorizationPointFactory::createFromSelector(new AuthorizationPointSelector($this->getWorkbench(), ltrim($row['class'], "\\")));
@@ -1489,7 +1507,9 @@ WHERE
         apol.target_user_role_oid IS NULL
     )
 SQL;
-            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            $query = $this->getDataConnection()->runSql($sql);
+            $rows = $query->getResultArray();
+            $query->freeResult();
             $this->auth_policies_loaded[$username] = [];
             foreach ($rows as $row) {
                 $this->auth_policies_loaded[$username][$row['auth_point_oid']][] = $row;
@@ -1578,6 +1598,7 @@ SQL;
 
         );
         $row = $query->getResultArray()[0];
+        $query->freeResult();
         if (empty($row) === true) {
             throw new UiPageNotFoundError('UI Page with ' . $err . ' not found!');
         }
@@ -1661,6 +1682,10 @@ SQL;
             foreach ($rows as $row) {
                 try {
                     $rootNode = $this->loadPageTreeCreateNodeFromDbRow($row);
+                    if(!$rootNode->isVisible()) {
+                        continue;
+                    }
+                    
                     $nodes[] = $rootNode;
                     $this->nodes_loaded[$rootNode->getUid] = $rootNode;
                 } catch (AccessDeniedError $e) {
@@ -1709,6 +1734,7 @@ SQL;
         $node->setCreatedByUserSelector($row['created_by_user_oid']);
         $node->setModifiedOn($row['modified_on']);
         $node->setModifiedByUserSelector($row['modified_by_user_oid']);
+        $node->setMenuVisible($row['menu_visible']);
 
         $this->getWorkbench()->eventManager()->dispatch(new OnUiMenuItemLoadedEvent($node));
 
@@ -1749,7 +1775,11 @@ SQL;
                         } else {
                             try {
                                 $parentNode = $this->loadPageTreeCreateNodeFromDbRow($row);
-                                $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                                if($parentNode->isVisible()) {
+                                    $this->nodes_loaded[$parentNode->getUid()] = $parentNode;
+                                } else {
+                                    $parentNode = null;
+                                }
                             } catch (AccessDeniedError $e) {
                                 // $this->getWorkbench()->getLogger()->logException($e, \exface\Core\Interfaces\Log\LoggerInterface::ERROR);
                                 $parentNode = null;
@@ -1774,6 +1804,9 @@ SQL;
                         } else {
                             try {
                                 $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $parentNode);
+                                if(!$childNode->isVisible()) {
+                                    continue;
+                                }
                             } catch (AccessDeniedError $e) {
                                 //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
                                 continue;
@@ -1878,6 +1911,9 @@ SQL;
                     } else {
                         try {
                             $childNode = $this->loadPageTreeCreateNodeFromDbRow($row, $node);
+                            if(!$childNode->isVisible()) {
+                                continue;
+                            }
                             $childIds[] = $childNode->getUid();
                             $node->addChildNode($childNode);
                             $this->nodes_loaded[$childNode->getUid()] = $childNode;
@@ -1906,6 +1942,9 @@ SQL;
                     } else {
                         try {
                             $childChildNode = $this->loadPageTreeCreateNodeFromDbRow($row, $childNode);
+                            if(!$childChildNode->isVisible()) {
+                                continue;
+                            }
                         } catch (AccessDeniedError $e) {
                             //$this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
                             continue;
@@ -1961,6 +2000,7 @@ SQL;
                 p.icon_set,
                 p.published,
                 p.menu_index,
+                p.menu_visible,
                 p.created_on,
                 {$this->buildSqlUuidSelector('p.created_by_user_oid')} as created_by_user_oid,
                 p.modified_on,
@@ -1995,6 +2035,7 @@ SQL;
         $sql = "/*load UiPageTree Data*/" . $sql . $sqlOrder;
         $query = $this->getDataConnection()->runSql($sql);
         $rows = $query->getResultArray();
+        $query->freeResult();
         return $rows;
     }
 
@@ -2052,8 +2093,9 @@ SELECT
     FROM exf_message
     WHERE code = '{$messageCode}'
 SQL;
-            $result = $this->getDataConnection()->runSql($sql);
-            $row = $result->getResultArray()[0];
+            $query = $this->getDataConnection()->runSql($sql);
+            $row = $query->getResultArray()[0];
+            $query->freeResult();
             $this->messages_loaded[$messageCode] = $row;
         } else {
             $row = $this->messages_loaded[$messageCode];
@@ -2100,8 +2142,9 @@ SELECT {$this->buildSqlUuidSelector('oid')} AS {$this->escapeAlias('UID')},
        default_language_code AS {$this->escapeAlias('DEFAULT_LANGUAGE_CODE')}
     FROM exf_app;
 SQL;
-            $result = $this->getDataConnection()->runSql($sql);
-            $this->apps_loaded = $result->getResultArray();
+            $query = $this->getDataConnection()->runSql($sql);
+            $this->apps_loaded = $query->getResultArray();
+            $query->freeResult();
         } else {
             $freshLoad = false;
         }
@@ -2186,8 +2229,9 @@ FROM
 WHERE {$selectorWhere}
 SQL;
 
-        $result = $this->getDataConnection()->runSql($sql);
-        $rows = $result->getResultArray();
+        $query = $this->getDataConnection()->runSql($sql);
+        $rows = $query->getResultArray();
+        $query->freeResult();
         $row = $rows[0] ?? null;
 
         if (count($rows) > 1) {
@@ -2260,8 +2304,9 @@ FROM
 WHERE {$selectorWhere}
 SQL;
 
-        $result = $this->getDataConnection()->runSql($sql);
-        $rows = $result->getResultArray();
+        $query = $this->getDataConnection()->runSql($sql);
+        $rows = $query->getResultArray();
+        $query->freeResult();
 
         $tpls = [];
         foreach ($rows as $row) {
@@ -2327,7 +2372,9 @@ WHERE ag.object_oid = {$this->buildSqlEscapedUid(HexadecimalNumberDataType::cast
 SQL;
 
         try {
-            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            $query = $this->getDataConnection()->runSql($sql);
+            $rows = $query->getResultArray();
+            $query->freeResult();
         } catch (Throwable $e) {
             // If compatibility mode available, retry
             if ($this->useCompatibilityMode($e) === true) {
@@ -2380,7 +2427,9 @@ WHERE {$sqlWhere}
 SQL;
 
         try {
-            $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+            $query = $this->getDataConnection()->runSql($sql);
+            $rows = $query->getResultArray();
+            $query->freeResult();
         } catch (Throwable $e) {
             throw new MetaModelLoadingFailedError('Failed to load Uxon snippet "' . $selector->toString() . '" from model!', null, $e);
         }
@@ -2449,7 +2498,9 @@ FROM exf_mutation m
 -- WHERE JSON_VALUE(m.targets_json, '$."{$target->getTargetKey()}"') = '{$target->getTargetValue()}'
 SQL;
             try {
-                $rows = $this->getDataConnection()->runSql($sql)->getResultArray();
+                $query = $this->getDataConnection()->runSql($sql);
+                $rows = $query->getResultArray();
+                $query->freeResult();
             } catch (DataQueryFailedError $e) {
                 $this->getWorkbench()->getLogger()->logException($e);
                 return [];

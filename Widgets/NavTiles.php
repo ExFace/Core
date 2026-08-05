@@ -59,6 +59,10 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     private $hiddenIfEmpty = false;
 
     private $showNavbar = null;
+
+    private $showParentPath = false;
+
+    private $showOverviewGroup = false;
     
     /**
      * Specifies the alias of the root page of the menu (i.e. tiles for it's children will be generated).
@@ -113,8 +117,8 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
             $nodes = $tree->getRootNodes();
             foreach ($nodes as $node) {
                 if ($node->hasChildNodes()) {
-                    $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName());
-                }
+                    $this->createTileGroupFromNodes($node->getChildNodes(), $node->getName(), null, 0);
+                } 
             }         
             $this->tilesBuilt = true;
             
@@ -145,25 +149,46 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
      *
      * @param UiPageTreeNode[] $nodes
      * @param string $caption
-     * @param int $depth
      * @param Tile $upperLevelTile
+     * @param int $depth
      * @return Tiles
      */
-    protected function createTileGroupFromNodes(array $nodes, string $caption, Tile $upperLevelTile = null) : Tiles
+    protected function createTileGroupFromNodes(array $nodes, string $caption, Tile $upperLevelTile = null, int $depth = -1) : Tiles
     {
         $tiles = WidgetFactory::create($this->getPage(), 'Tiles', $this);
         $tiles->setCaption($caption);
         $this->addWidget($tiles);
+        $hasVisibleTiles = false;
         
         foreach ($nodes as $node) {
             $tile = $this->createTileFromTreeNode($node, $tiles);
+
+            // if show_overview_group is false, hide all tiles with children in the first group (overview), 
+            // and hide the entire group if no tiles are visible in the group at all
+            // keep nodes with no children visible, otherwise they are not accessible at all if the overview group is hidden
+            if ($this->getDepth() !== 1 && $depth === 0 && $this->getShowOverviewGroup() === false && $node->hasChildNodes()) {
+                $tile->setHidden(true);
+            } else {
+                $hasVisibleTiles = true;
+            }
             $tiles->addWidget($tile);
             if ($upperLevelTile !== null) {
                 $this->parentTileIds[$tile->getId()] = $upperLevelTile;
             }
             if ($node->hasChildNodes()) {
-                $this->createTileGroupFromNodes($node->getChildNodes(), $caption . ' > ' . $node->getName(), $tile);
+                if ($this->getShowParentPath()) {
+                    $groupCaption = $caption . ' > ' . $node->getName();
+                } else {
+                    $groupCaption = $node->getName();
+                }
+
+                $this->createTileGroupFromNodes($node->getChildNodes(), $groupCaption, $tile, $depth + 1);
             }
+        }
+
+        // hide empty groups
+        if ($hasVisibleTiles === false) {
+            $tiles->setHidden(true);
         }
         
         return $tiles;
@@ -192,7 +217,7 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
         $tile->setHint($node->getName() . ($hint ? ":\n" . $hint : ''));
         $tile->setAction(new UxonObject([
             'alias' => 'exface.Core.GoToPage',
-            'page_alias' => $node->getPageSelector()
+            'page_alias' => $node->getPageSelector()->toString()
             
         ]));
         return $tile;
@@ -320,20 +345,81 @@ class NavTiles extends WidgetGrid implements iFillEntireContainer
     }
 
     /**
-     * Set to TRUE to display a navigation bar on top of the tile groups and FALSE to hide it
+     * Set to TRUE to display a navigation bar on top of the tile groups and FALSE to hide it.
      * 
+     * @uxon-property show_navbar
+     * @uxon-type boolean
+     * @uxon-default true
      * 
+     * @param bool $value
      * @return \exface\Core\Widgets\NavTiles
      */
-    public function setShowNavbar() : NavTiles
+    public function setShowNavbar(bool $value) : NavTiles
     {
-        $this->showNavbar = true;
+        $this->showNavbar = $value;
         return $this;
     }
 
     public function hasNavBar(bool $default = true) : bool
     {
         return $this->showNavbar ?? $default;
+    }
+
+    /**
+     * Whether or not the parent path should be included in the tile panels (parent > child)
+     * 
+     * @return bool
+     */
+    public function getShowParentPath() : bool
+    {
+        return $this->showParentPath;
+    }
+
+    /**
+     * Set to TRUE to include the parent path in the tile panels (parent > child).
+     * 
+     * If FALSE, each group caption contains only the current panel name.
+     * 
+     * @uxon-property show_parent_path
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setShowParentPath(bool $value) : NavTiles
+    {
+        $this->showParentPath = $value;
+        return $this;
+    }
+
+    /**
+     * Returns whether the first (overview) tile group should be shown.
+     * 
+     * @return bool
+     */
+    public function getShowOverviewGroup() : bool
+    {
+        return $this->showOverviewGroup;
+    }
+
+    /**
+     * Set to TRUE to show the first overview tile group alongside the other groups.
+     * 
+     * By default the overview group is hidden because its tiles are already visible
+     * within the individual groups below it.
+     * 
+     * @uxon-property show_overview_group
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return NavTiles
+     */
+    public function setShowOverviewGroup(bool $value) : NavTiles
+    {
+        $this->showOverviewGroup = $value;
+        return $this;
     }
 
     /**

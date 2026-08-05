@@ -1,7 +1,9 @@
 <?php
 namespace exface\Core\Interfaces\DataSheets;
 
+use exface\Core\CommonLogic\DataSheets\DataSheetJoinRules;
 use exface\Core\Exceptions\DataSheets\DataSheetColumnNotFoundError;
+use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
@@ -73,4 +75,11 @@ interface DataSheetSubsheetInterface extends DataSheetInterface
      * @return MetaRelationPathInterface|NULL
      */
     public function getRelationPathToParentSheet() : ?MetaRelationPathInterface;
+
+    /**
+     * Returns the join rules for this sub-sheet.
+     * 
+     * @return DataSheetJoinRules
+     */
+    public function getJoinRules() : DataSheetJoinRules;
 }

@@ -35,7 +35,6 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -68,9 +67,13 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * - isDisabled() : bool
  * - refreshDropdown(iColIdx) : Promise
  * - updateDependantColumns(iColIdx, iRowIdx, mValue) : void
+ * - lockDropdownColumnWidth(iColIdx, domCell) : void // Locks the column width while a dropdown is opened (only active if auto-column-width mode is enabled.)
+ * - unlockDropdownColumnWidth(iColIdx) : void
+ * - unlockAllDropdownColumnWidths() : void
  * - success(data, textStatus, jqXHR)
  * - error(jqXHR, textStatus, errorThrown)
  * - bLoaded: bool // true after all constructors ran
+ * - _autoColumnWidth: bool 
  * 
  * ### ColumnModel
  * 
@@ -124,7 +127,7 @@ use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface
  * 
  * NOTE: This trait requires the exfTools JS library to be available!
  * 
- * @method Data getWidget()
+ * @method DataSpreadSheet|DataImporter getWidget()
  * 
  * @author Andrej Kabachnik
  *
@@ -312,7 +315,12 @@ JS;
         $allowDeleteRow = $this->getAllowDeleteRows() ? 'true' : 'false';
         $allowEmptyRows = $this->getAllowEmptyRows() ? 'true' : 'false';
         $wordWrap = $widget->getNowrap() ? 'false' : 'true';
+        $wrapCaptions = $this->escapeBool(!$widget->getNowrapCaptions());
+        $autoColumnWidth = $this->escapeBool($widget->getAutoColumnWidth());
+        $stripeTable = $this->escapeBool($widget->getStriped());
         $disabledJs = $widget->isDisabled() ? 'true' : 'false';
+
+        $translator = $widget->getWorkbench()->getCoreApp()->getTranslator();
         
         if (($widget instanceof DataSpreadSheet) && $widget->hasRowNumberAttribute()) {
             $rowNumberCol = $widget->getRowNumberColumn();
@@ -330,7 +338,8 @@ JS;
     {$this->buildJsResetSelection('')}
     .jspreadsheet({
         data: [ [] ],
-        columnSorting:false,
+        columnSorting: {$this->escapeBool($this->getWidget()->getAllowSortingLoadedData())},
+        filters: {$this->escapeBool($this->getWidget()->getAllowFilteringLoadedData())},
         allowRenameColumn: false,
         allowInsertColumn: false,
         allowDeleteColumn: false,
@@ -338,8 +347,215 @@ JS;
         rowDrag: $allowDragRow,
         allowDeleteRow: $allowDeleteRow,
         wordWrap: $wordWrap,
+        tableOverflow: {$autoColumnWidth},
+        allowDeletingAllRows: true, 
         {$this->buildJsJExcelColumns()}
         {$this->buildJsJExcelMinSpareRows()}
+        text:{
+            noRecordsFound: '{$translator->translate('WIDGET.JEXCEL.NO_RECORDS_FOUND')}',
+            showingPage: '{$translator->translate('WIDGET.JEXCEL.SHOWING_PAGE')}',
+            show: '{$translator->translate('WIDGET.JEXCEL.SHOW')}',
+            entries: '{$translator->translate('WIDGET.JEXCEL.ENTRIES')}',
+            insertANewColumnBefore: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_COLUMN_BEFORE')}',
+            insertANewColumnAfter: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_COLUMN_AFTER')}',
+            deleteSelectedColumns: '{$translator->translate('WIDGET.JEXCEL.DELETE_SELECTED_COLUMNS')}',
+            renameThisColumn: '{$translator->translate('WIDGET.JEXCEL.RENAME_COLUMN')}',
+            orderAscending: '{$translator->translate('WIDGET.JEXCEL.ORDER_ASCENDING')}',
+            orderDescending: '{$translator->translate('WIDGET.JEXCEL.ORDER_DESCENDING')}',
+            insertANewRowBefore: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_ROW_BEFORE')}',
+            insertANewRowAfter: '{$translator->translate('WIDGET.JEXCEL.INSERT_NEW_ROW_AFTER')}',
+            deleteSelectedRows: '{$translator->translate('WIDGET.JEXCEL.DELETE_SELECTED_ROWS')}',
+            editComments: '{$translator->translate('WIDGET.JEXCEL.EDIT_COMMENTS')}',
+            addComments: '{$translator->translate('WIDGET.JEXCEL.ADD_COMMENTS')}',
+            comments: '{$translator->translate('WIDGET.JEXCEL.COMMENTS')}',
+            clearComments: '{$translator->translate('WIDGET.JEXCEL.CLEAR_COMMENTS')}',
+            clearColumnFilter: '{$translator->translate('WIDGET.JEXCEL.CLEAR_COLUMN_FILTER')}',
+            copy: '{$translator->translate('WIDGET.JEXCEL.COPY')}',
+            paste: '{$translator->translate('WIDGET.JEXCEL.PASTE')}',
+            saveAs: '{$translator->translate('WIDGET.JEXCEL.SAVE_AS')}',
+            areYouSureToDeleteTheSelectedRows: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DELETE_ROWS')}',
+            areYouSureToDeleteTheSelectedColumns: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DELETE_COLUMNS')}',
+            thisActionWillDestroyAnyExistingMergedCellsAreYouSure: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_DESTROY_MERGED_CELLS')}',
+            thisActionWillClearYourSearchResultsAreYouSure: '{$translator->translate('WIDGET.JEXCEL.CONFIRM_CLEAR_SEARCH')}',
+            thereIsAConflictWithAnotherMergedCell: '{$translator->translate('WIDGET.JEXCEL.ERROR_MERGED_CELL_CONFLICT')}',
+            invalidMergeProperties: '{$translator->translate('WIDGET.JEXCEL.ERROR_INVALID_MERGE_PROPERTIES')}',
+            cellAlreadyMerged: '{$translator->translate('WIDGET.JEXCEL.ERROR_CELL_ALREADY_MERGED')}',
+            noCellsSelected: '{$translator->translate('WIDGET.JEXCEL.NO_CELLS_SELECTED')}',
+        },
+        contextMenu: function(obj, x, y, e) {
+            // in order to add/remove items we need to overwrite the entire context menu.
+            // seems like an unfortunate implementation on their side, but there is no way to just add/remove items from the default menu.
+            // https://bossanova.uk/jspreadsheet/v4/examples/contextmenu
+
+            var items = [];
+
+            if (y == null) {
+                // Insert a new column
+                if (obj.options.allowInsertColumn == true) {
+                    items.push({
+                        title:obj.options.text.insertANewColumnBefore,
+                        onclick:function() {
+                            obj.insertColumn(1, parseInt(x), 1);
+                        }
+                    });
+                }
+
+                if (obj.options.allowInsertColumn == true) {
+                    items.push({
+                        title:obj.options.text.insertANewColumnAfter,
+                        onclick:function() {
+                            obj.insertColumn(1, parseInt(x), 0);
+                        }
+                    });
+                }
+
+                // Delete a column
+                if (obj.options.allowDeleteColumn == true) {
+                    items.push({
+                        title:obj.options.text.deleteSelectedColumns,
+                        onclick:function() {
+                            obj.deleteColumn(obj.getSelectedColumns().length ? undefined : parseInt(x));
+                        }
+                    });
+                }
+
+                // Rename column
+                if (obj.options.allowRenameColumn == true) {
+                    items.push({
+                        title:obj.options.text.renameThisColumn,
+                        onclick:function() {
+                            obj.setHeader(x);
+                        }
+                    });
+                }
+
+                // Sorting
+                if (obj.options.columnSorting == true) {
+                    // Line
+                    items.push({ type:'line' });
+
+                    items.push({
+                        title:obj.options.text.orderAscending,
+                        onclick:function() {
+                            obj.orderBy(x, 0);
+                        }
+                    });
+                    items.push({
+                        title:obj.options.text.orderDescending,
+                        onclick:function() {
+                            obj.orderBy(x, 1);
+                        }
+                    });
+                }
+            } else {
+                // Insert new row
+                if (obj.options.allowInsertRow == true) {
+                    items.push({
+                        title:obj.options.text.insertANewRowBefore,
+                        onclick:function() {
+                            obj.insertRow(1, parseInt(y), 1);
+                        }
+                    });
+                    
+                    items.push({
+                        title:obj.options.text.insertANewRowAfter,
+                        onclick:function() {
+                            obj.insertRow(1, parseInt(y));
+                        }
+                    });
+                }
+
+                if (obj.options.allowDeleteRow == true) {
+                    items.push({
+                        title:obj.options.text.deleteSelectedRows,
+                        onclick:function() {
+                            obj.deleteRow(obj.getSelectedRows().length ? undefined : parseInt(y));
+                        }
+                    });
+                }
+
+                if (x) {
+                    if (obj.options.allowComments == true) {
+                        items.push({ type:'line' });
+
+                        var title = obj.records[y][x].getAttribute('title') || '';
+
+                        items.push({
+                            title: title ? obj.options.text.editComments : obj.options.text.addComments,
+                            onclick:function() {
+                                obj.setComments([ x, y ], prompt(obj.options.text.comments, title));
+                            }
+                        });
+
+                        if (title) {
+                            items.push({
+                                title:obj.options.text.clearComments,
+                                onclick:function() {
+                                    obj.setComments([ x, y ], '');
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Clear all column filters
+            if (obj.options.filters == true && x !== null && x !== undefined) {
+                if (obj.filters) {
+                    items.push({ type: 'line' });
+                    items.push({
+                        title: obj.options.text.clearColumnFilter,
+                        onclick: function() {
+                            obj.resetFilters();
+                        }
+                    });
+                }
+            }
+
+            // Line
+            items.push({ type:'line' });
+
+            // Copy
+            items.push({
+                title: obj.options.text.copy,
+                shortcut: 'Ctrl + C',
+                onclick: function() {
+                    obj.copy(true);
+                }
+            });
+
+            // Paste
+            if (navigator && navigator.clipboard) {
+                items.push({
+                    title: obj.options.text.paste,
+                    shortcut: 'Ctrl + V',
+                    onclick: function() {
+                        if (obj.selectedCell) {
+                            navigator.clipboard.readText().then(function(text) {
+                                if (text) {
+                                    obj.paste(obj.selectedCell[0], obj.selectedCell[1], text);
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+
+            // Save
+            if (obj.options.allowExport) {
+                items.push({
+                    title: obj.options.text.saveAs,
+                    shortcut: 'Ctrl + S',
+                    onclick: function () {
+                        obj.download();
+                    }
+                });
+            }
+
+            // NOTE: we removed 'about' item here
+
+            return items;
+        },
         onload: function(instance) {
             var jqSelf = {$this->buildJsJqueryElement()};
             var oWidget = jqSelf[0].exfWidget;
@@ -361,6 +577,131 @@ JS;
             if (oWidget !== undefined && oWidget.isDisabled() === true) {
                 {$this->buildJsSetDisabled(true)}
             }
+
+            // custom styling flags
+            if ({$wrapCaptions} === true) {
+                jqSelf.addClass('exf-wrap-captions');
+            }
+            if ({$stripeTable} === true) {
+                jqSelf.addClass('exf-stripe-table');
+            }
+            if ({$autoColumnWidth} === true) {
+                jqSelf.addClass('exf-auto-column-width');
+            }
+
+            // adding a custom onclick event to the table, in oder to open the editor of dropdowns with a single click
+            // Idea based off https://github.com/jspreadsheet/ce/issues/1029 , 
+            // as other solutions using onSelect or similar functions broke a lot of other logic, such as keyboard navigation
+            // UPDATE: the originally proposed invisible <i> element showed up as table data in some cases, for example when filtering content
+            // new approach: we now listen to onclick events for the dropdown cells in general, and if they are within the 35px area from the right edge we open the editor
+            // we use a pseudo :after element to visually highlight the area, but unfortunalety pseudo elements are not truly within the dom, so we cant use onclick directly
+            jqSelf.off('click', '.jexcel_dropdown').on('click', '.jexcel_dropdown', function(e) {
+                // only open editor if were in the area around the dropdown button (35px from right side)
+                if (e.offsetX >= this.offsetWidth - 35) {
+                    var iColIdx = $(this).data("x");
+                    var iRowIdx = $(this).data("y");
+
+                    if (iColIdx !== undefined && iRowIdx !== undefined) {
+                        // lock the current dropdown column width while the editor is open
+                        // to avoid temporary collapse when dropdown content is re-rendered.
+                        instance.exfWidget.lockDropdownColumnWidth(iColIdx, this);
+                        instance.jexcel.openEditor(instance.jexcel.records[iRowIdx][iColIdx], true);
+                    }
+                }
+            });
+
+            // single-click logic for filter row dropdown cells
+            jqSelf.off('click', '.jexcel_column_filter').on('click', '.jexcel_column_filter', function(e) {
+                // only open editor if were in the area around the dropdown button (35px from right side)
+                if (e.offsetX >= this.offsetWidth - 35) {
+                    var iColIdx = $(this).data("x");
+                    if (iColIdx !== undefined) {
+                        instance.jexcel.openFilter(iColIdx);
+                    }
+                }
+            });
+
+            // show hover highlight if were hovering over dropdwn area (35 px from right side), since we do not use a proper html element
+            // otherwise on hover would always be called when hovering over entire cell
+            jqSelf.off('mousemove', '.jexcel_dropdown').on('mousemove', '.jexcel_dropdown', function(e) {
+                if (e.offsetX >= this.offsetWidth - 35) {
+                    $(this).addClass('exf-dropdown-hitbox-hover');
+                } else {
+                    $(this).removeClass('exf-dropdown-hitbox-hover');
+                }
+            });
+            jqSelf.off('mouseleave', '.jexcel_dropdown').on('mouseleave', '.jexcel_dropdown', function() {
+                $(this).removeClass('exf-dropdown-hitbox-hover');
+            });
+
+            // open context menu for the first visible data cell when clicking the select-all cell (top-left corner)
+            // (this is meant to raise more awareness that the context menu exists at all)
+            jqSelf.off('click', '.jexcel_selectall').on('click', '.jexcel_selectall', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!instance.jexcel.records || !instance.jexcel.records[0]) return;
+                var iFirstVisibleCol = instance.jexcel.options.columns.findIndex(function(col) { return col.type !== 'hidden'; });
+                if (iFirstVisibleCol === -1) return;
+                var iFirstVisibleRow = 0;
+                if (instance.jexcel.rows) {
+                    for (var i = 0; i < instance.jexcel.rows.length; i++) {
+                        if (instance.jexcel.rows[i] && instance.jexcel.rows[i].style.display !== 'none') {
+                            iFirstVisibleRow = i;
+                            break;
+                        }
+                    }
+                }
+                var oFirstCell = instance.jexcel.records[iFirstVisibleRow] && instance.jexcel.records[iFirstVisibleRow][iFirstVisibleCol];
+                
+                // open conext menu on first visible cell 
+                if (oFirstCell) {
+                    var oContextMenuEvent = new MouseEvent('contextmenu', {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: e.clientX,
+                        clientY: e.clientY
+                    });
+                    oFirstCell.dispatchEvent(oContextMenuEvent);
+                }
+            });
+
+            // wrap/replace the original keydown listener of JExcel, in order to overwrite the tab functionality
+            if (!jspreadsheet._exfKeyDownControlWrapped) {
+                jspreadsheet._exfKeyDownControlWrapped = true;
+                var _origKeyDownControls = jspreadsheet.keyDownControls;
+
+                jspreadsheet.keyDownControls = function(e) {
+                    if (e.key === 'Tab' && jspreadsheet.current) {
+                        var oInst = jspreadsheet.current;
+                        var aSelectedCol = oInst.getSelectedColumns();
+                        var aSelectedRow = oInst.getSelectedRows(true);
+                        if (aSelectedCol.length > 0 && aSelectedRow.length > 0) {
+                            var iLastVisibleColIdx = oInst.options.columns.findLastIndex(function(col) { return col.type !== 'hidden'; });
+                            var iFirstVisibleColIdx = oInst.options.columns.findIndex(function(col) { return col.type !== 'hidden'; });
+
+                            // tab at last visible column -> move to first column of next row
+                            // shift + tab at first visible column -> move to last column of previous row
+                            if (!e.shiftKey && aSelectedCol[0] === iLastVisibleColIdx) {
+                                oInst.down();
+                                oInst.first();
+                                e.preventDefault();
+                                return;
+                            }
+                            else if (e.shiftKey && aSelectedCol[0] === iFirstVisibleColIdx) {
+                                oInst.up();
+                                oInst.last();
+                                e.preventDefault();
+                                return;
+                            }
+                        }
+                    }
+                    return _origKeyDownControls.call(this, e);
+                };
+
+                // replace old event listener (otherwise its still pointing to original function)
+                document.removeEventListener('keydown', _origKeyDownControls);
+                document.addEventListener('keydown', jspreadsheet.keyDownControls);
+            }
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
@@ -373,6 +714,19 @@ JS;
             if (value === undefined) {
                 return;
             }
+
+            /*
+                Note sah: this whole setup seems to work based on a number of somewhat odd side-effects, im not sure if that behaviour was indended:
+                - the formatter/parser functions return empty strings for illegal values.
+                - those are then fed into the validator, which return the original value of the cell, if the value is invalid. For empty spreadsheet cells that are being filled, this is 'undefined'
+                - this 'undefined' is then returned as the mValidated value here, which is mean to override the value that was entered into the cell (return value of onbeforechange overrides value)
+                - however, the library/jexcel doesnt seem to do that properly with undefined (empty string however, DO work, they set the cell to empty), so the illegal value stays
+                - the illegal value stays in the spreadsheet and is marked as invalid by the validator (red, with the error message as tooltip) which is the intended user experience (i assume?)
+
+                If we move the validation logic into the onchange event (which would fix some issues with self-referencing cells), and return the formatted/parsed value here, the return value for illegal 
+                values would be an empty string, which clears the cell. In that case, the spreadsheet would instantly delete illegal values, not giving the user a chance to correct their entry, which is 
+                not a good user experience. So instead we re-validate self-referencing cells in onchange now, as a workaround to not change the UX here.
+            */
 
             mValueParsed = fnParser ? fnParser(value) : value;
             if ((mValueParsed === '' || mValueParsed === null) && mValueParsed !== value) {
@@ -388,8 +742,17 @@ JS;
             return mValidated;
         },
         oncreateeditor: function(el, cell, x, y, value) {
-            // only request data if column type is autocomplete, everything is fully rendered, lazy loading is true for column
             let columnType = el.jexcel.options.columns[x].type;
+
+            // when opening a dropdown, the previous content int he cell is removed.
+            // this causes layout collapse issues if we are using auto-column width mode, 
+            // where the width of the column is determined based on the content 
+            // solution: we briefly lock the column width to a a fixed pixel value while the dropdown is openend
+            if (x !== undefined && x !== null && columnType === 'autocomplete') {
+                el.exfWidget.lockDropdownColumnWidth(x, cell);
+            }
+
+            // only request data if column type is autocomplete, everything is fully rendered, lazy loading is true for column
             if (columnType === 'autocomplete' && el.exfWidget.bLoaded && el.exfWidget.getColumnModel(x).lazyLoading && !el.exfWidget.getColumnModel(x).wasLazyLoaded && !el.isLazyLoadingInProgress) {
                 
                 let colName = el.exfWidget.getColumnName(x);
@@ -435,22 +798,44 @@ JS;
             }  
             
         },
+        oncloseeditor: function(el, cell, x, y, value, save) {
+            let columnType = el.jexcel.options.columns[x].type;
+
+            // after closing the dropdown we can use the auto width again
+            if (x !== undefined && x !== null && columnType === 'autocomplete') {
+                el.exfWidget.unlockDropdownColumnWidth(x);
+            }
+        },
         onchange: function(instance, cell, col, row, value, oldValue) {
             // setTimeout ensures, the minSpareRows are always added before the subsequent logic runs. This is
             // important for value/data getters to work properly as they will ignore spare rows
             {$this->buildJsOnUpdateApplyValuesFromWidgetLinks('instance', 'col', 'row')};
+
             setTimeout(function(){
+
+                // If we have a self-referencing column, we need to validate it again after the value has been committed to the spreadsheet, 
+                // otherwise the validation will lag behind, because the validation uses the valueGetter, which is still the old value in onbeforechange
+                // This is only relevant for self-referencing columns, as they depend on the current value of the cell to validate themselves.
+                if (instance.exfWidget.bLoaded && instance.exfWidget.getColumnModel(col).isSelfReferencing === true) {
+                    instance.exfWidget.validateCell(cell, col, row, value, true);
+                }
+
                 // Calculate footer
                 {$this->buildJsFixedFootersSpread()}
 
     
                 // if a dropdown column is updated,
                 // check if there are related columns that should be updated too
+                // also re-add the hitbox for single-click, as they get cleared when selcting a value
                 let sColumnType = instance.jexcel.options.columns[col].type;
-                if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete' && instance.exfWidget.getColumnModel(col).dependantCols.length > 0) { 
-                    
+                if (instance.exfWidget.bLoaded && sColumnType === 'autocomplete') { 
+                    // reset the column with to auto/previous mode 
+                    instance.exfWidget.unlockDropdownColumnWidth(col);
+
                     // update the related cols
-                    instance.exfWidget.updateDependantColumns(col, row, value)
+                    if (instance.exfWidget.getColumnModel(col).dependantCols.length > 0){
+                        instance.exfWidget.updateDependantColumns(col, row, value);
+                    }
                 }
 
                 // refresh the conditional properties of spreadsheet onchange
@@ -461,24 +846,59 @@ JS;
             }, 0);
         },
         oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
+        },
+        onbeforedeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
+            // deleting the last row isnt allowed within Jexcel (by default), because otherwise the users have no way
+            // of adding new rows again. see https://github.com/jspreadsheet/ce/issues/1244
+            // Usually this fails slilently (JS console error), but normal user cant see those
+            // as a workaround, we allow it programatically, (allowDeletingAllRows: true), 
+            // so we can throw an explicit alert here (and return false to cancel the deletion)
             
+            var aAllRows = (el && el.jexcel && typeof el.jexcel.getData === 'function') ? (el.jexcel.getData() || []) : [];
+            var bIsDeletingAllMultiselect = (aAllRows.length === numOfRows) && aAllRows.length > 1;
+            if ((aAllRows.length === 1 && rowNumber === 0) || bIsDeletingAllMultiselect) {
+                window.alert('{$translator->translate('WIDGET.JEXCEL.CANNOT_DELETE_LAST_ROW')}');
+
+                if (bIsDeletingAllMultiselect){
+                    // if we have all/multiple rows selected, the default behaviour would be to delete all except hte last row
+                    // so we try and recreate that by removing all rows except the last one here 
+                   el.jexcel.setData([aAllRows[aAllRows.length - 1] || []]); 
+                }
+
+                return false;
+            }
         },
         ondeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             {$this->buildJsFixedFootersSpread()}
         },
         onselection: function(el, x1, y1, x2, y2, origin) {
-            $(el).data('_exfSelection', {
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2
-            });
+            // jexcel v4 seems to have issues with the initial onclick event https://github.com/jspreadsheet/ce/issues/1183, 
+            // on the first click this event is called once (correctly) and then multiple more times with values 0,0,0,0; which effectively resets the selection to the first row
+            // This causes issues with the context menu and our restore logic onBlur (deleting wrong rows ets)
+            // Example: user clicks row 3 once; event for row 3 gets fired, followed by multiple events with 0,0,0,0 in short succession. When the user then uses the context menu (rightclick -> delete)
+            // the onblur event gets called (when the context menu is used) and resets the last selection (0,0,0,0). This then deletes row 0 instead of row 3
+
+            let iTimeDiff = new Date().getTime() - $(el).data('_exfSelection')?.timeLastUpdated;
+
+            // so here, we try and fix this by only updating the selection data when the selection appears to be human (timeDiff > 15ms)
+            if (Number.isNaN(iTimeDiff) || iTimeDiff > 15){
+                $(el).data('_exfSelection', {
+                    timeLastUpdated: new Date().getTime(),
+                    x1: x1,
+                    y1: y1,
+                    x2: x2,
+                    y2: y2
+                });
+            }
         },
         onblur: function(el) {
             var oSel = $(el).data('_exfSelection');
             if (oSel.x1 !== null) {
                 $(el).jspreadsheet('updateSelectionFromCoords', oSel.x1, oSel.y1, oSel.x2, oSel.y2);
             }
+
+            // unlock column widths, in case dropdown wasnt closed properly
+            el.exfWidget.unlockAllDropdownColumnWidths();
         },
         onundo: function(el, historyRecord) {
             el.exfWidget.validateAll();
@@ -686,6 +1106,8 @@ JS;
         _rowNumberColName: $rowNumberColNameJs,
         _initData: [],
         _disabled: $disabledJs,
+        _autoColumnWidth: {$autoColumnWidth},
+        _dropdownColWidthLocks: {},
         _valueGetterRow: null,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
         getDoNotValidate: function(){
@@ -727,6 +1149,79 @@ JS;
         },
         getColumnModel: function(iColIdx) {
             return (this._cols[this.getColumnName(iColIdx)] || {});
+        },
+        lockDropdownColumnWidth: function(iColIdx, domCell) {
+            // only needed in auto column width mode
+            if (this._autoColumnWidth !== true || iColIdx === undefined || iColIdx === null) {
+                return;
+            }
+
+            iColIdx = parseInt(iColIdx);
+            if (Number.isNaN(iColIdx) || this._dropdownColWidthLocks[iColIdx] !== undefined) {
+                return;
+            }
+
+            // get the current width of the header cell of this colmun
+            var jqSelf = $(this.getDom());
+            var jqHeaderCell = jqSelf.find('thead > tr:first-child > td[data-x="' + iColIdx + '"]').first();
+            var oMeasureCell = jqHeaderCell[0];
+            var iColWidth = oMeasureCell ? Math.ceil(oMeasureCell.getBoundingClientRect().width) : 0;
+
+            if (!iColWidth || iColWidth < 1) {
+                return;
+            }
+
+            // save the old width to restore it later and set the current width as a fixed px width
+            var oCellToLock = jqHeaderCell[0];
+            if (!oCellToLock || !oCellToLock.style) {
+                return;
+            }
+
+            var oCellStyle = {
+                el: oCellToLock,
+                width: oCellToLock.style.width,
+                minWidth: oCellToLock.style.minWidth,
+                maxWidth: oCellToLock.style.maxWidth
+            };
+
+            oCellToLock.style.width = iColWidth + 'px';
+            oCellToLock.style.minWidth = iColWidth + 'px';
+            oCellToLock.style.maxWidth = iColWidth + 'px';
+
+            this._dropdownColWidthLocks[iColIdx] = oCellStyle;
+        },
+        unlockDropdownColumnWidth: function(iColIdx) {
+            // only needed in auto column width mode
+            if (this._autoColumnWidth !== true || iColIdx === undefined || iColIdx === null) {
+                return;
+            }
+
+            // get stored col width for this column
+            iColIdx = parseInt(iColIdx);
+            if (Number.isNaN(iColIdx)) {
+                return;
+            }
+            var oCellStyle = this._dropdownColWidthLocks[iColIdx];
+            if (!oCellStyle || !oCellStyle.el || !oCellStyle.el.style) {
+                return;
+            }
+
+            // Restore the original sizing to the column header cell
+            oCellStyle.el.style.width = oCellStyle.width;
+            oCellStyle.el.style.minWidth = oCellStyle.minWidth;
+            oCellStyle.el.style.maxWidth = oCellStyle.maxWidth;
+
+            delete this._dropdownColWidthLocks[iColIdx];
+        },
+        unlockAllDropdownColumnWidths: function() {
+            if (this._autoColumnWidth !== true) {
+                return;
+            }
+
+            var oWidget = this;
+            Object.keys(this._dropdownColWidthLocks).forEach(function(iColIdx) {
+                oWidget.unlockDropdownColumnWidth(iColIdx);
+            });
         },
         getInitValue: function(iCol, iRow) {
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
@@ -807,8 +1302,14 @@ JS;
 
             if (fnValidator === null || fnValidator === undefined || oColModel.hidden === true) {
                 return true;
-            }            
-            return fnValidator(mValue);
+            }
+            // Provide row context so self-referencing conditional validation
+            // (e.g. invalid_if in table cells) can resolve values from the same row.
+            this.setValueGetterRow(iRow);
+            var mResult = fnValidator(mValue);
+            this.setValueGetterRow(null);
+            
+            return mResult;
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
             var mValidationResult;
@@ -816,11 +1317,20 @@ JS;
             var bRequired = oCol.checkRequired(iRow);
             var bDisabled = $(cell).children('input').prop('disabled');
             var bEmpty = false;
+            var mValueRaw = mValue;
             if (mValue === '\u0000') {
                 mValue = '';
             }
 
-            if (this.getDoNotValidate() === true) {
+            // if were in a spare row, we dont need to validate
+            var aData = this.getJExcel().getData() || [];
+            var iSpareRows = {$this->getMinSpareRows()}; 
+
+            // spare rows do not need to be validated, however if a new value is entered into that otherwise empty (spare) row, we still need to validate it. 
+            // the issue here is that jexcel adds a new spare rows AFTER this validation has run, so we would otherwise skip the validation for the new value.
+            var bIsSpareRow = (iRow >= aData.length - iSpareRows);
+            var bValueEmpty = (mValue === '' || mValue === null || mValue === undefined);
+            if (this.getDoNotValidate() === true || (bIsSpareRow && bValueEmpty)) {
                 return mValue;
             }
 
@@ -830,7 +1340,13 @@ JS;
             }
             bEmpty = (mValue === '' || mValue === null || mValue === undefined);
 
-            mValidationResult = this.validateValue(iCol, iRow, mValue);
+            // If parsing collapses invalid text to empty/null, validate the raw value,
+            // similar to handling in onbeforechange 
+            if ((mValue === '' || mValue === null) && mValue !== mValueRaw) {
+                mValidationResult = this.validateValue(iCol, iRow, mValueRaw);
+            } else {
+                mValidationResult = this.validateValue(iCol, iRow, mValue);
+            }
             if (mValidationResult === true && bRequired === true && bDisabled !== true && bEmpty) {
                 mValidationResult = {$this->escapeString($this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.INPUT.VALIDATION_REQUIRED'))};
             }
@@ -897,6 +1413,11 @@ JS;
             var oWidget = this;
             var oJExcel = oWidget.getJExcel();
             let numRows = oJExcel.getData().length;
+
+            // do not refresh if nothing is there 
+            if (numRows === 0) {
+                return;
+            }
 
             for (i in this._cols) {
                 this._cols[i].conditionize(this);
@@ -1253,6 +1774,30 @@ JS;
 
             $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
             $systemFlagJs = $col->isBoundToAttribute() && $col->getAttribute()->isSystem() ? 'true' : 'false';
+
+            // Check for self-referencing conditions in invalid_if, disabled_if, required_if
+            $hasSelfReference = false;
+            
+            // Check invalid_if on cell widget
+            if ($cellWidget instanceof Input && ($condProp = $cellWidget->getInvalidIf())) {
+                if ($this->hasSelfReference($condProp)) {
+                    $hasSelfReference = true;
+                }
+            }
+            
+            // Check disabled_if on column
+            if (null !== $condProp = $col->getDisabledIf()) {
+                if ($this->hasSelfReference($condProp)) {
+                    $hasSelfReference = true;
+                }
+            }
+            
+            // Check required_if on cell widget
+            if ($cellWidget instanceof Input && ($condProp = $cellWidget->getRequiredIf())) {
+                if ($this->hasSelfReference($condProp)) {
+                    $hasSelfReference = true;
+                }
+            }
 
             // Disabling conditions
             $conditionsJs = '';
@@ -1833,7 +2378,7 @@ JS;
     protected function buildJsJExcelColumnDropdownOptions(InputSelect $cellWidget, ?DataColumn $dataCol = null) : string
     {
         if ($cellWidget->isBoundToAttribute() === false) {
-            throw new FacadeLogicError('TODO');
+            throw new FacadeLogicError('Dropdowns that are used in a DataSpreadSheet must be bound to an attribute.');
         }
         $filterJs = '';
 
@@ -2354,7 +2899,7 @@ JS;
      */
     public function buildJsDataResetter() : string
     {
-        return "(function(){ {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} })();";
+        return "(function(){ if( {$this->buildJsJqueryElement()}.length > 0) { {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} } })();";
     }
     
     /**
@@ -2575,7 +3120,11 @@ JS;
             var aVals = [];
 
             aSelectedIdxs.forEach(function(iRowIdx){
-                aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+                if (aAllRows.length === 0|| aAllRows[iRowIdx]['{$col->getDataColumnName()}'] === undefined) {
+                    console.warn('Data is not loaded yet, or column {$col->getDataColumnName()} does not exist in the current spreadsheet.'); 
+                } else {
+                    aVals.push(aAllRows[iRowIdx]['{$col->getDataColumnName()}']);
+                }
             })
 
             return aVals.join('{$delimiter}');

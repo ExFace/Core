@@ -15,9 +15,29 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\MapLayerInterface;
 /**
  * Allows to zoom-in and out automatically when the layer is refreshed
  * 
- * The zoom level of `0` shows the entire world map. Level `1` will zoom-in by a factor of two. Most maps allow
- * a zoom-level of about 18 (which is street-level).
+ * ### Auto zoom direction
  * 
+ * - set `zoom_in` to true to force the map to zoom into the map again if the data reloads.
+ * - set `zoom_out` to true to force the map to zoom out again if the data reloads.
+ * 
+ * ### Include all layers
+ * 
+ * If set on the `Map` widget itself the whole map will always include all layers into the auto zoom. If set on a specific `layer`, the auto zoom will be extended to all layers that are loaded before that layer.
+ * 
+ * ### Zoom Levels
+ * 
+ * - The zoom level of `0` shows the entire world map. 
+ * - Level `1` will zoom-in by a factor of two. (Each increase in zoom level doubles the resolution in both width and height.)
+ * 
+ * **Disclaimer**: Most maps allow a zoom-level of about 18 (which is street-level).
+ * 
+ * ### Disable Zoom
+ * - use `disabled` to disable the zoom on your level.
+ * - If you use it in a layer, it will disable the zoom of that layer.
+ * - If you use it in the map widget it will disable the zoom for the whole map. Keep in mind, that each layer can override this setting with their disabled within their auto_zoom object.
+ * 
+ * @author Andrej Kabachnik
+ * @summary_author Miriam Seitz
  */
 class AutoZoom implements WidgetPartInterface
 {
@@ -91,7 +111,7 @@ class AutoZoom implements WidgetPartInterface
     }
 
     /**
-     * Minimum zoom level
+     * Set to true to enforce an automatic zoom in on data changes.
      *
      * @uxon-property zoom_in
      * @uxon-type boolean
@@ -112,7 +132,7 @@ class AutoZoom implements WidgetPartInterface
     }
 
     /**
-     * Minimum zoom level
+     * Set to true to enforce an automatic zoom out on data changes.
      *
      * @uxon-property zoom_out
      * @uxon-type boolean
@@ -133,7 +153,7 @@ class AutoZoom implements WidgetPartInterface
     }
 
     /**
-     * Maximum zoom level
+     * Maximum zoom level. The map will not be zoomed in any further.
      *
      * @uxon-property zoom_max
      * @uxon-type number
@@ -156,7 +176,7 @@ class AutoZoom implements WidgetPartInterface
     }
 
     /**
-     * Minimum zoom level
+     * Minimum zoom level. The map will not be zoomed out any further.
      * 
      * @uxon-property zoom_min
      * @uxon-type number
@@ -180,6 +200,12 @@ class AutoZoom implements WidgetPartInterface
     }
 
     /**
+     * Disable zoom on this level.
+     * 
+     * @uxon-property disabled
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
      * @param bool $trueOrFalse
      * @return $this
      */
@@ -196,6 +222,7 @@ class AutoZoom implements WidgetPartInterface
     {
         return $this->includeOtherLayers;
     }
+
     /**
      * Set to TRUE to make sure all layers with auto_zoom remain visible after zooming this layer
      *
@@ -203,7 +230,7 @@ class AutoZoom implements WidgetPartInterface
      * @uxon-type boolean
      * @uxon-default false
      *
-     * @param float|null $zoomMin
+     * @param bool $trueOrFalse
      * @return $this
      */
     public function setIncludeOtherLayers(bool $trueOrFalse) : AutoZoom

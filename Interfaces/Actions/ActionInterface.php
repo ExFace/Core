@@ -556,4 +556,28 @@ interface ActionInterface extends
      * @return string
      */
     public function getAliasOfPrototype(bool $withNamespace = true) : string;
+
+    /**
+     * Returns the long-running threshold (in seconds) for this action.
+     *
+     * @return int|null
+     * - `>= 0`: The maximum execution in seconds, before this action should be logged.
+     * - `-1`: Do not log this action, regardless of execution time.
+     * - `null`: Use the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
+     *  in the `System.config.json`
+     */
+    public function getMonitorAsLongRunningAfterSeconds(?int $default = null) : int|null;
+
+    /**
+     * Set a custom run time threshold (in seconds), after which this action will appear in the monitor as long-runner.
+     *
+     * - Any value >= 0 will override the config setting.
+     * - You can disable this feature by setting the threshold to `-1` or `false`.
+     * - Not setting this property explicitly applies the default threshold defined in `MONITOR.LONG_RUNNERS.THRESHOLD_SECONDS_FOR_OTHERS`
+     * in the `System.config.json`.
+     * 
+     * @param int|bool|null $value
+     * @return ActionInterface
+     */
+    public function setMonitorAsLongRunningAfterSeconds(int|bool $value) : ActionInterface;
 }

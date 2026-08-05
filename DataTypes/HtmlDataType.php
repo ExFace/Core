@@ -9,6 +9,15 @@ class HtmlDataType extends CodeDataType
 {
     const URL_TYPE_RELATIVE = 'relative';
     CONST URL_TYPE_ALL = 'all';
+
+    /**
+     * {@inheritDoc}
+     * @see CodeDataType::getLanguage()
+     */
+    public function getLanguage(): ?string
+    {
+        return parent::getLanguage() ?? 'html';
+    }
     
     /**
      * Returns TRUE if the given string contains HTML tags and FALSE otherwise.

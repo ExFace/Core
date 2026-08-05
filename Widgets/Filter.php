@@ -475,13 +475,17 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
             }
         }
         
-        if (parent::getCaption() !== null) {
+        $hasExplicitCaption = parent::getCaption() !== null;
+
+        if ($hasExplicitCaption) {
             $input->setCaption(parent::getCaption());
         }
         
         // If the filter has a specific comparator, that is non-intuitive, add a corresponding suffix to
-        // the caption of the input widget.
-        $input = $this->enhanceInputWidgetWithComparatorHint($input);
+        // the caption of the input widget. Do not add it if an explicit caption was set.
+        if (! $hasExplicitCaption) {
+            $input = $this->enhanceInputWidgetWithComparatorHint($input);
+        }
         
         // The widgets in the filter should not be required accept for the case if the filter itself is marked
         // as required (see set_required()). This is important because, inputs based on required attributes are
@@ -1134,7 +1138,7 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      *
      * @return bool
      */
-    public function appliesToAggregatedValues() : bool
+    public function willApplyToAggregatedValues() : bool
     {
         return $this->appliesToAggregatedValues;
     }

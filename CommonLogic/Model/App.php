@@ -729,8 +729,8 @@ class App implements AppInterface
                     $this->selector_cache[$selectorString][$selectorClass] = ['selector' => $selector, 'instance' => $instance];
                     return true;
                 } else {
-                    // Double-chek if it is a path, but incorrect case, for formula selectors because formulas
-                    // are ofthe written UPPERCASED.
+                    // FORMULAS: Double-chek if it is a path, but incorrect case, for formula selectors because formulas
+                    // are often written UPPERCASED.
                     if ($selectorClass === FormulaSelector::class) {
                         try {
                             $path = str_replace(

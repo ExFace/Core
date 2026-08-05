@@ -86,7 +86,7 @@ class Debugger implements DebuggerInterface
         if ($use_html) {
             $output = $renderer->renderHtml(false);
         } else {
-            $output = $renderer->renderAsString();
+            $output = $renderer->renderPlainText();
         }
         return $output;
     }

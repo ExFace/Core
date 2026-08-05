@@ -398,4 +398,22 @@ class EntityList implements EntityListInterface, WorkbenchDependantInterface, iC
     {
         return null;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see EntityListInterface::diff()
+     */
+    public function diff(EntityListInterface $other_list) : EntityListInterface
+    {
+        if (! $other_list instanceof $this) {
+            throw new InvalidArgumentException('Cannot compare entity lists of different types: ' . get_class($this) . ' and ' . get_class($other_list) . '!');
+        }
+        $missing = $this->copy();
+        foreach ($this->getAll() as $key => $entity) {
+            if (! $other_list->has($key)) {
+                $missing->add($entity, $key);
+            }
+        }
+        return $missing;
+    }
 }

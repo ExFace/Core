@@ -15,10 +15,10 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * ## Scalar (single value) comparators
  * 
  * - `=` - universal comparator similar to SQL's `LIKE` with % on both sides. Can compare different 
- * data types. If the left value is a string, becomes TRUE if it contains the right value. Case 
+ * data types. If the left value is a string, becomes TRUE if it contains the right value. Case-
  * insensitive for strings
  * - `!=` - yields TRUE if `IS` would result in FALSE
- * - `==` - compares two single values of the same type. Case sensitive for stings. Normalizes the 
+ * - `==` - compares two single values of the same type. Case-sensitive for stings. Normalizes the 
  * values before comparison though, so the date `-1 == 21.09.2020` will yield TRUE on the 22.09.2020. 
  * - `!==` - the inverse of `EQUALS`
  * - `<` - yields TRUE if the left value is less than the right one. Both values must be of
@@ -107,7 +107,6 @@ use exface\Core\Interfaces\Model\ConditionInterface;
  * @method ComparatorsDataType LIST_SUBSET(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LIST_NOT_SUBSET(\exface\Core\CommonLogic\Workbench $workbench)
  * 
- * @method ComparatorsDataType LIST_EACH_IS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LIST_EACH_IS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LIST_EACH_EQUALS(\exface\Core\CommonLogic\Workbench $workbench)
  * @method ComparatorsDataType LIST_EACH_EQUALS_NOT(\exface\Core\CommonLogic\Workbench $workbench)
@@ -188,16 +187,28 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     const BETWEEN = '..';
     
     /**
-     * @const IN compares to each vaule in a list via EQUALS. Becomes true if the left
-     * value equals at leas on of the values in the list within the right value.
+     * @const IN compares to each value in a list via EQUALS. Becomes true if the left
+     * value equals at least one of the values on the right.
      */
     const IN = '[';
     
     /**
-     * @const NOT_IN the inverse von `[` . Becomes true if the left value equals none of the values in the
-     * list within the right value.
+     * @const NOT_IN is the inverse of `[` and compares to each value in a list via EQUALS.
+     * Becomes true if the left value equals none of the values on the right.
      */
     const NOT_IN = '![';
+
+    /**
+     * @const IS_IN compares to each value in a list via LIKE. Becomes true if the left
+     * value is at least like one of the values on the right.
+     */
+    const IS_IN = '[=';
+
+    /**
+     * @const NOT_IS_IN is the inverse of `[=` and compares to each value in a list via LIKE.
+     * Becomes true if the left value is like none of the values on the right.
+     */
+    const NOT_IS_IN = '![=';
     
     /**
      * @const LIST_INTERSECTS compares two lists with each other. Becomes true when at least one element is present in
@@ -222,8 +233,6 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      *     present in the right list.
      */
     const LIST_NOT_SUBSET = '![[';
-    
-    const LIST_EACH_IS = '[=';
     
     const LIST_EACH_IS_NOT = '[!=';
     
@@ -334,6 +343,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             
             case self::IN: $inv = self::NOT_IN; break;
             case self::NOT_IN: $inv = self::IN; break;
+            case self::IS_IN: $inv = self::NOT_IS_IN; break;
+            case self::NOT_IS_IN: $inv = self::IS_IN; break;
             case self::LIST_INTERSECTS: $inv = self::LIST_NOT_INTERSECTS; break;
             case self::LIST_NOT_INTERSECTS: $inv = self::LIST_INTERSECTS; break;
             case self::LIST_SUBSET: $inv = self::LIST_NOT_SUBSET; break;
@@ -343,8 +354,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case self::LIST_EACH_EQUALS_NOT: $inv = self::LIST_EACH_EQUALS; break;
             case self::LIST_EACH_GREATER_THAN: $inv = self::LIST_EACH_GREATER_THAN_OR_EQUALS; break;
             case self::LIST_EACH_GREATER_THAN_OR_EQUALS: $inv = self::LIST_EACH_GREATER_THAN; break;
-            case self::LIST_EACH_IS: $inv = self::LIST_EACH_IS_NOT; break;
-            case self::LIST_EACH_IS_NOT: $inv = self::LIST_EACH_IS; break;
+            case self::LIST_EACH_IS_NOT: $inv = self::IS_IN; break;
             case self::LIST_EACH_LESS_THAN: $inv = self::LIST_EACH_LESS_THAN_OR_EQUALS; break;
             case self::LIST_EACH_LESS_THAN_OR_EQUALS: $inv = self::LIST_EACH_LESS_THAN; break;
             
@@ -420,7 +430,6 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             case $comparator === self::LIST_EACH_EQUALS_NOT && $left === true:
             case $comparator === self::LIST_EACH_GREATER_THAN && $left === true:
             case $comparator === self::LIST_EACH_GREATER_THAN_OR_EQUALS && $left === true:
-            case $comparator === self::LIST_EACH_IS && $left === true:
             case $comparator === self::LIST_EACH_IS_NOT && $left === true:
             case $comparator === self::LIST_EACH_LESS_THAN && $left === true:
             case $comparator === self::LIST_EACH_LESS_THAN_OR_EQUALS && $left === true:
@@ -436,6 +445,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
                 break;
             case $comparator === self::IN && $right === true:
             case $comparator === self::NOT_IN && $right === true:
+            case $comparator === self::IS_IN && $right === true:
+            case $comparator === self::NOT_IS_IN && $right === true:
                 $result = true;
                 break;
             case $comparator === self::LIST_SUBSET:
@@ -488,6 +499,20 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
     {
+        /**
+         * TODO geb 2026-04-03
+         * - Currently only atomizes the right value (nested loop required)
+         * - Needs to be added to Condition::compare() around the end of the switch()
+         * - Extract atomizeComparison() for better performance
+         * - LIST_EACH works by "accident"
+         * - ][ does not work
+         * - [[ does not work
+         * - LIST_ANY does not work
+         * - exfTools.data.compareValues is also missing the double loop for LIST_EACH and LIST_ANY
+         * - IF we decide to fix this, we need to monitor the effects on all usages of these comparators, since they
+         * might have unintentionally "worked" in practice (even though they would not have met expectations).
+         */
+        
         // IDEA also support ConditionGroups atomizing their inner conditions and nested groups recursively
         $rightSideValues = $condition->getValue();
         if(!is_array($rightSideValues)) {

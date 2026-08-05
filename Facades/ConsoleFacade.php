@@ -227,13 +227,14 @@ class ConsoleFacade extends Application implements FacadeInterface
         }
         
         // If a real action is called, get it's result with pure PHP.
-        // Otherwise leave handling to Symfony Console, which would actually perform the command
+        // Otherwise, leave handling to Symfony Console, which would actually perform the command
         // on the command line. This fallback ensures, that things like"action help" still work!
         if ($command instanceof SymfonyCommandAdapter) {
             $definition = $command->getDefinition();
             // Strange merging-line taken from Syfmony's Application class
             $definition->setArguments(array_merge(
                 [
+                    // Shouldn't it be the $commandName here???
                     'command' => new InputArgument('command', InputArgument::REQUIRED, $command->getDescription()),
                 ],
                 $definition->getArguments()
@@ -243,7 +244,7 @@ class ConsoleFacade extends Application implements FacadeInterface
             $args = $input->getArguments();
             $opts = $input->getOptions();
             
-            $task = TaskFactory::createCliTask($this, $command->getAction()->getSelector(), $args, $opts);
+            $task = TaskFactory::createCliTask($this, $command->getAction()->getSelector(), $commandName, $args, $opts);
             $result = $this->getWorkbench()->handle($task);
             if ($result instanceof ResultMessageStreamInterface) {
                 yield from $result->getMessageStreamGenerator();

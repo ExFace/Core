@@ -1,8 +1,11 @@
 <?php
 namespace exface\Core\CommonLogic\AppInstallers;
 
+use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
+use exface\Core\Facades\ConsoleFacade\CliCommandRunner;
+use exface\Core\Facades\ConsoleFacade\CliOutputPrinter;
 
 /**
  * This installer takes care of file permissions, web.config and other settings required to run on Microsoft IIS.
@@ -51,13 +54,13 @@ class IISServerInstaller extends AbstractServerInstaller
      */
     protected function setPermissionsForPath(string $path, string $user): string
     {
-        $output = [];
-        exec("CACLS {$path} /e /p {$user}:c", $output);
-        $shortPath = StringDataType::substringAfter($path, DIRECTORY_SEPARATOR, false, false, true);
-        if (empty($output)) {
-            return "Permission for the user '{$user}' and folder/file '{$shortPath}' could not be changed!";
+        try {
+            CliCommandRunner::setPermissionsForPath($path, $user);
+        } catch (\Throwable $throwable) {
+            return CliOutputPrinter::printExceptionMessage($throwable);
         }
-        return "Permission for the user '{$user}' and folder/file '{$shortPath}' changed!";
+        $filename = FilePathDataType::findFileName($path, true);
+        return "Permission for the user '{$user}' and folder/file '{$filename}' changed!";
     }
 
     protected function getConfigFileName(): string

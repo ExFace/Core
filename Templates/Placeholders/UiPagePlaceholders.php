@@ -15,6 +15,7 @@ use exface\Core\Interfaces\Facades\HtmlPageFacadeInterface;
  * - `~page:alias` - the qualified alias
  * - `~page:url` - the URL to the page (only if a facade was provided as constructor argument!)
  * - `~page:title`
+ * - `~page:name:enquote` escapes the current page name and adds double quotes around it (e.g. for usage in JavaScript code)
  * 
  * Technically this resolver calls the getter method of the property - e.g.
  * `~page:title` is resolved by calling `getTitle()` on the page.
@@ -50,6 +51,8 @@ class UiPagePlaceholders extends AbstractPlaceholderResolver
         $vals = [];
         foreach ($this->filterPlaceholders($placeholders) as $placeholder) {
             $property = $this->stripPrefix(mb_strtolower($placeholder));
+            // name:enquote -> $property = "name", $modifier="enquote"
+            list($property, $modifier) = explode(':', $property);
             switch (true) {
                 case $property === 'alias':
                     $val = $this->page->getAliasWithNamespace();
@@ -65,6 +68,11 @@ class UiPagePlaceholders extends AbstractPlaceholderResolver
                         throw new RuntimeException('Unknown placehodler "' . $placeholder . '" found in template!');
                     }
             }
+            
+            switch ($modifier) {
+                case 'enquote': $val = json_encode($val, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE); break;
+            }
+            
             $vals[$placeholder] = $val;
         }
         return $vals;

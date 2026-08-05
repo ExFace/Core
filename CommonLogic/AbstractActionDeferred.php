@@ -62,6 +62,13 @@ use exface\Core\Interfaces\Tasks\ResultMessageStreamInterface;
  */
 abstract class AbstractActionDeferred extends AbstractAction
 {
+    protected function init()
+    {
+        parent::init();
+        // Do not monitor deferred actions as potentially long-running by default, because they are often used for
+        // CLI commands, which are expected to run for a long time.
+        $this->setMonitorAsLongRunningAfterSeconds(-1);
+    }
     
     /**
      *
@@ -73,12 +80,12 @@ abstract class AbstractActionDeferred extends AbstractAction
         $result = new ResultMessageStream($task);
         $result->setMessageStreamGenerator(
             function($callbackArgs) use ($result, $transaction) {
-                
-                yield from call_user_func_array([$this, 'performDeferred'], $callbackArgs);
+                $returnValue = yield from call_user_func_array([$this, 'performDeferred'], $callbackArgs);
                 
                 // IMPORTANT: don't forget to trigger the postprocessing!!!
                 $this->performAfterDeferred($result, $transaction);
-                
+
+                return $returnValue;
             }, 
             [
                 $this->performImmediately($task, $transaction, $result)

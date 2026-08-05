@@ -212,4 +212,25 @@ interface UiMenuItemInterface extends WorkbenchDependantInterface, AliasInterfac
      * @return bool
      */
     public function hasIcon() : bool;
+
+    /**
+     *
+     * @return string
+     */
+    public function __toString() : string;
+
+    /**
+     * Returns if the page is visible in the menu.
+     * 
+     * @return bool
+     */
+    public function isVisible() : bool;
+
+    /**
+     * Sets if the page is shown in the menu. (Default: true)
+     * 
+     * @param bool|null $visible
+     * @return UiMenuItemInterface
+     */
+    public function setMenuVisible(?bool $visible) : UiMenuItemInterface;
 }

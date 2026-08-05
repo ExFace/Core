@@ -5,6 +5,8 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -110,7 +112,7 @@ class DateDataType extends AbstractDataType
                     break;
                 // Numeric values, that are neither relative nor short dates, must be invalid!
                 case is_numeric($string) && intval($string) < self::TIMESTAMP_MIN_VALUE:
-                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', $string);
+                    throw new DataTypeCastingError('Cannot convert "' . $string . '" to a date!', '6W25AB1', null, $string);
                     break;
             }        
             
@@ -581,9 +583,21 @@ class DateDataType extends AbstractDataType
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\DataTypes\AbstractDataType::format()
      */
-    public function format($value = null) : string
+    public function format($value = null, bool $silent = true) : string
     {
-        $date = $this::castToPhpDate($value ?? $this->getValue());
+        try {
+            $date = $this::castToPhpDate($value ?? $this->getValue());
+        } catch (DataTypeExceptionInterface $e) {
+            $date = $value ?? $this->getValue();
+            $e = $this->createFormatterError($date, $e);
+            // When formatting, casting/parsing/validation errors should not break the operation
+            if ($silent === true) {
+                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::WARNING);
+                return $date ?? '';
+            } else {
+                throw $e;
+            }
+        }
         
         if ($date === null) {
             return '';
@@ -662,6 +676,25 @@ class DateDataType extends AbstractDataType
         $result = $number > 0 ? $dateTime->add($dateInterval) : $dateTime->sub($dateInterval);
         
         return $returnPhpDate ? $result : static::formatDateNormalized($result);
+    }
+
+    /**
+     * Casts a human readable interval format into PHP DateInterval
+     * 
+     *  - Supports `year(s)`, `month(s)`, `week(s)`, `day(s)`, `hour(s)`, `minute(s)`.
+     *  - Concatenate with `+`.
+     *  - For example: `1 day`, `4 hours + 30 minutes`, `1 Week + 2 Days`.
+     * 
+     * @param string|int $intervalString
+     * @return \DateInterval
+     */
+    public static function castInterval(string|int $intervalString) : \DateInterval
+    {
+        // Many other UXON properties use seconds, so we have a fallback here just to support the seconds too
+        if (is_int($intervalString)) {
+            $intervalString = $intervalString . ' seconds';
+        }
+        return \DateInterval::createFromDateString($intervalString);
     }
     
     /**

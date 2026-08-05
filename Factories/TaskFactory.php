@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\WidgetInterface;
@@ -61,21 +63,42 @@ class TaskFactory extends AbstractStaticFactory
     {
         return new HttpTask($facade->getWorkbench(), $facade, $request);
     }
-    
+
     /**
-     * Creates a taks for command line facades.
-     * 
+     * Creates a task for command line facades.
+     *
      * @param FacadeInterface $facade
-     * @param ServerRequestInterface $request
-     * @return HttpTaskInterface
+     * @param $actionSelector
+     * @param string $commandName
+     * @param string[] $arguments
+     * @param string[] $options
+     * @return CliTaskInterface
      */
-    public static function createCliTask(FacadeInterface $facade, $actionSelector, array $arguments, array $options) : CliTaskInterface
+    public static function createCliTask(FacadeInterface $facade, $actionSelector, string $commandName, array $arguments, array $options) : CliTaskInterface
     {
-        $task = new CliTask($facade->getWorkbench(), $facade);
+        $task = new CliTask($facade->getWorkbench(), $commandName, $arguments, $options, $facade);
         $task->setActionSelector($actionSelector);
-        $task->setCliArguments($arguments);
-        $task->setCliOptions($options);
+        return $task;
+    }
+
+    /**
+     * @param WorkbenchInterface $workbench
+     * @param UxonObject $uxon
+     * @return TaskInterface
+     */
+    public static function createFromUxon(WorkbenchInterface $workbench, UxonObject $uxon) : TaskInterface
+    {
+        // Operate on a copy so the caller's UXON keeps its "class" property and can
+        // be reused safely - ScheduledTask::getTaskToRun() may run createFromUxon()
+        // on the same innerTaskUxon more than once (enqueue + onRunPerformTask).
+        $uxon = $uxon->copy();
+        $class = $uxon->getProperty('class');
+        $uxon->unsetProperty('class');
+        if (! class_exists($class)) {
+            throw new InvalidArgumentException('Class "' . $class . '" defined in task UXON does not exist');
+        }
+        $task = new $class($workbench);
+        $task->importUxonObject($uxon);
         return $task;
     }
 }
-?>

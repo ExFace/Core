@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "User authentication [exface.Core.USER_AUTHENTICATOR]",
             "CREATED_ON": "2020-04-24 10:53:19",
-            "MODIFIED_ON": "2024-07-06 12:56:39",
+            "MODIFIED_ON": "2026-06-23 16:52:27",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea8619c8d1453697940205857feb80",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -117,6 +117,9 @@
                     },
                     {
                         "attribute_alias": "USER"
+                    },
+                    {
+                        "attribute_alias": "SYNC_MAIL_FLAG"
                     },
                     {
                         "attribute_alias": "DISABLED_FLAG"

@@ -28,7 +28,7 @@ interface iCanBeBoundToAttribute
      * 
      * This only returns TRUE if the widget is bound to a single attribute directly - not if the attribute
      * is part of a formula or similar. If a widget shows the result of a formula containing attributes,
-     * it is not concidered bound to an attribute, but still is bound to a data column (if it implements 
+     * it is not considered bound to an attribute, but still is bound to a data column (if it implements 
      * the interface `iShowDataColumn` of course).
      * 
      * NOTE: this will also return TRUE if the reference is set, but incorrect (e.g. an non-existant alias).

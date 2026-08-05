@@ -365,7 +365,7 @@ class AliasGeneratingBehavior extends AbstractBehavior implements DataModifyingB
      */
     protected function getErrorText() : string
     {
-        return 'Cannot generate values for attribute "' . $this->getTargetAttribute()->getName() . '" (alias ' . $this->getTargetAttribute()->getAliasWithRelationPath() . '") of object "' . $this->getObject()->getName() . '" (' . $this->getObject()->getAliasWithNamespace() . ')';
+        return 'Cannot generate values for attribute "' . $this->getTargetAttribute()->getName() . '" (alias `' . $this->getTargetAttribute()->getAliasWithRelationPath() . '`) of object "' . $this->getObject()->getName() . '" (' . $this->getObject()->getAliasWithNamespace() . ')';
     }
     
     /**

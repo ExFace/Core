@@ -1122,4 +1122,9 @@ JS;
     {
         return '[]';
     }
+    
+    public function buildJsDomElementGetter() : string
+    {
+        return "$('#{$this->getId()}')[0]";
+    }
 }

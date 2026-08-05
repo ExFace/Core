@@ -3,6 +3,8 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\InputMarkdown;
 use exface\Core\Widgets\Parts\HtmlTagStencil;
 use exface\Core\Widgets\Parts\TextMention;
@@ -67,11 +69,23 @@ trait ToastUIEditorTrait
                             if (oEditor._exfIgnoreChanges === true) {
                                 return;
                             }
+
+                            // if we have a character counter, refresh it on every change
+                            if (oEditor.refreshCharCounter) {
+                                oEditor.refreshCharCounter();
+                            }
                             
                             {$this->getOnChangeScript()} 
-                        }    
+                        },
+                        beforePreviewRender: function(sHtml){
+                            setTimeout(function(){
+                                var oEditor = {$this->buildJsMarkdownVar()};
+                                oEditor.refreshMermaid();
+                            }, 0);
+                        }  
                     },
                     customHTMLRenderer: {
+                        {$this->buildJsMarkdownRendererNewlines()}
                         {$this->buildJsCustomHtmlRenderers()}
                     },
                     widgetRules: [
@@ -79,7 +93,7 @@ trait ToastUIEditorTrait
                     ],
                 });
                 
-                {$this->buildJsAdditionalWidgetsCode()}
+                {$this->buildJsAdditionalWidgetsCode('ed')}
                 
                 return ed;
             }();
@@ -119,6 +133,7 @@ JS;
                         }    
                     },
                     customHTMLRenderer: {
+                        {$this->buildJsMarkdownRendererNewlines()}
                         {$this->buildJsCustomHtmlRenderers()}
                     },
                     widgetRules: [
@@ -126,7 +141,12 @@ JS;
                     ],
                 });
                 
-                {$this->buildJsAdditionalWidgetsCode()}
+                {$this->buildJsAdditionalWidgetsCode('ed')}
+                
+                setTimeout(function(){
+                    if (typeof mermaid === 'undefined') return;
+                    ed.refreshMermaid();
+                }, 0);
                 
                 return ed;
             }();
@@ -138,7 +158,7 @@ JS;
      * 
      * @return string
      */
-    protected function buildJsAdditionalWidgetsCode(): string {
+    protected function buildJsAdditionalWidgetsCode(string $editorJs): string {
         $additionalWidgetsCode = '';
 
         if ($this->getWidget() instanceof InputMarkdown 
@@ -148,6 +168,62 @@ JS;
               
             {$this->buildJsMentionsWidgetComponents()}
 JS;
+        }
+
+        // if its an inputmarkdown, and the max length is set, add code to refresh the character counter
+        if ($this->getWidget() instanceof InputMarkdown && null !== $this->getMarkdownCharCounterMaxLength()) {
+            $maxLength = $this->getMarkdownCharCounterMaxLength();
+            $additionalWidgetsCode .= <<<JS
+
+                (function(oEditor){
+                    if (oEditor.options.viewer === true) return;
+                    oEditor.refreshCharCounter = function() {
+                        var jqCounter = $('#{$this->getCharCounterId()}');
+                        if (jqCounter.length === 0 || oEditor.getMarkdown === undefined) {
+                            return;
+                        }
+                        var sMarkdown = oEditor.getMarkdown() || '';
+                        jqCounter.text(sMarkdown.length + '/{$maxLength}');
+                    };
+                    setTimeout(function(){
+                        oEditor.refreshCharCounter();
+                    }, 0);
+                })($editorJs);
+JS;
+        }
+        
+        if (true) {
+            $additionalWidgetsCode.= <<<JS
+                
+                (function(oEditor){
+                if (typeof mermaid === 'undefined') return;
+                var sPreviewSelector;
+                if (oEditor.options.viewer === true) {
+                    sPreviewSelector = '.toastui-editor-contents code[data-language="mermaid"]';
+                } else {
+                    sPreviewSelector = '#{$this->getId()} .toastui-editor-md-preview code[data-language="mermaid"]'
+                }
+                oEditor.refreshMermaid = function() {
+                    mermaid.initialize({
+                        startOnLoad:true,
+                        config: sPreviewSelector,
+                        theme: 'default'
+                    });
+                    
+                    if ($(sPreviewSelector + ':visible').length > 0) {
+                        mermaid.run({
+                            querySelector: sPreviewSelector
+                        });
+                    }
+                }
+                $('#{$this->getId()} .toastui-editor-tabs > .tab-item:nth-child(2)').click(function(){
+                    setTimeout(function(){
+                        oEditor.refreshMermaid();
+                    }, 0);
+                });
+                })($editorJs);
+JS;
+
         }
 
         return $additionalWidgetsCode;
@@ -579,7 +655,7 @@ JS;
                           
                             if (response.rows.length === 0) {
                                 wrapper.innerHTML = `<ul><li class="mention-item empty" style="\${ed.exfWidget.mentionItemEmptyCss}">
-                                    {$translator->translate('ERROR.No_RESULTS')}
+                                    {$translator->translate('ERROR.NO_RESULTS')}
                                   </li></ul>`;
                                 return resolve(wrapper);
                             }
@@ -666,6 +742,43 @@ JS;
 JS;
     }
 
+    /**
+     * Builds a ToastUI `customHTMLRenderer` entry that aligns the editor's newline handling
+     * with the `enable_newlines` property of the widget's `MarkdownDataType`.
+     * 
+     * By default ToastUI renders every single newline (softbreak) as a `<br>`. If the data type
+     * has `enable_newlines` set to `false`, this override makes softbreaks emit a plain newline
+     * instead, so standard markdown newline rules apply. Explicit hard breaks (two trailing spaces
+     * or `\`) keep producing `<br>` in both cases.
+     * 
+     * ## Known limitation - DO NOT try to "fix" this!
+     * 
+     * This override only affects the Markdown **Preview** tab and the read-only **Viewer**, because
+     * ToastUI's `customHTMLRenderer` is consumed exclusively by the `MarkdownPreview` component.
+     * It intentionally does NOT (and can not) affect:
+     * 
+     * - the **Write** tab - that is the raw markdown source editor, so there is nothing to render
+     *   there. `enable_newlines` is a rendering option and has no meaning for the plain source text.
+     * - the **WYSIWYG** mode - that uses a separate ProseMirror-based pipeline with its own
+     *   markdown<->document convertors which never consult `customHTMLRenderer`. ToastUI exposes
+     *   no option to change softbreak handling there.
+     * 
+     * @return string
+     */
+    protected function buildJsMarkdownRendererNewlines() : string
+    {
+        $dataType = $this->getWidget()->getValueDataType();
+        if (! ($dataType instanceof MarkdownDataType) || $dataType->getEnableNewlines() === true) {
+            return '';
+        }
+        return <<<JS
+
+                        softbreak: function() {
+                            return { type: 'html', content: '\\n' };
+                        },
+JS;
+    }
+
     protected function buildJsCustomHtmlRenderers(): string
     {
         if (! $this->getWidget() instanceof InputMarkdown) {
@@ -718,9 +831,54 @@ JS;
                   ['hr', 'quote'],
                   ['ul', 'ol', 'task', 'indent', 'outdent'],
                   ['table', {$image} 'link', {$this->buildJsToolbarItemsForStencils()}],
-                  ['code', 'codeblock',]],
+                  ['code', 'codeblock' {$this->buildJsToolbarItemCharacterCounter()}]],
 JS;
 
+    }
+
+    /**
+     * Builds a read-only toolbar item used to show the live character count.
+     *
+     * @return string
+     */
+    protected function buildJsToolbarItemCharacterCounter() : string
+    {
+        $maxLength = $this->getMarkdownCharCounterMaxLength();
+        if ($maxLength === null) {
+            return '';
+        }
+        return <<<JS
+                ,{
+                    name: 'Character count',
+                    tooltip: 'Character count',
+                    el: (function (){
+                        var span = $('<span id="{$this->getCharCounterId()}" style="display: inline-block; text-align: right; font-size: 12px; opacity: .85; padding: 0 4px; user-select: none;">0/{$maxLength}</span>')[0];
+                        return span;
+                    })()
+                }
+JS;
+    }
+
+    /**
+     * Returns max length for the markdown counter if a string-length constraint exists.
+     *
+     * @return int|null
+     */
+    protected function getMarkdownCharCounterMaxLength() : ?int
+    {
+        $widget = $this->getWidget();
+        if (! $widget instanceof InputMarkdown) {
+            return null;
+        }
+        $dataType = $widget->getValueDataType();
+        if (! $dataType instanceof StringDataType) {
+            return null;
+        }
+        $maxLength = $dataType->getLengthMax();
+        if ($maxLength === null || $maxLength <= 0) {
+            return null;
+        }
+        return (int) $maxLength;
     }
     
     protected function buildJsToolbarItemsForStencils() : string
@@ -847,6 +1005,7 @@ JS;
                             .addClass(bExpanding ? 'fa-compress' : 'fa-expand');
                         if (bExpanding && jqWrapper.innerWidth() > 800) {
                             oEditor.changePreviewStyle('vertical');
+                            oEditor.refreshMermaid();
                         } else {
                             oEditor.changePreviewStyle('tab');
                         }
@@ -859,6 +1018,14 @@ JS;
     protected function getFullScreenToggleId() : string
     {
         return $this->getId().'_tuiFullScreenToggle';
+    }
+
+    /**
+     * @return string
+     */
+    protected function getCharCounterId() : string
+    {
+        return $this->getId() . '_tuiCharCounter';
     }
 
     /**
@@ -887,28 +1054,34 @@ JS;
     public function buildJsValueSetter($value) : string
     {
         return <<<JS
-        
-        var oEditor = {$this->buildJsMarkdownVar()};
-        if({$value} === undefined || {$value} === null) {
-            {$value} = "";
+    (function(mVal, oEditor){    
+        if(mVal === undefined || mVal === null) {
+            mVal = "";
         }
         
-        {$this->buildJsImageDataSanitizer($value)}
+        {$this->buildJsImageDataSanitizer('mVal')}
 
-        if ("getMarkdown" in oEditor && {$value} === oEditor.getMarkdown()) {
+        if ("getMarkdown" in oEditor && mVal === oEditor.getMarkdown()) {
             return;
         } else {
             if (!("_lastSetValue" in oEditor)) {
                 oEditor._lastSetValue = null;
             }
             
-            if (oEditor._lastSetValue === {$value}) {
+            if (oEditor._lastSetValue === mVal) {
                 return;
             }
         }
         
-        oEditor.setMarkdown({$value});
-        oEditor._lastSetValue = {$value};
+        oEditor.setMarkdown(mVal);
+        oEditor._lastSetValue = mVal;
+        
+        if (oEditor.refreshMermaid) {
+            setTimeout(function(){
+                oEditor.refreshMermaid();
+            }, 0);
+        }
+    })({$value}, {$this->buildJsMarkdownVar()})
 JS;
     }
 
