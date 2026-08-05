@@ -161,6 +161,9 @@ Notes:
   - Supports DDL rollback.
   - Use `UUID` as type for unique identifiers as primary keys
   - Use `UUID` instead of `BINARY(16)`
+  - Do not use `BOOLEAN` for application boolean fields if the app writes numeric
+    values like `1` and `0`. Use `SMALLINT` instead and store boolean-like values
+    as `1` and `0`.
 
 ### Microsoft SQL Server
 
@@ -168,6 +171,9 @@ Notes:
   - Use `GO` as batch delimiter where needed.
   - Use `NVARCHAR()` instead of `VARCHAR()`
   - Use `NVARCHAR(MAX)` instead of `TEXT` for long text fields.
+  - Do not use `BIT` or other boolean-like types for application boolean fields
+    if the app writes numeric values like `1` and `0`. Use `SMALLINT` instead and
+    store boolean-like values as `1` and `0`.
 
 ## Migration logging expectations
 

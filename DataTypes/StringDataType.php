@@ -11,8 +11,6 @@ use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderValueInvalidError;
 use exface\Core\Factories\FormulaFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Templates\Modifiers\IfNullModifier;
-use Random\RandomException;
 use Transliterator;
 
 /**
@@ -742,14 +740,36 @@ class StringDataType extends AbstractDataType
     }
     
     /**
+     * Splits a string into an array of lines using any type of line break.
+     * 
+     * Line breaks are detected via the `\R` regex escape, so `\r\n`, `\n` and `\r`
+     * are all recognized. Use `$limit` to restrict the number of resulting lines -
+     * the last element will then contain the remaining unsplit text.
+     * 
+     * If the string contains invalid UTF-8 (which makes the unicode-aware split
+     * fail), the split is retried without the unicode modifier as a fallback so
+     * that this method always returns an array unless the input is unsplittable
+     * even as raw bytes.
      * 
      * @param string $string
      * @param int $limit
+     * @throws DataTypeCastingError
      * @return string[]
      */
     public static function splitLines(string $string, int $limit = null) : array
     {
-        return preg_split("/\R/u", $string, ($limit > 0 ? $limit : -1));
+        $max = ($limit > 0 ? $limit : -1);
+        $result = preg_split("/\R/u", $string, $max);
+        // preg_split() returns false on error - e.g. when the string contains
+        // invalid UTF-8 and the unicode modifier `u` cannot be applied. In that
+        // case retry without the modifier before giving up.
+        if ($result === false) {
+            $result = preg_split("/\R/", $string, $max);
+        }
+        if ($result === false) {
+            throw new DataTypeCastingError('Cannot split string into lines - invalid characters detected!');
+        }
+        return $result;
     }
     
     /**
