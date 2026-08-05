@@ -1,5 +1,45 @@
 # Release history
 
+## 1.40 - 11.07.2026
+
+Big points
+
+- Autonomous AI agents in [axenox.GenAI](https://github.com/axenox/genai)
+- New Gantt widget in [exface.UI5Facade](https://github.com/exface/ui5facade)
+with much more interactivity, horizontal and vertical stripes, customizable 
+tooltips, etc.
+
+New features
+
+- New widget `DisplayTemplate` with support in Form, DataTable and DataMatrix 
+  widgets.
+- Action `DownloadFile` can now open results instead of downloading them (via
+  `mode:open`).
+- New [Deployer](https://github.com/axenox/deployer) host config option `local_packages`.
+- New Azure mail sync and `sync_mail_flag` support for action 
+  `axenox.Microsoft365Connector.SyncEntraIdRoles`.
+- New formulas `=VersionCompare()` and `=FilterValue()`.
+- Much improved `SqlDataBaseInstaller` schema compare output.
+- `Icon` widget now supports `empty_icon` setting.
+- Custom colors for `Button` and `Tile` widgets in UI5 facade via `color` property.
+- SQL admin now supports copying tables in PostgreSQL
+
+Improvements
+
+- Improved ETL webservice routing and new JSON export web route.
+- `DataSheets` can now update subsheets via relation paths with more than one
+  relations.
+- `DataCollector` can now load related data even for foreign key columns with emtpy values.
+- `OData4JsonUrlBuilder` now supports the `$select` URL parameter.
+- `mappers` can now map from parent to child objects when source data is
+  available only on the parent.
+- Scheduled task logs now have detailed logbooks similar to log entries.
+- Improved debug/log output in CLI actions
+
+Important fixes
+
+- Markdown editor now renders mermaid diagrams correctly.
+
 ## 1.39 - 04.06.2026
 
 Big points
@@ -195,6 +235,8 @@ Improvements:
 - Added option `read_all` to improve performance of lookup-mappings
 - `FileAttachmentBehavior` can now generate and save file storage paths via formula in `file_path_calculation `
 - `CallActionBehavior` can now read required data in-advance from a configurable `input_data_event_alias`
+- Action `CallWebService` now has more configurable `result_data_sheet` 
+  instead of `result_data_columns`
 - Improved data imports via [axenox.ETL](https://github.com/axenox/etl) app
   - Added profiler tab to data flow step run details
   - Improved performance of duplicate checks in API-to-DataSheet flow steps
