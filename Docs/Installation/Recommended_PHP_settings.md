@@ -34,12 +34,12 @@ The following setting are recommended in the `php.ini` file in your PHP director
 
 ### General
 
-1. Increase memory limit: `memory_limit = 1G`
+1. Increase memory limit: `memory_limit = 1G` or more
 2. Set the correct timezone in `date.Timezone` - e.g. `date.timezone = Europe/Berlin`
 3. Enable and configure OPCache as shown below to increase performance
 4. Logging
 	- `log_errors = On`
-	- `error_log = <path_to_error_log_file>` - Use `syslog` to log to the windows event viewer or an absolute path to 
+	- `error_log = <path_to_error_log_file>` - Use `syslog` to log to the windows event viewer or an absolute path to log to a file. Make sure the file is writeable for the user, which runs the web server!
 
 
 ### DEV environments
