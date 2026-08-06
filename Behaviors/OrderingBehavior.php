@@ -35,6 +35,17 @@ use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
  * `order_with_attributes` and orders them based on your configuration. For example, if you update a page, this
  * behavior would order every page that has the same `MENU_PARENT`.
  * 
+ *  ## Event life-cycle
+ * 
+ * For technical reasons the OrderingBehavior is not part of the common cycle of `OnBefore[Create|Save|Update]Data` and `On[Create|Save|Update]Data` events.
+ * Instead, it reacts to `OnBeforeSaveData` and `OnSaveData`. They are fired before and after the other events, respectively.
+ * As a result, you need to bear these quirks in mind:
+ * - It is always executed before `OnBeforeCreateData`, `OnBeforeUpdateData` and `OnBeforeDeleteData`.
+ * - It is always executed after `OnCreateData`, `OnUpdateData` and `OnDeleteData`.
+ * - If you want to synchronize other Behaviors with the OrderingBehavior, consider attaching them to `OnBeforeDataSave` or `OnDataSave`.
+ * - You must ensure that all required sorting data is available during creates, since no data can be loaded at that point. For updates
+ * and deletes, missing data is loaded from the source automatically.
+ * 
  * ## Configuration
  * 
  * - `order_number_attribute` (required) - save the order number here. Must be of type `Integer`.
@@ -116,6 +127,9 @@ class OrderingBehavior extends AbstractBehavior
      */
     protected function unregisterEventListeners(): BehaviorInterface
     {
+        // TODO: We respond to the 'SaveData' event cycle, because DataSheet::dataUpdate() separates its data into
+        //       an update and a create pile. But we need the unaltered dataset, which is only available via 'OnBeforeSaveData'.
+        //       We could, in theory, still use the other events for everything else, but that is very inconvenient.
         $onBeforeHandle = array($this, 'handleOnBefore');
         $this->getWorkbench()->eventManager()->removeListener(OnBeforeSaveDataEvent::getEventName(), $onBeforeHandle);
 
