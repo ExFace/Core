@@ -150,6 +150,7 @@ Make sure the configuration file `System.config.json` exists and add the followi
 
 ```
 {
+	"INSTALLER.SERVER_INSTALLER.CLASS": "\\exface\\Core\\CommonLogic\\AppInstallers\\IISServerInstaller",
 	"METAMODEL.LOADER_CLASS": "\\exface\\Core\\ModelLoaders\\MsSqlModelLoader",
 	"METAMODEL.QUERY_BUILDER": "\\exface\\Core\\QueryBuilders\\MsSqlBuilder",
 	"METAMODEL.CONNECTOR": "\\exface\\Core\\DataConnectors\\MsSqlConnector",
@@ -161,8 +162,8 @@ Make sure the configuration file `System.config.json` exists and add the followi
 }
 ```
 
-- Connection settings for the metamodel DB. If SQL Server authentication with username and passwod is going to be used, add `user` and `password` to `METAMODEL.CONNECTOR_CONFIG`. For other options please see the documentation for the `MsSqlConnector` at `Administration > Documentation > Data Connectors`.
-- The IIS server installer to make sure the workbench has proper access to all files and folders it needs after installtion.
+- Connection settings for the metamodel DB. If SQL Server authentication with username and password is going to be used, add `user` and `password` to `METAMODEL.CONNECTOR_CONFIG`. For other options please see the documentation for the `MsSqlConnector` at `Administration > Documentation > Data Connectors`.
+- The IIS server installer to make sure the workbench has proper access to all files and folders it needs after installation.
 
 #### Install the workbench
 
