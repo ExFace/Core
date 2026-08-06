@@ -1469,7 +1469,9 @@ class DataSheet implements DataSheetInterface
             $processed_relations[$rel_path] = true;
         }
 
-        $eventBefore = $update_ds->getWorkbench()->eventManager()->dispatch(new OnBeforeUpdateDataWriteEvent($update_ds, $transaction, $create_if_uid_not_found));
+        $eventBefore = $update_ds->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeUpdateDataWriteEvent($update_ds, $transaction, $create_if_uid_not_found)
+        );
         if ($eventBefore->isPreventUpdate() === true) {
             // IDEA not sure, if it would be correct to fire OnUpdateData here?
             if ($commit && ! $transaction->isRolledBack()) {
@@ -1979,7 +1981,6 @@ class DataSheet implements DataSheetInterface
             $commit = false;
         }
 
-        $preventDefault = false;
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
             new OnBeforeSaveDataEvent($this, $transaction, OnBeforeSaveDataEvent::OPERATION_CREATE)
         );
@@ -1987,7 +1988,7 @@ class DataSheet implements DataSheetInterface
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
             new OnBeforeCreateDataEvent($this, $transaction, $update_if_uid_found)
         );
-        $preventDefault = $eventBefore->isDefaultPrevented();
+        $preventDefault = $preventDefault || $eventBefore->isDefaultPrevented();
         if ($preventDefault === true) {
             // IDEA not sure, if it would be correct to fire OnCreateData here?
             if ($commit && ! $transaction->isRolledBack()) {
@@ -2047,7 +2048,9 @@ class DataSheet implements DataSheetInterface
             }
         }
 
-        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeCreateDataWriteEvent($this, $transaction, $update_if_uid_found));
+        $eventBefore = $this->getWorkbench()->eventManager()->dispatch(
+            new OnBeforeCreateDataWriteEvent($this, $transaction, $update_if_uid_found)
+        );
         if ($eventBefore->isPreventCreate() === true) {
             // IDEA not sure, if it would be correct to fire OnCreateData here?
             if ($commit && ! $transaction->isRolledBack()) {
