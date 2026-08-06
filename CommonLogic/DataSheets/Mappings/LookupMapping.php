@@ -96,6 +96,79 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 
  * ```
  * 
+ * ### Lookups with delimiter-separated lists
+ * 
+ * Lookup mappings can work with delimiter-separated lists (for example comma-separated lists). 
+ * The lists are separated before processing, using the delimiter stored in the associated attribute.
+ * The results are stitched back together, before the final output is returned. This feature is turned off by default. 
+ * To enable it, add the property `from_values_are_lists` and set it to TRUE. 
+ * 
+ * Example config:
+ * 
+ * ```
+ * 
+ *  "x-lookup": {
+ *      "lookup_object_alias": "geb.testing.testing_geb",
+ *      "lookup_column": "status",
+ *      "if_not_found": "leave_empty",
+ *      "from_values_are_lists": true,
+ *      "matches": [
+ *          {
+ *              "from": "Registry",
+ *              "lookup": "registry"
+ *          },
+ *          {
+ *              "from": "Value_a",
+ *              "lookup": "value_a"
+ *          },
+ *          {
+ *              "from": "Value_b",
+ *              "lookup": "value_b"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
+ * The above config will accept both list and scalar values for `Registry`, `Value_a` and `Value_b`. Let's
+ * consider the following input data:
+ * 
+ * ```
+ * 
+ *  [
+ *      {
+ *          "Value_a": "1,0",
+ *          "Value_b": "22",
+ *          "Registry": "A,B,D"
+ *      }
+ *  ]
+ * 
+ * ```
+ * 
+ * With the list feature enabled, the mapper would check all unique combinations of values in the three match columns 
+ * `Registry`, `Value_a` and `Value_b` and write the matched lookups as a list into the output column. 
+ * If you had multiple input rows, this process would be repeated for each row. Consequently, the list mode can be very
+ *  heavy on performance. Use it with caution! 
+ * 
+ * For our example input, the table of combinations would look like this:
+ * 
+ * |Value_a|Value_b|Registry|
+ * |-------|-------|--------|
+ * |1|22|A|
+ * |0|22|A|
+ * |1|22|B|
+ * |0|22|B|
+ * |1|22|D|
+ * |0|22|D|
+ * 
+ * The final output is a delimiter separated list, like `"50,30,10"`. The delimiter depends on the `lookup_column` attribute.
+ * Bear in mind that the number of matches per row is not predictable, but the number of output rows is always guaranteed
+ * to be the same as the number of input rows.
+ * 
+ * Lastly, error handling remains largely unchanged. You can still use all error handling modes and the feedback 
+ * will be just as detailed, as with regular processing. The row numbers shown will relate to the original row, that
+ * the failed lookup belonged to. As such, you might receive multiple errors referencing the same row.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -425,7 +498,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     } else {
                         $msg = 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $iFromRow . ' with filter `' . $lookupSheet->getFilters()->__toString() . '`.';
                         
-                        $originalRowNr = $this->rowNumberAtlas[$atlasKey];
+                        $originalRowNr = $this->getAtlasIndex($atlasKey);
                         if($originalRowNr !== $iFromRow) {
                             $msg .= ' (Original row: ' . $originalRowNr . ')';
                         }
@@ -636,17 +709,7 @@ class LookupMapping extends AbstractDataSheetMapping
         
         // Traverse all to-values.
         foreach ($toColVals as $key => $val) {
-            // If the key is an integer, we assume that it already matches its original row.
-            if(!is_string($key)) {
-                $result[$key] = $val;
-            }
-            
-            // Get the original row number via the row number atlas.
-            $idx = $this->rowNumberAtlas[$key];
-            if($idx === null) {
-                // This code path should never be executed. If this error is thrown, the row number logic is broken.
-                throw new UnexpectedValueException('Could not match "' . $key . '" to a row number!'); 
-            }
+            $idx = $this->getAtlasIndex($key);
             
             // Stitch the values, by adding them to an array.
             $prev = $result[$idx];
@@ -666,6 +729,29 @@ class LookupMapping extends AbstractDataSheetMapping
         }
         
         return $result;
+    }
+
+    /**
+     * Returns the atlas index for a given key.
+     *
+     * @param int|string $key
+     * @return int
+     */
+    protected function getAtlasIndex(int|string $key) : int
+    {
+        // If the key is an integer, we assume that it already matches its original row.
+        if(!is_string($key)) {
+            return $key;
+        }
+
+        // Get the original row number via the row number atlas.
+        $idx = $this->rowNumberAtlas[$key];
+        if($idx === null) {
+            // This code path should never be executed. If this error is thrown, the row number logic is broken.
+            throw new UnexpectedValueException('Could not match "' . $key . '" to a row number!');
+        }
+        
+        return $idx;
     }
 
     /**
@@ -696,16 +782,7 @@ class LookupMapping extends AbstractDataSheetMapping
         // TODO: If you ever want to render the row numbers in the message produced here, remember to use this variable.
         $rowNrs = [];
         foreach (array_keys($unmatchedRows) as $rowNr) {
-            if(!is_string($rowNr)) {
-                $rowNrs[$rowNr] = $rowNr;
-            }
-            
-            $idx = $this->rowNumberAtlas[$rowNr];
-            if($idx === null) {
-                // This code path should never be executed. If this error is thrown, the row number logic is broken.
-                throw new UnexpectedValueException('Could not match "' . $rowNr . '" to a row number!');
-            }
-            
+            $idx = $this->getAtlasIndex($rowNr);
             $rowNrs[$idx] = $idx;
         }
         
@@ -1168,8 +1245,7 @@ class LookupMapping extends AbstractDataSheetMapping
 
     /**
      * If set to TRUE, from values will be treated as lists.
-     * The list delimiters will be inferred from the associated attributes.
-     *
+     * 
      * @uxon-property from_values_are_lists
      * @uxon-type bool
      * @uxon-template true
