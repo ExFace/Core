@@ -42,6 +42,17 @@ class HexadecimalNumberDataType extends NumberDataType
                 throw new DataTypeCastingError('Cannot convert "' . (strlen($string) > 30 ? substr($string, 0, 30) . '...' : $string) . '" to a hexadecimal number!');
         }
     }
+
+    /**
+     * Returns TRUE if the given string is a valid HEX number - i.e. starts with `0x` and continues with digits and letters 
+     * 
+     * @param string $string
+     * @return bool
+     */
+    public static function isHexNumber(string $string) : bool
+    {
+        return stripos($string, self::HEX_PREFIX) === 0 && ctype_xdigit(substr($string, 2));
+    }
     
     /**
      * 
