@@ -41,7 +41,6 @@
     - Contributing
       - [Proposing a change via GitHub](developer_docs/contributing/Contributing_on_GitHub.md)
       - [Setting up Eclipse IDE](developer_docs/contributing/Setting_up_Eclipse_IDE.md)
-    - Diagrams
     - [Extending the context bar](developer_docs/Conexts/index.md)
     - Facades
       - HTML facades based on AbstractAjaxFacade
@@ -78,14 +77,17 @@
     - [Platform introduction \& key concepts](Getting_started/Introduction.md)
     - [Welcome\!](Getting_started/Welcome.md)
   - [Installation](Installation/index.md)
+    - [Apache](Installation/Apache.md)
     - [IIS with SQL Server](Installation/IIS_with_SQL_Server.md)
     - [Initial configuration](Installation/Initial_configuration.md)
     - [Install via composer](Installation/Install_via_Composer.md)
     - [Recommended PHP settings](Installation/Recommended_PHP_settings.md)
+    - [Server security](Installation/Server_security.md)
     - [Seting up a DB for the metamodel](Installation/Configure_metamodel_DB.md)
     - [Setting up WAMP server on Windows](Installation/WAMP.md)
     - [Troubleshooting installation issues](Installation/Installation_troubleshooting.md)
     - [Troubleshooting web server issues](Installation/Server_troubleshooting.md)
+    - [nginx](Installation/nginx.md)
   - [Installing apps](installing_apps/index.md)
   - [Page index](sitemap.md)
   - [Publishing your apps](publishing_apps/index.md)
