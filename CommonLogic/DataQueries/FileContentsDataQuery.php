@@ -2,10 +2,13 @@
 namespace exface\Core\CommonLogic\DataQueries;
 
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\FileNotReadableError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
 use exface\Core\DataTypes\UrlDataType;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Factories\WidgetFactory;
+use exface\Core\Widgets\DebugMessage;
 
 /**
  * Contains the address of a single file and allows the data connector to load its info and contents 
@@ -209,5 +212,37 @@ class FileContentsDataQuery extends AbstractDataQuery
             $this->file_contents = $scalarOrCallback;
         }
         return $this;
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\CommonLogic\DataQueries\AbstractDataQuery::createDebugWidget()
+     */
+    public function createDebugWidget(DebugMessage $debug_widget)
+    {
+        $tab = $debug_widget->createTab();
+        $tab->setCaption('File');
+        $tab->addWidget(WidgetFactory::createFromUxonInParent($tab, new UxonObject([
+            'widget_type' => 'Markdown',
+            'value' => $this->toMarkdown(),
+            'height' => '100%',
+            'width' => '100%',
+            'hide_caption' => true
+        ])));
+        $debug_widget->addTab($tab);
+        return $debug_widget;
+    }
+    
+    protected function toMarkdown() : string
+    {
+        return <<<MD
+
+- Base path: `{$this->getbasePath()}`
+- Relative path: `{$this->getPathRelative()}`
+- Absolute path: `{$this->getPathAbsolute()}`
+- File exists: `{$this->getFileExists()}`
+MD;
+
     }
 }
