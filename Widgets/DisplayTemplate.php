@@ -1,37 +1,22 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\DataTypes\StringDataType;
-use exface\Core\Factories\RelationPathFactory;
-use exface\Core\Interfaces\Model\MetaRelationPathInterface;
-use exface\Core\Interfaces\Widgets\iCanBeBoundToCalculation;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
-use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
-use exface\Core\CommonLogic\Model\Aggregator;
-use exface\Core\Interfaces\Model\AggregatorInterface;
-use exface\Core\Interfaces\Widgets\iSupportAggregators;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
-use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Widgets\Parts\WidgetPropertyBinding;
 use exface\Core\Widgets\Traits\AttributeCaptionTrait;
 use exface\Core\CommonLogic\Model\Expression;
-use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
-use exface\Core\Widgets\Traits\iHaveAttributeGroupTrait;
-use exface\Core\Widgets\Traits\PrefillValueTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
 
 /**
  * HTML or text template with placeholders replaced by values from a data row
