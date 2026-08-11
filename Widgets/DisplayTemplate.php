@@ -41,6 +41,13 @@ use exface\Core\CommonLogic\UxonObject;
  *
  * When used inside of data widget cells, this widget will make the Facade load all attributes required for the 
  * template and place them in the server data.
+ * 
+ * ## Rendering as formatted text
+ * 
+ * For UI5 tables, you can set `render_as_formatted_text` to render the template via `sap.m.FormattedText`
+ * instead of `sap.ui.core.HTML`. This typically improves scroll performance because the control is lighter.
+ * 
+ * `sap.m.FormattedText` supports only a safe subset of HTML. If the template depends on complex layout markup or unsupported tags, keep this option disabled.
  *
  * ## Placeholders
  *
@@ -62,6 +69,7 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
     private ?string $template = null;
     private ?string $emptyText = null;
     private ?array $bindings = null;
+    private bool $render_as_formatted_text = false;
     
     public function getTemplate() : string
     {
@@ -257,6 +265,66 @@ class DisplayTemplate extends AbstractWidget implements iShowSingleAttribute, iH
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('template', $this->getTemplate());
         return $uxon;
+    }
+
+    /**
+     * Returns TRUE if the template should be rendered as `sap.m.FormattedText` where supported.
+     *
+     * @return bool
+     */
+    public function getRenderAsFormattedText() : bool
+    {
+        return $this->render_as_formatted_text;
+    }
+
+    /**
+     * Set to TRUE to render this template as `sap.m.FormattedText` in UI5 table cells.
+     * 
+     * This can improve performance in large tables compared to `sap.ui.core.HTML`, but only
+     * a limited/safe subset of HTML is supported by `sap.m.FormattedText`.
+     * 
+    * Text in HTML format. The following tags are supported:
+    * 
+    * - `a`
+    * - `abbr`
+    * - `bdi`
+    * - `blockquote`
+    * - `br`
+    * - `cite`
+    * - `code`
+    * - `em`
+    * - `h1`
+    * - `h2`
+    * - `h3`
+    * - `h4`
+    * - `h5`
+    * - `h6`
+    * - `p`
+    * - `pre`
+    * - `strong`
+    * - `span`
+    * - `u`
+    * - `s`
+    * - `dl`
+    * - `dt`
+    * - `dd`
+    * - `ul`
+    * - `ol`
+    * - `li`
+    * 
+    * `style`, `dir` and `target` attributes are allowed.
+     * 
+     * @uxon-property render_as_formatted_text
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DisplayTemplate
+     */
+    public function setRenderAsFormattedText(bool $value) : DisplayTemplate
+    {
+        $this->render_as_formatted_text = $value;
+        return $this;
     }
     
     /**
