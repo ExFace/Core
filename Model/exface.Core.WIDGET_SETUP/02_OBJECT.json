@@ -87,9 +87,9 @@
         {
             "_EXPORT_SUMMARY": "Widget setup [exface.Core.WIDGET_SETUP]",
             "CREATED_ON": "2025-06-27 09:42:23",
-            "MODIFIED_ON": "2026-01-05 17:03:36",
+            "MODIFIED_ON": "2026-08-10 13:06:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11f086ea436aa07486ea025041000001",
             "READABLE_FLAG": 1,
             "WRITABLE_FLAG": 1,
@@ -152,7 +152,7 @@
                                         "id": "prototype_selector"
                                     },
                                     {
-                                        "attribute_alias": "PAGE"
+                                        "attribute_alias": "SLUG"
                                     },
                                     {
                                         "attribute_alias": "OBJECT",

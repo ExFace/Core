@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2025-06-27 09:56:33",
-    "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-08-14 12:24:35",
+    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+    "modified_on": "2026-08-10 13:09:37",
     "contents": {
         "widget_type": "DataTable",
         "object_alias": "exface.Core.WIDGET_SETUP",
@@ -26,7 +26,7 @@
                 "attribute_alias": "APP"
             },
             {
-                "attribute_alias": "PAGE"
+                "attribute_alias": "SLUG"
             },
             {
                 "attribute_alias": "PRIVATE_FOR_USER"
@@ -40,7 +40,7 @@
                 "attribute_alias": "NAME"
             },
             {
-                "attribute_alias": "PAGE__ALIAS"
+                "attribute_alias": "SLUG"
             },
             {
                 "attribute_alias": "OBJECT__NAME"
@@ -64,7 +64,7 @@
         ],
         "sorters": [
             {
-                "attribute_alias": "PAGE__ALIAS",
+                "attribute_alias": "SLUG",
                 "direction": "asc"
             },
             {
@@ -81,12 +81,14 @@
                 "bind_to_double_click": true
             },
             {
+                "/*": "",
                 "action_alias": "Open page",
                 "action": {
                     "alias": "exface.Core.GoToUrl",
                     "url": "[#PAGE__ALIAS#].html",
                     "open_in_new_window": true
-                }
+                },
+                "*/": ""
             },
             {
                 "action_alias": "exface.Core.WidgetSetupPublishDialog"
