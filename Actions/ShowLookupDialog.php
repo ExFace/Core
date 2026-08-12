@@ -283,7 +283,11 @@ class ShowLookupDialog extends ShowDialog
         // Not doing so, will actually break many non-relation combos, where the default display
         // columns are not included by default. This filter will remove these columns in the lookup
         // too.
-        if (! empty($cols)) {
+        // However, if the designer has explicitly defined columns in the lookup widget, they are not
+        // auto-generated defaults, so keep them instead of letting the combos columns overwrite them (?)
+        $dataTableUxonOriginal = $data_table->exportUxonObjectOriginal();
+        $lookupHasExplicitColumns = $dataTableUxonOriginal->hasProperty('columns') && ! $dataTableUxonOriginal->getProperty('columns')->isEmpty();
+        if (! empty($cols) && $lookupHasExplicitColumns === false) {
             foreach ($data_table->getColumns() as $existingCol) {
                 $found = false;
                 foreach ($cols as $col) {
