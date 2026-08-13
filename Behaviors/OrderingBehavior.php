@@ -14,6 +14,7 @@ use exface\Core\Exceptions\Behaviors\BehaviorRuntimeError;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Events\EventInterface;
 use exface\Core\Interfaces\Events\EventManagerInterface;
 use exface\Core\Interfaces\Exceptions\DataSheetExceptionInterface;
@@ -102,6 +103,8 @@ class OrderingBehavior extends AbstractBehavior
     private mixed $orderBoundaryAliases = [];
     private int $nextInternalId = 0;
     private array $internalIdsInUse = [];
+    private array $defaultValues = [];
+    private array $tempColumns = [];
     
     /**
      *
@@ -285,12 +288,17 @@ class OrderingBehavior extends AbstractBehavior
             return;
         }
         
-        // Fetch any missing columns.
-        $this->fetchMissingColumns($eventSheet,$logbook);
+        // Fill missing values.
+        $this->applyDefaultValues(
+            $eventSheet,
+            $event->getOperation() === OnBeforeSaveDataEvent::OPERATION_CREATE,
+            $logbook
+        );
         $this->normalizeDataSheet($eventSheet);
 
         // Load old data for rows in event data.
         $loadedData = $this->createEmptyCopy($eventSheet, true, false);
+        $this->removeTempColumns($loadedData, $logbook);
         $loadedGroupData = $loadedData->copy();
         $loadedData->setFilters(ConditionGroupFactory::createOR($loadedData->getMetaObject()));
         $loadedData->getFilters()->addConditionFromColumnValues($eventSheet->getUidColumn(), true);
@@ -378,6 +386,10 @@ class OrderingBehavior extends AbstractBehavior
             $changedGroups
         );
 
+        // Clean up temp columns.
+        $this->removeTempColumns($eventSheet, $logbook);
+        
+        // Finish.
         $this->finishWork($event, $logbook, false);
     }
 
@@ -439,7 +451,7 @@ class OrderingBehavior extends AbstractBehavior
             true, 
             $logbook
         );
-
+        
         if(empty($pendingChanges)) {
             $logbook->addLine('No changes pending for input data.');
         } else {
@@ -450,6 +462,96 @@ class OrderingBehavior extends AbstractBehavior
         $this->finishWork($event, $logbook, true);
     }
 
+    /**
+     * Adds missing columns, collects missing data and fills any remaining gaps with the expressions defined in
+     * `use_default_values` and validates the `order_number_attributes` and `order_within_attributes` aliases 
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param bool               $onCreate
+     * @param BehaviorLogBook    $logBook
+     * @return void
+     */
+    private function applyDefaultValues(
+        DataSheetInterface $dataSheet,
+        bool $onCreate,
+        BehaviorLogBook $logBook
+    ) : void
+    {
+        $defaults = $this->getDefaultValues();
+        if(empty($defaults)) {
+            return;
+        }
+        
+        $object = $dataSheet->getMetaObject();
+        $objectAlias = $object->getAliasWithNamespace();
+        $orderNumberAlias = $this->getOrderNumberAttributeAlias();
+        $parentAliases = $this->getParentAliases();
+        
+        foreach ($defaults as $uxon) {
+            $columnName = $uxon['attribute_alias'];
+            
+            $valueExpression = ExpressionFactory::createFromString(
+                $dataSheet->getWorkbench(),
+                $uxon['calculation'],
+                $object,
+                true
+            );
+            
+            if(empty($columnName)) {
+                continue;
+            }
+
+            // Load missing data, but only outside onCreate.
+            if(!$onCreate) {
+                $this->collectMissingData($dataSheet, $logBook);
+            }
+            
+            // Ensure column exists.
+            $col = $dataSheet->getColumns()->getByExpression($columnName);
+            if($col === false) {
+                $col = $dataSheet->getColumns()->addFromExpression($columnName);
+            }
+
+            // Fill missing values.
+            foreach ($col->getValues() as $key => $value) {
+                if($value === null || $value === '') {
+                    $col->setValue($key, $valueExpression->evaluate($dataSheet, $key));
+                }
+            }
+            
+            // Mark temp columns for removal.
+            if(!$col->isAttribute()) {
+                if($columnName === $orderNumberAlias)
+                {
+                    throw new BehaviorConfigurationError($this, 'Invalid order number attribute! "' . $columnName . '" does not point to a valid attribute.');
+                }
+
+                if(in_array($columnName, $parentAliases))
+                {
+                    throw new BehaviorConfigurationError($this, 'Invalid attribute alias to order within! "' . $columnName . '" does not point to a valid attribute.');
+                }
+                
+                $this->tempColumns[$objectAlias][$columnName] = $columnName;
+            }
+        }
+    }
+
+    /**
+     * @param DataSheetInterface $dataSheet
+     * @param BehaviorLogBook    $logBook
+     * @return void
+     */
+    private function removeTempColumns(DataSheetInterface $dataSheet, BehaviorLogBook $logBook) : void
+    {
+        $columns = $dataSheet->getColumns();
+        foreach ($this->tempColumns[$dataSheet->getMetaObject()->getAliasWithNamespace()] as $tempColumnName) {
+            $col = $columns->getByExpression($tempColumnName);
+            if($col !== null) {
+                $columns->remove($col);
+            }
+        }
+    }
+    
     /**
      * Shift indices to avoid collisions with unique constraints.
      * 
@@ -516,13 +618,13 @@ class OrderingBehavior extends AbstractBehavior
     }
 
     /**
-     * Load any missing parent columns and merges their data into the event sheet.
+     * Load any missing parent column data into the event sheet.
      *
      * @param DataSheetInterface $eventSheet
      * @param BehaviorLogBook    $logBook
      * @return void
      */
-    private function fetchMissingColumns(
+    private function collectMissingData(
         DataSheetInterface $eventSheet,
         BehaviorLogBook $logBook
     ): void
@@ -1145,6 +1247,7 @@ class OrderingBehavior extends AbstractBehavior
     {
         // Prepare variables.
         $metaObject = $dataSheet->getMetaObject();
+        $tempColumns = $this->tempColumns[$metaObject->getAliasWithNamespace()] ?? [];
         $parentAliases = $this->getParentAliases();
         $conditionGroup = ConditionGroupFactory::createAND($metaObject);
         $processedParents = [];
@@ -1156,10 +1259,20 @@ class OrderingBehavior extends AbstractBehavior
                 continue;
             }
             $processedParents[] = $parent;
+            
+            // Ignore temp columns.
+            if(key_exists($parent, $tempColumns)) {
+                continue;
+            }
 
             // Create a filter that checks across all parent columns, whether at least one of them matches our parent.
             $subGroup = ConditionGroupFactory::createOR($metaObject);
             foreach ($parentAliases as $columnToCheck) {
+                // Ignore temp columns.
+                if(key_exists($columnToCheck, $tempColumns)) {
+                    continue;
+                }
+                
                 $column = $dataSheet->getColumns()->getByExpression($columnToCheck);
                 if($column === false) {
                     $column = $dataSheet->getColumns()->addFromExpression($columnToCheck);
@@ -1549,5 +1662,38 @@ class OrderingBehavior extends AbstractBehavior
     public function getPriority(): ?int
     {
         return parent::getPriority() ?? EventManagerInterface::PRIORITY_MIN;
+    }
+
+    /**
+     * You can assign defaults for any number of columns. You can use scalar values and formulas. 
+     * They will be applied as follows:
+     * - For updates and deletes, missing data is first loaded from source and then filled with
+     * defaults for all cells that remain empty.
+     * - For creates, missing data is immediately filled with defaults, since no loading can be performed.
+     * - If `column_name` is not a valid attribute alias, a new temp column will be created, which will
+     * be removed after processing.
+     * 
+     * These defaults NEVER overwrite any existing data, be it input data or loaded from source.
+     * However, they are applied to the actual data and will be saved alongside everything else.
+     * 
+     * @uxon-property use_default_values
+     * @uxon-type object
+     * @uxon-template [{"attribute_alias": "","calculation":""}]
+     * 
+     * @param UxonObject $defaults
+     * @return OrderingBehavior
+     */
+    public function setUseDefaultValues(UxonObject $defaults) : OrderingBehavior
+    {
+        $this->defaultValues = $defaults->toArray();
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDefaultValues() : array
+    {
+        return $this->defaultValues;
     }
 }
