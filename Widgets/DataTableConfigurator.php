@@ -118,9 +118,6 @@ class DataTableConfigurator extends DataConfigurator
         foreach ($tab->getWidgets() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
                 $columnExists = true;
-                if($existingColumn->getVisibility() === WidgetVisibilityDataType::HIDDEN) {
-                    $existingColumn->importUxonObject($column->exportUxonObject());
-                }
                 break;
             }
         }
@@ -129,9 +126,6 @@ class DataTableConfigurator extends DataConfigurator
         foreach($configuredWidget->getColumns() as $existingColumn) {
             if($alias === $existingColumn->getAttributeAlias()) {
                 $columnExists = true;
-                if($existingColumn->getVisibility() === WidgetVisibilityDataType::HIDDEN) {
-                    $existingColumn->importUxonObject($column->exportUxonObject());
-                }
                 break;
             }
         }
