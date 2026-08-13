@@ -975,7 +975,7 @@ abstract class AbstractWidget implements WidgetInterface
                 $attr = $this->getAttribute();
                 switch (true) {
                     case $this->hasAggregator():
-                        $hint = '';
+                        $hint =  $this->getCaption() ? $this->getCaption() : '';
                         break;
                     case $attr->getRelationPath()->isEmpty() === false && $this->isBoundToLabelAttribute():
                         $hint = $attr->getRelationPath()->getRelationLast()->getLeftKeyAttribute()->getHint();
