@@ -3,6 +3,7 @@ namespace exface\Core\QueryBuilders;
 
 use exface\Core\CommonLogic\QueryBuilder\AbstractQueryBuilder;
 use exface\Core\CommonLogic\DataQueries\PhpAnnotationsDataQuery;
+use exface\Core\DataTypes\StringDataType;
 use Wingu\OctopusCore\Reflection\ReflectionMethod;
 use Wingu\OctopusCore\Reflection\ReflectionClass;
 use exface\Core\CommonLogic\Filemanager;
@@ -90,7 +91,7 @@ class PhpAnnotationsReader extends AbstractQueryBuilder
                     $query->setClassNameWithNamespace($qpart->getCompareValue());
                     break;
                 case 'fqsen':
-                    $class_name = substr($qpart->getCompareValue(), 0, strpos($qpart->getCompareValue(), '::'));
+                    $class_name = StringDataType::substringBefore($qpart->getCompareValue(), '::', $qpart->getCompareValue());
                     if (strpos($class_name, '\\') !== 0) {
                         $class_name = '\\' . $class_name;
                     }
