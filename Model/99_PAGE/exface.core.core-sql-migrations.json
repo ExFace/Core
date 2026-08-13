@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "1970-01-01 01:00:00",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2022-03-23 18:24:56",
+    "modified_on": "2026-08-07 15:57:38",
     "contents": {
         "id": "MigrationsTable",
         "widget_type": "DataTable",
@@ -53,14 +53,6 @@
             },
             {
                 "attribute_alias": "failed_message"
-            },
-            {
-                "attribute_alias": "down_script",
-                "hidden": true
-            },
-            {
-                "attribute_alias": "up_script",
-                "hidden": true
             }
         ],
         "sorters": [
