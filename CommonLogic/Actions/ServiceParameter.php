@@ -449,7 +449,7 @@ class ServiceParameter implements ServiceParameterInterface
     {
         if ($this->examples === null) {
             if ($this->defaultValue !== null) {
-                return $this->defaultValue;
+                return [$this->defaultValue];
             }
         }
         return $this->examples;
