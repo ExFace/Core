@@ -71,7 +71,7 @@ class NginxServerInstaller extends AbstractServerInstaller
 # URL /{$urlPath}
 location /{$urlPath} {
     # Redirect everything to the API 
-    try_files \$uri \$uri/ /vendor/exface/core/index.php?\$args;
+    try_files \$uri /vendor/exface/core/index.php?\$query_string;
 }
     
 # Security restrictions
