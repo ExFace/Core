@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\CommonLogic\AppInstallers;
 
 use exface\Core\DataTypes\UrlDataType;
@@ -7,6 +6,29 @@ use exface\Core\Interfaces\Selectors\SelectorInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
 
+/**
+ * Creates and maintains an nginx.conf file for the current installation.
+ * 
+ * The nginx.conf file will only take care of the installation's URL path and will not interfere with other locations 
+ * or server blocks.
+ * 
+ * To use this config file on a server, it MUST be included in the global nginx.conf explicitly:
+ * 
+ * ```
+ * server {
+ *  listen 8080;
+ *  listen [::]:8080;
+ *  root /home/site/wwwroot/workbenchfolder/current;
+ *  index  index.php index.html index.htm;
+ *  server_name my.domain.com;
+ *  client_max_body_size 1000M;
+ *
+ *  #include location configurations from workbench folders
+ *  include /home/site/wwwroot/workbenchfolder/current/nginx.conf;
+ * }
+ * 
+ * ```
+ */
 class NginxServerInstaller extends AbstractServerInstaller
 {
     public function __construct(SelectorInterface $selectorToInstall)
@@ -16,8 +38,9 @@ class NginxServerInstaller extends AbstractServerInstaller
         // Placeholders to be used in the nginx.conf files
         $workbenchPath = $this->getWorkbench()->getInstallationPath();
         $workbenchUrl = $this->getWorkbench()->getUrl();
-        $workbenchHost = UrlDataType::findHost($workbenchPath);
+        $workbenchHost = UrlDataType::findHost($workbenchUrl);
         $urlPath = UrlDataType::findPath($workbenchUrl); 
+        $urlPath = trim($urlPath, '/');
         $phRenderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
         $phRenderer->addPlaceholder(new ArrayPlaceholders([
             'installation_url_path' => $urlPath,
@@ -25,9 +48,10 @@ class NginxServerInstaller extends AbstractServerInstaller
             'host' => $workbenchHost
         ]));
         
-        $this->configInstaller
-            ->setMissingMarkerBehavior($this->configInstaller::MISSING_MARKER_BEHAVIOR_ERROR)
-            ->addContent('Locations', $this->getLocationsContent($urlPath));
+        $this->getConfigInstaller()
+            ->setMissingMarkerBehavior(FileContentInstaller::MISSING_MARKER_BEHAVIOR_ERROR)
+            ->setPlaceholderRenderer($phRenderer)
+            ->addContent('Location', $this->buildConfigForLocation($urlPath, $workbenchPath));
     }
 
     protected function getServerFamily() : string
@@ -35,10 +59,15 @@ class NginxServerInstaller extends AbstractServerInstaller
         return 'nginx';
     }
 
-    protected function getLocationsContent(string $urlPath) : string
+    protected function buildConfigForLocation(string $urlPath, string $folderPathAbsolute) : string
     {
+        $urlPathWithSlash = $urlPath . '/';
         return <<<CONF
 
+# URL /{$urlPath}
+location /{$urlPath} {
+    alias {$folderPathAbsolute};
+    
     if (!-e \$request_filename){
         rewrite ^/api/.*$ /vendor/exface/core/index.php;
     }
@@ -52,20 +81,19 @@ class NginxServerInstaller extends AbstractServerInstaller
     if (!-e \$request_filename){
         rewrite ^/[^/]*$ /vendor/exface/core/index.php;
     }
-    
-    # Security restrictions
-    location /{$urlPath}/config { return 403; }
-    location /{$urlPath}/backup { return 403; }
-    location /{$urlPath}/translations { return 403; }
-    location /{$urlPath}/logs { return 403; }
-    location ~ ^/{$urlPath}/data/\..*$ { return 403; }
-
-    location ~* ^/{$urlPath}/vendor/.*\.html$ { return 404; }
-    location ~* ^/{$urlPath}/vendor/.*/gh-pages.*$ { return 404; }
-
-    # Disable .git directory
-    location ~ /\.git { deny all; access_log off; log_not_found off; }
 }
+    
+# Security restrictions
+location /{$urlPathWithSlash}config { return 403; }
+location /{$urlPathWithSlash}backup { return 403; }
+location /{$urlPathWithSlash}translations { return 403; }
+location /{$urlPathWithSlash}logs { return 403; }
+location /{$urlPathWithSlash}nginx.conf { return 403; }
+location ~ ^/{$urlPathWithSlash}data/\..*$ { return 403; }
+
+location ~* ^/{$urlPathWithSlash}vendor/.*\.html$ { return 404; }
+location ~* ^/{$urlPathWithSlash}vendor/.*/gh-pages.*$ { return 404; }
+    
 CONF;
     }
 

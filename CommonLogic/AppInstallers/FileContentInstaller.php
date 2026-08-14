@@ -5,6 +5,7 @@ use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\PlaceholderRenderers\PlaceholderRendererInterface;
+use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
 
 /**
  *
@@ -48,7 +49,7 @@ class FileContentInstaller extends AbstractAppInstaller
     
     private $missingMarkerBehavior = self::MISSING_MARKER_BEHAVIOR_APPEND;
     
-    private PlaceholderRendererInterface|null $placeholderRenderer = null;
+    private TemplateRendererInterface|null $placeholderRenderer = null;
     
     /**
      * [ marker => content ]
@@ -122,7 +123,7 @@ class FileContentInstaller extends AbstractAppInstaller
             $originalContent = $fileContent;
             $begin = trim(StringDataType::replacePlaceholders($this->getMarkerBegin(), ['marker' => preg_quote($marker)]));
             $end = trim(StringDataType::replacePlaceholders($this->getMarkerEnd(), ['marker' => preg_quote($marker)]));
-            $pattern = '/' . "\s+" . $begin . '.*' . $end . '/is';
+            $pattern = '/' . "\s*" . $begin . '.*' . $end . '/is';
             $newContent = "\n\n" . $begin . "\n" . $content . "\n" . $end;
 
             if (preg_match($pattern, $fileContent)) {
@@ -316,19 +317,19 @@ class FileContentInstaller extends AbstractAppInstaller
     /**
      * Add a template renderer to replace placeholders in the template file and in the generated sections
      * 
-     * @param PlaceholderRendererInterface $renderer
+     * @param TemplateRendererInterface $renderer
      * @return $this
      */
-    public function setPlaceholderRenderer(PlaceholderRendererInterface $renderer) : FileContentInstaller
+    public function setPlaceholderRenderer(TemplateRendererInterface $renderer) : FileContentInstaller
     {
         $this->placeholderRenderer = $renderer;
         return $this;
     }
 
     /**
-     * @return PlaceholderRendererInterface|null
+     * @return TemplateRendererInterface|null
      */
-    protected function getPlaceholderRenderer() : ?PlaceholderRendererInterface
+    protected function getPlaceholderRenderer() : ?TemplateRendererInterface
     {
         return $this->placeholderRenderer;
     }
