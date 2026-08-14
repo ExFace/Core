@@ -18,9 +18,13 @@ use exface\Core\Templates\Placeholders\ArrayPlaceholders;
  * server {
  *  listen 8080;
  *  listen [::]:8080;
- *  root /home/site/wwwroot/workbenchfolder/current;
+ *  root /home/site/wwwroot/<workbenchfolder>/current;
  *  index  index.php index.html index.htm;
- *  server_name my.domain.com;
+ *  server_name <my.domain.com>;
+ *  # Security settings
+ *  server_tokens off;
+ * 
+ *  # Allow large file uploads
  *  client_max_body_size 1000M;
  *
  *  #include location configurations from workbench folders
@@ -61,29 +65,17 @@ class NginxServerInstaller extends AbstractServerInstaller
 
     protected function buildConfigForLocation(string $urlPath, string $folderPathAbsolute) : string
     {
-        $urlPathWithSlash = $urlPath . '/';
+        $urlPathWithSlash = $urlPath ? $urlPath . '/' : '';
         return <<<CONF
 
 # URL /{$urlPath}
 location /{$urlPath} {
-    alias {$folderPathAbsolute};
-    
-    if (!-e \$request_filename){
-        rewrite ^/api/.*$ /vendor/exface/core/index.php;
-    }
-
-    if (\$request_uri ~ "^$")
-        rewrite ^/$ /\$request_uri redirect;
-    }
-    
-    rewrite ^/?$ /vendor/exface/core/index.php;
-    
-    if (!-e \$request_filename){
-        rewrite ^/[^/]*$ /vendor/exface/core/index.php;
-    }
+    # Redirect everything to the API 
+    try_files \$uri \$uri/ /vendor/exface/core/index.php?\$args;
 }
     
 # Security restrictions
+# These have higher priority than try_files as they are more specific!
 location /{$urlPathWithSlash}config { return 403; }
 location /{$urlPathWithSlash}backup { return 403; }
 location /{$urlPathWithSlash}translations { return 403; }
