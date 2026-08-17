@@ -367,7 +367,6 @@ class DataTimeline implements WidgetPartInterface
             if ($this->viewsUxon === null) {
                 $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
                 // IDEA get defaults from widget? Different defaults for Gantt and Scheduler?
-                // Info: This defaults are similar to frappe-gantt defaults.
                 $this->views = [
                     new DataTimelineView($this, new UxonObject([
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_DAY'),
