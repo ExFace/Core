@@ -13,6 +13,11 @@ use exface\Core\Factories\UserFactory;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\EnvironmentVariablePlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
+use exface\Core\Templates\Placeholders\SelectivePlaceholders;
 use exface\Core\Widgets\LoginPrompt;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\Security\AuthenticationToken\RememberMeAuthToken;
@@ -261,15 +266,28 @@ class SecurityManager implements SecurityManagerInterface
         $authenticators = [];
         $systemConfig = $workbench->getConfig();
         $authenticatorsUxon = $systemConfig->getOption('SECURITY.AUTHENTICATORS');
-        /*
-        if ($authenticatorsUxon->isArray()) {
-            $authUxonNormalized = new UxonObject();
-            foreach ($authenticatorsUxon as $pos => $authConfig) {
-                
-            }
+
+        // Replace placeholders in the authenticator configuration - e.g. secrets that, should be kept in environment
+        // variables.
+        if (mb_stripos($authenticatorsUxon->toJson(), '[#') !== false) {
+            $hasPlaceholders = true;
+            // BUT do not replace the placeholders just now! We might actually update the config down below, so we do not
+            // want the placeholders to be resolved at that point. Instead, replace them for every authenticator separately.
+            $renderer = new BracketHashStringTemplateRenderer($workbench);
+            // Add placeholders, but be sure to keep those, that are cannot be resolved - they might
+            // get resolved by concrete implementations, that allow specific placeholders in their
+            // properties.
+            $renderer->addPlaceholder(
+                new SelectivePlaceholders([
+                    new EnvironmentVariablePlaceholders(),
+                    new ConfigPlaceholders($workbench),
+                    new FormulaPlaceholders($workbench)
+                ])
+            );
         } else {
-            $authUxonNormalized = $authenticatorsUxon;
-        }*/
+            $hasPlaceholders = false;
+            $renderer = null;
+        }
             
         $authenticatorsUxonChanged = false;
         foreach ($authenticatorsUxon as $pos => $authConfig) {
@@ -308,11 +326,19 @@ class SecurityManager implements SecurityManagerInterface
             
             $authenticator = new $class($workbench);
             if ($uxon !== null && $uxon->isEmpty() === false) {
+                if ($hasPlaceholders === true && $renderer !== null) {
+                    $uxonOriginal = $uxon->toJson();
+                    $uxonResolved = $renderer->render($uxonOriginal);
+                    if ($uxonResolved !== $uxonOriginal) {
+                        $uxon = UxonObject::fromJson($uxonResolved);
+                    }
+                }
                 $authenticator->importUxonObject($uxon);
             }
             $authenticators[$uxon->getProperty('id')] = $authenticator;
         }
-        //$authenticators[] = new RememberMeAuthenticator($workbench);
+        // TODO always add the remember-me authenticator?
+        // $authenticators[] = new RememberMeAuthenticator($workbench);
         return $authenticators;
     }
     

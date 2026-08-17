@@ -12,7 +12,7 @@ use exface\Core\DataTypes\ServerSoftwareDataType;
  */
 abstract class AbstractServerInstaller extends AbstractAppInstaller
 {
-    protected FileContentInstaller $configInstaller;
+    private FileContentInstaller $configInstaller;
     
     /**
      * 
@@ -32,6 +32,18 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
             ->setMarkerEnd($this->stringToComment('END [#marker#]'));
         
         $this->configInstaller = $configInstaller;
+    }
+
+    /**
+     * Returns the file installer, that is going to be used to maintain the server config
+     * 
+     * Concrete implementations may change its settings, add a placeholder resolver, etc.
+     * 
+     * @return FileContentInstaller
+     */
+    protected function getConfigInstaller() : FileContentInstaller
+    {
+        return $this->configInstaller;
     }
 
     /**
@@ -70,7 +82,7 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
      */
     public function backup(string $absolute_path) : \Iterator
     {
-        yield from $this->configInstaller->backup($absolute_path);
+        yield from $this->getConfigInstaller()->backup($absolute_path);
     }
     
     /**
@@ -80,7 +92,7 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
      */
     public function uninstall() : \Iterator
     {
-        yield from $this->configInstaller->uninstall();
+        yield from $this->getConfigInstaller()->uninstall();
     }
 
     /**
@@ -97,10 +109,11 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
         
         yield $indentOuter . "Server configuration for {$serverType} {$serverVersion}:" . PHP_EOL;
         
-        $this->configInstaller->setOutputIndentation($indent);
+        $fileInstaller = $this->getConfigInstaller();
+        $fileInstaller->setOutputIndentation($indent);
         yield $indent . "Using \"{$this->getConfigTemplatePathRelative()}\" template for {$serverType}." . PHP_EOL;
-        yield from $this->configInstaller->install($source_absolute_path);
-        $this->configInstaller->setOutputIndentation($indentOuter);
+        yield from $fileInstaller->install($source_absolute_path);
+        $fileInstaller->setOutputIndentation($indentOuter);
     }
     
     /**
@@ -110,7 +123,7 @@ abstract class AbstractServerInstaller extends AbstractAppInstaller
      */
     public function setOutputIndentation(string $value) : AbstractAppInstaller
     {
-        $this->configInstaller->setOutputIndentation($value);
+        $this->getConfigInstaller()->setOutputIndentation($value);
         return parent::setOutputIndentation($value);
     }
 }
