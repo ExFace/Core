@@ -81,10 +81,18 @@ location /{$urlPathWithSlash}backup { return 403; }
 location /{$urlPathWithSlash}translations { return 403; }
 location /{$urlPathWithSlash}logs { return 403; }
 location /{$urlPathWithSlash}nginx.conf { return 403; }
+location ~ ^/{$urlPathWithSlash}composer\..*$ { return 403; }
 location ~ ^/{$urlPathWithSlash}data/\..*$ { return 403; }
 
 location ~* ^/{$urlPathWithSlash}vendor/.*\.html$ { return 404; }
 location ~* ^/{$urlPathWithSlash}vendor/.*/gh-pages.*$ { return 404; }
+
+location ~ /\. {
+    deny all;
+}
+location ~* \.(env|ini|log|sql|bak|dist)$ {
+    deny all;
+}
     
 CONF;
     }
