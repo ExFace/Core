@@ -231,6 +231,8 @@ class WidgetModifyingBehavior extends AbstractBehavior
             }
         }
         if ($configurator->hasOptionalColumns()) {
+            // Use the raw uxon here, not getOptionalColumns() - that would lazily (and permanently)
+            // build the columns tab from the not-yet-final columnsUxon.
             foreach ($configurator->getOptionalColumnsUxon()->toArray() as $existingColumn) {
                 $expr = $existingColumn['attribute_alias'] ?? $existingColumn['calculation'] ?? null;
                 if ($expr !== null) {
