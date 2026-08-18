@@ -8,9 +8,42 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
+ * A Gantt widget will show a TreeTable next to a Gantt chart (horizontal timeline bars)
+ * The Gantt Chart will show the tasks of the TreeTable as horizontal bars, 
+ * where the length of the bar is determined by the start and end date of the task.
  * 
+ * It contains all the classic properties of a TreeTable, as well as the additional Gantt features.
  * 
- * @author Andrej Kabachnik
+ * The Gantt also supports nested data and can display multiple bars per rows.
+ * You can read more about how to pass normal or nested data to the Gantt in the DataCalendarItem (task) documentation.
+ * 
+ * The Gantt timeline is highly adjustable. It allows you to create custom views like "days", "weeks", "months" and so on.
+ * To learn more about the timeline please read the DataTimeline documentation.
+ * 
+ * ## Example:
+ * 
+ * ```
+ * 
+ *  {
+ *      "widget_type": "Gantt",
+ *      "object_alias": "...",
+ *      "freeze_columns": 2,
+ *      "hide_header": false,
+ *      "paginate": false,
+ *      "aggregate_all": true,
+ *      "hide_caption": false,
+ *      "caption": "...",
+ *      "filters": [{ ... }],
+ *      "sorters": [{ ... }],
+ *      "columns": [{ ... }],
+ *      "timeline": { ... },
+ *      "tasks": { ... },
+ *      "buttons": [ { ... }]
+ *  }
+ * 
+ * ```
+ *
+ * @author Andrej Kabachnik & Sergej Riel
  *
  */
 class Gantt extends DataTree
@@ -19,23 +52,11 @@ class Gantt extends DataTree
     
     private $taskPart = null;
     
-    private $schedulerResourcePart = null;
-    
     private $startDate = null;
     
     private $childrenMoveWithParentIf = null;
     
     private $childrenMoveWithParent = null;
-    
-    private $keepScrollPosition = false;
-    
-    private $viewModeColumnWidthDay = null;
-    
-    private $viewModeColumnWidthWeek = null;
-    
-    private $viewModeColumnWidthMonth = null;
-    
-    private $viewModeColumnWidthYear = null;
 
     /**
      * @inheritDoc
@@ -241,143 +262,6 @@ class Gantt extends DataTree
     public function setStartDate(string $value) : Gantt
     {
         $this->startDate = $value;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getKeepScrollPosition() : bool
-    {
-        return $this->keepScrollPosition;
-    }
-
-
-    /**
-     * If this is set to true, it will prevent the Gantt chart from scrolling back to the start position on the left after each rerender.
-     * Set this to true if you are using multiple draggable taskbars on the same row.
-     * 
-     * @uxon-property keep_scroll_position
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $value
-     * @return $this
-     */
-    public function setKeepScrollPosition(bool $value): Gantt
-    {
-        $this->keepScrollPosition = $value;
-        return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getViewModeColumnWidthDay() : ?int
-    {
-        return $this->viewModeColumnWidthDay;
-    }
-
-    /**
-     * Sets the column width of the "day" view mode in pixels.
-     * 
-     * @uxon-property view_mode_column_width_day
-     * @uxon-type integer
-     * @uxon-default 38
-     * 
-     * @param int $value
-     * @return $this
-     */
-    public function setViewModeColumnWidthDay(int $value): Gantt
-    {
-        $this->viewModeColumnWidthDay = $value;
-        return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getViewModeColumnWidthWeek() : ?int
-    {
-        return $this->viewModeColumnWidthWeek;
-    }
-
-    /**
-     * Sets the column width of the "week" view mode in pixels.
-     *
-     * @uxon-property view_mode_column_width_week
-     * @uxon-type integer
-     * @uxon-default 140
-     *
-     * @param int $value
-     * @return $this
-     */
-    public function setViewModeColumnWidthWeek(int $value): Gantt
-    {
-        $this->viewModeColumnWidthWeek = $value;
-        return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getViewModeColumnWidthMonth() : ?int
-    {
-        return $this->viewModeColumnWidthMonth;
-    }
-
-    /**
-     * Sets the column width of the "month" view mode in pixels.
-     *
-     * @uxon-property view_mode_column_width_month
-     * @uxon-type integer
-     * @uxon-default 20
-     *
-     * @param int $value
-     * @return $this
-     */
-    public function setViewModeColumnWidthMonth(int $value): Gantt
-    {
-        $this->viewModeColumnWidthMonth = $value;
-        return $this;
-    }
-
-    /**
-     * @return int|null
-     */
-    public function getViewModeColumnWidthYear() : ?int
-    {
-        return $this->viewModeColumnWidthYear;
-    }
-
-    /**
-     * Sets the column width of the "year" view mode in pixels.
-     *
-     * @uxon-property view_mode_column_width_year
-     * @uxon-type integer
-     * @uxon-default 12
-     *
-     * @param int $value
-     * @return $this
-     */
-    public function setViewModeColumnWidthYear(int $value): Gantt
-    {
-        $this->viewModeColumnWidthYear = $value;
-        return $this;
-    }
-
-    /**
-     * This property is deprecated and do not work in the new Gantt version! Don't use it! It will be removed in the next versions.
-     * 
-     * @uxon-property auto_relayout_on_change
-     * @uxon-type bool
-     * @uxon-default false
-     * 
-     * @param bool $value
-     * @return $this
-     */
-    public function setAutoRelayoutOnChange(bool $value) : Gantt
-    {
         return $this;
     }
 }

@@ -1,6 +1,11 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Actions\ShowWidget;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -37,7 +42,7 @@ use exface\Core\Widgets\Traits\PopupTrait;
  * 
  * @author Andrej Kabachnik
  */
-class Dialog extends Form implements iAmClosable, iHaveHeader, IHaveTourGuideInterface
+class Dialog extends Form implements UiScreenInterface, iAmClosable, iHaveHeader, IHaveTourGuideInterface
 {
     use PopupTrait;
     use IHaveTourGuideTrait;
@@ -428,5 +433,19 @@ class Dialog extends Form implements iAmClosable, iHaveHeader, IHaveTourGuideInt
             $objects = array_merge($objects, $this->getHeader()->getMetaObjectsEffectingThisWidget());
         }
         return array_unique($objects);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getSlug()
+     */
+    public function getSlug() : string
+    {
+        $parent = $this->getParent();
+        if (($parent instanceof iTriggerAction) && $parent->getAction() instanceof iShowWidget) {
+            return $parent->getAction()->getAliasWithNamespace();
+        } else {
+            return $this->getPage()->getAliasWithNamespace();
+        }
     }
 }

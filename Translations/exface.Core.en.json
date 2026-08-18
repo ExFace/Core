@@ -447,6 +447,8 @@
     "WIDGET.GANTT_CHARD.VIEW_MODE_YEAR": "Year",
     "WIDGET.GANTT_CHARD.POPUP_CAPTION_DAYS": "days",
     "WIDGET.GANTT_CHARD.POPUP_CAPTION_EXCLUDED": "excluded",
+    "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "The given data interval is entirely in the past or future and does not include today's date.",
+    "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TITLE": "Today is not included.",
     "WIDGET.JEXCEL.ADD_ROWS_BUTTON_CAPTION": "add rows",
     "WIDGET.JEXCEL.ADD_ROWS_BUTTON_PROMPT": "How many rows do you want to add?",
     "WIDGET.JEXCEL.CONFIRM_PASTE_PROMPT": "The amount of pasted data might lead to performance issues, or unresponsiveness of the page.",

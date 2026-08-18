@@ -89,7 +89,10 @@ class WidgetPropertyScale implements WidgetPropertyScaleInterface
     public function getScaleValues() : array
     {
         if ($this->valueScale === null && $this->dataType instanceof EnumDataTypeInterface) {
-            $this->valueScale = $this->dataType->getValueHints();
+            // Prefer explicitly configured value hints, but fall back to the enum's labels, so a technical
+            // value is never shown on its own if a human-readable label is available
+            $hints = $this->dataType->getValueHints();
+            $this->valueScale = ! empty($hints) ? $hints : $this->dataType->getLabels();
         }
         return $this->valueScale ?? [];
     }

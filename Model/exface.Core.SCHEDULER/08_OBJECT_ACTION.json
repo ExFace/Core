@@ -189,7 +189,7 @@
         {
             "_EXPORT_SUMMARY": "Scheduler: Start selected [SchedulerStartSeleted]",
             "CREATED_ON": "2025-12-05 13:17:48",
-            "MODIFIED_ON": "2025-12-05 13:19:12",
+            "MODIFIED_ON": "2026-07-09 00:29:47",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f0826269a0f3b48262025041000001",
@@ -202,6 +202,7 @@
                 "icon": "play",
                 "input_rows_min": 1,
                 "input_rows_max": 1,
+                "input_object_alias": "exface.Core.SCHEDULER",
                 "widget": {
                     "widget_type": "Console",
                     "disabled": true,

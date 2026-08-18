@@ -2,11 +2,10 @@
 
 namespace exface\Core\Formulas;
 
-use exface\Core\CommonLogic\DataSheets\DataCollector;
+use exface\Core\CommonLogic\DataSheets\DataReadPrefetcher;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataCheckMapping;
 use exface\Core\CommonLogic\Model\Formula;
 use exface\Core\CommonLogic\Security\Authorization\ActionAuthorizationPoint;
-use exface\Core\Events\DataSheet\OnReadDataEvent;
 use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Factories\DataTypeFactory;
@@ -116,6 +115,7 @@ class IsButtonAuthorized extends Formula
 
         // Create fake input data for a single row
         $row = $mappedData->getRow($this->getCurrentRowNumber());
+        $mappedData->getSorters()->removeAll();
         $currentRowData = $mappedData->copy()->removeRows()->addRow($row, false, false);
         if ($mapByRow === true) {
             $currentRowData = $mapper->map($currentRowData);
@@ -123,45 +123,40 @@ class IsButtonAuthorized extends Formula
 
         // Create a fake task
         $task = TaskFactory::createFromDataSheet($currentRowData);
-
-        $onReadMissingData = function(OnReadDataEvent $event) use ($mappedData, $currentRowData) {
-            $eventData = $event->getDataSheet();
-            if (! $eventData->getMetaObject()->isExactly($mappedData->getMetaObject())) {
-                return;
-            }
-
-            $missingDataCollector = new DataCollector($mappedData->getMetaObject());
-            foreach ($eventData->getColumns() as $eventCol) {
-                if (! $mappedData->getColumns()->getByExpression($eventCol->getExpressionObj())) {
-                    $missingDataCollector->addExpression($eventCol->getExpressionObj());
-                }
-            }
-            if (! $missingDataCollector->isEmpty()) {
-                $event->preventDefault();
-                $event->stopPropagation();
-                $missingDataCollector->enrich($mappedData);
-                foreach ($missingDataCollector->getRequiredColumns() as $col) {
-                    $uid = $eventData->getUidColumn()->getValue(0);
-                    $colVal = $col->getValue(0);
-                    $eventData->setCellValue($col->getName(), $eventData->getUidColumn()->findRowByValue($uid), $colVal);
-                    $currentRowData->setCellValue($col->getName(), $currentRowData->getUidColumn()->findRowByValue($uid), $colVal);
-                }
-            }
-        };
-        $eventMgr = $this->getWorkbench()->eventManager();
-        $eventMgr->addListener(OnReadDataEvent::getEventName(), $onReadMissingData);
+        
+        // Listen to data reads on the object of the data sheet we are filling and remember read column, that were
+        // not there yet. The observer will add these column to the $mappedData and fill them for ALL rows when they
+        // are read for the first time - this will prevent these column from bein read separately for every row this
+        // formula is calculating
+        /* TODO test #DataReadPrefetcher here
+        $observer = new DataReadPrefetcher($mappedData->getMetaObject(), $mappedData);
+        $observer->setPrefetchOnEveryRead(true);
+        $observer->addDataSheetToEnrich($currentRowData);
+        $observer->start();
+        */
 
         // See if the action is authorized for this input data
         try {
             $actionAP->authorize($action, $task);
             $result = true;
+            /* TODO pass ALL rows to the authorization point at once instead of the current row only
+             * This should be much faster as any additional data required for policies will only need to be loaded once
+             * and not once per row! A prefetcher does not always help here, because input mapper eventually evaluated
+             * by the policies themselves still are applied per-row as the policy does not know, that originally there
+             * were multiple rows.
+             *//*
+            $task = TaskFactory::createFromDataSheet($allData);
+            $decisions = $actionAP->authorizePerRow($action, $task);
+            $result = $decisions[$this->getCurrentRowNumber()]->getPermitted();
+            */
         } catch (AccessPermissionDeniedError $e) {
             $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
             $result = false;
         }
 
-        $eventMgr->removeListener(OnReadDataEvent::getEventName(), $onReadMissingData);
-
+        /* TODO test #DataReadPrefetcher here
+        $observer->stop();
+        */
         // Stop blocking recursion
         unset($this->inProgressFor[$cacheKey]);
 

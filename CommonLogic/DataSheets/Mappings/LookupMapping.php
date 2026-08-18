@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Exceptions\DataSheets\DataMappingFailedError;
 use exface\Core\Exceptions\DataSheets\DataSheetMissingRequiredValueError;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\MetaObjectFactory;
@@ -95,6 +96,79 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 
  * ```
  * 
+ * ### Lookups with delimiter-separated lists
+ * 
+ * Lookup mappings can work with delimiter-separated lists (for example comma-separated lists). 
+ * The lists are separated before processing, using the delimiter stored in the associated attribute.
+ * The results are stitched back together, before the final output is returned. This feature is turned off by default. 
+ * To enable it, add the property `from_values_are_lists` and set it to TRUE. 
+ * 
+ * Example config:
+ * 
+ * ```
+ * 
+ *  "x-lookup": {
+ *      "lookup_object_alias": "geb.testing.testing_geb",
+ *      "lookup_column": "status",
+ *      "if_not_found": "leave_empty",
+ *      "from_values_are_lists": true,
+ *      "matches": [
+ *          {
+ *              "from": "Registry",
+ *              "lookup": "registry"
+ *          },
+ *          {
+ *              "from": "Value_a",
+ *              "lookup": "value_a"
+ *          },
+ *          {
+ *              "from": "Value_b",
+ *              "lookup": "value_b"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
+ * 
+ * The above config will accept both list and scalar values for `Registry`, `Value_a` and `Value_b`. Let's
+ * consider the following input data:
+ * 
+ * ```
+ * 
+ *  [
+ *      {
+ *          "Value_a": "1,0",
+ *          "Value_b": "22",
+ *          "Registry": "A,B,D"
+ *      }
+ *  ]
+ * 
+ * ```
+ * 
+ * With the list feature enabled, the mapper would check all unique combinations of values in the three match columns 
+ * `Registry`, `Value_a` and `Value_b` and write the matched lookups as a list into the output column. 
+ * If you had multiple input rows, this process would be repeated for each row. Consequently, the list mode can be very
+ *  heavy on performance. Use it with caution! 
+ * 
+ * For our example input, the table of combinations would look like this:
+ * 
+ * |Value_a|Value_b|Registry|
+ * |-------|-------|--------|
+ * |1|22|A|
+ * |0|22|A|
+ * |1|22|B|
+ * |0|22|B|
+ * |1|22|D|
+ * |0|22|D|
+ * 
+ * The final output is a delimiter separated list, like `"50,30,10"`. The delimiter depends on the `lookup_column` attribute.
+ * Bear in mind that the number of matches per row is not predictable, but the number of output rows is always guaranteed
+ * to be the same as the number of input rows.
+ * 
+ * Lastly, error handling remains largely unchanged. You can still use all error handling modes and the feedback 
+ * will be just as detailed, as with regular processing. The row numbers shown will relate to the original row, that
+ * the failed lookup belonged to. As such, you might receive multiple errors referencing the same row.
+ * 
  * @author Andrej Kabachnik
  *
  */
@@ -126,6 +200,8 @@ class LookupMapping extends AbstractDataSheetMapping
     private ?string $fallbackValue = null;
     private ?DataSheetInterface $lookupSheet = null;
     private ?UxonObject $lookupSheetUxon = null;
+    private bool $fromValuesAreLists = false;
+    private array $rowNumberAtlas = [];
 
     /**
      * 
@@ -220,6 +296,7 @@ class LookupMapping extends AbstractDataSheetMapping
     {
         $lookupExpr = $this->getLookupExpression();
         $toExpr = $this->getToExpression();
+        $this->rowNumberAtlas = [];
         
         $log = "Lookup {$this->getLookupObject()->__toString()} `{$lookupExpr->__toString()}` -> `{$toExpr->__toString()}`.";
 
@@ -308,7 +385,10 @@ class LookupMapping extends AbstractDataSheetMapping
                 case $fromExpr->isStatic():
                     $fromColsHaveValues = true;
                     $staticVal = $fromExpr->evaluate();
-                    $matchesFrom[$i]['static'] = $staticVal;
+                    $matchesFrom[$i] = [
+                        'static' => $staticVal,
+                        'fromColName' => $match['from']
+                    ];
                     $lookupSheet->getFilters()->addConditionFromString($match['lookup'], $staticVal, ComparatorDataType::EQUALS);
                     break;
                 default:
@@ -346,7 +426,7 @@ class LookupMapping extends AbstractDataSheetMapping
                 'lookupCol' => $lookupCol,
                 'matches' => $matches,
                 'matchesLookup' => $matchesLookup,
-                'matchesFrom' => $matchesLookup
+                'matchesFrom' => $matchesFrom
             ];
         }
 
@@ -358,10 +438,13 @@ class LookupMapping extends AbstractDataSheetMapping
             $toValDelim = EXF_LIST_SEPARATOR;
         }
 
+        // Atomize the from-data, to enable matching via lists.
+        $atomizedFromSheet = $this->atomizeFromData($fromSheet, $matchesFrom);
+        
         // For every row in the from-sheet we will create a row in the to-sheet
         $unmatchedRows = [];
-        foreach ($fromSheet->getRows() as $iFromRow => $fromRow) {
-            $toColVals[$iFromRow] = null;
+        foreach ($atomizedFromSheet->getRows() as $iFromRow => $fromRow) {
+            $atlasKey = $fromRow['atlasKey'] ?? $iFromRow;
             // Collect all from-values into a single string to quickly find out
             $fromRowValsJoined = '';
             foreach ($matches as $i => $match) {
@@ -369,7 +452,7 @@ class LookupMapping extends AbstractDataSheetMapping
             }
             // Look for matching lookup rows for this from-row
             foreach ($lookupSheet->getRows() as $lookupRow) {
-                $prevVal = $toColVals[$iFromRow];
+                $prevVal = $toColVals[$atlasKey];
                 // If any of the keys DO NOT match, continue with next lookup row
                 foreach ($matches as $iMatch => $match) {
                     // Convert both values to the data type of the lookup side so
@@ -402,37 +485,44 @@ class LookupMapping extends AbstractDataSheetMapping
                 if ($isSubsheet) {
                     if (! is_array($prevVal)) {
                         // Copy the template. Remember, that assigning arrays in PHP will do copy-on-wirte
-                        $toColVals[$iFromRow] = $subsheetTpl;
+                        $toColVals[$atlasKey] = $subsheetTpl;
                     }
                     if ($lookupVal !== null && $lookupVal !== '') {
                         foreach (explode($toValDelim, $lookupVal) as $val) {
-                            $toColVals[$iFromRow]['rows'][] = [$toExpr->getAttribute()->getAlias() => $val];
+                            $toColVals[$atlasKey]['rows'][] = [$toExpr->getAttribute()->getAlias() => $val];
                         }
                     }
                 } else {
                     if ($prevVal === null) {
-                        $toColVals[$iFromRow] = $lookupVal;
+                        $toColVals[$atlasKey] = $lookupVal;
                     } else {
-                        throw new DataMappingFailedError($this, $fromSheet, $toSheet, 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $iFromRow . ' with filter `' . $lookupSheet->getFilters()->__toString() . '`.');
+                        $msg = 'Lookup for "' . $toExpr->__toString() . '" returned more than 1 value on row ' . $iFromRow . ' with filter `' . $lookupSheet->getFilters()->__toString() . '`.';
+                        
+                        $originalRowNr = $this->getAtlasIndex($atlasKey);
+                        if($originalRowNr !== $iFromRow) {
+                            $msg .= ' (Original row: ' . $originalRowNr . ')';
+                        }
+                        
+                        throw new DataMappingFailedError($this, $atomizedFromSheet, $toSheet, $msg);
                     }
                 }
             }
             
             // If row could not be matched to any lookup row, we might have to respond.
-            if(null === ($toColVals[$iFromRow] ?? null)) {
+            if(!key_exists($atlasKey, $toColVals)) {
                 // If we do not have a lookup-value, that is perfectly fine if we did not have a
                 // from-value either.
                 if (! $isRequired && '' === trim($fromRowValsJoined)) {
                     // In case of subsheets, leaving the cell empty will actually not change anything. To really
                     // set it to an empty value, we need an empty subsheet here.
                     if ($isSubsheet) {
-                        $toColVals[$iFromRow] = $subsheetTpl;
+                        $toColVals[$atlasKey] = $subsheetTpl;
                     }
                 }
                 // Otherwise this from-row is a miss, and we need to handle it according to `if_not_found`
                 else {
                     // Cache unmatched row.
-                    $unmatchedRows[$iFromRow] = $fromRow;
+                    $unmatchedRows[$atlasKey] = $fromRow;
                     // Some configurations require, that we stop processing after encountering our first unmatched row.
                     if ($this->stopOnFirstMiss) {
                         break;
@@ -441,12 +531,227 @@ class LookupMapping extends AbstractDataSheetMapping
             }
         }
 
+        // Handle errors.
         $this->handleUnmatchedRows($unmatchedRows, $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
+        
+        // If we used atomized data, we have to stitch it back together, to ensure that the row count remains unchanged.
+        $toColVals = $this->stitchToData($toColVals, $toCol->getValueListDelimiter());
+        
+        // Apply the acquired data.
         $toCol->setValues($toColVals);
 
         $logbook?->addLine($log);
-        
         return $toSheet;
+    }
+
+    /**
+     * Ensures that the given from-data is properly atomized. 
+     * 
+     * If `$this->getFromValuesAreLists()` is TRUE, all from-columns used as match keys
+     * are treated as lists. Their delimiter is derived from their own `$column->getValueListDelimiter()`
+     * For each row of from-data this function creates new rows that only contain one value per
+     * match-column. The effort will be multiplicative. The atomized rows are associated with their
+     * original rows via `$this->rowNumberAtlas[$row['atlasKey']]`.
+     * 
+     * ### Example
+     * 
+     * ```
+     * // From-row
+     * rows => [
+     *      [
+     *          UID => 0,
+     *          KEY => "0,1,2",     // Match column
+     *          USER => "geb,aka"   // Match column
+     *      ]
+     * ]
+     * 
+     * // Atomized
+     *  rows => [
+     *       [
+     *            UID => 0,
+     *            KEY => "0",
+     *            USER => "geb"
+     *        ],
+     *        [
+     *            UID => 0,
+     *            KEY => "1",
+     *            USER => "geb"
+     *        ],
+     *        [
+     *            UID => 0,
+     *            KEY => "2",
+     *            USER => "geb"
+     *        ],
+     *        [
+     *             UID => 0,
+     *             KEY => "0",
+     *             USER => "aka"
+     *         ],
+     *         [
+     *             UID => 0,
+     *             KEY => "1",
+     *             USER => "aka"
+     *         ],
+     *         [
+     *             UID => 0,
+     *             KEY => "2",
+     *             USER => "aka"
+     *         ]
+     *  ]
+     * 
+     * ```
+     * 
+     * 
+     * @param DataSheetInterface $fromData
+     * @param array              $matchesFrom
+     * @return DataSheetInterface
+     */
+    protected function atomizeFromData(DataSheetInterface $fromData, array $matchesFrom) : DataSheetInterface
+    {
+        $result = $fromData->copy();
+        
+        // If we don't treat from-values as lists, we can skip this step.
+        if(!$this->getFromValuesAreLists()) {
+            return $result;
+        }
+
+        // Get delimiters.
+        $delimiters = [];
+        foreach ($matchesFrom as $match) {
+            $delimiters[$match['fromColName']] = $match['fromCol']?->getValueListDelimiter();
+        }
+
+        // Empty result sheet.
+        $result->removeRows();
+        
+        // Atomize. For each from-row, we explode the values in its match columns.
+        // Then, we create a new row for each unique combination of match-column values.
+        // So a row with 3 match columns that have 2, 3 and 4 values each, we would create 24 new rows.
+        foreach ($fromData->getRows() as $idx => $row) {
+            $atomizedRows = [];
+            
+            // Traverse match-columns.
+            foreach ($matchesFrom as $match) {
+                $colName = $match['fromColName'];
+                $delimiter = $delimiters[$colName] ?? null;
+                
+                if(!$fromData->getColumns()->has($colName)) {
+                    continue;
+                }
+                
+                // Explode the cell value and create new rows.
+                $atomizedRows = $this->atomizeCellValue(
+                    $atomizedRows ?: [$row],
+                    $row[$colName],
+                    $colName,
+                    $delimiter
+                );
+            }
+            
+            // Remember row indices.
+            foreach ($atomizedRows as &$atomizedRow) {
+                $atlasKey = 'atlas-' . count($this->rowNumberAtlas);
+                $this->rowNumberAtlas[$atlasKey] = $idx;
+                $atomizedRow['atlasKey'] = $atlasKey;
+            }
+            
+            $result->addRows($atomizedRows, false, false);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Separates a cell value according to its delimiter and creates a new row for each 
+     * resulting component and for each input row. If you provide 3 rows as base and the cells is
+     * atomized into 2 values, you would receive 6 rows as result. Each containing only a single
+     * value in the atomized cell.
+     * 
+     * @param array       $rows
+     * @param mixed       $cellValue
+     * @param string      $colName
+     * @param string|null $delimiter
+     * @return array
+     */
+    protected function atomizeCellValue(array $rows, mixed $cellValue, string $colName, ?string $delimiter) : array
+    {
+        // Explode cell value.
+        if($delimiter !== null && is_string($cellValue)) {
+            $cellComponents = explode($delimiter, $cellValue);
+        } else {
+            $cellComponents = [$cellValue];
+        }
+        
+        $result = [];
+        // Traverse all given rows.
+        foreach ($rows as $row) {
+            // Per given row, create a new row for each component.
+            foreach ($cellComponents as $component) {
+                $newRow = $row;
+                $newRow[$colName] = $component;
+                $result[] = $newRow;
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Stitches atomized to-data back together, using `$this->rowNumberAtlas`.
+     * 
+     * @param array  $toColVals
+     * @param string $delimiter
+     * @return array
+     */
+    protected function stitchToData(array $toColVals, string $delimiter) : array
+    {
+        $result = [];
+        
+        // Traverse all to-values.
+        foreach ($toColVals as $key => $val) {
+            $idx = $this->getAtlasIndex($key);
+            
+            // Stitch the values, by adding them to an array.
+            $prev = $result[$idx];
+            if($prev !== null && !is_array($prev)) {
+                $result[$idx] = [$prev, $val];
+            } else {
+                $result[$idx][] = $val;
+            }
+        }
+        
+        // Implode all arrays to get the final values.
+        foreach ($result as $idx => $val) {
+            if(is_array($val)) {
+                $val = array_unique($val);
+                $result[$idx] = implode($delimiter, $val);
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * Returns the atlas index for a given key.
+     *
+     * @param int|string $key
+     * @return int
+     */
+    protected function getAtlasIndex(int|string $key) : int
+    {
+        // If the key is an integer, we assume that it already matches its original row.
+        if(!is_string($key)) {
+            return $key;
+        }
+
+        // Get the original row number via the row number atlas.
+        $idx = $this->rowNumberAtlas[$key];
+        if($idx === null) {
+            // This code path should never be executed. If this error is thrown, the row number logic is broken.
+            throw new UnexpectedValueException('Could not match "' . $key . '" to a row number!');
+        }
+        
+        return $idx;
     }
 
     /**
@@ -473,13 +778,20 @@ class LookupMapping extends AbstractDataSheetMapping
             return;
         }
         
+        // Stitch row numbers to ensure proper error rendering.
+        // TODO: If you ever want to render the row numbers in the message produced here, remember to use this variable.
+        $rowNrs = [];
+        foreach (array_keys($unmatchedRows) as $rowNr) {
+            $idx = $this->getAtlasIndex($rowNr);
+            $rowNrs[$idx] = $idx;
+        }
+        
         $error = null;
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         switch ($this->notFoundBehavior) {
             // Throw an error.
             case self::IF_NOT_FOUND_ERROR_FIRST:
             case self::IF_NOT_FOUND_ERROR_ALL:
-                $rowNrs = array_keys($unmatchedRows);
                 $matches = $this->getMatches();
                 $matchKeys = [];
                 foreach ($unmatchedRows as $fromRow) {
@@ -503,7 +815,7 @@ class LookupMapping extends AbstractDataSheetMapping
                     count($unmatchedRows)
                 );
                 $error = new DataSheetMissingRequiredValueError(
-                    $fromSheet, 
+                    $fromSheet->copy(), 
                     $message, 
                     $errorUxon->getProperty('code') ?? '80YWY1Z', 
                     null, 
@@ -532,9 +844,8 @@ class LookupMapping extends AbstractDataSheetMapping
                     }
 
                 } catch (\Throwable $e) {
-                    $rowNrs = array_keys($unmatchedRows);
                     $error = new DataSheetMissingRequiredValueError(
-                        $fromSheet,
+                        $fromSheet->copy(),
                         null,
                         null,
                         $e,
@@ -552,9 +863,8 @@ class LookupMapping extends AbstractDataSheetMapping
                             $fallbackValue = $toCol->getDataType()->parse($fallbackValue);
                         } catch (\Throwable $e)
                         {
-                            $rowNrs = array_keys($unmatchedRows);
                             $error = new DataSheetMissingRequiredValueError(
-                                $fromSheet,
+                                $fromSheet->copy(),
                                 null,
                                 null,
                                 $e,
@@ -922,6 +1232,30 @@ class LookupMapping extends AbstractDataSheetMapping
     protected function setLookupSheet(UxonObject $uxon) : LookupMapping
     {
         $this->lookupSheetUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function getFromValuesAreLists() : bool
+    {
+        return $this->fromValuesAreLists;
+    }
+
+    /**
+     * If set to TRUE, from values will be treated as lists.
+     * 
+     * @uxon-property from_values_are_lists
+     * @uxon-type bool
+     * @uxon-template true
+     *
+     * @param bool $fromValuesAreLists
+     * @return $this
+     */
+    protected function setFromValuesAreLists(bool $fromValuesAreLists) : LookupMapping
+    {
+        $this->fromValuesAreLists = $fromValuesAreLists;
         return $this;
     }
 }

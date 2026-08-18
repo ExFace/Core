@@ -13,7 +13,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WidgetInterface;
 
 /**
- * Event fired after the a UI action has initialized its widget: e.g. the root of a UI page, a Dialog, a PopUp, etc.
+ * Event fired after a UI action has initialized its widget: e.g. the root of a UI page, a Dialog, a PopUp, etc.
  * 
  * @event exface.Core.Widget.OnUiActionWidgetInit
  * 

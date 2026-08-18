@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\CustomAttribute;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -973,7 +974,7 @@ abstract class AbstractWidget implements WidgetInterface
                 $attr = $this->getAttribute();
                 switch (true) {
                     case $this->hasAggregator():
-                        $hint = '';
+                        $hint =  $this->getCaption() ? $this->getCaption() : '';
                         break;
                     case $attr->getRelationPath()->isEmpty() === false && $this->isBoundToLabelAttribute():
                         $hint = $attr->getRelationPath()->getRelationLast()->getLeftKeyAttribute()->getHint();
@@ -1884,5 +1885,19 @@ abstract class AbstractWidget implements WidgetInterface
             }
         }
         return $this->tourSteps;
+    }
+    
+    public function findUiContainer() : UiScreenInterface
+    {
+        if (! $this->hasParent()) {
+            return $this->getPage();
+        } else {
+            $parent = $this->getParent();
+            if ($parent instanceof UiScreenInterface) {
+                return $parent;
+            } else {
+                return $parent->findUiContainer();
+            }
+        }
     }
 }

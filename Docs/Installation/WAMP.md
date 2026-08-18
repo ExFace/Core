@@ -6,7 +6,7 @@
 
 ### PHP extension `sodium`
 
-TODO 
+TODO
 
 ### PHP extension `sqlsrv` if you plan to use Microsoft SQL Server for model DB
 
@@ -30,12 +30,11 @@ TODO
 1. Install [OpenSSL for Windows](https://slproweb.com/products/Win32OpenSSL.html)
 2. Create a folder to work in (e.g. `c:\certs`)
 3. Open a command prompt (`cmd`) as administrator and go to the created folder (`cd c:\certs`).
-4. Create a private key via `openssl genrsa -out servername.2022.key 2048` - where 2022 is the current year (this has proven handy when renewing certificates later)
+4. Create a private key via `openssl genrsa -out servername.2022.key 2048` \- where 2022 is the current year \(this has proven handy when renewing certificates later\)
 5. Create a certificate request (CSR): create an empty text file named `req.conf` and add the contents below.
 6. Ask your IT department create a `.crt` file from the `req.conf`. Rename the resulting `.crt` to something similar to the private key file - in our case that would be `servername.2022.key`
-7. Put the files `servername.2022.key` and `servername.2022.crt` in a folder accessible for Apache - e.g. `c:\wamp\bin\Apache\apache2.4.52\conf\certs`. 
+7. Put the files `servername.2022.key` and `servername.2022.crt` in a folder accessible for Apache - e.g. `c:\wamp\bin\Apache\apache2.4.52\conf\certs`.
 8. Change the files `conf\httpd.conf` and `conf\extra\httpd-ssl.conf` inside your current Apache folder as shown in the chapters below
-
 
 ### CSR template
 
@@ -150,4 +149,3 @@ SSLSessionCacheTimeout  300
 	CustomLog "${INSTALL_DIR}/logs/custom.log" "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
 </VirtualHost>
 ```
-	

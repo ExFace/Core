@@ -350,7 +350,7 @@ class ExportXLSX extends ExportJSON
         
         switch (true) {
             case ($dataType instanceof BooleanDataType): 
-                return 'integer';
+                return $this->willFormatEnumsAsLabels() ? 'string' : 'integer';
             case ($dataType instanceof TimestampDataType):
             case ($dataType instanceof DateTimeDataType):
                 return $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.DATETIME_FORMAT_EXCEL');

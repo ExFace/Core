@@ -138,6 +138,7 @@ use exface\Core\CommonLogic\DataSheets\PivotSheet;
  */
 class DataMatrix extends DataTable
 {
+    private ?bool $formatValuesOnTranspose = null;
 
     /**
      * 
@@ -224,5 +225,35 @@ class DataMatrix extends DataTable
             return $pivotSheet;
         }
         return parent::prepareDataSheetToRead($data_sheet);
+    }
+
+    /**
+     * Returns TRUE to format transposed values in JavaScript and FALSE to keep raw values.
+     *
+     * If not set explicitly, facades can apply their own default behavior.
+     *
+     * @param bool $default
+     * @return bool
+     */
+    public function getFormatValuesOnTranspose(bool $default = true) : bool
+    {
+        return $this->formatValuesOnTranspose ?? $default;
+    }
+
+    /**
+     * Set to TRUE/FALSE to control if transposed values are formatted by datatype formatters, or if they use raw values.
+     *
+     * If not set, facades can apply their own default (e.g. UI5 defaults to FALSE).
+     *
+     * @uxon-property format_values_on_transpose
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return DataMatrix
+     */
+    public function setFormatValuesOnTranspose(bool $value) : DataMatrix
+    {
+        $this->formatValuesOnTranspose = $value;
+        return $this;
     }
 }

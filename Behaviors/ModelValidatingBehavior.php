@@ -180,8 +180,10 @@ class ModelValidatingBehavior extends AbstractBehavior
     public function onObjectEditorReadAttributes(OnActionPerformedEvent $event)
     {
         $action = $event->getAction();       
-        // Only handle ReadData actions for ATTRIBUTE object triggered for table widgets
-        if (! $action->is('exface.Core.ReadData')) {
+        // Only handle ReadData and Autosuggest actions for ATTRIBUTE object triggered for table widgets.
+        // Adding inherited attributes to the autosuggest allows to select them in the relation section
+        // the attribute editor (as custom relation key).
+        if (! $action->is('exface.Core.ReadData') && ! $action->is('exface.Core.Autosuggest')) {
             return;
         }
         if (!$this->appliesToObject($action->getMetaObject())) {
@@ -294,6 +296,15 @@ class ModelValidatingBehavior extends AbstractBehavior
                 $value = $cond->getValue();
                 if($value !== null) {
                     return $value;
+                }
+            }
+            if ($comp === ComparatorDataType::IN && $cond->isEmpty() === false) {
+                $value = $cond->getValue();
+                if($value !== null) {
+                    $values = explode($dataSheet->getMetaObject()->getAttribute($cond->getAttributeAlias())->getValueListDelimiter(), $value);
+                    if (count($values) === 1) {
+                        return $value;
+                    }
                 }
             }
         }
@@ -432,6 +443,9 @@ class ModelValidatingBehavior extends AbstractBehavior
                 case $relationPath . 'NAME':
                     $row[$col->getName()] = $attr->getName();
                     break;
+                case $relationPath . 'LABEL':
+                    $row[$col->getName()] = $attr->getName() . ' [' . $attr->getAlias() . ']';
+                    break;
                 case $relationPath . 'ALIAS':
                     $row[$col->getName()] = $attr->getAlias();
                     break;
@@ -476,6 +490,20 @@ class ModelValidatingBehavior extends AbstractBehavior
                     break;
                 case $relationPath . 'INFO_ICONS':
                     $row[$col->getName()] = $this->buildHtmlAttributeInfoIcons($attr);
+                    break;
+                case $relationPath . 'OBJECT':
+                    $row[$col->getName()] = $attr->getObjectId();
+                    break;
+                // Custom object label - helpful in attribute dropdowns like in the relation section of the attribute
+                // editor.
+                case $relationPath . 'OBJECT__LABEL':
+                    $row[$col->getName()] = $attr->getObjectInheritedFrom()->getName() . ' [inherited]';
+                    break;
+                case $relationPath . 'OBJECT__ALIAS':
+                    $row[$col->getName()] = $attr->getObjectInheritedFrom()->getAlias();
+                    break;
+                case $relationPath . 'OBJECT__ALIAS_WITH_NS':
+                    $row[$col->getName()] = $attr->getObjectInheritedFrom()->getAliasWithNamespace();
                     break;
             }
         }

@@ -10,8 +10,8 @@
 	"METAMODEL.CONNECTOR_CONFIG": {
 		"host": "127.0.0.1",
 		"user": "root",
-		"password": "",
-		"dbase": "",
+		"password": "<password>",
+		"dbase": "<database_name>",
 		"charset": "utf8"
 	}
 }
@@ -31,8 +31,8 @@ Also make sure, the Microsoft ODBC drivers are installed.
 	"METAMODEL.CONNECTOR_CONFIG": {
 		"host": "127.0.0.1",
 		"user": "sa",
-		"password": "",
-		"dbase": "",
+		"password": "<password>",
+		"dbase": "<database_name>",
 		"charset": "UTF-8"
 	}
 }
@@ -54,8 +54,8 @@ The `host` in the configuration above could not be resolved. Try using the machi
 	"METAMODEL.CONNECTOR_CONFIG": {
 		"host": "127.0.0.1",
 		"user": "root",
-		"password": "",
-		"dbase": "",
+		"password": "<password>",
+		"dbase": "<database_name>",
 		"charset": "utf8"
 	}
 }
