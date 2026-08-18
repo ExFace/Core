@@ -124,5 +124,83 @@
         }
       ]
     }
+  },
+  "data_type": {
+    "name": "Data type",
+    "description": "Predefined data types for attributes, data sheet columns, service parameters and other values",
+    "uxon_properties": [
+      "data_type"
+    ],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\DataTypeSelector",
+      "factory": "\\exface\\Core\\Factories\\DataTypeFactory::create"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.DATA_TYPE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "ALIAS"
+        }
+      ]
+    }
+  },
+  "communication_template": {
+    "name": "Communication template",
+    "description": "Templates for communication messages (email, sms, push notifications, etc.)",
+    "uxon_properties": [
+      "alias"
+    ],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\CommunicationTemplateSelector",
+      "factory": "\\exface\\Core\\Factories\\CommunicationFactory::createTemplateFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "ALIAS"
+        }
+      ]
+    }
   }
 }
