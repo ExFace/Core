@@ -270,13 +270,12 @@ class CalculatingBehavior extends AbstractBehavior implements DataModifyingBehav
         // Apply the calculation
         $this->inProgress = true;
         $mapper = $this->getDataMapper($inputSheet, $onlyExistingCols);
+        $logbook->addLine('Applying calculations to ' . $filteredSheet->countRows() . ' data rows');
         $calculatedSheet = $mapper->map($filteredSheet, true, $logbook);
-
         $logbook->addDataSheet('Calculation data', $calculatedSheet);
-
         if ($this->willNeedToUpdateData($event)) {
             $logbook->addLine('Performing an update using the calculation data');
-            $calculatedSheet->merge($inputSheet->extractSystemColumns(), false, true);
+            $calculatedSheet->merge($filteredSheet->extractSystemColumns(), false, true);
             $calculatedSheet->dataUpdate(false, ($event instanceof DataTransactionEventInterface) ? $event->getTransaction() : null);
         } else {
             $logbook->addLine('No update in data source required - all calculation can be directly applied to event data');

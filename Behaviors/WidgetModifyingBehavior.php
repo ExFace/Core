@@ -16,6 +16,8 @@ use exface\Core\Events\Behavior\OnBeforeBehaviorAppliedEvent;
 use exface\Core\Events\Behavior\OnBehaviorAppliedEvent;
 use exface\Core\Interfaces\Widgets\iHaveSidebar;
 use exface\Core\Widgets\DataTableConfigurator;
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
 
 /**
  * Allows to modify widgets, that show the object of this behavior: e.g. add buttons, etc.
@@ -36,6 +38,22 @@ use exface\Core\Widgets\DataTableConfigurator;
  *  }
  * 
  * ```
+ * 
+ * ## Columns added via `add_columns`
+ * 
+ * Since the same behavior instance can apply to many different widgets showing its object, a
+ * column configured in `add_columns` may collide with a column, that already exists on a
+ * particular widget (added by the widget's own definition or by another behavior instance) -
+ * same attribute or calculation, but possibly a different visibility, caption, etc. In this
+ * case the pre-existing column always wins and is left untouched: `add_columns` only ever adds
+ * columns that are not there yet, it never reconfigures existing ones.
+ * 
+ * A column added to a widget, that is aggregated (grouped), also needs to be usable in that
+ * context - either matching one of the grouping attributes or having an aggregator (e.g. `SUM`,
+ * `MAX`) - otherwise reading aggregated data would fail. Since `add_columns` cannot know in
+ * advance, whether a widget it applies to is aggregated, it automatically appends the
+ * attribute's `default_aggregate_function` to columns, that would otherwise be neither grouped
+ * nor aggregated.
  * 
  * @author Andrej Kabachnik
  *
@@ -175,7 +193,16 @@ class WidgetModifyingBehavior extends AbstractBehavior
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
         
-        $columnsUxon = $this->columnsToAddUxon;
+        $existingExpressions = $this->getExistingColumnExpressions($configurator);
+        $columnsUxon = new UxonObject();
+        foreach ($this->columnsToAddUxon->toArray() as $column) {
+            $expr = $column['attribute_alias'] ?? $column['calculation'] ?? null;
+            if ($expr !== null && in_array($expr, $existingExpressions, true)) {
+                continue;
+            }
+            $column = $this->applyAggregatorIfNeeded($configurator, $column);
+            $columnsUxon->append($column);
+        }
         if($configurator->hasOptionalColumns()) {
             foreach ($configurator->getOptionalColumnsUxon()->toArray() as $column) {
                 $columnsUxon->append($column);
@@ -184,6 +211,91 @@ class WidgetModifyingBehavior extends AbstractBehavior
         $configurator->setOptionalColumns($columnsUxon);
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
+    }
+
+    /**
+     * Returns the attribute aliases / calculation expressions of all columns already present on the
+     * configured widget or already registered as optional columns on the configurator.
+     *
+     * @param \exface\Core\Widgets\DataTableConfigurator $configurator
+     * @return string[]
+     */
+    protected function getExistingColumnExpressions(DataTableConfigurator $configurator) : array
+    {
+        $expressions = [];
+        foreach ($configurator->getWidgetConfigured()->getColumns() as $existingColumn) {
+            if ($alias = $existingColumn->getAttributeAlias()) {
+                $expressions[] = $alias;
+            } elseif ($existingColumn->isCalculated() && ! $existingColumn->getCalculationExpression()->isEmpty()) {
+                $expressions[] = $existingColumn->getCalculationExpression()->__toString();
+            }
+        }
+        if ($configurator->hasOptionalColumns()) {
+            // Use the raw uxon here, not getOptionalColumns() - that would lazily (and permanently)
+            // build the columns tab from the not-yet-final columnsUxon.
+            foreach ($configurator->getOptionalColumnsUxon()->toArray() as $existingColumn) {
+                $expr = $existingColumn['attribute_alias'] ?? $existingColumn['calculation'] ?? null;
+                if ($expr !== null) {
+                    $expressions[] = $expr;
+                }
+            }
+        }
+        return $expressions;
+    }
+
+    /**
+     * Makes sure a column added to a table, that is aggregated (grouped), either matches one of the
+     * grouping attributes or has an aggregator - otherwise the column would not be usable when reading
+     * aggregated data (e.g. the resulting SQL query would fail because the column would be neither
+     * grouped, nor aggregated).
+     *
+     * If the column's attribute is not part of the table's aggregations and has no aggregator of its
+     * own yet, the attribute's `default_aggregate_function` is applied automatically.
+     *
+     * @param DataTableConfigurator $configurator
+     * @param array $column
+     * @return array
+     */
+    protected function applyAggregatorIfNeeded(DataTableConfigurator $configurator, array $column) : array
+    {
+        // Only attribute-bound columns can be affected - calculated columns, etc. are left untouched.
+        $alias = $column['attribute_alias'] ?? null;
+        // If the column already has an explicit aggregator (e.g. `ATTR:SUM`), there is nothing to do.
+        if ($alias === null || DataAggregation::hasAggregation($alias)) {
+            return $column;
+        }
+
+        // If the table is not aggregated (grouped) at all, plain columns work just fine as they are.
+        $table = $configurator->getWidgetConfigured();
+        if (! $table->hasAggregations()) {
+            return $column;
+        }
+
+        // If the attribute cannot be resolved (e.g. invalid alias), just leave the column as-is -
+        // this is not the right place to raise an error about that.
+        try {
+            $attr = $table->getMetaObject()->getAttribute($alias);
+        } catch (MetaAttributeNotFoundError $e) {
+            return $column;
+        }
+
+        // If the attribute is one of the attributes the table is grouped by, it can be used without
+        // an aggregator - it is already unique per group.
+        if ($table->hasAggregationOverAttribute($attr)) {
+            return $column;
+        }
+
+        // Otherwise the attribute is neither grouped, nor aggregated, which would normally result in
+        // an invalid query (e.g. "column must appear in the GROUP BY clause or be used in an aggregate
+        // function" in SQL). Automatically apply the attribute's own default aggregator in this case,
+        // so the column keeps working inside aggregated tables. If there is no default aggregator
+        // defined for the attribute, leave the column untouched, since there is no safe way to guess
+        // which aggregator to use.
+        if ($defaultAggregator = $attr->getDefaultAggregateFunction()) {
+            $column['attribute_alias'] = DataAggregation::addAggregatorToAlias($alias, $defaultAggregator);
+        }
+
+        return $column;
     }
 
     /**

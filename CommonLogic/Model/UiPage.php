@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Actions\ShowWidget;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
 use exface\Core\CommonLogic\Selectors\PWASelector;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\Traits\UiMenuItemTrait;
@@ -18,15 +20,18 @@ use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Exceptions\UiPage\UiPageNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetIdConflictError;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
+use exface\Core\Factories\ActionFactory;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\UserFactory;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Interfaces\Actions\iShowWidget;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Interfaces\Model\UiMenuItemInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Interfaces\Selectors\AppSelectorInterface;
 use exface\Core\Interfaces\Selectors\PWASelectorInterface;
@@ -789,29 +794,6 @@ class UiPage implements UiPageInterface
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::getMenuVisible()
-     */
-    public function getMenuVisible()
-    {
-        return $this->menuVisible;
-    }
-
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Model\UiPageInterface::setMenuVisible()
-     */
-    public function setMenuVisible($menuVisible)
-    {
-        if (! is_null($menuVisible)) {
-            $this->menuVisible = BooleanDataType::cast($menuVisible);
-        }
-        return $this;
-    }
-
-    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getUid()
@@ -1097,7 +1079,7 @@ class UiPage implements UiPageInterface
         }
         $uxon->setProperty('menu_parent_page_selector', $this->isMenuHome() || ! $this->hasParent() ? null : $this->getParentPageSelector()->toString());
         $uxon->setProperty('menu_index', $this->getMenuIndex());
-        $uxon->setProperty('menu_visible', $this->getMenuVisible());
+        $uxon->setProperty('menu_visible', $this->isVisible());
         $uxon->setProperty('name', $this->getName());
         $uxon->setProperty('description', $this->getDescription());
         $uxon->setProperty('intro', $this->getIntro());
@@ -1448,7 +1430,7 @@ class UiPage implements UiPageInterface
             'MENU_HOME' => $this->isMenuHome(),
             'MENU_PARENT' => $this->hasParent() ? $this->getPageUidFromSelector($this->getParentPageSelector()) : null,
             'MENU_POSITION' => $this->getMenuIndex(),
-            'MENU_VISIBLE' => $this->getMenuVisible(),
+            'MENU_VISIBLE' => $this->isVisible(),
             'NAME' => $this->getName(),
             'REPLACE_PAGE' => $this->getReplacesPageSelector() !== null ? $this->getPageUidFromSelector($this->getReplacesPageSelector()) : null,
             'PUBLISHED' => $this->isPublished(),
@@ -1530,5 +1512,14 @@ class UiPage implements UiPageInterface
             $this->pwaSelector = new PWASelector($this->getWorkbench(), $this->pwaSelector);
         }
         return $this->pwaSelector;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getSlug()
+     */
+    public function getSlug() : string
+    {
+        return $this->getAliasWithNamespace();
     }
 }

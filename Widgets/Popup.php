@@ -1,7 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\Actions\ShowWidget;
+use exface\Core\CommonLogic\Selectors\ActionSelector;
+use exface\Core\Factories\ActionFactory;
+use exface\Core\Interfaces\Actions\iShowWidget;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\Traits\PopupTrait;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 
@@ -24,7 +30,7 @@ use exface\Core\Interfaces\Widgets\iAmClosable;
  * 
  * @author Andrej Kabachnik
  */
-class Popup extends Form implements iAmClosable
+class Popup extends Form implements UiScreenInterface, iAmClosable
 {
     use PopupTrait {
         createCloseButton as createCloseButtonViaTrait;
@@ -105,5 +111,19 @@ class Popup extends Form implements iAmClosable
     public function getButtonWidgetType()
     {
         return 'DialogButton';
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getSlug()
+     */
+    public function getSlug() : string
+    {
+        $parent = $this->getParent();
+        if (($parent instanceof iTriggerAction) && $parent->getAction() instanceof iShowWidget) {
+            return $parent->getAction()->getAliasWithNamespace();
+        } else {
+            return $this->getPage()->getAliasWithNamespace();
+        }
     }
 }

@@ -169,7 +169,8 @@ Disallow: /
         $softwareFamily = ServerSoftwareDataType::getServerSoftwareFamily();
         
         // Guess via folder structure - this is important for backwards compatibility with existing installations. 
-        // Future installations should have a manually defined ``
+        // Future installations should have a manually defined `INSTALLER.SERVER_INSTALLER.CLASS` config option in
+        // System.config.json.
         if(empty($softwareFamily)) {
             $path = $this->getWorkbench()->getInstallationPath();
             $softwareFamily = match (true) {

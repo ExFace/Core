@@ -178,6 +178,7 @@ class DataTimeline implements WidgetPartInterface
     
     private $granularity = null;
     private $initial_view_name = null;
+    private bool $row_zoom = false;
     private $workday_start_time = null;
     private $workday_end_time = null;
     
@@ -244,6 +245,35 @@ class DataTimeline implements WidgetPartInterface
     {
         $this->initial_view_name = $value;
         return $this;
+    }
+    
+    /**
+     * @experimental: Set to TRUE to let users zoom the height of timeline rows. It also expands aggregated task-bars in Gantt (@experimental: Not tested. DO NOT USE  IT IN PROD!).
+     * If used in Gantt: Adds zoom buttons "+" and "-" to change the height of the table and the Gantt rows.
+     *  - each press also increases / decreases the number of task lines in each Gantt row.
+     * 
+     * @uxon-property row_zoom
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return DataTimeline
+     */
+    public function setRowZoom(bool $value) : DataTimeline
+    {
+        $this->row_zoom = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if users can zoom timeline rows.
+     * @experimental
+     * 
+     * @return bool
+     */
+    public function getRowZoom() : bool
+    {
+        return $this->row_zoom;
     }
     
     /**
