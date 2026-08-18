@@ -104,6 +104,8 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
     
     private $selectable_null = null;
 
+    private $selectable_none = null;
+
     private $text_attribute_alias = null;
 
     private $value_attribute_alias = null;
@@ -246,7 +248,7 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
     {
         $generic_options =  [];
         // Unselect option if the input is not required and not disabled with a fixed value
-        if (! $this->isRequired() && ! ($this->isDisabled() && $this->getValue()) && ! array_key_exists('', $this->selectable_options)) {
+        if ($this->isSelectableNone() && ! ($this->isDisabled() && $this->getValue()) && ! array_key_exists('', $this->selectable_options)) {
             $generic_options[''] = $this->translate('WIDGET.SELECT_NONE');
         }
         // Select empty option if based on an attribute that is not required
@@ -374,6 +376,34 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
     public function setSelectableNull(bool $value) : InputSelect
     {
         $this->selectable_null = $value;
+        return $this;
+    }
+    
+    /**
+     * Returns TRUE if the empty "unselect" option is to be included in the selectable options
+     * 
+     * @return bool
+     */
+    public function isSelectableNone() : bool
+    {
+        return $this->selectable_none ?? ! $this->isRequired();
+    }
+    
+    /**
+     * Set to FALSE to exclude the empty "unselect" option (empty string) from `selectable_options`.
+     * 
+     * By default the empty "unselect" option is included automatically whenever the widget
+     * is not required.
+     * 
+     * @uxon-property selectable_none
+     * @uxon-type boolean
+     * 
+     * @param bool $value
+     * @return InputSelect
+     */
+    public function setSelectableNone(bool $value) : InputSelect
+    {
+        $this->selectable_none = $value;
         return $this;
     }
     
