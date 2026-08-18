@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
@@ -45,7 +46,8 @@ class SendToWidget extends AbstractAction
      */
     public function getTargetWidgetId()
     {
-        return $this->target_widget_id;
+        $widgetDefinedIn = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
+        return WidgetFactory::ensureIdSpace($this->target_widget_id, null, $widgetDefinedIn);
     }
     
     /**
