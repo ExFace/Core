@@ -33,6 +33,19 @@ class CliTaskQueue extends SyncTaskQueue
 {
     use TranslatablePropertyTrait;
 
+    /**
+     * Name of the environment variable carrying the timeout (in seconds) this queue will enforce on
+     * the child command.
+     *
+     * WHY IT EXISTS: the queue kills a command that overruns $timeout via Symfony Process. A command
+     * that wants to end itself cleanly BEFORE that hard kill - to finalize its own bookkeeping instead
+     * of being cut off mid-work with no trace - needs to know the number. It cannot read the queue
+     * config (it is a separate OS process) and putting the number on the command line would duplicate a
+     * value this queue already computes, so the two would drift the first time either is edited. This
+     * env var IS the enforced number, handed to the child as the single authoritative source.
+     */
+    public const ENV_TASK_TIMEOUT_SECONDS = 'EXFACE_TASK_TIMEOUT_SECONDS';
+
     private ?int $commandTimeout = null;
     private array $environmentVars = [];
     private array $environmentVarsInherit = [];
@@ -100,12 +113,23 @@ class CliTaskQueue extends SyncTaskQueue
         $projectRoot = $this->getWorkbench()->getInstallationPath();
         $envVars = $this->buildEnvironmentVars();
         $intervalTimeout = ($task instanceof TimeoutingTaskInterface) ? $task->getTimeoutInterval() : null;
-        if($intervalTimeout !== null) {
+        if ($intervalTimeout !== null) {
             // Reference date required because month/year lengths vary
             $reference = new \DateTimeImmutable('@0');
             $timeout = (float) ($reference->add($intervalTimeout)->getTimestamp() - $reference->getTimestamp());
+        } else {
+            // Assigned in this branch too (not only via a ?? fallback below) so $timeout is always
+            // defined - the previous version left it undefined on this path, emitting a notice.
+            $timeout = (float) $this->getCommandTimeout();
         }
-        $timeout = $timeout ?? (float) $this->getCommandTimeout();
+
+        // Hand the enforced timeout down to the child so a long-running command can end ITSELF cleanly
+        // before this queue hard-kills it. Only when finite: a timeout of 0 means "no limit" and must
+        // not be advertised to the child as a deadline. Normalized to a string so the child always
+        // parses one consistent format.
+        if ($timeout > 0) {
+            $envVars[self::ENV_TASK_TIMEOUT_SECONDS] = (string) $timeout;
+        }
         $ignoredExitCodes = ($task instanceof CliScriptTask) ? $task->getIgnoredExitCodes() : [];
 
         // Open a live output file so partial output survives even if the PHP process is
