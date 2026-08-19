@@ -113,6 +113,49 @@ JS;
     }
     
     /**
+     * Returns the JS code to validate that adding files does not exceed the `max_files` limit and call $fnOnErrorJs if it does.
+     * 
+     * This is a batch-level check (as opposed to buildJsFileValidator(), which validates a single file). Since
+     * each facade keeps track of already present/pending files differently, the caller must provide JS expressions
+     * for the number of files currently present ($iCurrentCountJs) and the number of files about to be added
+     * ($iFilesToAddJs). The returned code is a self-invoking function evaluating to `true` if the upload may proceed
+     * or `false` if the limit would be exceeded.
+     * 
+     * If `max_files` is not set (unlimited), the method returns the literal `true`, so it can be used inline safely.
+     * 
+     * The argument $fnOnErrorJs must be a javascript callable with the following signature: `function(sError)`.
+     * 
+     * By default, the error message uses the core translation `WIDGET.UPLOADER.ERROR_MAX_FILES`. A facade can
+     * override it by passing $errorText - a ready-to-use JS string expression (e.g. a quoted/escaped string).
+     * 
+     * @param string $iCurrentCountJs
+     * @param string $iFilesToAddJs
+     * @param string $fnOnErrorJs
+     * @param string|null $errorText
+     * @return string
+     */
+    protected function buildJsMaxFilesValidator(string $iCurrentCountJs, string $iFilesToAddJs, string $fnOnErrorJs, string $errorText = null) : string
+    {
+        $maxFiles = $this->getUploader()->getMaxFiles();
+        if ($maxFiles === null || $maxFiles <= 0) {
+            return 'true';
+        }
+        if ($errorText === null) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            $errorText = $this->escapeString($translator->translate('WIDGET.UPLOADER.ERROR_MAX_FILES', ['%max%' => $maxFiles]));
+        }
+        return <<<JS
+            (function(iCurrent, iAdding){
+                if ((iCurrent + iAdding) > {$maxFiles}) {
+                    ({$fnOnErrorJs})({$errorText});
+                    return false;
+                }
+                return true;
+            })({$iCurrentCountJs}, {$iFilesToAddJs})
+JS;
+    }
+    
+    /**
      * 
      * @param DataTypeInterface $contentDataType
      * @param string $fileContentJs
@@ -169,6 +212,10 @@ JS;
         }
         $maxFilenameLength = $this->getUploader()->getMaxFilenameLength();
         $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_FILENAME_TOO_LONG', ['%length%' => $maxFilenameLength]);
+        $maxFiles = $this->getUploader()->getMaxFiles();
+        if ($maxFiles !== null && $maxFiles > 0) {
+            $hint .= PHP_EOL . '- ' . $translator->translate('WIDGET.UPLOADER.HINT_MAX_FILES', ['%max%' => $maxFiles]);
+        }
         return $hint;
     }
 
