@@ -304,6 +304,45 @@ MD;
     }
 
     /**
+     * Wraps given text in a Markdown inline code span.
+     *
+     * WHY THIS EXISTS: escapeString() neutralizes Markdown SYNTAX, but it does not stop the
+     * autolinker of the GithubMarkdown parser, which turns anything starting with http://, https://
+     * or ftp:// into a link - and it cannot, because the URL scheme contains no escapable characters.
+     * Escaping would only add backslashes INSIDE the resulting link, leaving a link that is both
+     * still rendered and now genuinely broken. An inline code span is consumed by the parser before
+     * any inline marker inside it is looked at, so the text is rendered literally: no autolink, no
+     * formatting side effects, no escape characters - the value stays exactly as written and remains
+     * copy-pasteable. Use this for file paths, log file names, addresses and any other literal value
+     * that must be READ rather than followed.
+     *
+     * WHY THE VARIABLE-LENGTH FENCE: a value may itself contain backticks. Markdown closes a code
+     * span at the first backtick run of the SAME length, so a hard-coded single backtick would end
+     * the span in the middle of the value. The fence is therefore one backtick longer than the
+     * longest run inside the value, and padded with spaces when the value starts or ends with a
+     * backtick, as the CommonMark code-span rules require.
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function escapeCodeInline(string $text) : string
+    {
+        if ($text === '') {
+            return '';
+        }
+        $longest = 0;
+        if (preg_match_all('/`+/', $text, $matches) > 0) {
+            foreach ($matches[0] as $run) {
+                $longest = max($longest, strlen($run));
+            }
+        }
+        $fence = str_repeat('`', $longest + 1);
+        $pad = (str_starts_with($text, '`') || str_ends_with($text, '`')) ? ' ' : '';
+
+        return $fence . $pad . $text . $pad . $fence;
+    }
+
+    /**
      * Wraps given text in a Markdown blockquote
      *
      * @param string $text
