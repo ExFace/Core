@@ -22,7 +22,10 @@ use exface\Core\Widgets\Value;
 /**
  * Exports data to a printable HTML table and automatically open the browsers printing prompt
  * 
+ * ## Which columns get exported?
  * 
+ * A column is exported unless it is hidden or has `exportable` set to `false`. A hidden column, that is
+ * explicitly set to `exportable` = `true`, is still exported.
  * 
  *  
  * @author Andrej Kabachnik
@@ -123,10 +126,7 @@ HTML);
         $htmlRow = '';
         $fileHandle = $this->getWriter();
         foreach ($exportedColumns as $widget) {
-            if ($widget instanceof iShowDataColumn && $widget->isExportable(true) === false) {
-                continue;
-            }
-            if ($widget->isHidden()) {
+            if (! $this->isColumnExportable($widget)) {
                 continue;
             }
             
