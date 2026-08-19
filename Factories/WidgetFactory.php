@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Factories;
 
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
 use exface\Core\Interfaces\WidgetInterface;
@@ -446,5 +447,55 @@ abstract class WidgetFactory extends AbstractStaticFactory
     public static function createDebugMessage(WorkbenchInterface $workbench, MetaObjectInterface $baseObject = null) : DebugMessage
     {
         return static::createOnBlankPage($workbench, 'DebugMessage', ($baseObject ?? 'exface.Core.MESSAGE'));
+    }
+
+    /**
+     * Ensures a given widget ID has an ID space.
+     * 
+     * If the widget ID is a widget link or already has an ID space this function does nothing.
+     * 
+     * @param string               $widgetId
+     * The widget ID you want to ensure has an ID space.
+     * @param string|null          $idSpace
+     * The ID space to use if the widget ID does not have one.
+     * @param WidgetInterface|null $parentWidget
+     * If the widget ID doesn't have an ID space, and you didn't provide one, the ID space will be
+     * derived from this widget instead.
+     * @return string
+     */
+    public static function ensureIdSpace(
+        string          $widgetId,
+        string          $idSpace = null,
+        WidgetInterface $parentWidget = null
+    ) : string
+    {
+        // If the ID is a widget link, return it as is.
+        if (mb_substr($widgetId, 0, 1) === '~') {
+            return $widgetId;
+        }
+
+        $idPaceSeparator = UiPage::WIDGET_ID_SPACE_SEPARATOR;
+        
+        // If the widget id in the link does not have an id space, assume that we are in the id space of the parent.
+        $idSpaceOfLink = StringDataType::substringBefore($widgetId, $idPaceSeparator, null, false, true);
+        if ($idSpaceOfLink === null && ($idSpace !== null || $parentWidget !== null)) {
+            $idSpace = $idSpace ?? $parentWidget->getIdSpace();
+            // Don't add the id space if the widget id in the action is a path already and it starts with the id space
+            // TODO we really need a way to tell, if an id string is a path or a manual id. We are only guessing
+            // all the time!
+            switch (true) {
+                // No id space to set - forget it!
+                case $idSpace === null:
+                    break;
+                // Root id space - add it explicitly to speed up searching
+                case $idSpace === '' || $idSpace === $idPaceSeparator:
+                    // Otherwise add the id space unless the id actually starts with it
+                case false === StringDataType::startsWith($widgetId, $idSpace):
+                    $widgetId = $idSpace . $idPaceSeparator . $widgetId;
+                    break;
+            }
+        }
+        
+        return $widgetId;
     }
 }

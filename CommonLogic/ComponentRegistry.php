@@ -100,6 +100,8 @@ class ComponentRegistry implements ComponentRegistryInterface
                 $instance = $this->instantiate($component, $selector);
                 $printer = $printerClass::constructForInstance($instance);
                 break;
+            default:
+                return null;
         }
         return $printer->getMarkdown();
     }
