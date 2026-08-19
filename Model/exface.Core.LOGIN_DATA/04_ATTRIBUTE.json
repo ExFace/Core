@@ -287,9 +287,9 @@
         {
             "_EXPORT_SUMMARY": "Password [PASSWORD]",
             "CREATED_ON": "2020-01-07 17:17:41",
-            "MODIFIED_ON": "2020-01-07 20:34:09",
+            "MODIFIED_ON": "2026-08-19 14:02:58",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
-            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea3171627ea5f79442e4b318306b9a",
             "SORTABLEFLAG": 0,
             "FILTERABLEFLAG": 0,
@@ -310,11 +310,11 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 1,
-            "ICON": null,
-            "ICON_SET": null,
-            "ABBREVIATION": null,
+            "ICON": "",
+            "ICON_SET": "",
+            "ABBREVIATION": "",
             "ALIAS": "PASSWORD",
-            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATATYPE": "0x11ea99f0acf95c54b00c025041000001",
             "DATA_ADDRESS": "",
             "OBJECT": "0x11ea317101f20a789442e4b318306b9a",
             "FORMATTER": "",
@@ -332,7 +332,11 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": null
+            "CUSTOM_DATA_TYPE": {
+                "inner_data_type": {
+                    "alias": "exface.Core.String"
+                }
+            }
         },
         {
             "_EXPORT_SUMMARY": "Data Connection [CONNECTION]",
