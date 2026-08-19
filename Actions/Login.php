@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -114,6 +115,12 @@ class Login extends AbstractAction implements iModifyContext
     {
         $inputData = $this->getInputDataSheet($task);
         $inputRow = $inputData->getRow(0);
+        
+        // Decrypting the password from the input data, which is expected to be encrypted
+        $inputRow['PASSWORD'] = EncryptedDataType::decrypt(
+            EncryptedDataType::getSecret($this->getWorkbench()), $inputRow['PASSWORD']
+        );
+        
         if ($tokenClass = $inputData->getCellValue('AUTH_TOKEN_CLASS', 0)) {
             $reflector = new \ReflectionClass($tokenClass);
             $constructorArgs = [];
