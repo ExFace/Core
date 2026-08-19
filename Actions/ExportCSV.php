@@ -9,6 +9,12 @@ use exface\Core\Interfaces\Widgets\iShowDataColumn;
 
 /**
  *
+ * Exports data to a CSV file.
+ *
+ *  ## Which columns get exported?
+ *
+ *  A column is exported unless it is hidden or has `exportable` set to `false`. A hidden column, that is
+ *  explicitly set to `exportable` = `true`, is still exported.
  *
  *  ## Filename Placeholders
  *
@@ -78,8 +84,8 @@ class ExportCSV extends ExportJSON
         $output = [];
         $indexes = [];
         foreach ($exportedColumns as $widget) {
-            if ($widget->isHidden()) {
-                continue;   
+            if (! $this->isColumnExportable($widget)) {
+                continue;
             }
             
             // Name der Spalte
