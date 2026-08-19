@@ -114,12 +114,7 @@ class Login extends AbstractAction implements iModifyContext
     protected function getAuthToken(TaskInterface $task) : AuthenticationTokenInterface
     {
         $inputData = $this->getInputDataSheet($task);
-        $inputRow = $inputData->getRow(0);
-        
-        // Decrypting the password from the input data, which is expected to be encrypted
-        $inputRow['PASSWORD'] = EncryptedDataType::decrypt(
-            EncryptedDataType::getSecret($this->getWorkbench()), $inputRow['PASSWORD']
-        );
+        $inputRow = $inputData->getRowsDecrypted()[0];
         
         if ($tokenClass = $inputData->getCellValue('AUTH_TOKEN_CLASS', 0)) {
             $reflector = new \ReflectionClass($tokenClass);
