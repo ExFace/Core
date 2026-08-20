@@ -18,6 +18,7 @@ use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Interfaces\Widgets\iShowDataColumn;
 use exface\Core\Interfaces\Widgets\iHaveValue;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\NumberEnumDataType;
@@ -39,6 +40,9 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * You can explicitly define the columns to be exported via `columns`. If you don't and the action is placed in a data
  * widget (e.g. a `DataTable`), it will take all exportable columns of that data widget. Thus, you can exclude table 
  * columns from the export by setting `exportable` to `false` in the column configuration. 
+ * 
+ * Unlike the other export formats, hidden columns are still written to the file here - they are only marked as
+ * hidden in the spreadsheet. Only columns with `exportable` = `false` are excluded entirely.
  * 
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
  * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
@@ -124,6 +128,22 @@ class ExportXLSX extends ExportJSON
     }
 
     /**
+     * {@inheritDoc}
+     * 
+     * XLSX still writes hidden columns (when exportable) - they are only marked as hidden in
+     * the spreadsheet. So only explicitly non-exportable columns are excluded.
+     * 
+     * @see \exface\Core\Actions\ExportJSON::isColumnExportable()
+     */
+    protected function isColumnExportable(WidgetInterface $col) : bool
+    {
+        if ($col instanceof DataColumn) {
+            return $col->isExportable(true);
+        }
+        return true;
+    }
+
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
@@ -135,7 +155,7 @@ class ExportXLSX extends ExportJSON
         $colNames = [];
         $indexes = [];
         foreach ($exportedColumns as $widget) {
-            if ($widget instanceof iShowDataColumn && $widget->isExportable(true) === false) {
+            if (! $this->isColumnExportable($widget)) {
                 continue;
             }
             $colOptions = [];

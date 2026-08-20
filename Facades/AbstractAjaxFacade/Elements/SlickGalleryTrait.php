@@ -985,6 +985,11 @@ JS;
     .on('fileuploadsend', function(e, data) {
         var oParams = data.formData;
         
+        var bWithinMaxFiles = {$this->buildJsMaxFilesValidator("($jqSlickJs.slick('getSlick') ? $jqSlickJs.slick('getSlick').slideCount : 0)", 'data.files.length', "function(sError) { {$this->buildJsShowError('sError')} }")};
+        if (bWithinMaxFiles === false) {
+            return false;
+        }
+        
         data.files.forEach(function(file){
             var fileReader = new FileReader();
             var bFileValid = false; 
