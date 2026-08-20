@@ -554,9 +554,9 @@ JS;
      * Returns JS creating a dedicated pane for the given layer with a fixed z-index.
      *
      * The z-index is derived from the layer's position in the widget (`layers`
-     * property). Layers listed later render on top of layers listed earlier -
-     * exactly like Leaflet's default add order, but independent of data-loading
-     * timing. Reorder the `layers` in the widget to control the rendering order.
+     * property). Layers listed first (added first) render on top of layers
+     * listed later, independent of data-loading timing. Reorder the `layers` in
+     * the widget to control the rendering order.
      *
      * The default Leaflet `overlayPane` uses z-index 400, `markerPane` 600. The
      * values below stay within that range so shape layers keep rendering beneath
@@ -569,7 +569,8 @@ JS;
     protected function buildJsMapLayerPaneInit(MapLayerInterface $layer, string $oMapJs) : string
     {
         $paneName = $this->buildJsMapLayerPaneName($layer);
-        $zIndex = 400 + ($layer->getIndex() + 1) * 5;
+        $layerCount = count($this->getWidget()->getLayers());
+        $zIndex = 400 + ($layerCount - $layer->getIndex()) * 5;
         return <<<JS
 
                 (function(oMap){
