@@ -10,7 +10,14 @@ use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 
 /**
- * Sends the input data to a provided widget.
+ * Sends the input data of the action to a linked widget.
+ * 
+ * NOTE: Data is sent as-is. Being a front-end action, `SendToWidget` cannot read additional data or apply mappers.
+ * 
+ * The receiving widget must be configured to be able to accept the data: it must be based on the same object and must
+ * handle all required columns. Columns in the action data, that are not explicitly configured in the receiving widget
+ * will be ignored. There is no automation like in the case of lazy-loading-actions of data widgets, where the action
+ * automatically reads data required for the widget.
  *
  * @author Andrej Kabachnik
  *        
