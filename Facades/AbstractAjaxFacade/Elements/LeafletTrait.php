@@ -535,6 +535,53 @@ JS;
         return $js ?? '';
     }
 
+    /**
+     * Returns the name of the dedicated Leaflet map pane for the given layer.
+     *
+     * Each map layer gets its own pane so that the stacking order (z-index) is
+     * fully deterministic and does NOT depend on the order in which the layers
+     * finish loading their data. See buildJsMapLayerPaneInit() for details.
+     *
+     * @param MapLayerInterface $layer
+     * @return string
+     */
+    protected function buildJsMapLayerPaneName(MapLayerInterface $layer) : string
+    {
+        return 'exfMapLayerPane' . $layer->getIndex();
+    }
+
+    /**
+     * Returns JS creating a dedicated pane for the given layer with a fixed z-index.
+     *
+     * The z-index is derived from the layer's position in the widget (`layers`
+     * property). Layers listed later render on top of layers listed earlier -
+     * exactly like Leaflet's default add order, but independent of data-loading
+     * timing. Reorder the `layers` in the widget to control the rendering order.
+     *
+     * The default Leaflet `overlayPane` uses z-index 400, `markerPane` 600. The
+     * values below stay within that range so shape layers keep rendering beneath
+     * markers, tooltips and popups.
+     *
+     * @param MapLayerInterface $layer
+     * @param string $oMapJs
+     * @return string
+     */
+    protected function buildJsMapLayerPaneInit(MapLayerInterface $layer, string $oMapJs) : string
+    {
+        $paneName = $this->buildJsMapLayerPaneName($layer);
+        $zIndex = 400 + ($layer->getIndex() + 1) * 5;
+        return <<<JS
+
+                (function(oMap){
+                    var sPane = '{$paneName}';
+                    if (! oMap.getPane(sPane)) {
+                        oMap.createPane(sPane);
+                        oMap.getPane(sPane).style.zIndex = {$zIndex};
+                    }
+                })({$oMapJs});
+JS;
+    }
+
     public function buildJsLeafletPopup(string $titleJs, string $contentJs, string $bindToJs) : string
     {
         //close button in the popup is hidden as it actually is a link to the root page url with '#close' attached to it
@@ -653,6 +700,7 @@ JS;
                             [fLatFrom, fLngFrom],
                             [fLatTo, fLngTo]
                         ], {
+                            pane: '{$this->buildJsMapLayerPaneName($layer)}',
                             color: '{$color}',
                             weight: {$layer->getWidth()}
                         });
@@ -697,6 +745,7 @@ JS;
                             [fLatFrom, fLngFrom],
                             [fLatTo, fLngTo]
                         ], {
+                            pane: '{$this->buildJsMapLayerPaneName($layer)}',
                             color: '{$color}',
                             weight: {$layer->getWidth()}
                         });
@@ -727,6 +776,7 @@ JS;
         return <<<JS
             (function(){
                 var oLeaflet = {$this->buildJsLeafletVar()};
+                {$this->buildJsMapLayerPaneInit($layer, 'oLeaflet')}
                 var oLayer = L.featureGroup();
                 
                 oLayer._exfRefresh = $exfRefreshJs;
@@ -1020,6 +1070,7 @@ JS;
                                 const markerCoords = topMostCoordinates(feature);
                                 for (const [lng, lat] of markerCoords) {
                                     const oMarker = L.marker([lat, lng], {
+                                        pane: '{$this->buildJsMapLayerPaneName($layer)}',
                                         icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
                                         draggable: false,
                                         autoPan: false,
@@ -1045,10 +1096,13 @@ JS;
         return <<<JS
             (function(oLeaflet){
                 {$projectionInit}
+                {$this->buildJsMapLayerPaneInit($layer, 'oLeaflet')}
                 var oLayer = {$layerConstructor}(null, {
+                    pane: '{$this->buildJsMapLayerPaneName($layer)}',
                     pointToLayer: function(feature, latlng) {
                         var bDraggable = feature.properties.draggable || false;
                         var oMarker = L.marker(latlng, { 
+                            pane: '{$this->buildJsMapLayerPaneName($layer)}',
                             icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
                             draggable: bDraggable,
                             autoPan: bDraggable,
@@ -1271,7 +1325,6 @@ JS;
                     
                     oLayer.clearLayers();
                     oLayer.addData(aGeoJson);
-                    oLayer.bringToFront();
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 })();
                 
@@ -1296,7 +1349,6 @@ JS;
 
                     oLayer.clearLayers();
                     oLayer.addData(aFeatures);
-                    oLayer.bringToBack();
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
                 })();
                 
@@ -1313,7 +1365,6 @@ JS;
                     {$this->buildJsConvertDataRowsToGeoJSON($layer, 'aRows', 'aFeatures', 'aRowsSkipped')}
                     oLayer.clearLayers();
                     oLayer.addData(aFeatures);
-                    oLayer.bringToBack();
                     {$this->buildJsAutoZoom('oLayer', $layer->getAutoZoom())}
 JS;
 
@@ -1385,8 +1436,10 @@ JS;
         (function(oMap){
             $projectionInit
             $drawInitJs
+            {$this->buildJsMapLayerPaneInit($layer, 'oMap')}
 
             var oLayer = $layerConstructor(null, {
+                pane: '{$this->buildJsMapLayerPaneName($layer)}',
                 onEachFeature: function (feature, layer) {
                     {$showPopupJs}
                     {$tooltipJs}
@@ -1437,6 +1490,7 @@ JS;
                 pointToLayer: function(feature, latlng) {
                     var oProps = feature.properties.data;
                     return L.marker(latlng, {
+                        pane: '{$this->buildJsMapLayerPaneName($layer)}',
                         icon: new L.ExtraMarkers.icon({
                             icon: '',
                             markerColor: $color,
