@@ -14,7 +14,18 @@ namespace exface\Core\Widgets;
  *      "widget_type": "SpinnerFilter",
  *      "attribute_alias": "DATE",
  *      "value": 0,
- *      "value_step: "1d"
+ *      "value_step": "1d"
+ *  }
+ *  
+ * ```
+ * 
+ * This will create a number filter, that can be moved up/down by 5.
+ * 
+ * ```
+ *  {
+ *      "widget_type": "SpinnerFilter",
+ *      "attribute_alias": "QTY",
+ *      "value_step": "5"
  *  }
  *  
  * ```
