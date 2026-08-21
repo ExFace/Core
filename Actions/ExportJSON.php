@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
@@ -362,16 +363,15 @@ class ExportJSON extends ReadData implements iExportData
         $lazyExport = $this->isLazyExport($dataSheetMaster);
         $rowsOnPage = $this->getLimitRowsPerRequest();
         
-        // If we expect to do split requests, we MUST sort over a unique attribute!
+        // Since we expect to do split requests, we MUST sort over a unique attribute!
         // Otherwise, the results of subsequent requests may contain data in different order
         // resulting in duplicate or missing rows from the point of view of the entire
         // (combined) export.
-        if ($rowsOnPage > 0) {
-            if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
-                $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
-            } else {
-                $rowsOnPage = null;
-            }
+        if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
+            $dataSheetMaster->getSorters()->removeAll();
+            $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
+        } else {
+            $rowsOnPage = null;
         }
         
         $exportedWidget = $this->getWidgetToReadFor($task);
@@ -384,6 +384,11 @@ class ExportJSON extends ReadData implements iExportData
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
         $pageSheet = null;
+        $uidCol = $dataSheetMaster->getMetaObject()->getUidAttributeAlias();
+        $offsetFilter = null;
+        $cursorValue = null;    // largest UID of the previous page (keyset cursor)
+        $cursorSeenUids = [];   // exact UIDs already exported that collate-equal to current $cursorValue
+        
         do {
             if ($pageSheet === null) {
                 $pageSheet = $dataSheetMaster->copy();
@@ -399,11 +404,81 @@ class ExportJSON extends ReadData implements iExportData
                     }                    
                 }                
             } else {
+                if($offsetFilter !== null) {
+                    $pageSheet->getFilters()->removeCondition($offsetFilter);
+                }
+
+                // ">=" instead of ">": under a case-insensitive DB collation, UIDs differing
+                // only in case (e.g. "abc" vs "ABC") collate as equal, so a strict ">" could
+                // skip them - and the ORDER BY tie order is itself non-deterministic across
+                // separate page queries. ">=" never skips; the boundary group is simply
+                // re-read and stripped below via an exact, case-sensitive comparison.
+                $offsetFilter = ConditionFactory::createFromExpressionString(
+                    $pageSheet->getMetaObject(),
+                    $uidCol,
+                    $cursorValue,
+                    ComparatorDataType::GREATER_THAN_OR_EQUALS,
+                );
+
+                $pageSheet->getFilters()->addCondition($offsetFilter);
                 $pageSheet->removeRows();
             }
+            
             $pageSheet->setRowsLimit($rowsOnPage);
-            $pageSheet->setRowsOffset($rowOffset);
             $pageSheet->dataRead();
+            
+            // Number of rows actually read - captured before de-duplication because it
+            // drives loop termination (see the while-condition below).
+            $rowsRead = $pageSheet->countRows();
+            if ($rowsRead === 0) {
+                break;
+            }
+            
+            // The ">=" cursor re-reads the previous page's boundary group (all rows whose
+            // UID collates equal to $cursorValue). Drop the ones already exported. Exact
+            // string comparison => genuinely distinct case-variant UIDs are preserved.
+            $this->stripAlreadyExportedRows($pageSheet, $cursorSeenUids);
+            
+            // If a single collated UID value spans more rows than fit on a page, the whole
+            // page is the re-read boundary group: after de-duplication nothing remains and the
+            // cursor cannot advance. Rather than failing immediately, progressively double the
+            // page size and re-read (up to $maxDoublings times) to try to read past the group.
+            $doublings = 0;
+            $maxDoublings = 3;
+            while ($rowsRead === $rowsOnPage && $pageSheet->countRows() === 0) {
+                if ($doublings >= $maxDoublings) {
+                    throw new ActionRuntimeError($this, 'Cannot paginate export: more than ' . $rowsOnPage . ' rows share the same UID value "' . $cursorValue . '" under the data source collation. Increase the rows-per-request limit for this export.');
+                }
+                $rowsOnPage *= 2;
+                $doublings++;
+                $pageSheet->removeRows();
+                $pageSheet->setRowsLimit($rowsOnPage);
+                $pageSheet->dataRead();
+                $rowsRead = $pageSheet->countRows();
+                $this->stripAlreadyExportedRows($pageSheet, $cursorSeenUids);
+            }
+            
+            // Advance the cursor to the largest UID on this page (rows are sorted ascending by UID)
+            $uidValues = $pageSheet->getUidColumn()->getValues();
+            $cursorValue = end($uidValues);
+            
+            // Remember every exact UID that collates equal to the cursor, so the next
+            // iteration can strip the re-reads. The comparison is case-insensitive (and
+            // multibyte-aware) so the boundary group is over-approximated relative to a
+            // case-insensitive DB collation - which is safe, because the actual removal keyed
+            // on this set uses an exact string match and can never drop a distinct UID.
+            $cursorValueFolded = mb_strtolower((string)$cursorValue);
+            $cursorSeenUids = [];
+            foreach ($uidValues as $uid) {
+                if (mb_strtolower((string)$uid) === $cursorValueFolded) {
+                    $cursorSeenUids[(string)$uid] = true;
+                }
+            }
+            
+            // Exit early, if we did not find any more rows.
+            if($pageSheet->countRows() === 0) {
+                break;
+            }
             
             if ($this->willFormatEnumsAsLabels()) {
                 foreach ($pageSheet->getColumns() as $col) {
@@ -459,7 +534,7 @@ class ExportJSON extends ReadData implements iExportData
             // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
             // zu einem fatal error: maximum execution time exceeded.
             set_time_limit($this->getLimitTimePerRequest());
-        } while ($pageSheet->countRows() === $rowsOnPage);
+        } while ($rowsRead === $rowsOnPage);
         
         // Speicher frei machen
         $pageSheet = null;
@@ -481,13 +556,35 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Generates an array of column names from the passed array of widgets.
-     *
-     * The column name array is returned.
-     *
-     * @param iShowDataColumn[] $widget
-     * @return string[]
+     * Removes rows from $pageSheet whose UID was already exported on the previous page.
+     * 
+     * When paginating via a ">=" UID cursor (see perform()), the boundary group - all rows
+     * whose UID collates equal to the cursor value under the data source collation - is
+     * re-read on the next page. This strips those already-exported rows again using an exact,
+     * case-sensitive string comparison, so that genuinely distinct UIDs which merely collate
+     * equal (e.g. "abc" vs "ABC" under a case-insensitive collation) are preserved.
+     * 
+     * @param DataSheetInterface $pageSheet
+     * @param bool[] $exportedUids exact UID strings (as keys) already written to the output
+     * @return void
      */
+    protected function stripAlreadyExportedRows(DataSheetInterface $pageSheet, array $exportedUids) : void
+    {
+        if (empty($exportedUids)) {
+            return;
+        }
+        $duplicateIndexes = [];
+        foreach ($pageSheet->getUidColumn()->getValues() as $rowIdx => $uid) {
+            if (isset($exportedUids[(string)$uid])) {
+                $duplicateIndexes[] = $rowIdx;
+            }
+        }
+        if (! empty($duplicateIndexes)) {
+            $pageSheet->removeRows($duplicateIndexes);
+        }
+    }
+    
+    /**
     protected function writeHeader(array $exportedColumns) : array
     {
         $header = [];
