@@ -51,6 +51,13 @@ use exface\Core\Widgets\DataMatrix;
  * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
  * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
  *
+ * ## Which columns get exported?
+ * 
+ * The columns are taken from the widget the action is placed in (e.g. a `DataTable`). A column is exported
+ * unless it is hidden or has `exportable` set to `false`. A hidden column, that is explicitly set to
+ * `exportable` = `true`, is still exported. To avoid reading unneeded data, columns that will not be part of
+ * the export are removed before the data is read.
+ *
  * ## Filename Placeholders
  * 
  * You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
@@ -139,10 +146,100 @@ class ExportJSON extends ReadData implements iExportData
                     $dataSheet->getAggregations()->add($aggregation);
                 }
             }
+            // Don't read columns, that will not be part of the export anyway (hidden or
+            // explicitly non-exportable ones) to avoid fetching unneeded data.
+            $this->removeNonExportableColumns($dataSheet, $widget);
         }
         
         $dataSheet->removeRows();
         return $dataSheet;
+    }
+
+    /**
+     * Removes columns from the data sheet, that would not be part of the export anyway.
+     * 
+     * Only columns bound to widget columns, that will actually be exported (i.e. would pass
+     * the writeHeader() test) are kept. Everything else is removed to avoid reading unneeded
+     * data - this includes hidden or explicitly non-exportable widget columns as well as
+     * technical columns without a widget counterpart (e.g. columns added for button
+     * authorization or `hidden_if`/`disabled_if` conditions). System columns are kept, as
+     * they may be required for internal processing (e.g. UID sorting).
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @param WidgetInterface $widget
+     * @return void
+     */
+    protected function removeNonExportableColumns(DataSheetInterface $dataSheet, WidgetInterface $widget) : void
+    {
+        switch (true) {
+            case $widget instanceof iUseData:
+                $dataWidget = $widget->getData();
+                break;
+            case $widget instanceof iShowData:
+                $dataWidget = $widget;
+                break;
+            default:
+                return;
+        }
+        $columns = $dataWidget->getColumns();
+        // Optional columns live in a separate configurator tab, not in getColumns(). They
+        // are exported if the user made them visible (i.e. they are present in the sheet),
+        // so they must be treated as potentially exportable here too.
+        if (($dataWidget instanceof iHaveConfigurator) && ($configurator = $dataWidget->getConfiguratorWidget()) instanceof DataTableConfigurator) {
+            foreach ($configurator->getOptionalColumns() as $optCol) {
+                $columns[] = $optCol;
+            }
+        }
+        // Collect the data column names of all widget columns, that will actually be exported.
+        // Same rule as in writeHeader() (see isColumnExportable()): a column is exported unless
+        // it is hidden or explicitly non-exportable.
+        $exportableColNames = [];
+        foreach ($columns as $col) {
+            if (! ($col instanceof DataColumn)) {
+                continue;
+            }
+            if ($this->isColumnExportable($col) === false) {
+                continue;
+            }
+            $exportableColNames[] = $col->getDataColumnName();
+        }
+        
+        // Remove every sheet column, that is not going to be exported. Collect the names
+        // first and remove afterwards to avoid modifying the collection while iterating.
+        $namesToRemove = [];
+        foreach ($dataSheet->getColumns() as $sheetCol) {
+            // Keep columns, that will be exported.
+            if (in_array($sheetCol->getName(), $exportableColNames, true)) {
+                continue;
+            }
+            // Keep system columns - they may be required for internal processing.
+            if ($sheetCol->isAttribute() && $sheetCol->getAttribute()->isSystem()) {
+                continue;
+            }
+            $namesToRemove[] = $sheetCol->getName();
+        }
+        foreach ($namesToRemove as $name) {
+            $dataSheet->getColumns()->removeByKey($name);
+        }
+    }
+
+    /**
+     * Returns TRUE if the given column will be part of the export and FALSE otherwise.
+     * 
+     * This is used by both writeHeader() (to decide what to write) and
+     * removeNonExportableColumns() (to avoid reading data, that would not be exported anyway).
+     * Subclasses writing other file formats may export a different set of columns (e.g. XLSX
+     * keeps hidden columns) and override this accordingly.
+     * 
+     * @param WidgetInterface $col
+     * @return bool
+     */
+    protected function isColumnExportable(WidgetInterface $col) : bool
+    {
+        if ($col instanceof DataColumn) {
+            return $col->isExportable(! $col->isHidden());
+        }
+        return true;
     }
 
     /**
@@ -396,7 +493,7 @@ class ExportJSON extends ReadData implements iExportData
         $header = [];
         foreach ($exportedColumns as $widget) {
             if ($widget instanceof iShowDataColumn && $widget->isBoundToDataColumn()) {
-                if ($widget instanceof DataColumn && $widget->isExportable(! $widget->isHidden())=== false) {
+                if (! $this->isColumnExportable($widget)) {
                     continue;
                 }
                 if ($this->getUseAttributeAliasAsHeader() && ($widget instanceof iShowSingleAttribute) && $widget->isBoundToAttribute()) {
