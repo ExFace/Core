@@ -477,33 +477,33 @@ class OrderingBehavior extends AbstractBehavior
         BehaviorLogBook $logBook
     ) : void
     {
+        // Load missing data, but only outside onCreate.
+        if(!$onCreate) {
+            $this->collectMissingData($dataSheet, $logBook);
+        }
+        
         $defaults = $this->getDefaultValues();
         if(empty($defaults)) {
             return;
         }
-        
+
         $object = $dataSheet->getMetaObject();
         $objectAlias = $object->getAliasWithNamespace();
         $orderNumberAlias = $this->getOrderNumberAttributeAlias();
         $parentAliases = $this->getParentAliases();
-        
+
         foreach ($defaults as $uxon) {
             $columnName = $uxon['attribute_alias'];
-            
+
             $valueExpression = ExpressionFactory::createFromString(
                 $dataSheet->getWorkbench(),
                 $uxon['calculation'],
                 $object,
                 true
             );
-            
+
             if(empty($columnName)) {
                 continue;
-            }
-
-            // Load missing data, but only outside onCreate.
-            if(!$onCreate) {
-                $this->collectMissingData($dataSheet, $logBook);
             }
             
             // Ensure column exists.
