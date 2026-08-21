@@ -163,6 +163,16 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 {
     use iTrackIncomingLinksTrait;
     
+    /**
+     * Add a value to the current one: e.g. `add(1)`, `add(-1)` - only works if the value attribute
+     * has a numeric data type.
+     *
+     * @uxon-property add
+     *
+     * @var string
+     */
+    const FUNCTION_ADD = 'add';
+    
     private $text_column_id = null;
 
     private $value_column_id = null;
