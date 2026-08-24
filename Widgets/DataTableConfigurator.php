@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
@@ -91,6 +92,7 @@ class DataTableConfigurator extends DataConfigurator
         }
         $dryRun = $config->getOption('WIDGETS.SETUPS.CLEANUP.DRY_RUN') !== false;
         $maxDepth = (int) $config->getOption('WIDGETS.SETUPS.CLEANUP.MAX_SEARCH_DEPTH');
+        $modifiedOn = $dryRun ? null : DateTimeDataType::now();
 
         $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.WIDGET_SETUP');
         $ds->getColumns()->addMultiple(['UID', 'NAME', 'SLUG', 'WIDGET_ID', 'OBJECT', 'ORPHANED_FLAG']);
@@ -175,7 +177,7 @@ class DataTableConfigurator extends DataConfigurator
                                     'UID' => $row['UID'],
                                     'SLUG' => $container->getSlug(),
                                     'WIDGET_ID' => $widget->getIdWithinUiContainer(),
-                                    'MODIFIED_ON' => $row['MODIFIED_ON'] ?? null
+                                    'MODIFIED_ON' => $modifiedOn
                                 ]);
                             }
                             $convertedUids[] = $row['UID'];
@@ -198,7 +200,7 @@ class DataTableConfigurator extends DataConfigurator
                 $orphanSheet->addRow([
                     'UID' => $row['UID'],
                     'ORPHANED_FLAG' => $newFlag,
-                    'MODIFIED_ON' => $row['MODIFIED_ON'] ?? null
+                    'MODIFIED_ON' => $modifiedOn
                 ]);
             }
         }
