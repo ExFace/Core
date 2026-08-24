@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Utils\GanttXlsxBuilder;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
@@ -35,6 +36,7 @@ class ExportGanttXLSX extends ExportJSON
     private array $statusInfoColumns = [];
     private array $basicInfoColumnOverrides = [];
     private array $statusInfoColumnOverrides = [];
+    private array $semanticColors = [];
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -57,6 +59,11 @@ class ExportGanttXLSX extends ExportJSON
      */
     protected function getDataSheetToRead(TaskInterface $task): DataSheetInterface
     {
+        $facade = $task->getFacade();
+        if ($facade instanceof AbstractAjaxFacade) {
+            $this->semanticColors = $facade->getSemanticColors();
+        }
+
         $dataSheet = parent::getDataSheetToRead($task);
         if (! $dataSheet->getColumns()->getByExpression(self::TIME_STATUS_COLOR_COLUMN)) {
             $dataSheet->getColumns()->addFromExpression(self::TIME_STATUS_COLOR_COLUMN);
@@ -164,7 +171,7 @@ class ExportGanttXLSX extends ExportJSON
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
         try {
-            (new GanttXlsxBuilder())->build($mappedData, $this->getFilePathAbsolute());
+            (new GanttXlsxBuilder($this->semanticColors))->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
             throw new ActionRuntimeError($this, 'Unable to create the Gantt XLSX export.', null, $e);
         }

@@ -23,6 +23,18 @@ class GanttXlsxBuilder
         '4D6C73', '85A0A6', 'A8BBBF', 'C1D4D9', '9C797C', '9C797C',
     ];
 
+    private array $semanticColors;
+
+    /**
+     * Creates a builder that resolves semantic colors with the active facade's CSS color map.
+     *
+     * @param array<string, string> $semanticColors
+     */
+    public function __construct(array $semanticColors = [])
+    {
+        $this->semanticColors = array_change_key_case($semanticColors, CASE_UPPER);
+    }
+
     /**
      * Builds and saves the workbook from normalized Gantt data.
      *
@@ -565,20 +577,28 @@ class GanttXlsxBuilder
         return $names[$month] . ' ' . substr((string) $year, -2);
     }
 
-    /** Resolves semantic and hexadecimal colors to six-digit RGB. */
+    /** Resolves facade semantic colors and CSS hexadecimal colors to six-digit RGB. */
     private function resolveColor($value, ?string $default = null): ?string
     {
         if (! is_string($value) || trim($value) === '') {
             return $default;
         }
         $value = strtoupper(trim($value));
-        if ($value === '~WARNING') {
-            return 'ED7D31';
+        if (str_starts_with($value, '~')) {
+            $value = strtoupper(trim($this->semanticColors[$value] ?? ''));
+            if ($value === '') {
+                return $default;
+            }
         }
         if ($value === 'GREY' || $value === 'GRAY') {
             return '767171';
         }
-        return preg_match('/^#?([0-9A-F]{6})$/', $value, $matches) === 1 ? $matches[1] : $default;
+        if (preg_match('/^#?([0-9A-F]{3})$/', $value, $matches) === 1) {
+            return implode('', array_map(static fn(string $digit): string => $digit . $digit, str_split($matches[1])));
+        }
+        return preg_match('/^#?([0-9A-F]{6})$/', $value, $matches) === 1
+            ? $matches[1]
+            : $default;
     }
 
     /** Applies a solid RGB fill to a cell range. */
