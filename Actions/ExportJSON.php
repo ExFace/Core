@@ -371,15 +371,16 @@ class ExportJSON extends ReadData implements iExportData
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
         
-        // Reading the data is the only part that differs between objects with and without a UID:
+        // Reading the data is different for objects with and without a UID:
         // - With a UID we can paginate deterministically via a keyset cursor, doing several
         //   requests for large data sets - see readPagesByUid().
-        // - Without a UID we fall back to offset-based pagination - see readPagesWithoutUid().
+        // - Without a UID there is no stable sort order to paginate over, so everything is read
+        //   in a single request - see readPageWithoutUid().
         // Both return a generator of page sheets, so the per-page processing below stays shared.
-        if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
+        if ($dataSheetMaster->getMetaObject()->hasUidAttribute() && false) {
             $pages = $this->readPagesByUid($dataSheetMaster, $exportMapper);
         } else {
-            $pages = $this->readPagesWithoutUid($dataSheetMaster, $exportMapper);
+            $pages = $this->readPageWithoutUid($dataSheetMaster, $exportMapper);
         }
         
         foreach ($pages as $pageSheet) {
@@ -432,9 +433,7 @@ class ExportJSON extends ReadData implements iExportData
                 $dataSheetMaster->addRows($exportSheet->getRows(), false, false);
             }
             
-            // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
-            // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
-            // zu einem fatal error: maximum execution time exceeded.
+            // Reset the time limit for each iteration, so that we don't run into a timeout for large exports.
             set_time_limit($this->getLimitTimePerRequest());
         }
         
@@ -443,7 +442,7 @@ class ExportJSON extends ReadData implements iExportData
             $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
         }
         
-        // Datei abschliessen und zum Download bereitstellen
+        // Write file to disk and return a file result for download.
         $this->writeFileResult($dataSheetMaster);
         $result = ResultFactory::createFileResultFromPath($task, $this->getFilePathAbsolute(), $this->isDownloadable());
         
@@ -455,64 +454,26 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Creates the working copy of the master sheet used to read a single page of data.
+     * Reads all matching data for an object without a UID in a single request.
      * 
-     * The copy additionally gets any columns required by the export mapper - these are only
-     * needed while reading (as mapper input) and must not pollute the master sheet.
-     * 
-     * @param DataSheetInterface $dataSheetMaster
-     * @param DataSheetMapperInterface|null $exportMapper
-     * @return DataSheetInterface
-     */
-    private function createPageSheet(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : DataSheetInterface
-    {
-        $pageSheet = $dataSheetMaster->copy();
-        if ($exportMapper !== null) {
-            foreach ($exportMapper->getMappings() as $map) {
-                foreach ($map->getRequiredExpressions($pageSheet) as $req) {
-                    if (! $pageSheet->getColumns()->getByExpression($req)) {
-                        $pageSheet->getColumns()->addFromExpression($req);
-                    }
-                }
-            }
-        }
-        return $pageSheet;
-    }
-    
-    /**
-     * Reads matching data for an object without a UID page by page via an offset.
-     * 
-     * Without a UID there is no stable, unique key to build a keyset cursor from, so pagination
-     * falls back to a plain LIMIT/OFFSET. This is not fully deterministic if the data source has
-     * no inherent ordering, but it lets large result sets be fetched in several smaller requests,
-     * which many data sources handle far more efficiently than a single unbounded read. Each
-     * non-empty page is yielded to the caller for processing.
+     * Without a UID there is no stable, unique sort order to paginate over deterministically,
+     * so splitting the read into multiple requests could produce duplicate or missing rows.
+     * Everything is therefore read at once and yielded as a single page (if non-empty).
      * 
      * @param DataSheetInterface $dataSheetMaster
      * @param DataSheetMapperInterface|null $exportMapper
      * @return \Generator<DataSheetInterface>
      */
-    private function readPagesWithoutUid(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : \Generator
+    private function readPageWithoutUid(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : \Generator
     {
-        $rowsOnPage = $this->getLimitRowsPerRequest();
         $pageSheet = $this->createPageSheet($dataSheetMaster, $exportMapper);
-        $rowOffset = 0;
+        $pageSheet->removeRows();
+        $pageSheet->setRowsLimit(null);
+        $pageSheet->dataRead();
         
-        do {
-            $pageSheet->removeRows();
-            $pageSheet->setRowsOffset($rowOffset);
-            $pageSheet->setRowsLimit($rowsOnPage);
-            $pageSheet->dataRead();
-            
-            $rowsRead = $pageSheet->countRows();
-            if ($rowsRead === 0) {
-                break;
-            }
-            
+        if ($pageSheet->countRows() > 0) {
             yield $pageSheet;
-            
-            $rowOffset += $rowsOnPage;
-        } while ($rowsRead === $rowsOnPage);
+        }
     }
     
     /**
@@ -538,7 +499,7 @@ class ExportJSON extends ReadData implements iExportData
         $pageSheet = $this->createPageSheet($dataSheetMaster, $exportMapper);
         $offsetFilter = null;
         $cursorValue = null;    // largest UID of the previous page (keyset cursor)
-        $cursorSeenUids = [];   // exact UIDs already exported that collate-equal to current $cursorValue
+        $cursorSeenUids = [];   // exact UIDs from the last iteration that collate-equal to current $cursorValue
         $firstPage = true;
         
         do {
@@ -622,6 +583,31 @@ class ExportJSON extends ReadData implements iExportData
             
             yield $pageSheet;
         } while ($rowsRead === $rowsOnPage);
+    }
+
+    /**
+     * Creates the working copy of the master sheet used to read a single page of data.
+     * 
+     * The copy additionally gets any columns required by the export mapper - these are only
+     * needed while reading (as mapper input) and must not pollute the master sheet.
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return DataSheetInterface
+     */
+    private function createPageSheet(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : DataSheetInterface
+    {
+        $pageSheet = $dataSheetMaster->copy();
+        if ($exportMapper !== null) {
+            foreach ($exportMapper->getMappings() as $map) {
+                foreach ($map->getRequiredExpressions($pageSheet) as $req) {
+                    if (! $pageSheet->getColumns()->getByExpression($req)) {
+                        $pageSheet->getColumns()->addFromExpression($req);
+                    }
+                }
+            }
+        }
+        return $pageSheet;
     }
     
     /**
