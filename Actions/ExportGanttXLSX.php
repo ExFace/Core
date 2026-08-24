@@ -8,8 +8,10 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\Gantt;
 
 /**
@@ -26,31 +28,13 @@ use exface\Core\Widgets\Gantt;
  */
 class ExportGanttXLSX extends ExportJSON
 {
-    private const DEFAULT_BASIC_INFO_COLUMNS = [
-        'Mast__MastZuBauabschnitt__Bauabschnitt__LABEL_LIST_DISTINCT' => 'Leitungsabschnitt',
-        'LABEL' => 'Verortung',
-        'Mast__MastZuLeitungsabschnitt__Leitungsabschnitt__LABEL_LIST_DISTINCT' => 'Bauabschnitt',
-        'Mast__Bautyp__LABEL' => 'Bautyp',
-        'DatumStartGruendung' => 'Start 1IA',
-        'VerortungStatus__ZeitlicherStatus__WertAggregation' => 'Zeitlicher Status',
-    ];
-
-    private const DEFAULT_STATUS_INFO_COLUMNS = [
-        'FS_GBMDB' => 'Gesamtfortschritt',
-        'BAM_SMF' => 'Stellen Mastfuß (Stahl Unterteil)',
-        'BAM_SMO' => 'Stocken Mast (Stahl Oberteil & Ketten)',
-        'BAM_VMM' => 'Vormontage Mast (Stahl Oberteil)',
-        'BAM_EZA' => 'Errichtung Zuwegung & Arbeitsflächen (erstmalig)',
-        'BAM_AS1' => 'Armatur & Seilzug 1. SK',
-        'BAM_REA' => 'LWL / ES / Restarbeiten',
-        'BAM_FUN' => 'Fundament(-sanierung)',
-        'KN_DFS' => 'Dingliche Flächensicherung',
-        'KN_TFS' => 'Temporäre Flächensicherung',
-        'KN_PL' => 'Planung',
-    ];
+    private const BASIC_INFO_COLUMN_COUNT = 6;
+    private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
 
     private array $basicInfoColumns = [];
     private array $statusInfoColumns = [];
+    private array $basicInfoColumnOverrides = [];
+    private array $statusInfoColumnOverrides = [];
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -66,6 +50,21 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
+     * Adds the temporal status color required by the workbook alongside the requested Gantt columns.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Actions\ExportJSON::getDataSheetToRead()
+     */
+    protected function getDataSheetToRead(TaskInterface $task): DataSheetInterface
+    {
+        $dataSheet = parent::getDataSheetToRead($task);
+        if (! $dataSheet->getColumns()->getByExpression(self::TIME_STATUS_COLOR_COLUMN)) {
+            $dataSheet->getColumns()->addFromExpression(self::TIME_STATUS_COLOR_COLUMN);
+        }
+        return $dataSheet;
+    }
+
+    /**
      * Keeps every Gantt widget column available for mapping, including hidden nested task columns.
      *
      * {@inheritDoc}
@@ -77,13 +76,47 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Suppresses the generic JSON header because the specialized builder writes all XLSX headers.
+     * Splits requested business columns into basic and status mappings for the spreadsheet builder.
+     *
+     * System columns and the nested task column are excluded before the first six columns are
+     * assigned to `BasicInfo`; all remaining columns are assigned to `StatusInfo`.
      *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
     protected function writeHeader(array $exportedColumns): array
     {
+        $this->basicInfoColumns = [];
+        $this->statusInfoColumns = [];
+        $businessColumnIndex = 0;
+
+        foreach ($exportedColumns as $column) {
+            if (! $column instanceof DataColumn
+                || $column->isSystem()
+                || $column->hasNestedData()) {
+                continue;
+            }
+
+            $source = $column->getDataColumnName();
+            if ($source === '') {
+                continue;
+            }
+
+            $isBasicInfo = $businessColumnIndex < self::BASIC_INFO_COLUMN_COUNT;
+            $overrides = $isBasicInfo ? $this->basicInfoColumnOverrides : $this->statusInfoColumnOverrides;
+            $caption = $overrides[$source] ?? $column->getCaption() ?? $source;
+            if ($caption === '') {
+                $caption = $source;
+            }
+
+            if ($isBasicInfo) {
+                $this->basicInfoColumns[$source] = $caption;
+            } else {
+                $this->statusInfoColumns[$source] = $caption;
+            }
+            $businessColumnIndex++;
+        }
+
         return [];
     }
 
@@ -158,8 +191,6 @@ class ExportGanttXLSX extends ExportJSON
     {
         $result = [];
         $taskColumns = $this->getTaskColumnNames();
-        $basicMapping = array_replace(self::DEFAULT_BASIC_INFO_COLUMNS, $this->basicInfoColumns);
-        $statusMapping = array_replace(self::DEFAULT_STATUS_INFO_COLUMNS, $this->statusInfoColumns);
 
         foreach ($rows as $row) {
             if (! is_array($row)) {
@@ -167,11 +198,11 @@ class ExportGanttXLSX extends ExportJSON
             }
 
             $result[] = [
-                'BasicInfo' => $this->mapSection($row, $basicMapping),
+                'BasicInfo' => $this->mapSection($row, $this->basicInfoColumns),
                 'VerortungZuMassnahmeSichtbar' => [
                     'rows' => $this->mapTaskRows($row[$taskColumns['nested']] ?? [], $taskColumns),
                 ],
-                'StatusInfo' => $this->mapSection($row, $statusMapping),
+                'StatusInfo' => $this->mapSection($row, $this->statusInfoColumns),
             ];
         }
 
@@ -200,7 +231,7 @@ class ExportGanttXLSX extends ExportJSON
             }
         }
 
-        $timeStatusColor = 'VerortungStatus__ZeitlicherStatus__Farbe';
+        $timeStatusColor = self::TIME_STATUS_COLOR_COLUMN;
         if (isset($mapping['VerortungStatus__ZeitlicherStatus__WertAggregation'])
             && array_key_exists($timeStatusColor, $row)) {
             $target = $mapping['VerortungStatus__ZeitlicherStatus__WertAggregation'];
@@ -257,8 +288,8 @@ class ExportGanttXLSX extends ExportJSON
             'color' => 'Massnahme__MassnahmeTyp__FarbeAnzeige',
         ];
 
-        $trigger = $this->getWidgetDefinedIn();
-        if (! $trigger instanceof iUseInputWidget || ! ($inputWidget = $trigger->getInputWidget()) instanceof Gantt) {
+        $inputWidget = $this->getInputGantt();
+        if ($inputWidget === null) {
             return $columns;
         }
 
@@ -278,9 +309,24 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
+     * Returns the Gantt widget that supplies the action input.
+     *
+     * @return Gantt|null
+     */
+    private function getInputGantt(): ?Gantt
+    {
+        $trigger = $this->getWidgetDefinedIn();
+        if (! $trigger instanceof iUseInputWidget) {
+            return null;
+        }
+        $inputWidget = $trigger->getInputWidget();
+        return $inputWidget instanceof Gantt ? $inputWidget : null;
+    }
+
+    /**
      * Map Gantt columns to the basic-information captions in the workbook.
-     * Use Gantt data column names as keys and the desired workbook captions as values. Supplied
-     * entries override the built-in mapping, so the mapping can be completed incrementally.
+     * Use requested Gantt data column names as keys and the desired workbook captions as values.
+     * Supplied entries override the captions resolved from the first six business columns.
      *
      * @uxon-property basic_info_columns
      * @uxon-type {string => string}
@@ -290,14 +336,15 @@ class ExportGanttXLSX extends ExportJSON
      */
     public function setBasicInfoColumns(UxonObject $mapping): ExportGanttXLSX
     {
-        $this->basicInfoColumns = $mapping->toArray();
+        $this->basicInfoColumnOverrides = $mapping->toArray();
         return $this;
     }
 
     /**
      * Map Gantt columns to the status captions in the workbook.
-     * Use Gantt data column names as keys and the desired workbook captions as values. A companion
-     * color column named `_<data column name>Farbe` is applied automatically when available.
+     * Use requested Gantt data column names as keys and the desired workbook captions as values.
+     * Supplied entries override captions after the first six business columns. A companion color
+     * column named `_<data column name>Farbe` is applied automatically when available.
      *
      * @uxon-property status_info_columns
      * @uxon-type {string => string}
@@ -307,7 +354,7 @@ class ExportGanttXLSX extends ExportJSON
      */
     public function setStatusInfoColumns(UxonObject $mapping): ExportGanttXLSX
     {
-        $this->statusInfoColumns = $mapping->toArray();
+        $this->statusInfoColumnOverrides = $mapping->toArray();
         return $this;
     }
 }

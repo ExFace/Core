@@ -16,20 +16,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class GanttXlsxBuilder
 {
     private const DATA_START_ROW = 6;
-    private const BASIC_HEADER_ORDER = [
-        'Leitungsabschnitt', 'Verortung', 'Bauabschnitt', 'Bautyp', 'Start 1IA', 'Zeitlicher Status',
-    ];
-    private const STATUS_HEADER_ORDER = [
-        'Gesamtfortschritt', 'Kampfmittel', 'Umwelt', 'Archäologie', 'Genehmigung', 'Planung',
-        'Beschaffung Stahl UT', 'Beschaffung Stahl OT', 'Kreuzungen', 'Dingliche Flächensicherung',
-        'Temporäre Flächensicherung', 'Sonstiges', 'BZR', 'Stellen Mastfuß (Stahl Unterteil)',
-        'Vormontage Mast (Stahl Oberteil)', 'Errichtung Zuwegung & Arbeitsflächen (erstmalig)',
-        'Errichtung Provisorium', 'Demontage Seil', 'LWL / ES / Restarbeiten', 'Demontage Mast',
-        'Rückbau Fundament', 'Vermessung Maststandort', 'Fundament(-sanierung)',
-        'Stocken Mast (Stahl Oberteil & Ketten)', 'Armatur & Seilzug 1. SK', 'Armatur & Seilzug 2. SK',
-        'Armatur & Seilzug 3. SK', 'Armatur & Seilzug 4. SK', 'Wiederherstellung Baufläche',
-        'Demontage Provisorium',
-    ];
     private const STATUS_HEADER_COLORS = [
         'A5A5A5', 'D9E1F2', 'D9E1F2', 'F2E3B3', 'F2D06B', 'D98943', 'D96D48', 'FFB1A8',
         'D9C7A7', '65B6BF', '176A73', '83A603', '618C03', '365902', 'A68660', '555643',
@@ -47,8 +33,8 @@ class GanttXlsxBuilder
     public function build($data, string $outputPath): void
     {
         $items = $this->extractItems($data);
-        $basicHeaders = $this->collectHeaders($items, 'BasicInfo', self::BASIC_HEADER_ORDER, true);
-        $statusHeaders = $this->collectHeaders($items, 'StatusInfo', self::STATUS_HEADER_ORDER, false);
+        $basicHeaders = $this->collectHeaders($items, 'BasicInfo');
+        $statusHeaders = $this->collectHeaders($items, 'StatusInfo');
         $timeline = $this->buildTimeline($items);
         $layout = $this->calculateLayout(count($basicHeaders), count($statusHeaders));
 
@@ -92,24 +78,22 @@ class GanttXlsxBuilder
     }
 
     /**
-     * Collects preferred and additional section headers while omitting color helper fields.
+     * Collects section headers in input order while omitting color helper fields.
      *
      * @param list<array<string, mixed>> $items
      * @param string $section
-     * @param list<string> $preferred
-     * @param bool $hideId
      * @return list<string>
      */
-    private function collectHeaders(array $items, string $section, array $preferred, bool $hideId): array
+    private function collectHeaders(array $items, string $section): array
     {
-        $headers = array_fill_keys($preferred, true);
+        $headers = [];
         foreach ($items as $item) {
             $values = $item[$section] ?? [];
             if (! is_array($values)) {
                 continue;
             }
             foreach (array_keys($values) as $key) {
-                if (! is_string($key) || str_ends_with($key, '_Farbe') || ($hideId && strtolower($key) === 'id')) {
+                if (! is_string($key) || str_ends_with($key, '_Farbe')) {
                     continue;
                 }
                 $headers[$key] = true;
