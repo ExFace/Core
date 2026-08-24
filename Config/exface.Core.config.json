@@ -68,5 +68,7 @@
 		{
 		    "alias": "exface.Core.ExportCSV"
 		}
-	]
+	],
+
+	"EXPORT.MAX_PROCESSING_TIME": 3
 }

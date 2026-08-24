@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
@@ -32,6 +33,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
 use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
@@ -48,16 +50,44 @@ use exface\Core\Widgets\DataMatrix;
  * By default, captions will be used for keys. Alternatively you can use attribute aliases by setting
  * `use_attribute_alias_as_header` = TRUE.
  * 
- * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
- * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
- *
+ * ## How the data is read (and why it may take several steps)
+ * 
+ * The export always contains ALL rows that match the current filters - not just the rows that
+ * are currently on screen. To stay fast and avoid running out of memory on large tables,
+ * the data is fetched in several smaller batches ("requests") instead of one huge read. The
+ * batches are then combined into a single export file. As a designer you normally don't have to think about this:
+ * The action exports all matching rows, no matter how many there are, and the user gets one complete file.
+ * 
+ * If you do want to influence this behaviour, two settings let you do so:
+ * 
+ * - `limit_rows_per_request` - how many rows are fetched per batch (default 10000).
+ * - `limit_time_per_request` - how long a single batch may take before it is aborted (default 300 seconds).
+ * 
+ * Whether the data can be split into batches depends on the exported object:
+ * 
+ * - Objects WITH a unique identifier (UID) - almost all business objects - are read batch by
+ *   batch. The UID is used to reliably continue where the previous batch stopped, so no row is
+ *   ever exported twice or skipped. This is the normal, memory-friendly case.
+ * - Objects WITHOUT a UID cannot be split safely (there is no reliable way to tell the batches
+ *   apart), so all their rows are read in one single request. For such objects `limit_rows_per_request`
+ *   has no effect and very large exports may hit memory limits.
+ * 
+ * ### When should I change these settings?
+ * 
+ * You usually do not need to. Only adjust them if an export fails:
+ * 
+ * - "Allowed memory size exhausted" -> LOWER `limit_rows_per_request` (e.g. to 5000 or 1000) so
+ *   each batch is smaller and uses less memory.
+ * - "Maximum execution time exceeded" -> RAISE `limit_time_per_request` to give each batch more
+ *   time to finish.
+ * 
  * ## Which columns get exported?
  * 
  * The columns are taken from the widget the action is placed in (e.g. a `DataTable`). A column is exported
  * unless it is hidden or has `exportable` set to `false`. A hidden column, that is explicitly set to
  * `exportable` = `true`, is still exported. To avoid reading unneeded data, columns that will not be part of
  * the export are removed before the data is read.
- *
+ * 
  * ## Filename Placeholders
  * 
  * You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
@@ -360,51 +390,32 @@ class ExportJSON extends ReadData implements iExportData
         $this->initializeFilePathAbsolute($dataSheetMaster);
 
         $lazyExport = $this->isLazyExport($dataSheetMaster);
-        $rowsOnPage = $this->getLimitRowsPerRequest();
-        
-        // If we expect to do split requests, we MUST sort over a unique attribute!
-        // Otherwise, the results of subsequent requests may contain data in different order
-        // resulting in duplicate or missing rows from the point of view of the entire
-        // (combined) export.
-        if ($rowsOnPage > 0) {
-            if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
-                $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
-            } else {
-                $rowsOnPage = null;
-            }
-        }
-        
         $exportedWidget = $this->getWidgetToReadFor($task);
         
         if ($lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
         }
 
-        $rowOffset = 0;
+        $mapperAddedCols = [];
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
-        $pageSheet = null;
-        do {
-            if ($pageSheet === null) {
-                $pageSheet = $dataSheetMaster->copy();
-                // Add required columns for export mapper to $pageSheet only, not to
-                // the master sheet.
-                if ($exportMapper !== null) {
-                    foreach ($exportMapper->getMappings() as $map) {
-                        foreach ($map->getRequiredExpressions($pageSheet) as $req) {
-                            if (! $pageSheet->getColumns()->getByExpression($req)) {
-                                $pageSheet->getColumns()->addFromExpression($req);
-                            }
-                        }
-                    }                    
-                }                
-            } else {
-                $pageSheet->removeRows();
-            }
-            $pageSheet->setRowsLimit($rowsOnPage);
-            $pageSheet->setRowsOffset($rowOffset);
-            $pageSheet->dataRead();
-            
+        
+        // Abort early if a timed sample read extrapolates to more than the allowed total time.
+        $this->checkEstimatedExportTime($dataSheetMaster, $this->getEstimateSampleSize($exportedWidget));
+        
+        // Reading the data is different for objects with and without a UID:
+        // - With a UID we can paginate deterministically via a keyset cursor, doing several
+        //   requests for large data sets - see readPagesByUid().
+        // - Without a UID there is no stable sort order to paginate over, so everything is read
+        //   in a single request - see readPageWithoutUid().
+        // Both return a generator of page sheets, so the per-page processing below stays shared.
+        if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
+            $pages = $this->readPagesByUid($dataSheetMaster, $exportMapper);
+        } else {
+            $pages = $this->readPageWithoutUid($dataSheetMaster, $exportMapper);
+        }
+        
+        foreach ($pages as $pageSheet) {
             if ($this->willFormatEnumsAsLabels()) {
                 foreach ($pageSheet->getColumns() as $col) {
                     $type = $col->getDataType();
@@ -454,22 +465,16 @@ class ExportJSON extends ReadData implements iExportData
                 $dataSheetMaster->addRows($exportSheet->getRows(), false, false);
             }
             
-            $rowOffset += $rowsOnPage;
-            // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
-            // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
-            // zu einem fatal error: maximum execution time exceeded.
+            // Reset the time limit for each iteration, so that we don't run into a timeout for large exports.
             set_time_limit($this->getLimitTimePerRequest());
-        } while ($pageSheet->countRows() === $rowsOnPage);
-        
-        // Speicher frei machen
-        $pageSheet = null;
+        }
         
         if (! $lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster, $mapperAddedCols));
             $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
         }
         
-        // Datei abschliessen und zum Download bereitstellen
+        // Write file to disk and return a file result for download.
         $this->writeFileResult($dataSheetMaster);
         $result = ResultFactory::createFileResultFromPath($task, $this->getFilePathAbsolute(), $this->isDownloadable());
         
@@ -481,13 +486,249 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Generates an array of column names from the passed array of widgets.
-     *
-     * The column name array is returned.
-     *
-     * @param iShowDataColumn[] $widget
-     * @return string[]
+     * Aborts the export up-front if the estimated total read time exceeds `limit_time_total`.
+     * 
+     * Delegates the actual sampling and extrapolation to DataSheet::estimateReadDuration(). The
+     * guard is a no-op unless `limit_time_total` is set. 
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param int $sampleSize
+     * @throws ActionRuntimeError if the extrapolated read time exceeds the configured limit
+     * @return void
      */
+    protected function checkEstimatedExportTime(DataSheetInterface $dataSheetMaster, int $sampleSize) : void
+    {
+        $budget = $this->getLimitTimeTotal();
+        if ($budget === null) {
+            return;
+        }
+        
+        try {
+            $estimate = $dataSheetMaster->estimateReadDuration($sampleSize);
+        } catch (\Throwable $e) {
+            return;
+        }
+        
+        if ($estimate !== null && $estimate > $budget) {
+            throw new ActionRuntimeError($this, 'Export aborted: estimated read time of ' . round($estimate) . ' seconds exceeds the limit of ' . $budget . ' seconds. Try narrowing down the filters.');
+        }
+    }
+    
+    /**
+     * Returns the number of rows to sample when estimating the read time (see checkEstimatedExportTime()).
+     * 
+     * Uses the pagination size of the widget the export is called from. Falls back to 30 if the
+     * widget or its page size is unknown.
+     * 
+     * @param WidgetInterface|null $widget
+     * @return int
+     */
+    protected function getEstimateSampleSize(?WidgetInterface $widget) : int
+    {
+        $default = 30;
+        switch (true) {
+            case $widget instanceof iUseData:
+                $dataWidget = $widget->getData();
+                break;
+            case $widget instanceof iShowData:
+                $dataWidget = $widget;
+                break;
+            default:
+                return $default;
+        }
+        if (! ($dataWidget instanceof Data)) {
+            return $default;
+        }
+        return $dataWidget->getPaginator()->getPageSize($default) ?? $default;
+    }
+
+    /**
+     * Reads all matching data for an object without a UID in a single request.
+     * 
+     * Without a UID there is no stable, unique sort order to paginate over deterministically,
+     * so splitting the read into multiple requests could produce duplicate or missing rows.
+     * Everything is therefore read at once and yielded as a single page (if non-empty).
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return \Generator<DataSheetInterface>
+     */
+    private function readPageWithoutUid(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : \Generator
+    {
+        $pageSheet = $this->createPageSheet($dataSheetMaster, $exportMapper);
+        $pageSheet->removeRows();
+        $pageSheet->setRowsLimit(null);
+        $pageSheet->dataRead();
+        
+        if ($pageSheet->countRows() > 0) {
+            yield $pageSheet;
+        }
+    }
+    
+    /**
+     * Reads matching data for an object with a UID page by page via a keyset cursor.
+     * 
+     * Since large exports are split into several requests, we MUST sort over a unique attribute.
+     * Otherwise, the results of subsequent requests may contain data in different order resulting
+     * in duplicate or missing rows from the point of view of the entire (combined) export. Each
+     * non-empty page is yielded to the caller for processing.
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return \Generator<DataSheetInterface>
+     */
+    private function readPagesByUid(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : \Generator
+    {
+        // Sort over the unique UID attribute so pages combine to a stable, gap-free sequence.
+        $dataSheetMaster->getSorters()->removeAll();
+        $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
+        $uidCol = $dataSheetMaster->getMetaObject()->getUidAttributeAlias();
+        
+        $rowsOnPage = $this->getLimitRowsPerRequest();
+        $pageSheet = $this->createPageSheet($dataSheetMaster, $exportMapper);
+        $offsetFilter = null;
+        $cursorValue = null;    // largest UID of the previous page (keyset cursor)
+        $cursorSeenUids = [];   // exact UIDs from the last iteration that collate-equal to current $cursorValue
+        $firstPage = true;
+        
+        do {
+            if (! $firstPage) {
+                if ($offsetFilter !== null) {
+                    $pageSheet->getFilters()->removeCondition($offsetFilter);
+                }
+
+                // ">=" instead of ">": under a case-insensitive DB collation, UIDs differing
+                // only in case (e.g. "abc" vs "ABC") collate as equal, so a strict ">" could
+                // skip them - and the ORDER BY tie order is itself non-deterministic across
+                // separate page queries. ">=" never skips; the boundary group is simply
+                // re-read and stripped below via an exact, case-sensitive comparison.
+                $offsetFilter = ConditionFactory::createFromExpressionString(
+                    $pageSheet->getMetaObject(),
+                    $uidCol,
+                    $cursorValue,
+                    ComparatorDataType::GREATER_THAN_OR_EQUALS,
+                );
+
+                $pageSheet->getFilters()->addCondition($offsetFilter);
+            }
+            $firstPage = false;
+            
+            $pageSheet->removeRows();
+            $pageSheet->setRowsLimit($rowsOnPage);
+            $pageSheet->dataRead();
+            
+            // Number of rows actually read - captured before de-duplication because it
+            // drives loop termination (see the while-condition below).
+            $rowsRead = $pageSheet->countRows();
+            
+            if ($rowsRead === 0) {
+                break;
+            }
+            
+            // The ">=" cursor re-reads the previous page's boundary group (all rows whose
+            // UID collates equal to $cursorValue). Drop the ones already exported. Exact
+            // string comparison => genuinely distinct case-variant UIDs are preserved.
+            $this->stripAlreadyExportedRows($pageSheet, $cursorSeenUids);
+            
+            // If a single collated UID value spans more rows than fit on a page, the whole
+            // page is the re-read boundary group: after de-duplication nothing remains and the
+            // cursor cannot advance. Rather than failing immediately, progressively double the
+            // page size and re-read (up to $maxDoublings times) to try to read past the group.
+            $doublings = 0;
+            $maxDoublings = 3;
+            while ($rowsRead === $rowsOnPage && $pageSheet->countRows() === 0) {
+                if ($doublings >= $maxDoublings) {
+                    throw new ActionRuntimeError($this, 'Cannot paginate export: more than ' . $rowsOnPage . ' rows share the same UID value "' . $cursorValue . '" under the data source collation. Increase the rows-per-request limit for this export.');
+                }
+                $rowsOnPage *= 2;
+                $doublings++;
+                $pageSheet->removeRows();
+                $pageSheet->setRowsLimit($rowsOnPage);
+                $pageSheet->dataRead();
+                $rowsRead = $pageSheet->countRows();
+                $this->stripAlreadyExportedRows($pageSheet, $cursorSeenUids);
+            }
+            
+            // Advance the cursor to the largest UID on this page (rows are sorted ascending by UID)
+            $uidValues = $pageSheet->getUidColumn()->getValues();
+            $cursorValue = end($uidValues);
+            
+            // Remember every exact UID that collates equal to the cursor, so the next
+            // iteration can strip the re-reads. The comparison is case-insensitive (and
+            // multibyte-aware) so the boundary group is over-approximated relative to a
+            // case-insensitive DB collation - which is safe, because the actual removal keyed
+            // on this set uses an exact string match and can never drop a distinct UID.
+            $cursorValueFolded = mb_strtolower((string)$cursorValue);
+            $cursorSeenUids = [];
+            foreach ($uidValues as $uid) {
+                if (mb_strtolower((string)$uid) === $cursorValueFolded) {
+                    $cursorSeenUids[(string)$uid] = true;
+                }
+            }
+            
+            // Skip pages that only contained already-exported re-reads.
+            if ($pageSheet->countRows() === 0) {
+                break;
+            }
+            
+            yield $pageSheet;
+        } while ($rowsRead === $rowsOnPage);
+    }
+
+    /**
+     * Creates the working copy of the master sheet used to read a single page of data.
+     * 
+     * The copy additionally gets any columns required by the export mapper - these are only
+     * needed while reading (as mapper input) and must not pollute the master sheet.
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return DataSheetInterface
+     */
+    private function createPageSheet(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : DataSheetInterface
+    {
+        $pageSheet = $dataSheetMaster->copy();
+        if ($exportMapper !== null) {
+            foreach ($exportMapper->getMappings() as $map) {
+                foreach ($map->getRequiredExpressions($pageSheet) as $req) {
+                    if (! $pageSheet->getColumns()->getByExpression($req)) {
+                        $pageSheet->getColumns()->addFromExpression($req);
+                    }
+                }
+            }
+        }
+        return $pageSheet;
+    }
+    
+    /**
+     * Removes rows from $pageSheet whose UID was already exported on the previous page.
+     * 
+     * When paginating via a ">=" UID cursor (see perform()), the boundary group - all rows
+     * whose UID collates equal to the cursor value under the data source collation - is
+     * re-read on the next page. This strips those already-exported rows again using an exact,
+     * case-sensitive string comparison, so that genuinely distinct UIDs which merely collate
+     * equal (e.g. "abc" vs "ABC" under a case-insensitive collation) are preserved.
+     * 
+     * @param DataSheetInterface $pageSheet
+     * @param bool[] $exportedUids exact UID strings (as keys) already written to the output
+     * @return void
+     */
+    protected function stripAlreadyExportedRows(DataSheetInterface $pageSheet, array $exportedUids) : void
+    {
+        if (empty($exportedUids)) {
+            return;
+        }
+        $duplicateIndexes = [];
+        foreach ($pageSheet->getUidColumn()->getValues() as $rowIdx => $uid) {
+            if (isset($exportedUids[(string)$uid])) {
+                $duplicateIndexes[] = $rowIdx;
+            }
+        }
+        if (! empty($duplicateIndexes)) {
+            $pageSheet->removeRows($duplicateIndexes);
+        }
+    }
+
     protected function writeHeader(array $exportedColumns) : array
     {
         $header = [];
@@ -850,14 +1091,21 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Sets the number of rows per request (default 10000).
-     *
-     * If in total more rows are requested, several subsequent requests are started to fetch
-     * all rows. If a fatal error: "allowed memory size exhausted" occurs during a
-     * xlsx-export it is advisable to reduce this number.
+     * Sets how many rows are fetched per batch (default 10000).
+     * 
+     * The export reads all matching rows, but does so in several smaller batches to save memory
+     * (see the class description). This property controls the batch size: a smaller value uses
+     * less memory per batch but needs more batches, a larger value is faster but needs more memory.
+     * 
+     * Lower this value (e.g. to 5000 or 1000) if an export fails with a memory error like
+     * "allowed memory size exhausted".
+     * 
+     * Note: this only has an effect for objects that have a unique identifier (UID). Objects
+     * without a UID are always read in a single request (see the class description).
      *
      * @uxon-property limit_rows_per_request
      * @uxon-type integer
+     * @uxon-default 10000
      *
      * @param integer $number
      * @return \exface\Core\Actions\ExportXLSX
@@ -905,15 +1153,18 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
-     * Sets the time limit per request (in seconds) (default 300).
-     *
-     * If the processing of one request takes longer than the time limit, php assumes that
-     * some kind of error occured and stops the execution of the code. If a fatal error:
-     * "maximum execution time exceeded" occurs during a xlsx-export it is possible to
-     * increase this number to try if the request finishes in a longer time.
+     * Sets how long a single batch may take before it is aborted, in seconds (default 300).
+     * 
+     * The export reads its data in several batches (see the class description). This is the time
+     * limit for ONE batch, not for the whole export - it is reset for every batch. If a batch
+     * takes longer than this, the system assumes something went wrong and stops.
+     * 
+     * Raise this value if an export fails with a time error like "maximum execution time exceeded",
+     * to give each batch more time to finish.
      *
      * @uxon-property limit_time_per_request
      * @uxon-type integer
+     * @uxon-default 300
      *
      * @param integer $microseconds
      * @return \exface\Core\Actions\ExportJSON
@@ -922,6 +1173,18 @@ class ExportJSON extends ReadData implements iExportData
     {
         $this->limitTimePerRequest = $microseconds;
         return $this;
+    }
+    
+    /**
+     * Returns the total time budget for the whole export in seconds or NULL if disabled.
+     *
+     * @return int|null
+     */
+    public function getLimitTimeTotal() : ?int
+    {
+        $config = $this->getWorkbench()->getCoreApp()->getConfig();
+        return $config->hasOption("EXPORT.MAX_PROCESSING_TIME") ? 
+            $config->getOption("EXPORT.MAX_PROCESSING_TIME") : null;
     }
     
     /**
