@@ -20,6 +20,7 @@ use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\DataSheets\DataSheetMergeError;
 use exface\Core\Factories\QueryBuilderFactory;
+use exface\Core\QueryBuilders\AbstractSqlBuilder;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ConditionGroupFactory;
@@ -3441,6 +3442,62 @@ class DataSheet implements DataSheetInterface
         
         $this->setCounterForRowsInDataSource($result->getAllRowsCounter());
         return $result->getAllRowsCounter();
+    }
+
+    /**
+     *
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::estimateReadDuration()
+     */
+    public function estimateReadDuration(int $sampleSize) : ?float
+    {
+        if ($sampleSize < 1) {
+            throw new DataSheetRuntimeError($this, 'Cannot estimate read duration: sample size must be a positive integer, "' . $sampleSize . '" given!');
+        }
+
+        // TODO geb 2026-08-24: decide how to handle non-SQL sources. Where the underlying COUNT
+        // reads every row (e.g. file or web-service objects), sampling plus counting is as
+        // expensive as the full read, so estimation is pointless. For now we bail out for anything
+        // but SQL - this needs a proper cross-source decision (e.g. a query-builder capability flag).
+        try {
+            $queryBuilder = QueryBuilderFactory::createForObject($this->getMetaObject());
+        } catch (\Throwable $e) {
+            return null;
+        }
+        if (! ($queryBuilder instanceof AbstractSqlBuilder)) {
+            return null;
+        }
+
+        // Time the sample read on a copy so this sheet's rows, limit and counter stay untouched.
+        $sampleSheet = $this->copy();
+        $sampleSheet->setAutoCount(false);
+        $sampleSheet->removeRows();
+        $sampleSheet->setRowsLimit($sampleSize);
+
+        $tStart = microtime(true);
+        // TODO geb 2026-08-24: It would be nice, if we could make this data available for processing, since we've already read it.
+        $sampleSheet->dataRead();
+        $sampleDuration = microtime(true) - $tStart;
+        $sampledRows = $sampleSheet->countRows();
+
+        // Empty result - nothing to read.
+        if ($sampledRows === 0) {
+            return 0.0;
+        }
+        // The sample already holds every matching row, so its duration is the full read time.
+        if ($sampledRows < $sampleSize) {
+            return $sampleDuration;
+        }
+
+        // Extrapolate the sample duration linearly to the total number of matching rows.
+        $totalRows = $this->copy()->dataCount();
+        if ($totalRows === null) {
+            return null;
+        }
+        if ($totalRows <= $sampledRows) {
+            return $sampleDuration;
+        }
+        return $sampleDuration * ($totalRows / $sampledRows);
     }
 
     /**

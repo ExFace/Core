@@ -33,6 +33,7 @@ use exface\Core\Widgets\Container;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ExpressionFactory;
+use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\DataSheets\PivotSheetInterface;
 use exface\Core\Interfaces\DataSheets\PivotColumnInterface;
@@ -399,6 +400,9 @@ class ExportJSON extends ReadData implements iExportData
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
         
+        // Abort early if a timed sample read extrapolates to more than the allowed total time.
+        $this->checkEstimatedExportTime($dataSheetMaster, $this->getEstimateSampleSize($exportedWidget));
+        
         // Reading the data is different for objects with and without a UID:
         // - With a UID we can paginate deterministically via a keyset cursor, doing several
         //   requests for large data sets - see readPagesByUid().
@@ -482,6 +486,63 @@ class ExportJSON extends ReadData implements iExportData
     }
     
     /**
+     * Aborts the export up-front if the estimated total read time exceeds `limit_time_total`.
+     * 
+     * Delegates the actual sampling and extrapolation to DataSheet::estimateReadDuration(). The
+     * guard is a no-op unless `limit_time_total` is set. 
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param int $sampleSize
+     * @throws ActionRuntimeError if the extrapolated read time exceeds the configured limit
+     * @return void
+     */
+    protected function checkEstimatedExportTime(DataSheetInterface $dataSheetMaster, int $sampleSize) : void
+    {
+        $budget = $this->getLimitTimeTotal();
+        if ($budget === null) {
+            return;
+        }
+        
+        try {
+            $estimate = $dataSheetMaster->estimateReadDuration($sampleSize);
+        } catch (\Throwable $e) {
+            return;
+        }
+        
+        if ($estimate !== null && $estimate > $budget) {
+            throw new ActionRuntimeError($this, 'Export aborted: estimated read time of ' . round($estimate) . ' seconds exceeds the limit of ' . $budget . ' seconds. Try narrowing down the filters.');
+        }
+    }
+    
+    /**
+     * Returns the number of rows to sample when estimating the read time (see checkEstimatedExportTime()).
+     * 
+     * Uses the pagination size of the widget the export is called from. Falls back to 30 if the
+     * widget or its page size is unknown.
+     * 
+     * @param WidgetInterface|null $widget
+     * @return int
+     */
+    protected function getEstimateSampleSize(?WidgetInterface $widget) : int
+    {
+        $default = 30;
+        switch (true) {
+            case $widget instanceof iUseData:
+                $dataWidget = $widget->getData();
+                break;
+            case $widget instanceof iShowData:
+                $dataWidget = $widget;
+                break;
+            default:
+                return $default;
+        }
+        if (! ($dataWidget instanceof Data)) {
+            return $default;
+        }
+        return $dataWidget->getPaginator()->getPageSize($default) ?? $default;
+    }
+
+    /**
      * Reads all matching data for an object without a UID in a single request.
      * 
      * Without a UID there is no stable, unique sort order to paginate over deterministically,
@@ -559,6 +620,7 @@ class ExportJSON extends ReadData implements iExportData
             // Number of rows actually read - captured before de-duplication because it
             // drives loop termination (see the while-condition below).
             $rowsRead = $pageSheet->countRows();
+            
             if ($rowsRead === 0) {
                 break;
             }
@@ -1111,6 +1173,18 @@ class ExportJSON extends ReadData implements iExportData
     {
         $this->limitTimePerRequest = $microseconds;
         return $this;
+    }
+    
+    /**
+     * Returns the total time budget for the whole export in seconds or NULL if disabled.
+     *
+     * @return int|null
+     */
+    public function getLimitTimeTotal() : ?int
+    {
+        $config = $this->getWorkbench()->getCoreApp()->getConfig();
+        return $config->hasOption("EXPORT.MAX_PROCESSING_TIME") ? 
+            $config->getOption("EXPORT.MAX_PROCESSING_TIME") : null;
     }
     
     /**
