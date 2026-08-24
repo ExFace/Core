@@ -44,34 +44,56 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * Unlike the other export formats, hidden columns are still written to the file here - they are only marked as
  * hidden in the spreadsheet. Only columns with `exportable` = `false` are excluded entirely.
  * 
- * As all export actions do, this action will read all data matching the current filters (no pagination), eventually
- * splitting it into multiple requests. You can use `limit_rows_per_request` and `limit_time_per_request` to control this.
+ * ## How the data is read (and why it may take several steps)
+ * 
+ * The export always contains ALL rows that match the current filters - not just the rows that
+ * are currently on screen. To stay fast and avoid running out of memory on large tables,
+ * the data is fetched in several smaller batches ("requests") instead of one huge read. The
+ * batches are then combined into a single Excel file. As a designer you normally don't have to think about this:
+ * The action exports all matching rows, no matter how many there are, and the user gets one complete file.
+ * 
+ * If you do want to influence this behaviour, two settings let you do so:
+ * 
+ * - `limit_rows_per_request` - how many rows are fetched per batch (default 10000).
+ * - `limit_time_per_request` - how long a single batch may take before it is aborted (default 300 seconds).
+ * 
+ * Whether the data can be split into batches depends on the exported object:
+ * 
+ * - Objects WITH a unique identifier (UID) - almost all business objects - are read batch by
+ *   batch. The UID is used to reliably continue where the previous batch stopped, so no row is
+ *   ever exported twice or skipped. This is the normal, memory-friendly case.
+ * - Objects WITHOUT a UID cannot be split safely (there is no reliable way to tell the batches
+ *   apart), so all their rows are read in one single request. For such objects `limit_rows_per_request`
+ *   has no effect and very large exports may hit memory limits.
+ * 
+ * ### When should I change these settings?
+ * 
+ * You usually do not need to. Only adjust them if an export fails:
+ * 
+ * - "Allowed memory size exhausted" -> LOWER `limit_rows_per_request` (e.g. to 5000 or 1000) so
+ *   each batch is smaller and uses less memory.
+ * - "Maximum execution time exceeded" -> RAISE `limit_time_per_request` to give each batch more
+ *   time to finish.
  * 
  * ## Data type handling
  * 
  * If the exported data uses custom data types, they can be mapped to Excel format expressions manually
  * using `data_type_map`.
- *
- *
- *
+ * 
  * ## Filename Placeholders
- *
- *
- *
+ * 
  * You can dynamically generate filenames based on aggregated data, by using placeholders in the property `filename`.
  * For example `"filename":"[#=Now('yyyy-MM-dd')#]_[#~data:Materialkategorie:LIST_DISTINCT#]"` could be used to include both
  * the current date and some information about the categories present in the export and result in a filename like `2024-09-10_Muffen`.
- *
+ * 
  * ### Supported placeholders:
- *
+ * 
  * - `[#=Formula()#]` Allows the use of formulas.
  * - `[#~data:attribute_alias:AGGREGATOR#]` Aggregates the data column for the given alias by applying the specified aggregator. See below for
- *a list of supported aggregators.
- *
- *
- *
+ * a list of supported aggregators.
+ * 
  * ### Supported aggregators:
- *
+ * 
  * - `SUM` Sums up all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
  * - `AVG` Calculates the arithmetic mean of all values present in the column. Non-numeric values will either be read as numerics or as 0, if they cannot be converted.
  * - `MIN` Gets the lowest of all values present in the column. If only non-numeric values are present, their alphabetic rank is used. If the column is mixed,
@@ -82,25 +104,24 @@ use exface\Core\DataTypes\NumberEnumDataType;
  * - `COUNT_DISTINCT` Counts the number of unique entries in the column, excluding empty rows.
  * - `LIST` Lists all non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
  * - `LIST_DISTINCT` Lists all unique, non-empty rows in the column, applying the following format: `Some value,anotherValue,yEt another VaLue` => `SomeValue_AnotherValue_YetAnotherValue`
- *
- *
+ * 
  * ## Examples
  * 
  * Here is an example of the configuration for a machine-friendly export (no filters, no frozen rows, aliases as headers):
  * 
  * ```
+ * 
  * {
- *  "alias": "exface.Core.ExportXLSX",
- *  "use_attiribute_alias_as_header": true,
- *  "enable_column_filters": false,
- *  "freeze_header_row": false
+ *     "alias": "exface.Core.ExportXLSX",
+ *     "use_attribute_alias_as_header": true,
+ *     "enable_column_filters": false,
+ *     "freeze_header_row": false
  * }
  * 
  * ```
  * 
- *  
  * @author SFL
- *
+ * 
  */
 class ExportXLSX extends ExportJSON
 {
@@ -401,9 +422,11 @@ class ExportXLSX extends ExportJSON
     }
     
     /**
-     * Maps a UXON data type alias (incl. namespace) to an Excel cell format.
+     * Map custom data types to the Excel cell format they should be exported with.
      * 
-     * You can use any Excel cell type notation or the following simple types:
+     * Provide a list of `data type alias (incl. namespace)` to `Excel cell format` pairs. Use this
+     * whenever a column's values should appear in a specific format in the spreadsheet. You can use
+     * any Excel cell format notation or one of the following simple formats:
      * 
      * | simple formats | format code                               |
      * | -------------- | ----------------------------------------- |
@@ -442,10 +465,11 @@ class ExportXLSX extends ExportJSON
     }
     
     /**
-     * Set to FALSE to disable autofiltering (filter icon) on columns
+     * Set to FALSE to disable autofiltering (filter icon) on columns.
      * 
      * @uxon-property enable_column_filters
-     * @uxon-type boolean 
+     * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool $value
      * @return ExportXLSX
@@ -466,10 +490,11 @@ class ExportXLSX extends ExportJSON
     }
     
     /**
-     * Set to FALSE in order not to freeze the first row (header row)
+     * Set to FALSE in order not to freeze the first row (header row).
      * 
      * @uxon-property freeze_header_row
      * @uxon-type boolean
+     * @uxon-default true
      * 
      * @param bool $value
      * @return ExportXLSX

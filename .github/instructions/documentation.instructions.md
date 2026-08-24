@@ -35,6 +35,12 @@ to decorate your text. Use [example-configurations](#code-examples) where it mak
 how the component was written.
 - Summaries for UXON-Properties must not have any empty lines, use ` ` spaces to avoid empty lines.
 
+### Class Documentation
+
+The class-level docblock is rendered as documentation just like UXON-Property summaries, so the same whitespace constraint applies:
+
+- Do **not** use any empty lines anywhere in the class docblock. Wherever you would normally leave a blank line (e.g. between paragraphs or headings), use a line containing a single ` ` space instead.
+
 ### Code Examples
 
 It is good practice to include code-examples, especially if you need to explain specific setups. Due to the way we render
@@ -70,3 +76,6 @@ Example:
  
 ```
 
+### Inheritance and Overrides
+
+Our documentation renderer supports inheritance only partially. Class-Docs and overrided summaries are not rendered in the editor. If you want to document a class that inherits from another class, you need to copy the documentation from the parent class and adapt it to your needs. If you override a function, you need to copy the summary from the parent function and adapt it to your needs.

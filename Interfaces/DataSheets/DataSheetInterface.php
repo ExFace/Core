@@ -238,6 +238,27 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function dataCount() : ?int;
 
     /**
+     * Estimates how long a full read of this sheet would take by timing a small sample read.
+     * 
+     * Reads `$sampleSize` rows (on an internal copy, leaving this sheet untouched), measures the
+     * duration and extrapolates it linearly to the total number of matching rows:
+     * `estimate = sampleDuration * totalRows / sampleSize`. This allows aborting operations that
+     * would obviously run into a timeout before doing the expensive full read.
+     * 
+     * Returns the estimated duration in seconds, or NULL if no meaningful estimate is possible
+     * (i.e. the data source cannot count the total number of rows). If the sample already contains
+     * all matching rows, the measured sample duration is returned as the estimate.
+     * 
+     * NOTE: this calls dataCount() internally, so the same performance caveats apply - avoid it for
+     * data sources with poor counting performance (see dataCount()). Currently only SQL-based
+     * sources are supported; for others NULL is returned (see the TODO in the implementation).
+     * 
+     * @param int $sampleSize
+     * @return float|NULL
+     */
+    public function estimateReadDuration(int $sampleSize) : ?float;
+
+    /**
      * 
      * @return int
      */
