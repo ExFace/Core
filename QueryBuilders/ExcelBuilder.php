@@ -120,6 +120,16 @@ class ExcelBuilder extends FileBuilder
      * @uxon-default true
      */
     const DAP_EXCEL_READ_EMPTY_CELLS = 'excel_read_empty_cells';
+
+    /**
+     * Set to TRUE to remove empty rows after reading the spreadsheet.
+     *
+     * @uxon-property excel_remove_empty_rows
+     * @uxon-target object
+     * @uxon-type boolean
+     * @uxon-default false
+     */
+    const DAP_EXCEL_REMOVE_EMPTY_ROWS = 'excel_remove_empty_rows';
     
     /**
      * 
@@ -236,6 +246,7 @@ class ExcelBuilder extends FileBuilder
 
         $dapReadDataOnly = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_DATA_ONLY)) ?? false;
         $dapReadEmptyCells = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_READ_EMPTY_CELLS)) ?? true;
+        $dapRemoveEmptyRows = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_REMOVE_EMPTY_ROWS)) ?? false;
         $dapErrorIfNoSheet = BooleanDataType::cast($mainObj->getDataAddressProperty(self::DAP_EXCEL_ERROR_IF_SHEET_NOT_FOUND)) ?? true;
         
         $sheetName = $this->getSheetForObject($mainObj);
@@ -344,6 +355,15 @@ class ExcelBuilder extends FileBuilder
         unset($worksheet);
         unset($spreadsheet);
         unset($reader);
+
+        // Filter out empty rows.
+        if($dapRemoveEmptyRows) {
+            $result_rows = array_filter($result_rows, function($row) {
+                return !empty(array_filter($row, function($value) {
+                    return $value !== null && $value !== '';
+                }));
+            });
+        }
 
         return $result_rows;
     }
