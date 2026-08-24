@@ -361,50 +361,189 @@ class ExportJSON extends ReadData implements iExportData
         $this->initializeFilePathAbsolute($dataSheetMaster);
 
         $lazyExport = $this->isLazyExport($dataSheetMaster);
-        $rowsOnPage = $this->getLimitRowsPerRequest();
-        
-        // Since we expect to do split requests, we MUST sort over a unique attribute!
-        // Otherwise, the results of subsequent requests may contain data in different order
-        // resulting in duplicate or missing rows from the point of view of the entire
-        // (combined) export.
-        if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
-            $dataSheetMaster->getSorters()->removeAll();
-            $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
-        } else {
-            $rowsOnPage = null;
-        }
-        
         $exportedWidget = $this->getWidgetToReadFor($task);
         
         if ($lazyExport) {
             $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster));
         }
 
-        $rowOffset = 0;
+        $mapperAddedCols = [];
         $errorMessage = null;
         set_time_limit($this->getLimitTimePerRequest());
-        $pageSheet = null;
+        
+        // Reading the data is the only part that differs between objects with and without a UID:
+        // - With a UID we can paginate deterministically via a keyset cursor, doing several
+        //   requests for large data sets - see readPagesByUid().
+        // - Without a UID we fall back to offset-based pagination - see readPagesWithoutUid().
+        // Both return a generator of page sheets, so the per-page processing below stays shared.
+        if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
+            $pages = $this->readPagesByUid($dataSheetMaster, $exportMapper);
+        } else {
+            $pages = $this->readPagesWithoutUid($dataSheetMaster, $exportMapper);
+        }
+        
+        foreach ($pages as $pageSheet) {
+            if ($this->willFormatEnumsAsLabels()) {
+                foreach ($pageSheet->getColumns() as $col) {
+                    $type = $col->getDataType();
+                    if ($type instanceof EnumDataTypeInterface) {
+                        $values = $col->getValues();
+                        $newValues = [];
+                        foreach ($values as $val) {
+                            $newValues[] = $type->getLabelOfValue($val);
+                        }
+                        $col->setValues($newValues);
+                    }
+                }
+            }
+
+            if ($exportMapper !== null) {
+                $exportMapper->setInheritColumns(DataSheetMapper::INHERIT_ALL);
+                $exportSheet = $exportMapper->map($pageSheet);
+            } else {
+                $exportSheet = $pageSheet;
+            }
+
+            // if we format enums, also format booleans to their labels yes/no
+            if ($this->willFormatEnumsAsLabels()) {
+                $this->formatBooleanColumnsAsLabels($exportSheet);
+            }
+            
+            if ($lazyExport) {
+                $this->writeRows($exportSheet, $columnNames);
+            } else {
+                $mapperAddedCols = [];
+                // Don't add any columns to the master sheet if reading produced hidden/system columns
+                // However, if we have mappings, they might have produced additional columns that are
+                // actually needed, so we need to detect this and add the columns here. Mappings like
+                // JsonToRowsMapping will add columns from the read values, so we need to check columns
+                // for every page separately.
+                if ($exportMapper !== null && $pageSheet->getColumns()->count() !== $exportSheet->getColumns()->count()) {
+                    foreach ($exportSheet->getColumns() as $exportCol) {
+                        $exportColExpr = $exportCol->getExpressionObj();
+                        $exportColInPageSheet = $pageSheet->getColumns()->getByExpression($exportColExpr);
+                        $exportColInMaster = $dataSheetMaster->getColumns()->getByExpression($exportColExpr);
+                        if (! $exportCol->getHidden() && ! $exportColInPageSheet && ! $exportColInMaster) {
+                            $mapperAddedCols[] = $exportCol;
+                            $dataSheetMaster->getColumns()->addFromExpression($exportColExpr, $exportCol->getName());
+                        }
+                    }
+                }
+                $dataSheetMaster->addRows($exportSheet->getRows(), false, false);
+            }
+            
+            // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
+            // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
+            // zu einem fatal error: maximum execution time exceeded.
+            set_time_limit($this->getLimitTimePerRequest());
+        }
+        
+        if (! $lazyExport) {
+            $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster, $mapperAddedCols));
+            $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
+        }
+        
+        // Datei abschliessen und zum Download bereitstellen
+        $this->writeFileResult($dataSheetMaster);
+        $result = ResultFactory::createFileResultFromPath($task, $this->getFilePathAbsolute(), $this->isDownloadable());
+        
+        if ($errorMessage !== null) {
+            $result->setMessage($errorMessage);
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Creates the working copy of the master sheet used to read a single page of data.
+     * 
+     * The copy additionally gets any columns required by the export mapper - these are only
+     * needed while reading (as mapper input) and must not pollute the master sheet.
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return DataSheetInterface
+     */
+    private function createPageSheet(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : DataSheetInterface
+    {
+        $pageSheet = $dataSheetMaster->copy();
+        if ($exportMapper !== null) {
+            foreach ($exportMapper->getMappings() as $map) {
+                foreach ($map->getRequiredExpressions($pageSheet) as $req) {
+                    if (! $pageSheet->getColumns()->getByExpression($req)) {
+                        $pageSheet->getColumns()->addFromExpression($req);
+                    }
+                }
+            }
+        }
+        return $pageSheet;
+    }
+    
+    /**
+     * Reads matching data for an object without a UID page by page via an offset.
+     * 
+     * Without a UID there is no stable, unique key to build a keyset cursor from, so pagination
+     * falls back to a plain LIMIT/OFFSET. This is not fully deterministic if the data source has
+     * no inherent ordering, but it lets large result sets be fetched in several smaller requests,
+     * which many data sources handle far more efficiently than a single unbounded read. Each
+     * non-empty page is yielded to the caller for processing.
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return \Generator<DataSheetInterface>
+     */
+    private function readPagesWithoutUid(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : \Generator
+    {
+        $rowsOnPage = $this->getLimitRowsPerRequest();
+        $pageSheet = $this->createPageSheet($dataSheetMaster, $exportMapper);
+        $rowOffset = 0;
+        
+        do {
+            $pageSheet->removeRows();
+            $pageSheet->setRowsOffset($rowOffset);
+            $pageSheet->setRowsLimit($rowsOnPage);
+            $pageSheet->dataRead();
+            
+            $rowsRead = $pageSheet->countRows();
+            if ($rowsRead === 0) {
+                break;
+            }
+            
+            yield $pageSheet;
+            
+            $rowOffset += $rowsOnPage;
+        } while ($rowsRead === $rowsOnPage);
+    }
+    
+    /**
+     * Reads matching data for an object with a UID page by page via a keyset cursor.
+     * 
+     * Since large exports are split into several requests, we MUST sort over a unique attribute.
+     * Otherwise, the results of subsequent requests may contain data in different order resulting
+     * in duplicate or missing rows from the point of view of the entire (combined) export. Each
+     * non-empty page is yielded to the caller for processing.
+     * 
+     * @param DataSheetInterface $dataSheetMaster
+     * @param DataSheetMapperInterface|null $exportMapper
+     * @return \Generator<DataSheetInterface>
+     */
+    private function readPagesByUid(DataSheetInterface $dataSheetMaster, ?DataSheetMapperInterface $exportMapper) : \Generator
+    {
+        // Sort over the unique UID attribute so pages combine to a stable, gap-free sequence.
+        $dataSheetMaster->getSorters()->removeAll();
+        $dataSheetMaster->getSorters()->addFromString($dataSheetMaster->getMetaObject()->getUidAttributeAlias());
         $uidCol = $dataSheetMaster->getMetaObject()->getUidAttributeAlias();
+        
+        $rowsOnPage = $this->getLimitRowsPerRequest();
+        $pageSheet = $this->createPageSheet($dataSheetMaster, $exportMapper);
         $offsetFilter = null;
         $cursorValue = null;    // largest UID of the previous page (keyset cursor)
         $cursorSeenUids = [];   // exact UIDs already exported that collate-equal to current $cursorValue
+        $firstPage = true;
         
         do {
-            if ($pageSheet === null) {
-                $pageSheet = $dataSheetMaster->copy();
-                // Add required columns for export mapper to $pageSheet only, not to
-                // the master sheet.
-                if ($exportMapper !== null) {
-                    foreach ($exportMapper->getMappings() as $map) {
-                        foreach ($map->getRequiredExpressions($pageSheet) as $req) {
-                            if (! $pageSheet->getColumns()->getByExpression($req)) {
-                                $pageSheet->getColumns()->addFromExpression($req);
-                            }
-                        }
-                    }                    
-                }                
-            } else {
-                if($offsetFilter !== null) {
+            if (! $firstPage) {
+                if ($offsetFilter !== null) {
                     $pageSheet->getFilters()->removeCondition($offsetFilter);
                 }
 
@@ -421,9 +560,10 @@ class ExportJSON extends ReadData implements iExportData
                 );
 
                 $pageSheet->getFilters()->addCondition($offsetFilter);
-                $pageSheet->removeRows();
             }
+            $firstPage = false;
             
+            $pageSheet->removeRows();
             $pageSheet->setRowsLimit($rowsOnPage);
             $pageSheet->dataRead();
             
@@ -475,84 +615,13 @@ class ExportJSON extends ReadData implements iExportData
                 }
             }
             
-            // Exit early, if we did not find any more rows.
-            if($pageSheet->countRows() === 0) {
+            // Skip pages that only contained already-exported re-reads.
+            if ($pageSheet->countRows() === 0) {
                 break;
             }
             
-            if ($this->willFormatEnumsAsLabels()) {
-                foreach ($pageSheet->getColumns() as $col) {
-                    $type = $col->getDataType();
-                    if ($type instanceof EnumDataTypeInterface) {
-                        $values = $col->getValues();
-                        $newValues = [];
-                        foreach ($values as $val) {
-                            $newValues[] = $type->getLabelOfValue($val);
-                        }
-                        $col->setValues($newValues);
-                    }
-                }
-            }
-
-            if ($exportMapper !== null) {
-                $exportMapper->setInheritColumns(DataSheetMapper::INHERIT_ALL);
-                $exportSheet = $exportMapper->map($pageSheet);
-            } else {
-                $exportSheet = $pageSheet;
-            }
-
-            // if we format enums, also format booleans to their labels yes/no
-            if ($this->willFormatEnumsAsLabels()) {
-                $this->formatBooleanColumnsAsLabels($exportSheet);
-            }
-            
-            if ($lazyExport) {
-                $this->writeRows($exportSheet, $columnNames);
-            } else {
-                $mapperAddedCols = [];
-                // Don't add any columns to the master sheet if reading produced hidden/system columns
-                // However, if we have mappings, they might have produced additional columns that are
-                // actually needed, so we need to detect this and add the columns here. Mappings like
-                // JsonToRowsMapping will add columns from the read values, so we need to check columns
-                // for every page separately.
-                if ($exportMapper !== null && $pageSheet->getColumns()->count() !== $exportSheet->getColumns()->count()) {
-                    foreach ($exportSheet->getColumns() as $exportCol) {
-                        $exportColExpr = $exportCol->getExpressionObj();
-                        $exportColInPageSheet = $pageSheet->getColumns()->getByExpression($exportColExpr);
-                        $exportColInMaster = $dataSheetMaster->getColumns()->getByExpression($exportColExpr);
-                        if (! $exportCol->getHidden() && ! $exportColInPageSheet && ! $exportColInMaster) {
-                            $mapperAddedCols[] = $exportCol;
-                            $dataSheetMaster->getColumns()->addFromExpression($exportColExpr, $exportCol->getName());
-                        }
-                    }
-                }
-                $dataSheetMaster->addRows($exportSheet->getRows(), false, false);
-            }
-            
-            $rowOffset += $rowsOnPage;
-            // Das Zeitlimit wird bei jedem Schleifendurchlauf neu gesetzt, so dass es immer
-            // nur fuer einen Durchlauf gilt. Sonst kommt es bei groesseren Abfragen schnell
-            // zu einem fatal error: maximum execution time exceeded.
-            set_time_limit($this->getLimitTimePerRequest());
+            yield $pageSheet;
         } while ($rowsRead === $rowsOnPage);
-        
-        // Speicher frei machen
-        $pageSheet = null;
-        
-        if (! $lazyExport) {
-            $columnNames = $this->writeHeader($this->getExportColumnWidgets($exportedWidget, $dataSheetMaster, $mapperAddedCols));
-            $this->writeRows($dataSheetMaster instanceof PivotSheetInterface ? $dataSheetMaster->getPivotResultDataSheet() : $dataSheetMaster, $columnNames);
-        }
-        
-        // Datei abschliessen und zum Download bereitstellen
-        $this->writeFileResult($dataSheetMaster);
-        $result = ResultFactory::createFileResultFromPath($task, $this->getFilePathAbsolute(), $this->isDownloadable());
-        
-        if ($errorMessage !== null) {
-            $result->setMessage($errorMessage);
-        }
-        
-        return $result;
     }
     
     /**
@@ -583,8 +652,7 @@ class ExportJSON extends ReadData implements iExportData
             $pageSheet->removeRows($duplicateIndexes);
         }
     }
-    
-    /**
+
     protected function writeHeader(array $exportedColumns) : array
     {
         $header = [];
