@@ -465,6 +465,10 @@ class DataColumn implements DataColumnInterface
         if ($this->hasTotals()) {
             $arr['totals'] = $this->getTotals()->exportUxonObject()->toArray();
         }
+
+        if (null !== $nestedData = $this->getNestedDataTemplateUxon()) {
+            $arr['nested_data'] = $nestedData->toArray();
+        }
         
         if ($this->isAttribute()) {
             // If it contains an attribute, it will be enough to export it's alias and every thing
