@@ -358,21 +358,42 @@ class GanttXlsxBuilder
             $timelineIndex[$week['key']] = $index;
         }
         $timelineEnd = $this->getTimelineEndColumn($layout, count($timeline));
+
+        $rowPlans = [];
         $row = self::DATA_START_ROW;
         foreach ($items as $item) {
             $lanes = $this->packTasks($this->normalizeTasks($item, $timelineIndex));
             $endRow = $row + max(1, count($lanes)) - 1;
-            for ($dataRow = $row; $dataRow <= $endRow; $dataRow++) {
-                $sheet->getRowDimension($dataRow)->setRowHeight(28.45);
-                $sheet->getStyle($this->range(1, $dataRow, $timelineEnd, $dataRow))->applyFromArray([
-                    'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
-                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF808080']]],
-                ]);
-            }
-            $this->writeValueSection($sheet, 1, $basicHeaders, $item['BasicInfo'] ?? [], $row, $endRow, true);
-            $this->writeValueSection($sheet, $layout['statusStart'], $statusHeaders, $item['StatusInfo'] ?? [], $row, $endRow, false);
-            $sheet->getStyle($this->range($layout['statusStart'], $row, $layout['statusEnd'], $endRow))
-                ->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            $rowPlans[] = ['item' => $item, 'lanes' => $lanes, 'startRow' => $row, 'endRow' => $endRow];
+            $row = $endRow + 1;
+        }
+
+        if ($rowPlans === []) {
+            return;
+        }
+
+        $lastRow = $row - 1;
+        for ($dataRow = self::DATA_START_ROW; $dataRow <= $lastRow; $dataRow++) {
+            $sheet->getRowDimension($dataRow)->setRowHeight(28.45);
+        }
+        $sheet->getStyle($this->range(1, self::DATA_START_ROW, $timelineEnd, $lastRow))->applyFromArray([
+            'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF808080']]],
+        ]);
+        if ($statusHeaders !== []) {
+            $sheet->getStyle($this->range($layout['statusStart'], self::DATA_START_ROW, $layout['statusEnd'], $lastRow))->applyFromArray([
+                'font' => ['size' => 10],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            ]);
+        }
+
+        foreach ($rowPlans as $plan) {
+            $item = $plan['item'];
+            $lanes = $plan['lanes'];
+            $row = $plan['startRow'];
+            $endRow = $plan['endRow'];
+            $this->writeValueSection($sheet, 1, $basicHeaders, $item['BasicInfo'] ?? [], $row, $endRow);
+            $this->writeValueSection($sheet, $layout['statusStart'], $statusHeaders, $item['StatusInfo'] ?? [], $row, $endRow);
             if ($endRow > $row) {
                 $sheet->mergeCells($this->range($layout['verortung'], $row, $layout['verortung'], $endRow));
             }
@@ -394,7 +415,6 @@ class GanttXlsxBuilder
             }
             $sheet->getStyle($this->range($layout['ganttLabel'], $endRow, $timelineEnd, $endRow))
                 ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
-            $row = $endRow + 1;
         }
     }
 
@@ -404,7 +424,7 @@ class GanttXlsxBuilder
      * @param list<string> $headers
      * @param mixed $values
      */
-    private function writeValueSection(Worksheet $sheet, int $startColumn, array $headers, $values, int $startRow, int $endRow, bool $basic): void
+    private function writeValueSection(Worksheet $sheet, int $startColumn, array $headers, $values, int $startRow, int $endRow): void
     {
         $values = is_array($values) ? $values : [];
         foreach ($headers as $index => $header) {
@@ -419,8 +439,6 @@ class GanttXlsxBuilder
             if ($color !== null) {
                 $this->fill($sheet, $range, $color);
             }
-            $sheet->getStyle($range)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
-            $sheet->getStyle($range)->getFont()->setSize($basic ? 12 : 10);
         }
     }
 
