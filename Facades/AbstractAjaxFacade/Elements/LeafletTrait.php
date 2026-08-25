@@ -1704,26 +1704,50 @@ JS;
                                     oBounds = oBounds.extend(oOtherModel.layer.getBounds());
                                 });
                             }
+                            var bFitApplied = false;
                             switch (true) {
                                 // Zoom-out if allowed and needed zoom < current zoom or map zoom never changed
                                 case bZOut === true && (fZBounds < fZMap || fZMap === oMap._exfState.initialZoom):
                                     oMap.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
+                                    bFitApplied = true;
                                     break;
                                 // Zoom-in if allowed and needed zoom > current zoom or map zoom never changed
                                 case bZIn === true && (fZBounds > fZMap || fZMap === oMap._exfState.initialZoom):
                                     oMap.fitBounds(oBounds, {padding: [10,10], {$maxZoomJs} });
+                                    bFitApplied = true;
                                     break;
                                 // Pan without zooming if bounds outside of map
                                 case ! oMap.getBounds().contains(oBounds):
                                     oMap.fitBounds(oBounds, {padding: [10,10], maxZoom: oMap.getZoom() });
+                                    bFitApplied = true;
                                     break;
                             }
                             
-                            // it saves the last initial autoZoom and is used in buildJsLeafletControlHomeZoom()
-                            oMap.once('moveend', () => {
-                              oMap._exfState.homeCenter = oMap.getCenter();
-                              oMap._exfState.homeZoom = oMap.getZoom();
-                            });
+                            // Save the "home" view used by buildJsLeafletControlHomeZoom(). Capture the view once
+                            // the autoZoom has settled. Using a one-off 'moveend' listener alone is not reliable:
+                            // if fitBounds() did not actually move the map (or was not applied at all), no 'moveend'
+                            // fires and the listener would instead capture the user's first pan/zoom. Therefore
+                            // capture immediately when no fit was applied and add a fallback that removes a pending
+                            // listener if the fit produced no movement.
+                            (function(){
+                                var bCaptured = false;
+                                var fnCapture = function(){
+                                    bCaptured = true;
+                                    oMap._exfState.homeCenter = oMap.getCenter();
+                                    oMap._exfState.homeZoom = oMap.getZoom();
+                                };
+                                if (bFitApplied) {
+                                    oMap.once('moveend', fnCapture);
+                                    setTimeout(function(){
+                                        if (! bCaptured) {
+                                            oMap.off('moveend', fnCapture);
+                                            fnCapture();
+                                        }
+                                    }, 500);
+                                } else {
+                                    fnCapture();
+                                }
+                            })();
                         }
                 	},100);
 
