@@ -9,6 +9,10 @@ Anything written by AI needs to be properly documented, so that:
 These instructions are WIP. If you don't find what you are looking for, try to emulate the documentation style
 from more recent components.
 
+> **IMPORTANT — docs do not inherit.** Class docblocks and overridden method summaries are NOT rendered through
+> inheritance. Whenever you edit a class docblock or a method summary, you MUST search all subclasses and update
+> every copy that duplicates it. See [Inheritance and Overrides](#inheritance-and-overrides).
+
 ## Summaries
 
 Each function needs a summary that succinctly explains what the function does. It will be read by developers who
@@ -78,4 +82,11 @@ Example:
 
 ### Inheritance and Overrides
 
-Our documentation renderer supports inheritance only partially. Class-Docs and overrided summaries are not rendered in the editor. If you want to document a class that inherits from another class, you need to copy the documentation from the parent class and adapt it to your needs. If you override a function, you need to copy the summary from the parent function and adapt it to your needs.
+Our documentation renderer supports inheritance only partially: class docblocks and overridden method summaries are NOT rendered in the editor. Documentation therefore has to be duplicated onto every subclass, and that duplication has to be kept in sync by hand.
+
+When editing documentation, you MUST:
+
+- Before finishing any change to a class docblock, search for its subclasses and update every one that carries its own copy of the affected section. Example: `ExportXLSX extends ExportJSON` and duplicates the "How the data is read" section, so a change to that section in `ExportJSON` must be mirrored in `ExportXLSX`.
+- Before finishing any change to a method summary, search for classes that override that method and update each overridden summary that duplicates the affected text.
+- When first documenting a class that inherits from another, copy the relevant documentation from the parent and adapt it to the subclass.
+- Treat "does a subclass (or override) copy this?" as a routine check for every docblock/summary edit — do not rely on the file you are editing to hint that a copy exists elsewhere.
