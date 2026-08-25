@@ -25,17 +25,24 @@ class GanttXlsxBuilder
 
     private array $semanticColors;
     private bool $mergeCells;
+    private float $textColorPreference;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
      *
      * @param array<string, string> $semanticColors
      * @param bool $mergeCells
+     * @param float $textColorPreference
      */
-    public function __construct(array $semanticColors = [], bool $mergeCells = false)
+    public function __construct(
+        array $semanticColors = [],
+        bool $mergeCells = false,
+        float $textColorPreference = 0.5
+    )
     {
         $this->semanticColors = array_change_key_case($semanticColors, CASE_UPPER);
         $this->mergeCells = $mergeCells;
+        $this->textColorPreference = max(0.0, min(1.0, $textColorPreference));
     }
 
     /**
@@ -316,9 +323,11 @@ class GanttXlsxBuilder
         ]);
         foreach (range($layout['statusStart'], $layout['statusEnd']) as $column) {
             $rgb = $sheet->getStyle($this->cell($column, 4))->getFill()->getStartColor()->getRGB();
-            if ($this->useWhiteText($rgb)) {
-                $sheet->getStyle($this->cell($column, 4))->getFont()->getColor()->setARGB('FFFFFFFF');
-            }
+            $textColor = $this->resolveColor(
+                ColorTools::pickTextColorForBackgroundColor('#' . $rgb, $this->textColorPreference),
+                '000000'
+            );
+            $sheet->getStyle($this->cell($column, 4))->getFont()->getColor()->setARGB('FF' . $textColor);
         }
         $sheet->getStyle($this->range($layout['ganttLabel'], 2, $layout['ganttLabel'], 5))->getFont()->setSize(8);
         if ($timelineCount > 0) {
@@ -445,7 +454,11 @@ class GanttXlsxBuilder
             }
             $color = $this->resolveColor($values[$header . '_Farbe'] ?? $values[preg_replace('/\s+/', '', $header) . '_Farbe'] ?? null);
             if ($color !== null) {
-                $this->fill($sheet, $range, $color);
+                $textColor = $this->resolveColor(
+                    ColorTools::pickTextColorForBackgroundColor('#' . $color, $this->textColorPreference ),
+                    '000000'
+                );
+                $this->fillWithTextColor($sheet, $range, $color, $textColor);
             }
         }
     }
@@ -643,14 +656,16 @@ class GanttXlsxBuilder
         $sheet->getStyle($range)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF' . strtoupper($rgb));
     }
 
-    /** Determines whether a background needs white text for contrast. */
-    private function useWhiteText(string $rgb): bool
+    /** Applies a solid background and contrasting text color in one style operation. */
+    private function fillWithTextColor(Worksheet $sheet, string $range, string $backgroundRgb, string $textRgb): void
     {
-        $rgb = strtoupper(ltrim($rgb, '#'));
-        if (strlen($rgb) !== 6) {
-            return false;
-        }
-        return ((hexdec(substr($rgb, 0, 2)) * 299 + hexdec(substr($rgb, 2, 2)) * 587 + hexdec(substr($rgb, 4, 2)) * 114) / 1000) < 155;
+        $sheet->getStyle($range)->applyFromArray([
+            'fill' => [
+                'fillType' => Fill::FILL_SOLID,
+                'startColor' => ['argb' => 'FF' . strtoupper($backgroundRgb)],
+            ],
+            'font' => ['color' => ['argb' => 'FF' . strtoupper($textRgb)]],
+        ]);
     }
 
     /** Applies a medium black outline to a rectangular range. */

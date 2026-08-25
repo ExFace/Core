@@ -38,6 +38,7 @@ class ExportGanttXLSX extends ExportJSON
     private array $statusInfoColumnOverrides = [];
     private array $semanticColors = [];
     private bool $mergeCells = false;
+    private float $textColorPreference = 0.5;
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -63,6 +64,8 @@ class ExportGanttXLSX extends ExportJSON
         $facade = $task->getFacade();
         if ($facade instanceof AbstractAjaxFacade) {
             $this->semanticColors = $facade->getSemanticColors();
+            $this->textColorPreference = (float) $facade->getConfig()
+                ->getOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE');
         }
 
         $dataSheet = parent::getDataSheetToRead($task);
@@ -172,7 +175,7 @@ class ExportGanttXLSX extends ExportJSON
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
         try {
-            (new GanttXlsxBuilder($this->semanticColors, $this->mergeCells))
+            (new GanttXlsxBuilder($this->semanticColors, $this->mergeCells, $this->textColorPreference))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
             throw new ActionRuntimeError($this, 'Unable to create the Gantt XLSX export.', null, $e);
