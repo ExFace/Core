@@ -6,7 +6,6 @@ use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
-use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
@@ -94,7 +93,6 @@ class DataTableConfigurator extends DataConfigurator
         }
         $dryRun = $config->getOption('WIDGETS.SETUPS.CLEANUP.DRY_RUN') !== false;
         $maxDepth = (int) $config->getOption('WIDGETS.SETUPS.CLEANUP.MAX_SEARCH_DEPTH');
-        $modifiedOn = $dryRun ? null : DateTimeDataType::now();
 
         $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.WIDGET_SETUP');
         $ds->getColumns()->addMultiple(['UID', 'NAME', 'SLUG', 'WIDGET_ID', 'OBJECT', 'ORPHANED_FLAG', 'CREATED_BY_USER', 'MODIFIED_ON']);
@@ -170,16 +168,15 @@ class DataTableConfigurator extends DataConfigurator
         $alreadyNewCnt = 0;
         $convertedUids = [];
 
-        // Setups to actually convert - only written to the data source when not a dry run.
+        // Setups to update - only written to the data source when not a dry run.
         $updateSheet = DataSheetFactory::createFromObject($ds->getMetaObject());
-        // Changes to the orphaned flag - only written to the data source when not a dry run.
-        $orphanSheet = DataSheetFactory::createFromObject($ds->getMetaObject());
 
         foreach ($ds->getRows() as $row) {
             $totalCnt++;
             $widgetId = $row['WIDGET_ID'] ?? '';
             $slug = $row['SLUG'] ?? '';
             $storedFlag = (int) ($row['ORPHANED_FLAG'] ?? 0);
+            $updatedValues = [];
 
             $isDuplicate = isset($duplicateUids[$row['UID']]);
             $isOrphan = $isDuplicate || $slug === '' || ! isset($existingScreens[$slug]);
@@ -212,12 +209,10 @@ class DataTableConfigurator extends DataConfigurator
                             $alreadyNewCnt++;
                         } else {
                             if (! $dryRun) {
-                                $updateSheet->addRow([
-                                    'UID' => $row['UID'],
+                                $updatedValues = [
                                     'SLUG' => $container->getSlug(),
-                                    'WIDGET_ID' => $widget->getIdWithinUiContainer(),
-                                    'MODIFIED_ON' => $modifiedOn
-                                ]);
+                                    'WIDGET_ID' => $widget->getIdWithinUiContainer()
+                                ];
                             }
                             $convertedUids[] = $row['UID'];
                             $convertibleCnt++;
@@ -236,20 +231,19 @@ class DataTableConfigurator extends DataConfigurator
             // Reconcile the orphaned flag in both directions (set when orphaned, clear when found).
             $newFlag = $isOrphan ? 1 : 0;
             if ($newFlag !== $storedFlag && ! $dryRun) {
-                $orphanSheet->addRow([
+                $updatedValues['ORPHANED_FLAG'] = $newFlag;
+            }
+            if (! empty($updatedValues)) {
+                $updateSheet->addRow(array_merge([
                     'UID' => $row['UID'],
-                    'ORPHANED_FLAG' => $newFlag,
-                    'MODIFIED_ON' => $modifiedOn
-                ]);
+                    'MODIFIED_ON' => $row['MODIFIED_ON']
+                ], $updatedValues));
             }
         }
 
         // if its not a dry run, save the results
         if (! $dryRun && ! $updateSheet->isEmpty()) {
             $updateSheet->dataUpdate();
-        }
-        if (! $dryRun && ! $orphanSheet->isEmpty()) {
-            $orphanSheet->dataUpdate();
         }
 
         $event->addResultMessage('Widget setup cleanup (' . ($dryRun ? 'dry run' : 'applied') . '): read ' . $totalCnt . ' setup(s) - ' . $convertibleCnt . ($dryRun ? ' can be converted to the new format' : ' converted to the new format') . ', ' . ($unresolvedCnt + $screenGoneCnt + $duplicateCnt) . ' orphaned (' . $unresolvedCnt . ' could not be resolved, ' . $screenGoneCnt . ' screen removed, ' . $duplicateCnt . ' duplicate), ' . $alreadyNewCnt . ' already in the new format.' . (empty($convertedUids) ? '' : ' Converted UIDs: ' . implode(', ', $convertedUids) . '.'));
@@ -465,6 +459,12 @@ class DataTableConfigurator extends DataConfigurator
                     'attribute_alias' => 'SLUG',
                     'comparator' => ComparatorDataType::EQUALS,
                     'value' => $screenSlug,
+                    'hidden' => true
+                ],
+                [
+                    'attribute_alias' => 'ORPHANED_FLAG',
+                    'comparator' => ComparatorDataType::EQUALS_NOT,
+                    'value' => true,
                     'hidden' => true
                 ], 
                 [
