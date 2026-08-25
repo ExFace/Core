@@ -24,15 +24,18 @@ class GanttXlsxBuilder
     ];
 
     private array $semanticColors;
+    private bool $mergeCells;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
      *
      * @param array<string, string> $semanticColors
+     * @param bool $mergeCells
      */
-    public function __construct(array $semanticColors = [])
+    public function __construct(array $semanticColors = [], bool $mergeCells = false)
     {
         $this->semanticColors = array_change_key_case($semanticColors, CASE_UPPER);
+        $this->mergeCells = $mergeCells;
     }
 
     /**
@@ -394,10 +397,12 @@ class GanttXlsxBuilder
             $endRow = $plan['endRow'];
             $this->writeValueSection($sheet, 1, $basicHeaders, $item['BasicInfo'] ?? [], $row, $endRow);
             $this->writeValueSection($sheet, $layout['statusStart'], $statusHeaders, $item['StatusInfo'] ?? [], $row, $endRow);
-            if ($endRow > $row) {
+            if ($this->mergeCells && $endRow > $row) {
                 $sheet->mergeCells($this->range($layout['verortung'], $row, $layout['verortung'], $endRow));
             }
-            $sheet->setCellValue($this->cell($layout['verortung'], $row), $item['BasicInfo']['Verortung'] ?? '');
+            foreach ($this->getValueRows($row, $endRow) as $valueRow) {
+                $sheet->setCellValue($this->cell($layout['verortung'], $valueRow), $item['BasicInfo']['Verortung'] ?? '');
+            }
             $sheet->getStyle($this->range($layout['verortung'], $row, $layout['verortung'], $endRow))->getFont()->setBold(true);
             foreach ($lanes as $laneIndex => $tasks) {
                 foreach ($tasks as $task) {
@@ -430,16 +435,29 @@ class GanttXlsxBuilder
         foreach ($headers as $index => $header) {
             $column = $startColumn + $index;
             $range = $this->range($column, $startRow, $column, $endRow);
-            if ($endRow > $startRow) {
+            if ($this->mergeCells && $endRow > $startRow) {
                 $sheet->mergeCells($range);
             }
             $value = $values[$header] ?? '';
-            $sheet->setCellValue($this->cell($column, $startRow), is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : $value);
+            $value = is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : $value;
+            foreach ($this->getValueRows($startRow, $endRow) as $valueRow) {
+                $sheet->setCellValue($this->cell($column, $valueRow), $value);
+            }
             $color = $this->resolveColor($values[$header . '_Farbe'] ?? $values[preg_replace('/\s+/', '', $header) . '_Farbe'] ?? null);
             if ($color !== null) {
                 $this->fill($sheet, $range, $color);
             }
         }
+    }
+
+    /**
+     * Returns the rows that receive location values according to the merge setting.
+     *
+     * @return iterable<int>
+     */
+    private function getValueRows(int $startRow, int $endRow): iterable
+    {
+        return $this->mergeCells ? [$startRow] : range($startRow, $endRow);
     }
 
     /**

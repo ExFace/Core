@@ -37,6 +37,7 @@ class ExportGanttXLSX extends ExportJSON
     private array $basicInfoColumnOverrides = [];
     private array $statusInfoColumnOverrides = [];
     private array $semanticColors = [];
+    private bool $mergeCells = false;
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -171,7 +172,8 @@ class ExportGanttXLSX extends ExportJSON
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
         try {
-            (new GanttXlsxBuilder($this->semanticColors))->build($mappedData, $this->getFilePathAbsolute());
+            (new GanttXlsxBuilder($this->semanticColors, $this->mergeCells))
+                ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
             throw new ActionRuntimeError($this, 'Unable to create the Gantt XLSX export.', null, $e);
         }
@@ -362,6 +364,24 @@ class ExportGanttXLSX extends ExportJSON
     public function setStatusInfoColumns(UxonObject $mapping): ExportGanttXLSX
     {
         $this->statusInfoColumnOverrides = $mapping->toArray();
+        return $this;
+    }
+
+    /**
+     * Merge location information vertically when overlapping tasks occupy multiple rows.
+     *
+     * Keep this disabled to repeat the BasicInfo and StatusInfo values in every task lane instead.
+     *
+     * @uxon-property merge_cells
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return ExportGanttXLSX
+     */
+    public function setMergeCells(bool $value): ExportGanttXLSX
+    {
+        $this->mergeCells = $value;
         return $this;
     }
 }
