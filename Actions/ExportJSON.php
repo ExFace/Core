@@ -63,6 +63,14 @@ use exface\Core\Widgets\DataMatrix;
  * - `limit_rows_per_request` - how many rows are fetched per batch (default 10000).
  * - `limit_time_per_request` - how long a single batch may take before it is aborted (default 300 seconds).
  * 
+ * On top of the per-batch time limit, there is an overall time budget for the whole export. It is
+ * not an action property, but the core config option `EXPORT.MAX_PROCESSING_TIME` (in seconds,
+ * default 300). Before reading starts, the action samples a few rows, extrapolates how long the
+ * full export would take and aborts up-front with a readable error if that estimate exceeds the
+ * budget - so users get quick feedback instead of waiting for a request to time out. Set the
+ * option to raise or lower this budget installation-wide. If you remove the option or set it to null the guard
+ *  is disabled.
+ * 
  * Whether the data can be split into batches depends on the exported object:
  * 
  * - Objects WITH a unique identifier (UID) - almost all business objects - are read batch by
