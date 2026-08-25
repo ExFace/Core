@@ -212,7 +212,7 @@ class UiPage implements UiPageInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\UiPageInterface::getWidget()
      */
-    public function getWidget($id, WidgetInterface $parent = null)
+    public function getWidget($id, WidgetInterface $parent = null, int $maxDepth = 50)
     {
         if ($this->isDirty()) {
             $this->regenerateFromContents();
@@ -261,7 +261,7 @@ class UiPage implements UiPageInterface
                 $id_original = $id;
                 $id_space = '';
             } else {
-                $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space);
+                $parent_of_id_space = $this->getWidgetFromIdSpace($id_space, '', $parent_of_id_space, true, $maxDepth);
             }
         }
         // If the id space was there, but empty remove the separator from the id and explicitly request the root
@@ -271,10 +271,10 @@ class UiPage implements UiPageInterface
         // would mean "root id space".
         if ($id_space_length === 0) {
             $id_original = mb_substr($id, 1);
-            return $this->getWidgetFromIdSpace($id_original, self::WIDGET_ID_SEPARATOR, $parent_of_id_space);
+            return $this->getWidgetFromIdSpace($id_original, self::WIDGET_ID_SEPARATOR, $parent_of_id_space, true, $maxDepth);
         }
         
-        return $this->getWidgetFromIdSpace($id_original, '', $parent_of_id_space);
+        return $this->getWidgetFromIdSpace($id_original, '', $parent_of_id_space, true, $maxDepth);
     }
 
     /**

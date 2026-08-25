@@ -63,12 +63,13 @@ interface UiPageInterface extends UiMenuItemInterface, UiScreenInterface, iCanBe
      *
      * @param string $widget_id            
      * @param WidgetInterface $parent  
+     * @param int $maxDepth
      * 
      * @throws WidgetNotFoundError if no widget with such an id was found
      *           
      * @return WidgetInterface
      */
-    public function getWidget($widget_id, WidgetInterface $parent = null);
+    public function getWidget($widget_id, WidgetInterface $parent = null, int $maxDepth = 50);
 
     /**
      * Removes the widget with the given id from this page.
