@@ -29,6 +29,9 @@
                 "attribute_alias": "SLUG"
             },
             {
+                "attribute_alias": "ORPHANED_FLAG"
+            },
+            {
                 "attribute_alias": "PRIVATE_FOR_USER"
             },
             {
@@ -36,6 +39,9 @@
             }
         ],
         "columns": [
+            {
+                "attribute_alias": "ORPHANED_FLAG"
+            },
             {
                 "attribute_alias": "NAME"
             },
