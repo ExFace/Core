@@ -518,7 +518,7 @@ class ExportJSON extends ReadData implements iExportData
         }
         
         if ($estimate !== null && $estimate > $budget) {
-            throw new ActionRuntimeError($this, 'Export aborted: estimated read time of ' . round($estimate) . ' seconds exceeds the limit of ' . $budget . ' seconds. Try narrowing down the filters.');
+            throw new ActionRuntimeError($this, 'Export aborted: estimated read time of ' . round($estimate) . ' seconds exceeds the limit of ' . $budget . ' seconds.', '87NS89T');
         }
     }
     
