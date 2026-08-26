@@ -2,12 +2,10 @@
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 use exface\Core\DataTypes\MarkdownDataType;
-use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
-use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**

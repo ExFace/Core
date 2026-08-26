@@ -84,7 +84,29 @@
           ]
         }
       }
-    ]
+    ],
+    "search_prototype_data": {
+      "object_alias": "exface.Core.ACTION",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "NAME"
+        },
+        {
+          "attribute_alias":  "PATHNAME_RELATIVE",
+          "name": "Selector"
+        }
+      ]
+    }
   },
   "page": {
     "name": "UI page",
@@ -160,6 +182,87 @@
       "columns": [
         {
           "attribute_alias":  "ALIAS"
+        }
+      ]
+    },
+    "search_prototype_data": {
+      "object_alias": "exface.Core.DATA_PROTOTYPE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "NAME"
+        },
+        {
+          "attribute_alias":  "PATHNAME_RELATIVE",
+          "name": "Selector"
+        }
+      ]
+    }
+  },
+  "behavior": {
+    "name": "Behavior",
+    "description": "Behaviors are reusable logic templates for metaobject - e.g. StateMachineBehavior, UndeletableBehavior, etc.",
+    "uxon_properties": [],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\BehaviorSelector",
+      "factory": "\\exface\\Core\\Factories\\BehaviorFactory::createFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\BehaviorMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.BEHAVIOR",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "ALIAS"
+        }
+      ]
+    },
+    "search_prototype_data": {
+      "object_alias": "exface.Core.BEHAVIOR",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "NAME"
+        },
+        {
+          "attribute_alias":  "PATHNAME_RELATIVE",
+          "name": "Selector"
         }
       ]
     }
