@@ -4,12 +4,19 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\ComponentRegistryInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
+use exface\Core\Templates\BracketHashStringTemplateRenderer;
+use exface\Core\Templates\Placeholders\ArrayPlaceholders;
+use exface\Core\Templates\Placeholders\ConfigPlaceholders;
+use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 
 class ComponentRegistry implements ComponentRegistryInterface
 {
@@ -26,11 +33,20 @@ class ComponentRegistry implements ComponentRegistryInterface
             $this->config = array_merge_recursive($this->config, $json);
         }
     }
-    
-    
-    public function getComponentKeys() : array
+
+    /**
+     * {@inheritDoc}
+     * @see ComponentRegistryInterface::getComponentKeys()
+     */
+    public function getComponentKeys(?string $havingKey = null) : array
     {
-        return array_keys($this->config);
+        $keys = array_keys($this->config);
+        if ($havingKey !== null) {
+            $keys = array_filter($keys, function($key) use ($havingKey) {
+                return array_key_exists($havingKey, $this->config[$key]);
+            });
+        }
+        return $keys;
     }
     
     protected function canInstantiate(string $component) : bool
@@ -126,5 +142,42 @@ class ComponentRegistry implements ComponentRegistryInterface
     public function getWorkbench()
     {
         return $this->workbench;
+    }
+    
+    protected function getComponentModel(string $component) : ?array
+    {
+        $component = mb_strtolower($component);
+        return $this->config[$component] ?? null;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see ComponentRegistryInterface::searchPrototypes()
+     */
+    public function searchPrototypes(string $searchTerm, string $component, ?int $limit = null, int $offset = null) : DataSheetInterface
+    {
+        $compModel = $this->getComponentModel($component);
+        if (! $compModel) {
+            throw new InvalidArgumentException('Cannot search prototypes for unknown component "' . $component . '"');
+        }
+        $dataSheetUxon = new UxonObject($compModel['search_prototype_data'] ?? []);
+        if ($dataSheetUxon->isEmpty()) {
+            throw new InvalidArgumentException('Cannot search prototypes for component "' . $component . '" - no prototype search data defined');
+        }
+        
+        // Render placeholders
+        $dataSheetJson = $dataSheetUxon->toJson();
+        $renderer = new BracketHashStringTemplateRenderer($this->getWorkbench());
+        $renderer->addPlaceholder(new ArrayPlaceholders([
+            '~query' => $searchTerm
+        ]));
+        $renderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench()));
+        $renderer->addPlaceholder(new FormulaPlaceholders($this->getWorkbench()));
+        $renderedJson = $renderer->render($dataSheetJson);
+        $dataSheetUxon = UxonObject::fromJson($renderedJson);
+        
+        $dataSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $dataSheetUxon);
+        $dataSheet->dataRead($limit, $offset);
+        return $dataSheet;
     }
 }
