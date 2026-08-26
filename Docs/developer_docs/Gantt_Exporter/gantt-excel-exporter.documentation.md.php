@@ -181,15 +181,19 @@ their configured background color. The calculation uses the active facade config
 - A separate location column followed by weekly timeline columns
 - Timeline grouping by execution year, quarter, month, and calendar week
 - Quarter-bounded date range derived from all valid nested tasks
+- ISO week 53 in years that contain it, including its days in the following calendar year
 - Overlapping measures packed into separate lanes
 - Task bars filled with their configured colors
 - Merged basic and status cells across all lanes of a location
 - A continuous medium bottom border from BasicInfo through the timeline after every location
 - Fixed row heights, column widths, borders, freeze pane, filter, and print settings
 
-Tasks without both a valid `Y-m-d` start date and end date are not drawn. If no task in the complete
-result has a valid date range, the export still contains the basic-information and status table but
-does not add weekly timeline columns.
+If a task supplies only a valid start date, its end is calculated by adding the task configuration's
+`default_duration_hours`, rounded up to full days. If it supplies only an end date, the same duration
+is subtracted to calculate its start. Every cell in such an inferred task bar has a thin diagonal
+line from bottom-left to top-right. Tasks without either date are not drawn. If no task in the
+complete result provides or yields a valid date range, the export still contains the
+basic-information and status table but does not add weekly timeline columns.
 
 ## Files changed
 

@@ -5,6 +5,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Borders;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -27,6 +28,7 @@ class GanttXlsxBuilder
     private bool $mergeCells;
     private float $textColorPreference;
     private int $freezeColumns;
+    private int $defaultTaskDurationDays;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -35,21 +37,27 @@ class GanttXlsxBuilder
      * @param bool $mergeCells
      * @param float $textColorPreference
      * @param int $freezeColumns
+     * @param int $defaultTaskDurationDays
      */
     public function __construct(
         array $semanticColors = [],
         bool $mergeCells = false,
         float $textColorPreference = 0.5,
-        int $freezeColumns = 0
+        int $freezeColumns = 0,
+        int $defaultTaskDurationDays = 2
     )
     {
         if ($freezeColumns < 0) {
             throw new \InvalidArgumentException('The number of frozen columns cannot be negative.');
         }
+        if ($defaultTaskDurationDays < 0) {
+            throw new \InvalidArgumentException('The default task duration cannot be negative.');
+        }
         $this->semanticColors = array_change_key_case($semanticColors, CASE_UPPER);
         $this->mergeCells = $mergeCells;
         $this->textColorPreference = max(0.0, min(1.0, $textColorPreference));
         $this->freezeColumns = $freezeColumns;
+        $this->defaultTaskDurationDays = $defaultTaskDurationDays;
     }
 
     /**
@@ -143,11 +151,12 @@ class GanttXlsxBuilder
         $max = null;
         foreach ($items as $item) {
             foreach ($this->extractRawTasks($item) as $task) {
-                $start = $this->parseDate($task['DurchfuehrungVon'] ?? null);
-                $end = $this->parseDate($task['DurchfuehrungBis'] ?? null);
-                if ($start === null || $end === null) {
+                $interval = $this->resolveTaskInterval($task);
+                if ($interval === null) {
                     continue;
                 }
+                $start = $interval['start'];
+                $end = $interval['end'];
                 if ($end < $start) {
                     [$start, $end] = [$end, $start];
                 }
@@ -159,17 +168,19 @@ class GanttXlsxBuilder
             return [];
         }
 
-        $startYear = (int) $min->format('Y');
-        $endYear = (int) $max->format('Y');
-        $startWeek = (($this->quarterForMonth((int) $min->format('n')) - 1) * 13) + 1;
-        $endWeek = $this->quarterForMonth((int) $max->format('n')) * 13;
+        $startQuarterMonth = (($this->quarterForMonth((int) $min->format('n')) - 1) * 3) + 1;
+        $endQuarterMonth = $this->quarterForMonth((int) $max->format('n')) * 3;
+        $timelineStart = $min->setDate((int) $min->format('Y'), $startQuarterMonth, 1);
+        $timelineEnd = $max->setDate((int) $max->format('Y'), $endQuarterMonth, 1)
+            ->modify('last day of this month');
+        $timelineStart = $timelineStart->modify('-' . ((int) $timelineStart->format('N') - 1) . ' days');
+        $timelineEnd = $timelineEnd->modify('-' . ((int) $timelineEnd->format('N') - 1) . ' days');
+
         $timeline = [];
-        for ($year = $startYear; $year <= $endYear; $year++) {
-            $first = $year === $startYear ? $startWeek : 1;
-            $last = $year === $endYear ? $endWeek : 52;
-            for ($week = $first; $week <= $last; $week++) {
-                $timeline[] = ['year' => $year, 'week' => $week, 'key' => $this->weekKey($year, $week)];
-            }
+        for ($weekStart = $timelineStart; $weekStart <= $timelineEnd; $weekStart = $weekStart->modify('+1 week')) {
+            $year = (int) $weekStart->format('o');
+            $week = (int) $weekStart->format('W');
+            $timeline[] = ['year' => $year, 'week' => $week, 'key' => $this->weekKey($year, $week)];
         }
         return $timeline;
     }
@@ -428,9 +439,19 @@ class GanttXlsxBuilder
                     $range = $this->range($start, $taskRow, $end, $taskRow);
                     $sheet->setCellValue($this->cell($start, $taskRow), $task['label']);
                     $this->fill($sheet, $range, $task['color']);
+                    $taskBorders = [
+                        'outline' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF808080']],
+                    ];
+                    if ($task['inferredInterval']) {
+                        $taskBorders['diagonal'] = [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['argb' => 'FF808080'],
+                        ];
+                        $taskBorders['diagonalDirection'] = Borders::DIAGONAL_UP;
+                    }
                     $sheet->getStyle($range)->applyFromArray([
                         'font' => ['size' => 12], 'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'wrapText' => false],
-                        'borders' => ['outline' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF808080']]],
+                        'borders' => $taskBorders,
                     ]);
                 }
             }
@@ -483,17 +504,18 @@ class GanttXlsxBuilder
     /**
      * Normalizes valid dated tasks to timeline indices.
      *
-     * @return list<array{label:string,color:string,startIndex:int,endIndex:int}>
+     * @return list<array{label:string,color:string,startIndex:int,endIndex:int,inferredInterval:bool}>
      */
     private function normalizeTasks(array $item, array $timelineIndex): array
     {
         $tasks = [];
         foreach ($this->extractRawTasks($item) as $row) {
-            $start = $this->parseDate($row['DurchfuehrungVon'] ?? null);
-            $end = $this->parseDate($row['DurchfuehrungBis'] ?? null);
-            if ($start === null || $end === null) {
+            $interval = $this->resolveTaskInterval($row);
+            if ($interval === null) {
                 continue;
             }
+            $start = $interval['start'];
+            $end = $interval['end'];
             if ($end < $start) {
                 [$start, $end] = [$end, $start];
             }
@@ -506,10 +528,37 @@ class GanttXlsxBuilder
                 'label' => (string) ($row['LABEL'] ?? ''), 'color' => $this->resolveColor($row['FarbeAnzeige'] ?? null, 'D9D9D9'),
                 'startIndex' => min($timelineIndex[$startKey], $timelineIndex[$endKey]),
                 'endIndex' => max($timelineIndex[$startKey], $timelineIndex[$endKey]),
+                'inferredInterval' => $interval['inferred'],
             ];
         }
         usort($tasks, static fn(array $a, array $b): int => [$a['startIndex'], $a['endIndex'], $a['label']] <=> [$b['startIndex'], $b['endIndex'], $b['label']]);
         return $tasks;
+    }
+
+    /**
+     * Resolves a task's interval and marks dates completed with the configured default duration.
+     *
+     * @param array<string, mixed> $task
+     * @return array{start:\DateTimeImmutable,end:\DateTimeImmutable,inferred:bool}|null
+     */
+    private function resolveTaskInterval(array $task): ?array
+    {
+        $start = $this->parseDate($task['DurchfuehrungVon'] ?? null);
+        $end = $this->parseDate($task['DurchfuehrungBis'] ?? null);
+        if ($start === null && $end === null) {
+            return null;
+        }
+
+        $inferred = false;
+        if ($start === null) {
+            $start = $end->modify('-' . $this->defaultTaskDurationDays . ' days');
+            $inferred = true;
+        } elseif ($end === null) {
+            $end = $start->modify('+' . $this->defaultTaskDurationDays . ' days');
+            $inferred = true;
+        }
+
+        return ['start' => $start, 'end' => $end, 'inferred' => $inferred];
     }
 
     /**
@@ -593,10 +642,10 @@ class GanttXlsxBuilder
         return $date instanceof \DateTimeImmutable && $date->format('Y-m-d') === trim($value) ? $date : null;
     }
 
-    /** Converts a date to the timeline's capped ISO week key. */
+    /** Converts a date to its ISO week key. */
     private function dateToWeekKey(\DateTimeImmutable $date): string
     {
-        return $this->weekKey((int) $date->format('o'), min((int) $date->format('W'), 52));
+        return $this->weekKey((int) $date->format('o'), (int) $date->format('W'));
     }
 
     /** Formats one timeline lookup key. */

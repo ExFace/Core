@@ -183,7 +183,8 @@ class ExportGanttXLSX extends ExportJSON
                 $this->semanticColors,
                 $this->getMergeCells(),
                 $this->textColorPreference,
-                $this->getFreezeColumns()
+                $this->getFreezeColumns(),
+                $this->getDefaultTaskDurationDays()
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
@@ -327,6 +328,19 @@ class ExportGanttXLSX extends ExportJSON
             $columns['color'] = $tasks->getColorColumn()->getDataColumnName();
         }
         return $columns;
+    }
+
+    /**
+     * Returns the task fallback duration in whole days using the same calculation as UI5Gantt.
+     */
+    private function getDefaultTaskDurationDays(): int
+    {
+        $inputWidget = $this->getInputGantt();
+        $defaultDurationHours = $inputWidget === null
+            ? 48
+            : $inputWidget->getTasksConfig()->getDefaultDurationHours(48);
+
+        return (int) ceil($defaultDurationHours / 24);
     }
 
     /**
