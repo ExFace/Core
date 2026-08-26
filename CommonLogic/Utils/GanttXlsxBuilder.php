@@ -26,6 +26,7 @@ class GanttXlsxBuilder
     private array $semanticColors;
     private bool $mergeCells;
     private float $textColorPreference;
+    private int $freezeColumns;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -33,16 +34,22 @@ class GanttXlsxBuilder
      * @param array<string, string> $semanticColors
      * @param bool $mergeCells
      * @param float $textColorPreference
+     * @param int $freezeColumns
      */
     public function __construct(
         array $semanticColors = [],
         bool $mergeCells = false,
-        float $textColorPreference = 0.5
+        float $textColorPreference = 0.5,
+        int $freezeColumns = 0
     )
     {
+        if ($freezeColumns < 0) {
+            throw new \InvalidArgumentException('The number of frozen columns cannot be negative.');
+        }
         $this->semanticColors = array_change_key_case($semanticColors, CASE_UPPER);
         $this->mergeCells = $mergeCells;
         $this->textColorPreference = max(0.0, min(1.0, $textColorPreference));
+        $this->freezeColumns = $freezeColumns;
     }
 
     /**
@@ -555,8 +562,9 @@ class GanttXlsxBuilder
                 $sheet->getColumnDimensionByColumn($column)->setWidth(2);
             }
         }
-        $sheet->freezePane($this->cell($layout['statusStart'], self::DATA_START_ROW));
-        $sheet->setSelectedCell($this->cell($layout['statusStart'], self::DATA_START_ROW));
+        $freezePaneColumn = min($this->freezeColumns, $end) + 1;
+        $sheet->freezePane($this->cell($freezePaneColumn, self::DATA_START_ROW));
+        $sheet->setSelectedCell($this->cell($freezePaneColumn, self::DATA_START_ROW));
         $sheet->setAutoFilter($this->range(1, 5, $end, $lastRow));
         $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE)->setPaperSize(PageSetup::PAPERSIZE_A4)
             ->setPageOrder(PageSetup::PAGEORDER_DOWN_THEN_OVER)->setScale(100)->setPrintArea($this->range(1, 1, $end, $lastRow));

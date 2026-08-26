@@ -29,7 +29,6 @@ use exface\Core\Widgets\Gantt;
  */
 class ExportGanttXLSX extends ExportJSON
 {
-    private const BASIC_INFO_COLUMN_COUNT = 6;
     private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
 
     private array $basicInfoColumns = [];
@@ -39,6 +38,8 @@ class ExportGanttXLSX extends ExportJSON
     private array $semanticColors = [];
     private bool $mergeCells = false;
     private float $textColorPreference = 0.5;
+    private int $freezeColumns = 0;
+    private int $basicInfoColumnCount = 6;
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -89,8 +90,8 @@ class ExportGanttXLSX extends ExportJSON
     /**
      * Splits requested business columns into basic and status mappings for the spreadsheet builder.
      *
-     * System columns and the nested task column are excluded before the first six columns are
-     * assigned to `BasicInfo`; all remaining columns are assigned to `StatusInfo`.
+     * System columns and the nested task column are excluded before the configured number of
+     * columns is assigned to `BasicInfo`; all remaining columns are assigned to `StatusInfo`.
      *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
@@ -99,6 +100,9 @@ class ExportGanttXLSX extends ExportJSON
     {
         $this->basicInfoColumns = [];
         $this->statusInfoColumns = [];
+        $basicInfoColumnOverrides = $this->getBasicInfoColumns();
+        $statusInfoColumnOverrides = $this->getStatusInfoColumns();
+        $basicInfoColumnCount = $this->getBasicInfoColumnCount();
         $businessColumnIndex = 0;
 
         foreach ($exportedColumns as $column) {
@@ -113,8 +117,8 @@ class ExportGanttXLSX extends ExportJSON
                 continue;
             }
 
-            $isBasicInfo = $businessColumnIndex < self::BASIC_INFO_COLUMN_COUNT;
-            $overrides = $isBasicInfo ? $this->basicInfoColumnOverrides : $this->statusInfoColumnOverrides;
+            $isBasicInfo = $businessColumnIndex < $basicInfoColumnCount;
+            $overrides = $isBasicInfo ? $basicInfoColumnOverrides : $statusInfoColumnOverrides;
             $caption = $overrides[$source] ?? $column->getCaption() ?? $source;
             if ($caption === '') {
                 $caption = $source;
@@ -175,7 +179,12 @@ class ExportGanttXLSX extends ExportJSON
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
         try {
-            (new GanttXlsxBuilder($this->semanticColors, $this->mergeCells, $this->textColorPreference))
+            (new GanttXlsxBuilder(
+                $this->semanticColors,
+                $this->getMergeCells(),
+                $this->textColorPreference,
+                $this->getFreezeColumns()
+            ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
             throw new ActionRuntimeError($this, 'Unable to create the Gantt XLSX export.', null, $e);
@@ -338,7 +347,7 @@ class ExportGanttXLSX extends ExportJSON
     /**
      * Map Gantt columns to the basic-information captions in the workbook.
      * Use requested Gantt data column names as keys and the desired workbook captions as values.
-     * Supplied entries override the captions resolved from the first six business columns.
+     * Supplied entries override captions in the configured number of BasicInfo columns.
      *
      * @uxon-property basic_info_columns
      * @uxon-type {string => string}
@@ -353,10 +362,21 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
+     * Returns the configured caption overrides for BasicInfo columns.
+     *
+     * @return array<string, string>
+     */
+    public function getBasicInfoColumns(): array
+    {
+        return $this->basicInfoColumnOverrides;
+    }
+
+    /**
      * Map Gantt columns to the status captions in the workbook.
      * Use requested Gantt data column names as keys and the desired workbook captions as values.
-     * Supplied entries override captions after the first six business columns. A companion color
-     * column named `_<data column name>Farbe` is applied automatically when available.
+     * Supplied entries override captions after the configured number of BasicInfo columns. A
+     * companion color column named `_<data column name>Farbe` is applied automatically when
+     * available.
      *
      * @uxon-property status_info_columns
      * @uxon-type {string => string}
@@ -368,6 +388,45 @@ class ExportGanttXLSX extends ExportJSON
     {
         $this->statusInfoColumnOverrides = $mapping->toArray();
         return $this;
+    }
+
+    /**
+     * Returns the configured caption overrides for StatusInfo columns.
+     *
+     * @return array<string, string>
+     */
+    public function getStatusInfoColumns(): array
+    {
+        return $this->statusInfoColumnOverrides;
+    }
+
+    /**
+     * Define how many requested business columns form the BasicInfo section.
+     *
+     * All subsequent business columns form the StatusInfo section.
+     *
+     * @uxon-property basic_info_column_count
+     * @uxon-type integer
+     * @uxon-default 6
+     *
+     * @param int $value
+     * @return ExportGanttXLSX
+     */
+    public function setBasicInfoColumnCount(int $value): ExportGanttXLSX
+    {
+        if ($value < 0) {
+            throw new ActionConfigurationError($this, '`basic_info_column_count` cannot be negative.');
+        }
+        $this->basicInfoColumnCount = $value;
+        return $this;
+    }
+
+    /**
+     * Returns the number of requested business columns assigned to BasicInfo.
+     */
+    public function getBasicInfoColumnCount(): int
+    {
+        return $this->basicInfoColumnCount;
     }
 
     /**
@@ -386,5 +445,42 @@ class ExportGanttXLSX extends ExportJSON
     {
         $this->mergeCells = $value;
         return $this;
+    }
+
+    /**
+     * Returns whether location information is merged across overlapping task lanes.
+     */
+    public function getMergeCells(): bool
+    {
+        return $this->mergeCells;
+    }
+
+    /**
+     * Define how many columns from the left remain visible while scrolling through the workbook.
+     *
+     * Set this to `0` to freeze only the five header rows.
+     *
+     * @uxon-property freeze_columns
+     * @uxon-type integer
+     * @uxon-default 0
+     *
+     * @param int $value
+     * @return ExportGanttXLSX
+     */
+    public function setFreezeColumns(int $value): ExportGanttXLSX
+    {
+        if ($value < 0) {
+            throw new ActionConfigurationError($this, '`freeze_columns` cannot be negative.');
+        }
+        $this->freezeColumns = $value;
+        return $this;
+    }
+
+    /**
+     * Returns the number of columns frozen from the left.
+     */
+    public function getFreezeColumns(): int
+    {
+        return $this->freezeColumns;
     }
 }
