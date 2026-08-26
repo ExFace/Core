@@ -427,7 +427,7 @@ class GanttXlsxBuilder
                     ]);
                 }
             }
-            $sheet->getStyle($this->range($layout['ganttLabel'], $endRow, $timelineEnd, $endRow))
+            $sheet->getStyle($this->range($layout['basicStart'], $endRow, $timelineEnd, $endRow))
                 ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
         }
     }
@@ -542,10 +542,10 @@ class GanttXlsxBuilder
             $sheet->getRowDimension($row)->setRowHeight($height);
         }
         foreach (range(1, $layout['basicEnd']) as $offset => $column) {
-            $sheet->getColumnDimensionByColumn($column)->setWidth([13.13, 9.13, 12.6, 14.46, 14.13, 14.13][$offset] ?? 13);
+            $sheet->getColumnDimensionByColumn($column)->setWidth([13.15, 13.0, 12.6, 14.45, 12, 15.15][$offset] ?? 13);
         }
         foreach (range($layout['statusStart'], $layout['statusEnd']) as $column) {
-            $sheet->getColumnDimensionByColumn($column)->setWidth(7.66);
+            $sheet->getColumnDimensionByColumn($column)->setWidth(5.5);
         }
         $sheet->getColumnDimensionByColumn($layout['spacer'])->setWidth(6.13);
         $sheet->getColumnDimensionByColumn($layout['verortung'])->setWidth(16.2);
