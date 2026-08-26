@@ -3165,6 +3165,21 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "87NS89T Exported data-set is too large.",
+            "CREATED_ON": "2026-08-26 14:39:24",
+            "MODIFIED_ON": "2026-08-26 14:39:24",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f1a1c12b84999aa1c1db77c5447ffb",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "87NS89T",
+            "TITLE": "Exported data-set is too large.",
+            "DESCRIPTION": "This error occurs, when you are trying to export too many rows at once. Reduce the number of rows by by filtering out rows that you don't need or split the export into separate chunks, for example by filtering for different dates.  ",
+            "HINT": "The data-set you want to export is too large. Narrow it down, by applying stricter filters.",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
