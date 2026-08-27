@@ -227,6 +227,11 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         // Disable widget setups to prevent recursion due to tables inside the setups table buttons
         $table->setConfiguratorSetupsEnabled(false);
         $table->getPaginator()->setCountAllRows(false);
+        // The autosuggest columns are defined explicitly below (and in addComboColumns()). Disable the
+        // implicit auto-adding of default-display columns, otherwise a premature getColumns() call (e.g.
+        // triggered by a behavior when importing the table UXON initializes the configurator) would add
+        // them on the still-empty table and initTable() would then add them again - resulting in duplicates.
+        $table->setColumnsAutoAddDefaultDisplayAttributes(false);
         
         // Now see if the user had already defined a table in UXON
         /* @var $table_uxon \exface\Core\CommonLogic\UxonObject */
