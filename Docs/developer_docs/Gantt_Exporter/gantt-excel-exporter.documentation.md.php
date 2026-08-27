@@ -84,6 +84,11 @@ location values are repeated in every occupied task lane without merging cells.
 Set `freeze_columns` to the number of columns that should remain visible on the left while
 scrolling. It defaults to `0`, which freezes only the five workbook header rows.
 
+Configure printing with `orientation`, `paper_size`, `page_order`, `scale`, and `page_margins`.
+Paper sizes use PhpSpreadsheet's numeric `PageSetup::PAPERSIZE_*` codes, for example `9` for A4
+and `64` for A2. Page margins are specified in inches and support `left`, `right`, `top`, `bottom`,
+`header`, and `footer`.
+
 ## Normalized data contract
 
 Before workbook generation, every main Gantt row is converted into this structure:

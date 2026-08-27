@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Actions\Traits\iHaveXLSXPrintSettings;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Utils\GanttXlsxBuilder;
@@ -29,6 +30,8 @@ use exface\Core\Widgets\Gantt;
  */
 class ExportGanttXLSX extends ExportJSON
 {
+    use iHaveXLSXPrintSettings;
+
     private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
 
     private array $basicInfoColumns = [];
@@ -184,7 +187,8 @@ class ExportGanttXLSX extends ExportJSON
                 $this->getMergeCells(),
                 $this->textColorPreference,
                 $this->getFreezeColumns(),
-                $this->getDefaultTaskDurationDays()
+                $this->getDefaultTaskDurationDays(),
+                $this->getXLSXPrintSettings()
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {

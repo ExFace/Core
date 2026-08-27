@@ -29,6 +29,7 @@ class GanttXlsxBuilder
     private float $textColorPreference;
     private int $freezeColumns;
     private int $defaultTaskDurationDays;
+    private array $printSettings;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -38,13 +39,15 @@ class GanttXlsxBuilder
      * @param float $textColorPreference
      * @param int $freezeColumns
      * @param int $defaultTaskDurationDays
+     * @param array<string, mixed> $printSettings
      */
     public function __construct(
         array $semanticColors = [],
         bool $mergeCells = false,
         float $textColorPreference = 0.5,
         int $freezeColumns = 0,
-        int $defaultTaskDurationDays = 2
+        int $defaultTaskDurationDays = 2,
+        array $printSettings = []
     )
     {
         if ($freezeColumns < 0) {
@@ -58,6 +61,21 @@ class GanttXlsxBuilder
         $this->textColorPreference = max(0.0, min(1.0, $textColorPreference));
         $this->freezeColumns = $freezeColumns;
         $this->defaultTaskDurationDays = $defaultTaskDurationDays;
+        $this->printSettings = $printSettings + [
+            'orientation' => PageSetup::ORIENTATION_LANDSCAPE,
+            'paper_size' => PageSetup::PAPERSIZE_A4,
+            'page_order' => PageSetup::PAGEORDER_DOWN_THEN_OVER,
+            'scale' => 100,
+            'page_margins' => [],
+        ];
+        $this->printSettings['page_margins'] += [
+            'left' => 0.25,
+            'right' => 0.25,
+            'top' => 0.75,
+            'bottom' => 0.75,
+            'header' => 0.3,
+            'footer' => 0.3,
+        ];
     }
 
     /**
@@ -615,9 +633,20 @@ class GanttXlsxBuilder
         $sheet->freezePane($this->cell($freezePaneColumn, self::DATA_START_ROW));
         $sheet->setSelectedCell($this->cell($freezePaneColumn, self::DATA_START_ROW));
         $sheet->setAutoFilter($this->range(1, 5, $end, $lastRow));
-        $sheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE)->setPaperSize(PageSetup::PAPERSIZE_A4)
-            ->setPageOrder(PageSetup::PAGEORDER_DOWN_THEN_OVER)->setScale(100)->setPrintArea($this->range(1, 1, $end, $lastRow));
-        $sheet->getPageMargins()->setLeft(0.25)->setTop(0.75)->setHeader(0.3)->setRight(0.25)->setFooter(0.3)->setBottom(0.75);
+        $sheet->getPageSetup()
+            ->setOrientation($this->printSettings['orientation'])
+            ->setPaperSize($this->printSettings['paper_size'])
+            ->setPageOrder($this->printSettings['page_order'])
+            ->setScale($this->printSettings['scale'])
+            ->setPrintArea($this->range(1, 1, $end, $lastRow));
+        $margins = $this->printSettings['page_margins'];
+        $sheet->getPageMargins()
+            ->setLeft($margins['left'])
+            ->setRight($margins['right'])
+            ->setTop($margins['top'])
+            ->setBottom($margins['bottom'])
+            ->setHeader($margins['header'])
+            ->setFooter($margins['footer']);
     }
 
     /**
