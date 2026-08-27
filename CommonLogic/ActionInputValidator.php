@@ -6,10 +6,9 @@ use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
-use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
+use exface\Core\Interfaces\Widgets\iInjectInputColumns;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
@@ -125,25 +124,31 @@ class ActionInputValidator
             }
         }
 
-        // Widgets based on a related object (e.g. InputTags for 3-table tagging) send their input
-        // as a nested subsheet in a single column named after the relation from the parent object.
-        // TODO Future improvement: validate the subsheet contents recursively by building the
-        // expected columns against the child widget's own object and checking the nested rows the
-        // same way as the top level (also handling arbitrary nesting depth).
-        if($inputWidget instanceof iContainOtherWidgets) {
-            $inputObject = $inputWidget->getMetaObject();
-            foreach ($inputWidget->getInputWidgets() as $child) {
-                if(($child instanceof iTakeInputAsDataSubsheet)
-                    && $child->isSubsheetForObject($inputObject)
-                    && null !== $relPath = $child->getObjectRelationPathFromParent()
-                ) {
-                    $name = $relPath->toString();
-                    $expectedColumns[$name] = $name;
-                }
-            }
-        }
+        $this->addColumnsInjectedAtRuntime($expectedColumns);
         
         return $expectedColumns;
+    }
+
+    /**
+     * Adds columns that the triggering widget declares to be injected into the input data at runtime.
+     * 
+     * Some actions add columns to their input data on the client side (e.g. the `dump_setup()` function
+     * of a `DataTable` or a map drop-zone). The triggering button opts out of the forgery false positive
+     * by listing these columns via `input_columns_injected` - a server-side declaration that cannot be
+     * forged from the client.
+     * 
+     * @param array $target
+     * @return void
+     */
+    protected function addColumnsInjectedAtRuntime(array &$target) : void
+    {
+        $trigger = $this->getTriggerWidget();
+        if(! $trigger instanceof iInjectInputColumns) {
+            return;
+        }
+        foreach ($trigger->getInputColumnsInjected() as $name) {
+            $target[$name] = $name;
+        }
     }
 
     /**
@@ -153,14 +158,8 @@ class ActionInputValidator
      */
     protected function getInputWidget() : WidgetInterface|null
     {
-        $task = $this->getTask();
-        $action = $this->getAction();
-        
-        if($task->isTriggeredByWidget()) {
-            $widget = $task->getWidgetTriggeredBy();
-        } elseif ($action->isDefinedInWidget()) {
-            $widget = $action->getWidgetDefinedIn();
-        } else {
+        $widget = $this->getTriggerWidget();
+        if($widget === null) {
             return null;
         }
 
@@ -169,6 +168,25 @@ class ActionInputValidator
         }
 
         return $widget;
+    }
+
+    /**
+     * Returns the widget that triggered the action (e.g. the button), before resolving its input widget.
+     * 
+     * @return WidgetInterface|null
+     */
+    protected function getTriggerWidget() : ?WidgetInterface
+    {
+        $task = $this->getTask();
+        $action = $this->getAction();
+
+        if($task->isTriggeredByWidget()) {
+            return $task->getWidgetTriggeredBy();
+        }
+        if($action->isDefinedInWidget()) {
+            return $action->getWidgetDefinedIn();
+        }
+        return null;
     }
 
     /**
@@ -214,6 +232,12 @@ class ActionInputValidator
 
         $action = $this->getAction();
         $task = $this->getTask();
+
+        // Input synthesized server-side by a preceding action (e.g. within an action chain) cannot be
+        // forged by the client, so it is exempt from the column forgery check.
+        if($task->isInputDataTrusted()) {
+            return;
+        }
         
         // See if the task has input data.
         if(!$task->hasInputData()) {
@@ -238,11 +262,18 @@ class ActionInputValidator
         }
 
         if(!empty($unexpectedColumns)) {
+            $message = 'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
+                '": ' . implode(', ', $unexpectedColumns) . '!';
+            // Only expose the remediation hint in developer mode - it could reveal an attack vector to end users.
+            if ($action->getWorkbench()->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS') === true) {
+                $message .= ' If these columns are added to the input data at runtime (e.g. injected client-side by a ' .
+                    'widget or a drop target), declare them on the triggering button via its ' .
+                    '"input_columns_injected" property so they are recognized as legitimate.';
+            }
             $error = new ActionTaskInvalidException(
                 $action,
                 $task,
-                'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
-                '": ' . implode(', ', $unexpectedColumns) . '!'
+                $message
             );
             
             $error->setUseExceptionMessageAsTitle(true);

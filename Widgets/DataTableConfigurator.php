@@ -605,6 +605,8 @@ class DataTableConfigurator extends DataConfigurator
             'caption' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE'),
             'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT'),
             'icon' => 'refresh',
+            // dump_setup() fills these columns into the input data on the client side
+            'input_columns_injected' => ["SETUP_UXON", "SLUG", "WIDGET_ID", "PROTOTYPE_FILE", "OBJECT", "PRIVATE_FOR_USER"],
             'action' => $this->buildUxonForActionUpdateSetup(),
             "disabled_if" => [
                 "operator" => EXF_LOGICAL_OR,
@@ -756,6 +758,8 @@ class DataTableConfigurator extends DataConfigurator
                         "visibility" => "promoted",
                         "align" => "opposite",
                         'icon' => 'bookmark-o',
+                        // dump_setup() fills these columns into the input data on the client side
+                        "input_columns_injected" => ["SETUP_UXON", "SLUG", "WIDGET_ID", "PROTOTYPE_FILE", "OBJECT", "PRIVATE_FOR_USER"],
                         "action" => [
                             "alias" => "exface.Core.ActionChain",
                             "offline_strategy" => OfflineStrategyDataType::IGNORE,

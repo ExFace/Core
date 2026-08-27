@@ -19,6 +19,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iDefineAction;
+use exface\Core\Interfaces\Widgets\iInjectInputColumns;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
@@ -52,7 +53,7 @@ use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
  * @author Andrej Kabachnik
  *
  */
-class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled
+class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled, iInjectInputColumns
 {
     use iCanBeAlignedTrait;
 
@@ -117,7 +118,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $appearance = self::APPEARANCE_DEFAULT;
 
     private $inputDataUxon = null;
-
     private $hiddenIfInputInvalid = false;
 
     private $disabledIfInputInvalid = true;
@@ -125,6 +125,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $showIcon = null;
 
     private $addedWidgets = [];
+
+    /**
+     * @var string[]
+     */
+    private $injectedInputColumns = [];
 
     /**
      *
@@ -141,6 +146,33 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         parent::init();
         $this->setHiddenIfAccessDenied($this->getWorkbench()->getConfig()->getOption('WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED'));
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iInjectInputColumns::getInputColumnsInjected()
+     */
+    public function getInputColumnsInjected() : array
+    {
+        return $this->injectedInputColumns;
+    }
+
+    /**
+     * Column names that this button's action adds to its input data at runtime (e.g. via a widget
+     * function or a map drop), so the action input validation does not flag them as unexpected.
+     * 
+     * @uxon-property input_columns_injected
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $columnNames
+     * @return Button
+     */
+    public function setInputColumnsInjected($columnNames) : Button
+    {
+        $this->injectedInputColumns = $columnNames instanceof UxonObject ? $columnNames->toArray() : $columnNames;
+        return $this;
     }
 
     public function getAction()
