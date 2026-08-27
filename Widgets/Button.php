@@ -159,8 +159,9 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     }
 
     /**
-     * Column names that this button's action adds to its input data at runtime (e.g. via a widget
-     * function or a map drop), declared as trusted so the action input validation does not flag them.
+     * Declare column names that this button's action adds to its input data as trusted 
+     * so they are not flagged as forgeries. You don't have to declare columns that are naturally part of the 
+     * input data (like input widgets, table columns, and so on).
      * 
      * For example, a button whose `custom_request_data_script` injects two columns client-side:
      * 
@@ -177,8 +178,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
      * }
      * ```
      * 
-     * Only the listed columns are accepted - any other undeclared column is still flagged, so the
-     * forgery check stays meaningful.
+     * Only the listed columns are accepted - any other undeclared column would be flagged as a forgery.
      * 
      * @uxon-property input_columns_trusted
      * @uxon-type array
