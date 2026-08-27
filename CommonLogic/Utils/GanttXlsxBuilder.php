@@ -12,7 +12,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
- * Builds the fixed Terminübersicht workbook from normalized Gantt export data.
+ * Builds a formatted timeline workbook from normalized Gantt export data.
  */
 class GanttXlsxBuilder
 {
@@ -30,6 +30,7 @@ class GanttXlsxBuilder
     private int $freezeColumns;
     private int $defaultTaskDurationDays;
     private array $printSettings;
+    private array $translations;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -40,6 +41,7 @@ class GanttXlsxBuilder
      * @param int $freezeColumns
      * @param int $defaultTaskDurationDays
      * @param array<string, mixed> $printSettings
+     * @param array<string, string> $translations
      */
     public function __construct(
         array $semanticColors = [],
@@ -47,7 +49,8 @@ class GanttXlsxBuilder
         float $textColorPreference = 0.5,
         int $freezeColumns = 0,
         int $defaultTaskDurationDays = 2,
-        array $printSettings = []
+        array $printSettings = [],
+        array $translations = []
     )
     {
         if ($freezeColumns < 0) {
@@ -76,6 +79,37 @@ class GanttXlsxBuilder
             'header' => 0.3,
             'footer' => 0.3,
         ];
+        $requiredTranslations = [
+            'SHEET_TITLE',
+            'BASIC_INFO',
+            'STATUS_INFO',
+            'LOCATION',
+            'GANTT',
+            'YEAR',
+            'QUARTER',
+            'MONTH',
+            'CALENDAR_WEEK',
+            'EXECUTION_YEAR',
+            'MONTH_01',
+            'MONTH_02',
+            'MONTH_03',
+            'MONTH_04',
+            'MONTH_05',
+            'MONTH_06',
+            'MONTH_07',
+            'MONTH_08',
+            'MONTH_09',
+            'MONTH_10',
+            'MONTH_11',
+            'MONTH_12',
+        ];
+        $missingTranslations = array_diff($requiredTranslations, array_keys($translations));
+        if ($missingTranslations !== []) {
+            throw new \InvalidArgumentException(
+                'Missing Gantt workbook translations: ' . implode(', ', $missingTranslations)
+            );
+        }
+        $this->translations = $translations;
     }
 
     /**
@@ -95,7 +129,7 @@ class GanttXlsxBuilder
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Terminübersicht');
+        $sheet->setTitle($this->translations['SHEET_TITLE']);
         $spreadsheet->getDefaultStyle()->getFont()->setName('AvenirNext LT Com Regular')->setSize(12);
         $this->writeHeaders($sheet, $layout, $basicHeaders, $statusHeaders, $timeline);
         $this->writeDataRows($sheet, $layout, $basicHeaders, $statusHeaders, $timeline, $items);
@@ -244,14 +278,19 @@ class GanttXlsxBuilder
     {
         $end = $this->getTimelineEndColumn($layout, count($timeline));
         $sheet->mergeCells($this->range($layout['basicStart'], 1, $layout['basicEnd'], 1));
-        $sheet->setCellValue($this->cell($layout['basicStart'], 1), 'Mast-Basis-Informationen');
+        $sheet->setCellValue($this->cell($layout['basicStart'], 1), $this->translations['BASIC_INFO']);
         $sheet->mergeCells($this->range($layout['statusStart'], 1, $layout['statusEnd'], 1));
-        $sheet->setCellValue($this->cell($layout['statusStart'], 1), 'Relevanz + Status');
+        $sheet->setCellValue($this->cell($layout['statusStart'], 1), $this->translations['STATUS_INFO']);
         $sheet->mergeCells($this->range($layout['verortung'], 1, $layout['verortung'], 5));
-        $sheet->setCellValue($this->cell($layout['verortung'], 1), 'Verortung');
+        $sheet->setCellValue($this->cell($layout['verortung'], 1), $this->translations['LOCATION']);
         $sheet->mergeCells($this->range($layout['ganttLabel'], 1, $end, 1));
-        $sheet->setCellValue($this->cell($layout['ganttLabel'], 1), 'Ablauf-Gantt');
-        foreach (['Jahr 20..', 'Quartal', 'Monat', 'KW'] as $index => $label) {
+        $sheet->setCellValue($this->cell($layout['ganttLabel'], 1), $this->translations['GANTT']);
+        foreach ([
+            $this->translations['YEAR'],
+            $this->translations['QUARTER'],
+            $this->translations['MONTH'],
+            $this->translations['CALENDAR_WEEK'],
+        ] as $index => $label) {
             $sheet->setCellValue($this->cell($layout['ganttLabel'], $index + 2), $label);
         }
         foreach ($basicHeaders as $index => $header) {
@@ -278,8 +317,8 @@ class GanttXlsxBuilder
         foreach ($timeline as $index => $week) {
             $column = $layout['timelineStart'] + $index;
             $sheet->setCellValue($this->cell($column, 5), $week['week']);
-            $groups['year'][] = ['column' => $column, 'label' => 'Ausführungsjahr: ' . $week['year']];
-            $groups['quarter'][] = ['column' => $column, 'label' => 'Quartal ' . $this->quarterForWeek($week['week'])];
+            $groups['year'][] = ['column' => $column, 'label' => $this->translations['EXECUTION_YEAR'] . ' ' . $week['year']];
+            $groups['quarter'][] = ['column' => $column, 'label' => $this->translations['QUARTER'] . ' ' . $this->quarterForWeek($week['week'])];
             $groups['month'][] = ['column' => $column, 'label' => $this->monthLabelForWeek($week['year'], $week['week'])];
         }
         $this->mergeGroups($sheet, $groups['year'], 2);
@@ -695,10 +734,15 @@ class GanttXlsxBuilder
         return (int) ceil($month / 3);
     }
 
-    /** Formats the German month label associated with an ISO week. */
+    /** Formats the translated month label associated with an ISO week. */
     private function monthLabelForWeek(int $year, int $week): string
     {
-        $names = [1 => 'Jan', 'Feb', 'Mrz', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+        $names = [];
+        for ($monthNumber = 1; $monthNumber <= 12; $monthNumber++) {
+            $names[$monthNumber] = $this->translations[
+                'MONTH_' . str_pad((string) $monthNumber, 2, '0', STR_PAD_LEFT)
+            ];
+        }
         $date = (new \DateTimeImmutable())->setISODate($year, $week, 4);
         $month = (int) $date->format('n');
         $quarter = $this->quarterForWeek($week);

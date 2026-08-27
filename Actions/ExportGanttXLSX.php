@@ -188,7 +188,8 @@ class ExportGanttXLSX extends ExportJSON
                 $this->textColorPreference,
                 $this->getFreezeColumns(),
                 $this->getDefaultTaskDurationDays(),
-                $this->getXLSXPrintSettings()
+                $this->getXLSXPrintSettings(),
+                $this->getWorkbookTranslations()
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
@@ -345,6 +346,37 @@ class ExportGanttXLSX extends ExportJSON
             : $inputWidget->getTasksConfig()->getDefaultDurationHours(48);
 
         return (int) ceil($defaultDurationHours / 24);
+    }
+
+    /**
+     * Translates every user-visible workbook label with the active Core locale.
+     *
+     * @return array<string, string>
+     */
+    private function getWorkbookTranslations(): array
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $prefix = 'WIDGET.GANTT_CHARD.EXCEL.';
+        $translations = [];
+        foreach ([
+            'SHEET_TITLE',
+            'BASIC_INFO',
+            'STATUS_INFO',
+            'LOCATION',
+            'GANTT',
+            'YEAR',
+            'QUARTER',
+            'MONTH',
+            'CALENDAR_WEEK',
+            'EXECUTION_YEAR',
+        ] as $key) {
+            $translations[$key] = $translator->translate($prefix . $key);
+        }
+        for ($month = 1; $month <= 12; $month++) {
+            $key = 'MONTH_' . str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+            $translations[$key] = $translator->translate($prefix . $key);
+        }
+        return $translations;
     }
 
     /**
