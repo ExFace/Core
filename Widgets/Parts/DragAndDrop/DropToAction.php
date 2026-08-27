@@ -158,7 +158,7 @@ class DropToAction implements WidgetPartInterface
                     $injectedColumns[] = $mapping->getToExpression()->__toString();
                 }
                 if (! empty($injectedColumns)) {
-                    $this->triggerWidget->setInputColumnsInjected($injectedColumns);
+                    $this->triggerWidget->setInputColumnsTrusted($injectedColumns);
                 }
             }
         }

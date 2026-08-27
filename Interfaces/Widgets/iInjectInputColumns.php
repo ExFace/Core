@@ -11,18 +11,18 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
  * `include_target_columns` to the dropped data. Since no widget declares these columns, the server-side
  * action input validation (see `ActionInputValidator`) would flag them as a possible request forgery.
  * 
- * To opt out of that false positive, list the injected columns on the triggering button via the UXON
- * property `input_columns_injected`. The declaration lives on the server-side widget model, so it cannot
- * be forged from the client.
+ * To opt out of that false positive, declare the injected columns as trusted on the triggering button
+ * via the UXON property `input_columns_trusted`. The declaration lives on the server-side widget model,
+ * so it cannot be forged from the client.
  * 
  * @author Andrej Kabachnik
  */
 interface iInjectInputColumns extends iTriggerAction
 {
     /**
-     * Returns the names of the input-data columns that this trigger adds to the input data at runtime.
+     * Returns the names of the input-data columns that this trigger declares as trusted (added at runtime).
      * 
      * @return string[]
      */
-    public function getInputColumnsInjected() : array;
+    public function getInputColumnsTrusted() : array;
 }

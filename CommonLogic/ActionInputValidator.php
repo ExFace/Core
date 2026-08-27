@@ -130,11 +130,11 @@ class ActionInputValidator
     }
 
     /**
-     * Adds columns that the triggering widget declares to be injected into the input data at runtime.
+     * Adds columns that the triggering widget declares as trusted (injected into the input at runtime).
      * 
      * Some actions add columns to their input data on the client side (e.g. the `dump_setup()` function
      * of a `DataTable` or a map drop-zone). The triggering button opts out of the forgery false positive
-     * by listing these columns via `input_columns_injected` - a server-side declaration that cannot be
+     * by listing these columns via `input_columns_trusted` - a server-side declaration that cannot be
      * forged from the client.
      * 
      * @param array $target
@@ -146,7 +146,7 @@ class ActionInputValidator
         if(! $trigger instanceof iInjectInputColumns) {
             return;
         }
-        foreach ($trigger->getInputColumnsInjected() as $name) {
+        foreach ($trigger->getInputColumnsTrusted() as $name) {
             $target[$name] = $name;
         }
     }
@@ -268,7 +268,7 @@ class ActionInputValidator
             if ($action->getWorkbench()->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS') === true) {
                 $message .= ' If these columns are added to the input data at runtime (e.g. injected client-side by a ' .
                     'widget or a drop target), declare them on the triggering button via its ' .
-                    '"input_columns_injected" property so they are recognized as legitimate.';
+                    '"input_columns_trusted" property so they are recognized as legitimate.';
             }
             $error = new ActionTaskInvalidException(
                 $action,

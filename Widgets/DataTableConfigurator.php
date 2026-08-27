@@ -45,7 +45,7 @@ class DataTableConfigurator extends DataConfigurator
 
     /**
      * Columns that dump_setup() injects into the input data client-side - declared here so the
-     * input-forgery validation recognizes them as legitimate (see `input_columns_injected`).
+     * input-forgery validation recognizes them as legitimate (see `input_columns_trusted`).
      */
     private const SETUP_INPUT_COLUMNS = ['SETUP_UXON', 'SLUG', 'WIDGET_ID', 'PROTOTYPE_FILE', 'OBJECT', 'PRIVATE_FOR_USER'];
 
@@ -612,7 +612,7 @@ class DataTableConfigurator extends DataConfigurator
             'hint' => $this->translate('WIDGET.DATACONFIGURATOR.SETUPS_TAB_UPDATE_HINT'),
             'icon' => 'refresh',
             // dump_setup() fills these columns into the input data on the client side
-            'input_columns_injected' => self::SETUP_INPUT_COLUMNS,
+            'input_columns_trusted' => self::SETUP_INPUT_COLUMNS,
             'action' => $this->buildUxonForActionUpdateSetup(),
             "disabled_if" => [
                 "operator" => EXF_LOGICAL_OR,
@@ -765,7 +765,7 @@ class DataTableConfigurator extends DataConfigurator
                         "align" => "opposite",
                         'icon' => 'bookmark-o',
                         // dump_setup() fills these columns into the input data on the client side
-                        "input_columns_injected" => self::SETUP_INPUT_COLUMNS,
+                        "input_columns_trusted" => self::SETUP_INPUT_COLUMNS,
                         "action" => [
                             "alias" => "exface.Core.ActionChain",
                             "offline_strategy" => OfflineStrategyDataType::IGNORE,

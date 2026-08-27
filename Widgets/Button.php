@@ -129,7 +129,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     /**
      * @var string[]
      */
-    private $injectedInputColumns = [];
+    private $trustedInputColumns = [];
 
     /**
      *
@@ -151,27 +151,49 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     /**
      * {@inheritDoc}
      * 
-     * @see \exface\Core\Interfaces\Widgets\iInjectInputColumns::getInputColumnsInjected()
+     * @see \exface\Core\Interfaces\Widgets\iInjectInputColumns::getInputColumnsTrusted()
      */
-    public function getInputColumnsInjected() : array
+    public function getInputColumnsTrusted() : array
     {
-        return $this->injectedInputColumns;
+        return $this->trustedInputColumns;
     }
 
     /**
      * Column names that this button's action adds to its input data at runtime (e.g. via a widget
-     * function or a map drop), so the action input validation does not flag them as unexpected.
+     * function or a map drop), declared as trusted so the action input validation does not flag them.
      * 
-     * @uxon-property input_columns_injected
+     * For example, a button whose `custom_request_data_script` injects two columns client-side:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Button",
+     *  "input_columns_trusted": ["SCANNED_AT", "DEVICE_ID"],
+     *  "facade_options": {
+     *      "exface.UI5Facade.UI5Facade": {
+     *          "custom_request_data_script": "var oRow = requestData.rows[0]; oRow['SCANNED_AT'] = Date.now(); oRow['DEVICE_ID'] = getDeviceId(); return true;"
+     *      }
+     *  },
+     *  "action": {"alias": "my.App.SaveScan"}
+     * }
+     * ```
+     * 
+     * Only the listed columns are accepted - any other undeclared column is still flagged, so the
+     * forgery check stays meaningful.
+     * 
+     * @uxon-property input_columns_trusted
      * @uxon-type array
      * @uxon-template [""]
      * 
      * @param UxonObject|string[] $columnNames
      * @return Button
      */
-    public function setInputColumnsInjected($columnNames) : Button
+    public function setInputColumnsTrusted($columnNames) : Button
     {
-        $this->injectedInputColumns = $columnNames instanceof UxonObject ? $columnNames->toArray() : $columnNames;
+        // TODO If a real use case ever needs to inject a *dynamic* set of columns (e.g. a Shape-B
+        // custom_request_data_script whose column names are not fixed), add a coarser opt-out here that
+        // trusts the whole client payload for this button. Deliberately omitted for now: no such surface
+        // exists yet and the lever would invite bypassing the forgery check where an allow-list suffices.
+        $this->trustedInputColumns = $columnNames instanceof UxonObject ? $columnNames->toArray() : $columnNames;
         return $this;
     }
 
