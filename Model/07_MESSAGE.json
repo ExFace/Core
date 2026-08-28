@@ -3180,6 +3180,21 @@
             "HINT": "The data-set you want to export is too large. Narrow it down, by applying stricter filters.",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "87OS4GW Unexpected task input columns detected!",
+            "CREATED_ON": "2026-08-28 12:57:57",
+            "MODIFIED_ON": "2026-08-28 12:57:57",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f19d5053b386bc9d50c940a654427b",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "87OS4GW",
+            "TITLE": "Unexpected task input columns detected!",
+            "DESCRIPTION": "This error is triggered by our request forgery protection to prevent injection of unauthorized data into user requests. If these columns were injected by a trusted source (such as a backend-script) make sure to mark them as trusted by using the `input_columns_trusted` property on the corresponding action so they are recognized as legitimate.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],
