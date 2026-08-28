@@ -37,7 +37,7 @@ use exface\Core\Interfaces\Actions\iModifyData;
  * - `--app` - the UID or namespaced alias of the app in which to generate objects
  * - `--object` - the UID or namespaced alias of the object for which to generate attributes
  * - `--address` - a data address mask used to restrict imported objects or attributes (use data source specific syntax, 
- * e.g. "order%" for all addresses starting with "order")
+ * e.g. "order%" for all addresses starting with "order" for typical SQL data sources)
  * - `--config` - a JSON configuration for the model builder
  * 
  * ### Examples
