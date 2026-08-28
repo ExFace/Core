@@ -217,7 +217,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     
     /**
      * Sets the padding of the timeline view.
-     * In frappe-gantt, this is the extra space before the start of the first task and after the end date of the last task inside the timeline.
+     * In Gantt, this is the extra space before the start of the first task and after the end date of the last task inside the timeline.
      * Examples: 
      * - "7d" adds 7 days of padding on both sides.
      * - "1m" adds 1 month of padding on both sides.
@@ -245,7 +245,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     
     /**
      * Sets the snap_at of the timeline view.
-     * In frappe-gantt, this defines the snapping behavior when dragging tasks.
+     * In Gantt, this defines the snapping behavior when dragging tasks.
      * Possible values:
      * - "daily" (snaps to each day)
      * - "weekly" (snaps to each week)
@@ -273,7 +273,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     
     /**
      * Sets the upper_text_frequency of the timeline view.
-     * In frappe-gantt, this defines how often the upper header text is displayed.
+     * In Gantt, this defines how often the upper header text is displayed.
      * For example, a value of 4 means the upper header text is shown every 4 units of the granularity.
      * 
      * @uxon-property upper_text_frequency

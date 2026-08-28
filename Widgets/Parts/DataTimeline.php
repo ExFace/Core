@@ -172,6 +172,9 @@ class DataTimeline implements WidgetPartInterface
     const INTERVAL_MONTH = 'month';
     const INTERVAL_YEAR = 'year';
     const INTERVAL_DECADE = 'decade';
+
+    const POPUP_ON_CLICK = 'click';
+    const POPUP_ON_HOVER = 'hover';
     
     private ?array $views = null;
     private ?UxonObject $viewsUxon = null;
@@ -181,6 +184,7 @@ class DataTimeline implements WidgetPartInterface
     private bool $row_zoom = false;
     private $workday_start_time = null;
     private $workday_end_time = null;
+    private ?string $popup_on = null;
     
     public function exportUxonObject()
     {
@@ -275,6 +279,42 @@ class DataTimeline implements WidgetPartInterface
     {
         return $this->row_zoom;
     }
+
+    /**
+     * @param string|null $default
+     * @return string|null
+     */
+    public function getPopupOn(string $default = null) : ?string
+    {
+        return $this->popup_on ?? $default;
+    }
+
+    /**
+     * Define whether timeline item popups open on click or hover.
+     * In Gantt behavior:
+     * - `click` - user has to click on the bar to open the popup and click outside to close it.
+     * - `hover` - hovering shows the popup and leaving the bar hides it; clicking a bar pins the popup until the user clicks outside a bar or clicks another bar.
+     * 
+     * ATTENTION: The "hover" option is @experimental. Do not use it in production yet!
+     *
+     * @uxon-property popup_on
+     * @uxon-type [click,hover]
+     *
+     * @param string $value
+     * @return DataTimeline
+     */
+    public function setPopupOn(string $value) : DataTimeline
+    {
+        $value = mb_strtolower($value);
+        switch ($value) {
+            case self::POPUP_ON_CLICK:
+            case self::POPUP_ON_HOVER:
+                $this->popup_on = $value;
+                return $this;
+        }
+
+        throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline popup_on value "' . $value . '": please use click or hover!');
+    }
     
     /**
      *
@@ -367,7 +407,6 @@ class DataTimeline implements WidgetPartInterface
             if ($this->viewsUxon === null) {
                 $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
                 // IDEA get defaults from widget? Different defaults for Gantt and Scheduler?
-                // Info: This defaults are similar to frappe-gantt defaults.
                 $this->views = [
                     new DataTimelineView($this, new UxonObject([
                         'name' => $translator->translate('WIDGET.GANTT_CHARD.VIEW_MODE_DAY'),
