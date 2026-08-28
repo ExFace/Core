@@ -264,19 +264,14 @@ class ActionInputValidator
         if(!empty($unexpectedColumns)) {
             $message = 'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
                 '": ' . implode(', ', $unexpectedColumns) . '!';
-            // Only expose the remediation hint in developer mode - it could reveal an attack vector to end users.
-            if ($action->getWorkbench()->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS') === true) {
-                $message .= ' If these columns are added to the input data at runtime (e.g. injected client-side by a ' .
-                    'widget or a drop target), declare them on the triggering button via its ' .
-                    '"input_columns_trusted" property so they are recognized as legitimate.';
-            }
+
             $error = new ActionTaskInvalidException(
                 $action,
                 $task,
-                $message
+                $message,
+                '87OS4GW'
             );
             
-            $error->setUseExceptionMessageAsTitle(true);
             foreach (array_keys($unexpectedColumns) as $unexpectedColumn) {
                 $error->addIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN, $unexpectedColumn);
             }
