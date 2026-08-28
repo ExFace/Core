@@ -440,36 +440,30 @@ class ConditionalPropertyCondition implements WidgetPartInterface, \Stringable
      */
     public function toCondition() : ConditionInterface
     {
-        $attrExpr = null;
-        $valueExpr = null;
-        $expr = $this->getValueLeftExpression();
-        if ($expr->isReference()) {
+        $leftExpr = $this->getValueLeftExpression();
+        if ($leftExpr->isReference()) {
             throw new RuntimeException('Cannot convert conditional property "' . $this->__toString() . '" to a regular condition group - widget links not supported!');
         }
-        if ($expr->isMetaAttribute()) {
-            $attrExpr = $expr;
-        } else {
-            $valueExpr = $expr;
-        }
-        $expr = $this->getValueRightExpression();
-        if ($expr->isReference()) {
+        $rightExpr = $this->getValueRightExpression();
+        if ($rightExpr->isReference()) {
             throw new RuntimeException('Cannot convert conditional property "' . $this->__toString() . '" to a regular condition group - widget links not supported!');
         }
-        if ($expr->isMetaAttribute()) {
-            if ($attrExpr !== null) {
+        if ($rightExpr->isMetaAttribute()) {
+            if ($leftExpr->isMetaAttribute()) {
                 throw new RuntimeException('Cannot convert conditional property "' . $this->__toString() . '" to a regular condition group - cannot have meta attributes on both sides of the condition!');
-            } else {
-                $attrExpr = $expr;
             }
+            $conditionExpr = $rightExpr;
+            $valueExpr = $leftExpr;
         } else {
-            $valueExpr = $expr;
+            $conditionExpr = $leftExpr;
+            $valueExpr = $rightExpr;
         }
         
         return ConditionFactory::createFromExpression(
             $this->getWorkbench(),
-            $attrExpr,
-            $this->getComparator(),
+            $conditionExpr,
             $valueExpr->__toString(),
+            $this->getComparator(),
             false
         );
     }
