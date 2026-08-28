@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
+use exface\Core\Interfaces\Widgets\iInjectInputColumns;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
@@ -122,8 +123,32 @@ class ActionInputValidator
                 $expectedColumns[$name] = $name;
             }
         }
+
+        $this->addColumnsInjectedAtRuntime($expectedColumns);
         
         return $expectedColumns;
+    }
+
+    /**
+     * Adds columns that the triggering widget declares as trusted (injected into the input at runtime).
+     * 
+     * Some actions add columns to their input data on the client side (e.g. the `dump_setup()` function
+     * of a `DataTable` or a map drop-zone). The triggering button opts out of the forgery false positive
+     * by listing these columns via `input_columns_trusted` - a server-side declaration that cannot be
+     * forged from the client.
+     * 
+     * @param array $target
+     * @return void
+     */
+    protected function addColumnsInjectedAtRuntime(array &$target) : void
+    {
+        $trigger = $this->getTriggerWidget();
+        if(! $trigger instanceof iInjectInputColumns) {
+            return;
+        }
+        foreach ($trigger->getInputColumnsTrusted() as $name) {
+            $target[$name] = $name;
+        }
     }
 
     /**
@@ -133,14 +158,8 @@ class ActionInputValidator
      */
     protected function getInputWidget() : WidgetInterface|null
     {
-        $task = $this->getTask();
-        $action = $this->getAction();
-        
-        if($task->isTriggeredByWidget()) {
-            $widget = $task->getWidgetTriggeredBy();
-        } elseif ($action->isDefinedInWidget()) {
-            $widget = $action->getWidgetDefinedIn();
-        } else {
+        $widget = $this->getTriggerWidget();
+        if($widget === null) {
             return null;
         }
 
@@ -149,6 +168,25 @@ class ActionInputValidator
         }
 
         return $widget;
+    }
+
+    /**
+     * Returns the widget that triggered the action (e.g. the button), before resolving its input widget.
+     * 
+     * @return WidgetInterface|null
+     */
+    protected function getTriggerWidget() : ?WidgetInterface
+    {
+        $task = $this->getTask();
+        $action = $this->getAction();
+
+        if($task->isTriggeredByWidget()) {
+            return $task->getWidgetTriggeredBy();
+        }
+        if($action->isDefinedInWidget()) {
+            return $action->getWidgetDefinedIn();
+        }
+        return null;
     }
 
     /**
@@ -194,6 +232,12 @@ class ActionInputValidator
 
         $action = $this->getAction();
         $task = $this->getTask();
+
+        // Input synthesized server-side by a preceding action (e.g. within an action chain) cannot be
+        // forged by the client, so it is exempt from the column forgery check.
+        if($task->isInputDataTrusted()) {
+            return;
+        }
         
         // See if the task has input data.
         if(!$task->hasInputData()) {
@@ -218,11 +262,18 @@ class ActionInputValidator
         }
 
         if(!empty($unexpectedColumns)) {
+            $message = 'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
+                '": ' . implode(', ', $unexpectedColumns) . '!';
+            // Only expose the remediation hint in developer mode - it could reveal an attack vector to end users.
+            if ($action->getWorkbench()->getConfig()->getOption('DEBUG.PRETTIFY_ERRORS') === true) {
+                $message .= ' If these columns are added to the input data at runtime (e.g. injected client-side by a ' .
+                    'widget or a drop target), declare them on the triggering button via its ' .
+                    '"input_columns_trusted" property so they are recognized as legitimate.';
+            }
             $error = new ActionTaskInvalidException(
                 $action,
                 $task,
-                'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
-                '": ' . implode(', ', $unexpectedColumns) . '!'
+                $message
             );
             
             $error->setUseExceptionMessageAsTitle(true);

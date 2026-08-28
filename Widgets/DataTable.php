@@ -649,7 +649,7 @@ class DataTable extends Data implements
     {
         return 'DataTableConfigurator';
     }
-    
+
     /**
      * 
      * {@inheritDoc}

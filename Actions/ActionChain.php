@@ -212,6 +212,10 @@ class ActionChain extends AbstractAction implements iCallOtherActions
         $freezeInputIdx = $this->getUseInputDataOfAction();
         $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
         $chainDataModified = false;
+        // TRUE once $inputSheet holds a sheet synthesized server-side by a preceding action instead of
+        // the client-supplied chain input, making it exempt from the input-forgery validation.
+        // Inherited from the incoming task so nested chains stay exempt if their own input is trusted.
+        $inputDataTrusted = $task->isInputDataTrusted();
         $chainMessage = null;
         $chainResult = null;
         $messages = [];
@@ -280,6 +284,7 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             // Let the action handle a copy of the task
             // Every action gets the data resulting from the previous action as input data
             $t = $t->copy()->setInputData($inputSheet);
+            $t->setInputDataTrusted($inputDataTrusted);
             
             // Perform the action if it should not be skipped
             $skip = ($this->getSkipActionsIfInputEmpty() === true && $inputSheet->isEmpty() && $action->getInputRowsMin() !== 0);
@@ -323,6 +328,9 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                     if ($freezeInputIdx === null || $freezeInputIdx > $idx) {
                         if ($lastResult instanceof ResultData) {
                             $inputSheet = $lastResult->getData();
+                            // The sheet was synthesized server-side by the preceding action, so it cannot
+                            // carry client-forged columns and the next action's input is exempt.
+                            $inputDataTrusted = true;
                         }
                         $diagram .= $idx < $idxLast ? PHP_EOL . $diagramShapeId : '';
                     } else {
