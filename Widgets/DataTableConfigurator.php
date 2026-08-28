@@ -236,7 +236,10 @@ class DataTableConfigurator extends DataConfigurator
             if (! empty($updatedValues)) {
                 $updateSheet->addRow(array_merge([
                     'UID' => $row['UID'],
-                    'MODIFIED_ON' => $row['MODIFIED_ON']
+                    'MODIFIED_ON' => $row['MODIFIED_ON'],
+                    'SLUG' => $slug,
+                    'WIDGET_ID' => $widgetId,
+                    'ORPHANED_FLAG' => $storedFlag
                 ], $updatedValues));
             }
         }
