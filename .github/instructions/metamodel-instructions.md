@@ -1,95 +1,158 @@
 ---
-description: "How to read and modify the model via file system? How are changes via UI packaged and deployed? Useful commands."
+description: "Use when reading, generating, exporting, editing, installing, or repairing ExFace metamodel JSON in an app Model folder. Covers model DB synchronization, aliases, and validation."
 name: "Working with the metamodel"
-applyTo: "**/*.php"
+applyTo: "Model/**/*.json"
 ---
 
-The Metamodel is kept in the Core database and accessed via model loader 
-classes in `exface\Core\ModelLoaders\` for different SQL DB engines or via 
-DataSheets - just like any other data. All apps are installed into this 
-central model DB and are combined to one big model.
+# Working with the metamodel
 
-To include the model in app git repos and packages, the 
-`exface\Core\CommonLogic\AppInstallers\MetamodelInstaller` saves it as JSON 
-files in the `Model` folder of every app. When an app is exported, the 
-`Model` folder is completely recreated. When an app is installed or  
-repaired, its model in the database is completely replaced by the data in 
-the exported JSON files.
+## Mental model
 
-Users should only edit the model via GUI in `Administration > Metamodel` and 
-other administration pages. When a feature or a similar work item is 
-completed, the models of the respective apps should be exported in 
-`Administration > Metamodel > Apps`. This will transfer changes done in the 
-model DB to the model JSON files. The files can then be committed to git.
+The metamodel has two representations. Always identify which one currently
+contains the newest changes before writing anything.
 
-When an app is deployed, the `MetamodelInstaller` is called automatically 
-and "unpacks" the model from JSON files into the DB. This can als be done 
-manually via UI (via `Repair` button in `Administration > Metamodel > Apps`) 
-or via command line (`vendor/bin/action axenox.PackageManager:InstallApp <app_alias>`).
+| Representation | Purpose | How it changes |
+|---|---|---|
+| Central model database | Combined runtime model of all installed apps | Administration UI, DataSheets, model builders, or app installation |
+| `<app>/Model/` JSON files | Version-controlled and deployable model of one app | App model export or deliberate file edits |
 
-To read the model when working with code, you can use the JSON files in the 
-`Model` folders of apps. However, if there are dedicated tools available to 
-work with the model, prefer those.
+The synchronization operations are destructive in their target direction:
 
-It is also possible to modify the files and use the InstallApp command to 
-"repair" the app afterwards. To avoid losing changes in the model DB, that 
-we're not exported yet, do an export first - before modifying files.
+- **Export** replaces the app's `Model` folder with data from the model DB.
+- **Install/repair** replaces the app's records in the model DB with data from
+  the app's `Model` folder.
 
-## Folder structure
+Never export after making uninstalled manual JSON changes: export would
+overwrite them. Never install before exporting newer UI/model-builder changes:
+install would remove them from the model DB.
 
-Object model files are store in subfolders, so it is easy to find attributes 
-or behaviors if you know the object alias.
+The model can be read through model loader classes in
+`exface\Core\ModelLoaders\`, dedicated model tools, or DataSheets. Prefer a
+dedicated tool when one is available; otherwise inspect the app's model JSON.
 
-- `app.app.object_alias_1/` <- subfolder for object-bound model entities are 
-  saved in subfolder per object
-     - `02_OBJECT.json` <- object information: e.g. data address, description
-     - `03_OBJECT_BEHAVIORS.json`
-     - `04_ATTRIBUTE.json` <- attributes of the object
-     - `08_OBJECT_ACTION.json`
-- `app.app.object_alias_2`
-- ...
-- `Security/`
-     - `PageGroups/`
-         - `<name_of_page_group>`
-             - `12_PAGE_GROUP.json`
-             - `13_PAGE_GROUP_PAGES.json`
-     - `UserRoles/`
-         - `<alias_of_role>`
-             - `14_USER_ROLE.json`
-             - `16_AUTHORIZATION_POLICY.json`
-- `00_APP.json` <- Data of the app itself
-- `01_DATATYPE.json` <- entities without an object binding are stored as data sheet UXON
-- ...
-- `99_PAGES` <- pages are stored separately in a different JSON format, not as exported DataSheet
-     - `app.alias.page_alias_1.json`
-     - `app.alias.page_alias_2.json`
-     - ...
+## Choose the workflow
 
-Infrastructure apps (like `axenox.ETL`) may add their own subfolders to the 
-`Model` folder of an app, if they need to store additional model data. To 
-make this work, their custom installers must be registered in the main app 
-class - e.g. installers from the `axenox.GenAI` app are  registered in the 
-ETL app in `axenox/etl/ETLApp.php` and allow the ETL app model to install 
-its own agents.
+### Changes made in the administration UI or via DataSheets
 
-## Export/import commands
+1. Finish the changes in the model DB.
+2. Export the affected app.
+3. Review all changes under its `Model` folder.
+4. Revert only exporter collateral that is known to be unrelated. Do not
+   revert concurrent user changes.
+5. Commit the exported files.
 
-Use the following CLI commands to transfer the model to JSON files and back to the DB.
+Export from `Administration > Metamodel > Apps`, or run from the installation
+root:
 
-- `vendor/bin/action axenox.PackageMangager:InstallApp exface.Core`
-- `vendor/bin/action axenox.PackageMangager:ExportAppModel exface.Core`
+```sh
+vendor/bin/action axenox.PackageManager:ExportAppModel <app_alias>
+```
 
-## Generate models from data sources
+### Deliberate edits to model JSON
 
-When a data source changes (e.g. tables or column are added to SQL DBs), use 
-the `exface.Core.GenerateModelFromDataSource` action to generate missing objects
-and attributes in the model. You can export the model then to update the JSON
-files.
+Use this route when an agent must edit exported model files directly.
 
-Examples to call the action from CLI:
+1. Export the affected app first. This preserves newer model DB changes.
+2. Review the export diff before editing; exporters can rewrite unrelated
+   generated summaries, ordering, or final newlines.
+3. Edit only the required JSON records.
+4. Install the app to transfer the files into the model DB.
+5. Validate the installed model. Do not export again unless the DB was changed
+   afterward.
 
-- `vendor/bin/action exface.Core:GenerateModelFromDataSource --object=exface.Core.PAGE` - generate missing attributes
-for the given object
-- `vendor/bin/action exface.Core:GenerateModelFromDataSource --source=exface.Core.METAMODEL_DB --app=exface.Core --address="exf_page%"` -
-Generate objects from all addresses (= SQL table names) in the data source 
-  starting with "exf_page" and create them in the app "exface.Core".
+```sh
+vendor/bin/action axenox.PackageManager:ExportAppModel <app_alias>
+vendor/bin/action axenox.PackageManager:InstallApp <app_alias>
+```
+
+Deployment runs the same metamodel installer automatically. In the UI,
+`Administration > Metamodel > Apps > Repair` is equivalent to `InstallApp`.
+
+### Generate objects or attributes from a data source
+
+Use `exface.Core:GenerateModelFromDataSource` after adding or changing tables
+or columns. The action writes to the model DB, not directly to model JSON.
+
+For a new table:
+
+```sh
+vendor/bin/action exface.Core:GenerateModelFromDataSource --source=exface.Core.METAMODEL_SOURCE --app=<app_alias> --address=<table_name_or_mask>
+```
+
+For missing attributes of an existing object:
+
+```sh
+vendor/bin/action exface.Core:GenerateModelFromDataSource --object=<namespaced_object_alias>
+```
+
+Then normalize the generated model in the administration UI and export it.
+If direct JSON editing is necessary, export first, normalize the files, and
+install them as described above.
+
+Model builders infer physical structure, not final domain semantics. Check all
+of the following before considering a generated model complete:
+
+- Rename generated object and attribute aliases to the app's established
+  semantic format, commonly uppercase such as `AI_NOTE` and `AI_AGENT`.
+- Keep physical table and column names in `DATA_ADDRESS`; changing an alias
+  must not change its data address.
+- Rename the object directory to match the namespaced object alias, for example
+  `Model/axenox.GenAI.AI_NOTE/`.
+- Check relation attributes. Set `RELATED_OBJ` when foreign-key relations were
+  not inferred, and compare flags with equivalent relations on neighboring
+  objects.
+- Choose the appropriate label attribute with `LABELFLAG`.
+- Add `DEFAULT_EDITOR_UXON` when the object must open in generic edit dialogs.
+- Compare with a neighboring object from the same app rather than inventing a
+  new model style.
+
+If generation fails after partially creating an object, fix the underlying
+problem and rerun the same command. The builder should skip existing records
+and create only missing ones. Verify the resulting counts and log instead of
+assuming the first run rolled back.
+
+## Model folder structure
+
+Object-bound entities are grouped by namespaced object alias:
+
+```text
+Model/
+  <app_alias>.<OBJECT_ALIAS>/
+    02_OBJECT.json             Object properties and default editor UXON
+    03_OBJECT_BEHAVIORS.json   Object behaviors, when present
+    04_ATTRIBUTE.json          Object attributes and relations
+    08_OBJECT_ACTION.json      Object actions, when present
+    11_ATTRIBUTE_COMPOUND.json Compound attributes, when present
+  00_APP.json                  App record
+  01_DATATYPE.json             Non-object-bound model entities
+  99_PAGE/                     Pages in page-specific JSON format
+  Security/
+    PageGroups/<group>/
+    UserRoles/<role>/
+```
+
+Files such as `02_OBJECT.json` and `04_ATTRIBUTE.json` are exported DataSheet
+UXON. Preserve their `object_alias`, `columns`, row UIDs, filters, and physical
+data addresses. Change only the relevant row properties.
+
+Infrastructure apps can register custom model installers and store additional
+subfolders, such as AI agent definitions. Those installers must be registered
+by the owning app class; do not treat custom folders as ordinary metamodel
+DataSheet exports.
+
+## Validation checklist
+
+After changing model files:
+
+1. Parse every edited JSON file.
+2. Run `InstallApp <app_alias>` and confirm the expected model entity counts.
+3. Resolve generated or renamed objects by their final namespaced alias.
+4. For generated SQL objects, rerun `GenerateModelFromDataSource --object=...`;
+   it should report zero created attributes and all physical attributes as
+   existing.
+5. Exercise the affected UI or behavior when practical.
+6. Review `git diff` and remove only unrelated exporter collateral.
+
+An installer can finish successfully while reporting a separate static SQL or
+schema warning. Report such warnings and determine whether they are related;
+do not hide them or expand the task to fix unrelated failures.
