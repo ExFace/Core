@@ -481,7 +481,7 @@
         {
             "_EXPORT_SUMMARY": "Disabled [DISABLED_FLAG]",
             "CREATED_ON": "2020-05-12 13:49:14",
-            "MODIFIED_ON": "2025-01-15 18:13:07",
+            "MODIFIED_ON": "2026-08-27 16:08:35",
             "CREATED_BY_USER": "0x11e9545e8e69e0d8b95b00505689aada",
             "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
             "UID": "0x11ea94469df79b09bc54025041000001",
@@ -493,7 +493,10 @@
             "READABLEFLAG": 1,
             "WRITABLEFLAG": 0,
             "SYSTEMFLAG": 0,
-            "DEFAULT_EDITOR_UXON": null,
+            "DEFAULT_EDITOR_UXON": {
+                "widget_type": "InputSelect",
+                "multi_select": false
+            },
             "COPY_WITH_RELATED_OBJECT": 0,
             "DELETE_WITH_RELATED_OBJECT": 0,
             "DEFAULT_DISPLAY_UXON": {
@@ -508,9 +511,9 @@
             "RELATION_CARDINALITY": "",
             "TYPE": "D",
             "COPYABLEFLAG": 0,
-            "ICON": null,
-            "ICON_SET": null,
-            "ABBREVIATION": null,
+            "ICON": "",
+            "ICON_SET": "",
+            "ABBREVIATION": "",
             "ALIAS": "DISABLED_FLAG",
             "DATATYPE": "0x37000000000000000000000000000000",
             "DATA_ADDRESS": [
@@ -534,7 +537,7 @@
             "UIDFLAG": 0,
             "HIDDENFLAG": 0,
             "EDITABLEFLAG": 0,
-            "REQUIREDFLAG": 0,
+            "REQUIREDFLAG": 1,
             "RELATED_OBJ": null,
             "SORTERPOS": null,
             "SORTERDIR": "",

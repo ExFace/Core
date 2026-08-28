@@ -8,6 +8,7 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * An advanced search dialog allowing the user to search and select data entries.
@@ -134,8 +135,13 @@ class DataLookupDialog extends Dialog
                 }
                 if ($filterAttrAlias !== '' || $filterAttrAlias !== null) {
                     $filterWidget = $dataConfigurator->createFilterForAttributeAlias($filterAttrAlias);
-                    if ($filterWidget->getInputWidget() instanceof iSupportMultiSelect) {
-                        $filterWidget->getInputWidget()->setMultiSelect(true);
+                    $filterInput = $filterWidget->getInputWidget();
+                    // Boolean filters render as a single-select Yes/No/All (see InputCheckBox::transformIntoSelect()),
+                    // so forcing multi-select here would produce a nonsensical multi-value boolean filter.
+                    $isBoolean = $filterWidget->isBoundToAttribute()
+                        && $filterWidget->getAttribute()->getDataType() instanceof BooleanDataType;
+                    if ($filterInput instanceof iSupportMultiSelect && ! $isBoolean) {
+                        $filterInput->setMultiSelect(true);
                     }
                     $dataConfigurator->addFilter($filterWidget);
                 }

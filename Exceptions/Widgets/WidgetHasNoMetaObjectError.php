@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
 
 /**
  * Exception thrown if a no meta object can be determined for a widget.
@@ -22,7 +23,7 @@ class WidgetHasNoMetaObjectError extends WidgetConfigurationError
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Exceptions\WidgetExceptionInterface::setWidget()
      */
-    public function setWidget(WidgetInterface $widget)
+    public function setWidget(WidgetInterface $widget) : WidgetExceptionInterface
     {
         $widget->setMetaObject($widget->getWorkbench()->model()->getObject('exface.Core.BASE_OBJECT'));
         return parent::setWidget($widget);
