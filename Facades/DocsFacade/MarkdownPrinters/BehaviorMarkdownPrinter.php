@@ -42,14 +42,14 @@ class BehaviorMarkdownPrinter extends AbstractMarkdownPrinter implements Markdow
         $heading = MarkdownDataType::buildMarkdownHeader($behavior->getName(), $this->headingLevel);
         $prototypeClass = '\\' . get_class($behavior);
         $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($behavior);
-        $objectLink = DocsFacade::buildUrlToDocsForMetaObject($behavior->getMetaObject());
+        $objectLink = DocsFacade::buildUrlToDocsForMetaObject($behavior->getObject());
 
         return <<<MD
 
 {$heading}
 
 - Prototype: [$prototypeClass]($prototypeLink)
-- Object: [{$behavior->getMetaObject()->__toString()}]({$objectLink})
+- Object: [{$behavior->getObject()->__toString()}]({$objectLink})
 
 ```
 {$behavior->exportUxonObject()->toJson(true)}
