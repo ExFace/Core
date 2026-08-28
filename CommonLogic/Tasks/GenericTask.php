@@ -47,6 +47,8 @@ class GenericTask implements TaskInterface
     
     private $inputData = null;
     
+    private $inputDataTrusted = false;
+    
     private $transaction = null;
     
     private $object = null;
@@ -159,6 +161,27 @@ class GenericTask implements TaskInterface
     public function setInputData(DataSheetInterface $dataSheet): TaskInterface
     {
         $this->inputData = $dataSheet;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::isInputDataTrusted()
+     */
+    public function isInputDataTrusted() : bool
+    {
+        return $this->inputDataTrusted;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setInputDataTrusted()
+     */
+    public function setInputDataTrusted(bool $value) : TaskInterface
+    {
+        $this->inputDataTrusted = $value;
         return $this;
     }
 
