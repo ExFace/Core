@@ -647,6 +647,11 @@ class GenericTask implements TaskInterface
                 case 'widget_id':
                     $this->setWidgetIdTriggeredBy($val);
                     break;
+                // This property is security critical and should only be set via code, not through the Uxon import.
+                // We fail silently (i.e. remove the property) to obfuscate this sensitive information.
+                case 'input_data_trusted':
+                    $uxon->unsetProperty('input_data_trusted');
+                    break;
             }
         }
         // Fall back to the default importer for all other properties
