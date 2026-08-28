@@ -81,4 +81,15 @@ Use the following CLI commands to transfer the model to JSON files and back to t
 
 ## Generate models from data sources
 
-TODO
+When a data source changes (e.g. tables or column are added to SQL DBs), use 
+the `exface.Core.GenerateModelFromDataSource` action to generate missing objects
+and attributes in the model. You can export the model then to update the JSON
+files.
+
+Examples to call the action from CLI:
+
+- `vendor/bin/action exface.Core:GenerateModelFromDataSource --object=exface.Core.PAGE` - generate missing attributes
+for the given object
+- `vendor/bin/action exface.Core:GenerateModelFromDataSource --source=exface.Core.METAMODEL_DB --app=exface.Core --address="exf_page%"` -
+Generate objects from all addresses (= SQL table names) in the data source 
+  starting with "exf_page" and create them in the app "exface.Core".
