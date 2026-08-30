@@ -1,5 +1,5 @@
 ---
-description: "Use when reading, generating, exporting, editing, installing, or repairing ExFace metamodel JSON in an app Model folder. Covers model DB synchronization, aliases, and validation."
+description: "Use when reading, generating, exporting, editing, installing, or repairing ExFace metamodel JSON in an app Model folder. Covers model DB synchronization, generated UIDs, aliases, and validation."
 name: "Working with the metamodel"
 applyTo: "Model/**/*.json"
 ---
@@ -73,6 +73,29 @@ Deployment runs the same metamodel installer automatically. In the UI,
 Use `exface.Core:GenerateModelFromDataSource` after adding or changing tables
 or columns. The action writes to the model DB, not directly to model JSON.
 
+**The model generator owns UID creation for database-bound model entities.**
+When it discovers a new table, column, relation, or other physical database
+structure, it creates the corresponding model record and assigns its UID. Never
+compute, derive, invent, or hard-code a new UID programmatically or directly in
+model JSON for such an entity. This applies to objects, attributes, relations,
+and other generated records. Export the generator-assigned UID and preserve it
+through later normalization. Only copy an existing UID when intentionally
+referring to the model record that already owns it.
+
+For a schema change, use this sequence:
+
+1. Add migrations for every SQL engine supported by the app.
+2. Run `InstallApp <app_alias>` to import the current app model and apply the
+   migration to the configured database.
+3. Run the model generator against the new table or existing object. It creates
+   missing model records and their UIDs in the central model database.
+4. Export the app model so those generated records and UIDs are written to the
+   app's `Model` folder.
+5. Normalize inferred aliases, data types, relations, labels, and UXON while
+   preserving every generated UID and physical `DATA_ADDRESS`.
+6. If normalization was done in JSON, run `InstallApp <app_alias>` again and
+   validate the installed model.
+
 For a new table:
 
 ```sh
@@ -85,9 +108,12 @@ For missing attributes of an existing object:
 vendor/bin/action exface.Core:GenerateModelFromDataSource --object=<namespaced_object_alias>
 ```
 
-Then normalize the generated model in the administration UI and export it.
-If direct JSON editing is necessary, export first, normalize the files, and
-install them as described above.
+Do not create a placeholder row with a made-up UID before running the generator;
+an existing row can make the builder treat the physical structure as already
+modeled and skip the record it should own. Normalize the generated model in the
+administration UI and export it. If direct JSON editing is necessary, export
+first, normalize the files without changing generated UIDs, and install them as
+described above.
 
 Model builders infer physical structure, not final domain semantics. Check all
 of the following before considering a generated model complete:
@@ -133,7 +159,9 @@ Model/
 
 Files such as `02_OBJECT.json` and `04_ATTRIBUTE.json` are exported DataSheet
 UXON. Preserve their `object_alias`, `columns`, row UIDs, filters, and physical
-data addresses. Change only the relevant row properties.
+data addresses. UIDs identify model records and are not values to calculate from
+table names, column names, timestamps, or neighboring records. Change only the
+relevant row properties.
 
 Infrastructure apps can register custom model installers and store additional
 subfolders, such as AI agent definitions. Those installers must be registered
@@ -150,8 +178,10 @@ After changing model files:
 4. For generated SQL objects, rerun `GenerateModelFromDataSource --object=...`;
    it should report zero created attributes and all physical attributes as
    existing.
-5. Exercise the affected UI or behavior when practical.
-6. Review `git diff` and remove only unrelated exporter collateral.
+5. Confirm exported new records contain generator-assigned UIDs and that no UID
+  was introduced by application code, migration SQL, or manual calculation.
+6. Exercise the affected UI or behavior when practical.
+7. Review `git diff` and remove only unrelated exporter collateral.
 
 An installer can finish successfully while reporting a separate static SQL or
 schema warning. Report such warnings and determine whether they are related;
