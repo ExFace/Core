@@ -6,9 +6,11 @@ use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
 use exface\Core\Interfaces\Widgets\iInjectInputColumns;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
@@ -121,6 +123,24 @@ class ActionInputValidator
             foreach ($inputWidget->getColumns() as $column) {
                 $name = $column->getDataColumnName();
                 $expectedColumns[$name] = $name;
+            }
+        }
+
+        // Widgets based on a related object (e.g. InputTags for 3-table tagging) send their input
+        // as a nested subsheet in a single column named after the relation from the parent object.
+        // TODO Future improvement: validate the subsheet contents recursively by building the
+        // expected columns against the child widget's own object and checking the nested rows the
+        // same way as the top level (also handling arbitrary nesting depth).
+        if($inputWidget instanceof iContainOtherWidgets) {
+            $inputObject = $inputWidget->getMetaObject();
+            foreach ($inputWidget->getInputWidgets() as $child) {
+                if(($child instanceof iTakeInputAsDataSubsheet)
+                    && $child->isSubsheetForObject($inputObject)
+                    && null !== $relPath = $child->getObjectRelationPathFromParent()
+                ) {
+                    $name = $relPath->toString();
+                    $expectedColumns[$name] = $name;
+                }
             }
         }
 
