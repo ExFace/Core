@@ -59,6 +59,9 @@ inherits the standard export workflow:
 This design avoids PHP `max_input_vars` failures caused by posting thousands of nested form
 variables from the browser.
 
+Fixed workbook labels, timeline headings, and month abbreviations use
+`WIDGET.GANTT_CHARD.EXCEL.*` Core translations and therefore follow the active language.
+
 ## Export lifecycle overrides
 
 `ExportGanttXLSX` customizes these `ExportJSON` hooks:
@@ -84,10 +87,10 @@ location values are repeated in every occupied task lane without merging cells.
 Set `freeze_columns` to the number of columns that should remain visible on the left while
 scrolling. It defaults to `0`, which freezes only the five workbook header rows.
 
-Configure printing with `orientation`, `paper_size`, `page_order`, `scale`, and `page_margins`.
-Paper sizes use PhpSpreadsheet's numeric `PageSetup::PAPERSIZE_*` codes, for example `9` for A4
-and `64` for A2. Page margins are specified in inches and support `left`, `right`, `top`, `bottom`,
-`header`, and `footer`.
+Configure printing in the nested `xlsx_print_settings` object with `orientation`, `paper_size`,
+`page_order`, `scale`, and `page_margins`. Paper sizes use PhpSpreadsheet's numeric
+`PageSetup::PAPERSIZE_*` codes, for example `9` for A4 and `64` for A2. Page margins are specified
+in inches and support `left`, `right`, `top`, `bottom`, `header`, and `footer`.
 
 ## Normalized data contract
 

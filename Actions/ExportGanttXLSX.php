@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
-use exface\Core\Actions\Traits\iHaveXLSXPrintSettings;
+use exface\Core\CommonLogic\Actions\XLSXPrintSettings;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Utils\GanttXlsxBuilder;
@@ -30,8 +30,6 @@ use exface\Core\Widgets\Gantt;
  */
 class ExportGanttXLSX extends ExportJSON
 {
-    use iHaveXLSXPrintSettings;
-
     private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
 
     private array $basicInfoColumns = [];
@@ -43,6 +41,7 @@ class ExportGanttXLSX extends ExportJSON
     private float $textColorPreference = 0.5;
     private int $freezeColumns = 0;
     private int $basicInfoColumnCount = 6;
+    private ?XLSXPrintSettings $xlsxPrintSettings = null;
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -188,7 +187,7 @@ class ExportGanttXLSX extends ExportJSON
                 $this->textColorPreference,
                 $this->getFreezeColumns(),
                 $this->getDefaultTaskDurationDays(),
-                $this->getXLSXPrintSettings(),
+                $this->getXLSXPrintSettings()->toArray(),
                 $this->getWorkbookTranslations()
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
@@ -210,9 +209,9 @@ class ExportGanttXLSX extends ExportJSON
 
     /**
      * Converts raw Gantt rows into the three sections consumed by the spreadsheet builder.
-     *
-     * @param array<int|string, array<string, mixed>> $rows
-     * @return list<array<string, mixed>>
+     * 
+     * @param array $rows
+     * @return array
      */
     private function mapGanttRows(array $rows): array
     {
@@ -240,12 +239,13 @@ class ExportGanttXLSX extends ExportJSON
         return $result;
     }
 
+
     /**
      * Maps configured source columns and companion color columns to spreadsheet fields.
-     *
-     * @param array<string, mixed> $row
-     * @param array<string, string> $mapping
-     * @return array<string, mixed>
+     * 
+     * @param array $row
+     * @param array $mapping
+     * @return array
      */
     private function mapSection(array $row, array $mapping): array
     {
@@ -532,5 +532,34 @@ class ExportGanttXLSX extends ExportJSON
     public function getFreezeColumns(): int
     {
         return $this->freezeColumns;
+    }
+
+    /**
+     * Configure page layout settings for the generated XLSX workbook.
+     *
+     * @uxon-property xlsx_print_settings
+     * @uxon-type \exface\Core\CommonLogic\Actions\XLSXPrintSettings
+     * @uxon-template {"orientation":"landscape","paper_size":9,"page_order":"downThenOver","scale":100,"page_margins":{"left":0.25,"right":0.25,"top":0.75,"bottom":0.75,"header":0.3,"footer":0.3}}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    public function setXLSXPrintSettings(UxonObject $uxon): ExportGanttXLSX
+    {
+        $this->xlsxPrintSettings = new XLSXPrintSettings($this, $uxon);
+        return $this;
+    }
+
+    /**
+     * Returns the XLSX page layout settings, creating their defaults when not configured.
+     *
+     * @return XLSXPrintSettings
+     */
+    public function getXLSXPrintSettings(): XLSXPrintSettings
+    {
+        if ($this->xlsxPrintSettings === null) {
+            $this->xlsxPrintSettings = new XLSXPrintSettings($this);
+        }
+        return $this->xlsxPrintSettings;
     }
 }
