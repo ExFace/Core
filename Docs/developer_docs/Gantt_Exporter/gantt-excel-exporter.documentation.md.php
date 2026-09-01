@@ -215,7 +215,7 @@ horizontal groups use white and vertical groups use neutral gray.
 - Overlapping measures packed into separate lanes
 - Task bars filled with their configured colors
 - Merged exported value cells across all lanes of a location
-- A continuous medium bottom border from the first exported column through the timeline after every location
+- A continuous thick black bottom border from the first exported column through the timeline after every location
 - Fixed row heights, column widths, borders, freeze pane, filter, and print settings
 
 If a task supplies only a valid start date, its end is calculated by adding the task configuration's

@@ -603,7 +603,9 @@ class GanttXlsxBuilder
                 }
             }
             $sheet->getStyle($this->range($layout['columnsStart'], $endRow, $timelineEnd, $endRow))
-                ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
+                ->getBorders()->getBottom()
+                ->setBorderStyle(Border::BORDER_MEDIUM)
+                ->getColor()->setARGB('FF000000');
         }
     }
 
