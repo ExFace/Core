@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
@@ -119,12 +120,11 @@ class ActionInputValidator
             );
         }
         
-        if($inputWidget instanceof iHaveColumns) {
-            foreach ($inputWidget->getColumns() as $column) {
-                $name = $column->getDataColumnName();
-                $expectedColumns[$name] = $name;
-            }
-        }
+        // Collect columns declared by the input widget itself and by any data widget nested inside it
+        // (e.g. a DataSpreadSheet placed inside a Dialog). Nested data widgets based on the same object
+        // as their container contribute their columns as flat rows to the input data - just like the
+        // top level widget would. Widgets based on a related object are handled as subsheets below.
+        $this->addColumnsFromDataWidgets($expectedColumns, $inputWidget, $inputWidget->getMetaObject());
 
         // Widgets based on a related object (e.g. InputTags for 3-table tagging) send their input
         // as a nested subsheet in a single column named after the relation from the parent object.
@@ -207,6 +207,40 @@ class ActionInputValidator
             return $action->getWidgetDefinedIn();
         }
         return null;
+    }
+
+    /**
+     * Recursively collects the columns of the given widget and of any data widget nested inside it,
+     * as long as the widget is based on the same object as the input (`$inputObject`).
+     * 
+     * This is needed for input widgets that are containers (e.g. a Dialog) holding a data widget like
+     * a DataSpreadSheet: the data widget contributes its columns directly to the flat input data, but
+     * `prepareDataSheetToRead()` may skip them once the container has already added system columns.
+     * Data widgets based on a related object are subsheets and are handled separately by the caller.
+     * 
+     * @param array               $target
+     * @param WidgetInterface     $widget
+     * @param MetaObjectInterface $inputObject
+     * @return void
+     */
+    protected function addColumnsFromDataWidgets(
+        array &$target,
+        WidgetInterface $widget,
+        MetaObjectInterface $inputObject
+    ) : void
+    {
+        if($widget instanceof iHaveColumns && $widget->getMetaObject()->is($inputObject)) {
+            foreach ($widget->getColumns() as $column) {
+                $name = $column->getDataColumnName();
+                $target[$name] = $name;
+            }
+        }
+
+        if($widget instanceof iContainOtherWidgets) {
+            foreach ($widget->getWidgets() as $child) {
+                $this->addColumnsFromDataWidgets($target, $child, $inputObject);
+            }
+        }
     }
 
     /**
