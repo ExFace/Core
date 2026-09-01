@@ -39,7 +39,7 @@ class GanttXlsxBuilder
      * @param array<string, mixed> $printSettings
      * @param array<string, string> $translations
      * @param list<string|null> $headingColors
-     * @param list<array{name:string,column_count:int,column_width:float,orientation:string}> $headerGroups
+     * @param list<array<string,mixed>> $headerGroups
      */
     public function __construct(
         array $semanticColors = [],
@@ -254,7 +254,7 @@ class GanttXlsxBuilder
     /**
      * Resolves configured groups to absolute workbook column boundaries.
      *
-     * @return list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}>
+     * @return list<array<string,mixed>>
      */
     private function resolveHeaderGroups(int $columnCount): array
     {
@@ -265,6 +265,8 @@ class GanttXlsxBuilder
                 'column_count' => $columnCount,
                 'column_width' => 13.0,
                 'orientation' => 'horizontal',
+                'empty_cell_filler' => null,
+                'empty_cell_color' => null,
             ]];
         }
 
@@ -272,8 +274,14 @@ class GanttXlsxBuilder
         $start = 1;
         $remaining = $columnCount;
         foreach ($configuredGroups as $group) {
-            if (! is_array($group)
-                || ! isset($group['name'], $group['column_count'], $group['column_width'], $group['orientation'])) {
+            if (! is_array($group)) {
+                throw new \InvalidArgumentException('Every XLSX header group must be an object.');
+            }
+            $group += [
+                'empty_cell_filler' => null,
+                'empty_cell_color' => null,
+            ];
+            if (! isset($group['name'], $group['column_count'], $group['column_width'], $group['orientation'])) {
                 throw new \InvalidArgumentException('Every XLSX header group must contain name, column_count, column_width, and orientation.');
             }
             $count = (int) $group['column_count'];
@@ -291,6 +299,12 @@ class GanttXlsxBuilder
                 'column_count' => $count,
                 'column_width' => $width,
                 'orientation' => $orientation,
+                'empty_cell_filler' => is_string($group['empty_cell_filler'])
+                    ? $group['empty_cell_filler']
+                    : null,
+                'empty_cell_color' => is_string($group['empty_cell_color'])
+                    ? $group['empty_cell_color']
+                    : null,
                 'start' => $start,
                 'end' => $start + $count - 1,
             ];
@@ -327,7 +341,7 @@ class GanttXlsxBuilder
      *
      * @param array<string, int> $layout
      * @param list<string> $headers
-     * @param list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}> $headerGroups
+     * @param list<array<string,mixed>> $headerGroups
      * @param list<array{year:int,week:int,key:string}> $timeline
      */
     private function writeHeaders(Worksheet $sheet, array $layout, array $headers, array $headerGroups, array $timeline): void
@@ -501,7 +515,7 @@ class GanttXlsxBuilder
      * Writes grouped column values and packed Gantt task lanes.
      *
      * @param list<string> $headers
-     * @param list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}> $headerGroups
+     * @param list<array<string,mixed>> $headerGroups
      * @param list<array{year:int,week:int,key:string}> $timeline
      * @param list<array<string,mixed>> $items
      */
@@ -548,7 +562,15 @@ class GanttXlsxBuilder
             $lanes = $plan['lanes'];
             $row = $plan['startRow'];
             $endRow = $plan['endRow'];
-            $this->writeValueSection($sheet, $layout['columnsStart'], $headers, $item['Columns'] ?? [], $row, $endRow);
+            $this->writeValueSection(
+                $sheet,
+                $layout['columnsStart'],
+                $headers,
+                $headerGroups,
+                $item['Columns'] ?? [],
+                $row,
+                $endRow
+            );
             if ($this->mergeCells && $endRow > $row) {
                 $sheet->mergeCells($this->range($layout['verortung'], $row, $layout['verortung'], $endRow));
             }
@@ -589,23 +611,39 @@ class GanttXlsxBuilder
      * Writes one merged value section and applies companion field colors.
      *
      * @param list<string> $headers
+     * @param list<array<string,mixed>> $headerGroups
      * @param mixed $values
      */
-    private function writeValueSection(Worksheet $sheet, int $startColumn, array $headers, $values, int $startRow, int $endRow): void
+    private function writeValueSection(
+        Worksheet $sheet,
+        int $startColumn,
+        array $headers,
+        array $headerGroups,
+        $values,
+        int $startRow,
+        int $endRow
+    ): void
     {
         $values = is_array($values) ? $values : [];
         foreach ($headers as $index => $header) {
             $column = $startColumn + $index;
+            $group = $this->findHeaderGroup($headerGroups, $column);
             $range = $this->range($column, $startRow, $column, $endRow);
             if ($this->mergeCells && $endRow > $startRow) {
                 $sheet->mergeCells($range);
             }
-            $value = $values[$header] ?? '';
+            $value = $values[$header] ?? null;
+            $isEmpty = $value === null || (is_string($value) && trim($value) === '');
+            if ($isEmpty) {
+                $value = $group['empty_cell_filler'];
+            }
             $value = is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : $value;
             foreach ($this->getValueRows($startRow, $endRow) as $valueRow) {
                 $sheet->setCellValue($this->cell($column, $valueRow), $value);
             }
-            $color = $this->resolveColor($values[$header . '_Farbe'] ?? $values[preg_replace('/\s+/', '', $header) . '_Farbe'] ?? null);
+            $color = $isEmpty
+                ? $this->resolveColor($group['empty_cell_color'])
+                : $this->resolveColor($values[$header . '_Farbe'] ?? $values[preg_replace('/\s+/', '', $header) . '_Farbe'] ?? null);
             if ($color !== null) {
                 $textColor = $this->resolveColor(
                     ColorTools::pickTextColorForBackgroundColor('#' . $color, $this->textColorPreference ),
@@ -758,8 +796,8 @@ class GanttXlsxBuilder
     /**
      * Returns the configured group containing an absolute workbook column.
      *
-     * @param list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}> $headerGroups
-     * @return array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}
+     * @param list<array<string,mixed>> $headerGroups
+     * @return array<string,mixed>
      */
     private function findHeaderGroup(array $headerGroups, int $column): array
     {

@@ -156,7 +156,9 @@ groups:
             "name": "Relevanz + Status",
             "column_count": 8,
             "column_width": 5.5,
-            "orientation": "vertical"
+            "orientation": "vertical",
+            "empty_cell_filler": "-",
+            "empty_cell_color": "#eeeeee"
         }
     ]
 }
@@ -169,6 +171,11 @@ Columns beyond the configured total are assigned to the last group. `column_widt
 every column in the resulting group. `orientation` controls whether the individual column captions
 are horizontal or rotated by 90 degrees. If `header_groups` is omitted, all exported columns form
 one unnamed horizontal group with width `13`.
+
+`empty_cell_filler` defines the text written when a grouped data cell contains `null`, an empty
+string, or only whitespace. If the property is omitted, the cell remains empty. Numeric zero and
+boolean values are retained. Set `empty_cell_color` to color empty cells and automatically select
+a contrasting text color. Without `empty_cell_color`, empty cells keep their normal background.
 
 Cell colors are mapped automatically when the input row contains a companion column named
 `_<source column>Farbe`. The temporal status color uses
@@ -235,7 +242,7 @@ table but does not add weekly timeline columns.
 - `CommonLogic/Actions/XLSXPrintSettings.php`
   - Provides reusable page setup and margin configuration.
 - `CommonLogic/Actions/XLSXHeaderGroups.php`
-  - Defines group titles, boundaries, widths, and header orientations.
+  - Defines group titles, boundaries, widths, header orientations, and empty-cell presentation.
 - `.github/instructions/gantt-excel-exporter.instructions.md`
   - Added maintenance rules for future changes.
 - `Docs/developer_docs/Gantt_Exporter/gantt-excel-exporter.documentation.md.php`

@@ -202,7 +202,7 @@
 		"Access-Control-Expose-Headers": ""
 	},
 
-	"MUTATIONS.ENABLED": false,
+	"MUTATIONS.ENABLED": true,
   
     "BEHAVIORS.SOFTDELETE.FILTER_DELETED_ON_READ": "auto"
 }

@@ -10,7 +10,8 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
 /**
  * Configure one consecutive group of column headers in an XLSX workbook.
  *
- * Define the group title, number of columns, common column width, and header text orientation.
+ * Define the group title, number of columns, common column width, header text orientation, and
+ * display of empty cells.
  * 
  * ```
  * 
@@ -18,7 +19,9 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  *     "name": "Relevance and status",
  *     "column_count": 8,
  *     "column_width": 5.5,
- *     "orientation": "vertical"
+ *     "orientation": "vertical",
+ *     "empty_cell_filler": "n/a",
+ *     "empty_cell_color": "#eeeeee"
  * }
  * 
  * ```
@@ -35,6 +38,8 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
     private int $columnCount = 0;
     private float $columnWidth = 13.0;
     private string $orientation = 'horizontal';
+    private ?string $emptyCellFiller = null;
+    private ?string $emptyCellColor = null;
 
     /**
      * Creates a header group for an action and imports its UXON configuration.
@@ -158,9 +163,63 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
     }
 
     /**
+     * Define the text displayed in empty data cells of this group.
+     *
+     * @uxon-property empty_cell_filler
+     * @uxon-type string
+     * @param string $value
+     * @return $this
+     */
+    public function setEmptyCellFiller(string $value): XLSXHeaderGroups
+    {
+        $this->emptyCellFiller = $value;
+        return $this;
+    }
+
+    /**
+     * Returns the text displayed in empty data cells of this group.
+     */
+    public function getEmptyCellFiller(): ?string
+    {
+        return $this->emptyCellFiller;
+    }
+
+    /**
+     * Define the background color applied to empty data cells of this group.
+     *
+     * Leave this property unset to keep empty cells uncolored.
+     *
+     * @uxon-property empty_cell_color
+     * @uxon-type color
+     *
+     * @param string $value
+     * @return $this
+     */
+    public function setEmptyCellColor(string $value): XLSXHeaderGroups
+    {
+        $this->emptyCellColor = $value;
+        return $this;
+    }
+
+    /**
+     * Returns the optional background color for empty data cells.
+     */
+    public function getEmptyCellColor(): ?string
+    {
+        return $this->emptyCellColor;
+    }
+
+    /**
      * Returns this group in the format expected by XLSX builders.
      *
-     * @return array{name:string,column_count:int,column_width:float,orientation:string}
+     * @return array{
+     *     name:string,
+     *     column_count:int,
+     *     column_width:float,
+     *     orientation:string,
+     *     empty_cell_filler:string|null,
+     *     empty_cell_color:string|null
+     * }
      */
     public function toArray(): array
     {
@@ -169,6 +228,8 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
             'column_count' => $this->getColumnCount(),
             'column_width' => $this->getColumnWidth(),
             'orientation' => $this->getOrientation(),
+            'empty_cell_filler' => $this->getEmptyCellFiller(),
+            'empty_cell_color' => $this->getEmptyCellColor(),
         ];
     }
 }
