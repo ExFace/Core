@@ -25,7 +25,8 @@ class GanttXlsxBuilder
     private int $defaultTaskDurationDays;
     private array $printSettings;
     private array $translations;
-    private array $statusHeadingColors;
+    private array $headingColors;
+    private array $headerGroups;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -37,7 +38,8 @@ class GanttXlsxBuilder
      * @param int $defaultTaskDurationDays
      * @param array<string, mixed> $printSettings
      * @param array<string, string> $translations
-     * @param list<string|null> $statusHeadingColors
+     * @param list<string|null> $headingColors
+     * @param list<array{name:string,column_count:int,column_width:float,orientation:string}> $headerGroups
      */
     public function __construct(
         array $semanticColors = [],
@@ -47,7 +49,8 @@ class GanttXlsxBuilder
         int $defaultTaskDurationDays = 2,
         array $printSettings = [],
         array $translations = [],
-        array $statusHeadingColors = []
+        array $headingColors = [],
+        array $headerGroups = []
     )
     {
         if ($freezeColumns < 0) {
@@ -78,8 +81,6 @@ class GanttXlsxBuilder
         ];
         $requiredTranslations = [
             'SHEET_TITLE',
-            'BASIC_INFO',
-            'STATUS_INFO',
             'LOCATION',
             'GANTT',
             'YEAR',
@@ -107,7 +108,8 @@ class GanttXlsxBuilder
             );
         }
         $this->translations = $translations;
-        $this->statusHeadingColors = $statusHeadingColors;
+        $this->headingColors = $headingColors;
+        $this->headerGroups = $headerGroups;
     }
 
     /**
@@ -120,18 +122,21 @@ class GanttXlsxBuilder
     public function build($data, string $outputPath): void
     {
         $items = $this->extractItems($data);
-        $basicHeaders = $this->collectHeaders($items, 'BasicInfo');
-        $statusHeaders = $this->collectHeaders($items, 'StatusInfo');
+        $headers = $this->collectHeaders($items);
+        if ($headers === []) {
+            throw new \RuntimeException('Gantt export data must contain at least one exported column.');
+        }
+        $headerGroups = $this->resolveHeaderGroups(count($headers));
         $timeline = $this->buildTimeline($items);
-        $layout = $this->calculateLayout(count($basicHeaders), count($statusHeaders));
+        $layout = $this->calculateLayout(count($headers));
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle($this->translations['SHEET_TITLE']);
         $spreadsheet->getDefaultStyle()->getFont()->setName('AvenirNext LT Com Regular')->setSize(12);
-        $this->writeHeaders($sheet, $layout, $basicHeaders, $statusHeaders, $timeline);
-        $this->writeDataRows($sheet, $layout, $basicHeaders, $statusHeaders, $timeline, $items);
-        $this->applyWorksheetSettings($sheet, $layout, count($timeline));
+        $this->writeHeaders($sheet, $layout, $headers, $headerGroups, $timeline);
+        $this->writeDataRows($sheet, $layout, $headers, $headerGroups, $timeline, $items);
+        $this->applyWorksheetSettings($sheet, $layout, $headerGroups, count($timeline));
 
         $directory = dirname($outputPath);
         if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
@@ -168,14 +173,13 @@ class GanttXlsxBuilder
      * Collects section headers in input order while omitting color helper fields.
      *
      * @param list<array<string, mixed>> $items
-     * @param string $section
      * @return list<string>
      */
-    private function collectHeaders(array $items, string $section): array
+    private function collectHeaders(array $items): array
     {
         $headers = [];
         foreach ($items as $item) {
-            $values = $item[$section] ?? [];
+            $values = $item['Columns'] ?? [];
             if (! is_array($values)) {
                 continue;
             }
@@ -248,19 +252,68 @@ class GanttXlsxBuilder
     }
 
     /**
-     * Calculates fixed column regions from dynamic header counts.
+     * Resolves configured groups to absolute workbook column boundaries.
+     *
+     * @return list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}>
+     */
+    private function resolveHeaderGroups(int $columnCount): array
+    {
+        $configuredGroups = $this->headerGroups;
+        if ($configuredGroups === []) {
+            $configuredGroups = [[
+                'name' => '',
+                'column_count' => $columnCount,
+                'column_width' => 13.0,
+                'orientation' => 'horizontal',
+            ]];
+        }
+
+        $groups = [];
+        $start = 1;
+        foreach ($configuredGroups as $group) {
+            if (! is_array($group)
+                || ! isset($group['name'], $group['column_count'], $group['column_width'], $group['orientation'])) {
+                throw new \InvalidArgumentException('Every XLSX header group must contain name, column_count, column_width, and orientation.');
+            }
+            $count = (int) $group['column_count'];
+            $width = (float) $group['column_width'];
+            $orientation = (string) $group['orientation'];
+            if ($count < 1 || $width <= 0 || ! in_array($orientation, ['horizontal', 'vertical'], true)) {
+                throw new \InvalidArgumentException('Invalid XLSX header group settings.');
+            }
+            $groups[] = [
+                'name' => (string) $group['name'],
+                'column_count' => $count,
+                'column_width' => $width,
+                'orientation' => $orientation,
+                'start' => $start,
+                'end' => $start + $count - 1,
+            ];
+            $start += $count;
+        }
+        if ($start - 1 !== $columnCount) {
+            throw new \InvalidArgumentException(
+                'XLSX header groups contain ' . ($start - 1)
+                . ' columns, but the export contains ' . $columnCount . '.'
+            );
+        }
+        return $groups;
+    }
+
+    /**
+     * Calculates fixed workbook regions from the exported column count.
      *
      * @return array<string, int>
      */
-    private function calculateLayout(int $basicCount, int $statusCount): array
+    private function calculateLayout(int $columnCount): array
     {
-        $basicEnd = $basicCount;
-        $statusStart = $basicEnd + 1;
-        $statusEnd = $statusStart + $statusCount - 1;
         return [
-            'basicStart' => 1, 'basicEnd' => $basicEnd, 'statusStart' => $statusStart,
-            'statusEnd' => $statusEnd, 'spacer' => $statusEnd + 1, 'verortung' => $statusEnd + 2,
-            'ganttLabel' => $statusEnd + 3, 'timelineStart' => $statusEnd + 4,
+            'columnsStart' => 1,
+            'columnsEnd' => $columnCount,
+            'spacer' => $columnCount + 1,
+            'verortung' => $columnCount + 2,
+            'ganttLabel' => $columnCount + 3,
+            'timelineStart' => $columnCount + 4,
         ];
     }
 
@@ -268,17 +321,19 @@ class GanttXlsxBuilder
      * Writes all five workbook header rows and their fixed styles.
      *
      * @param array<string, int> $layout
-     * @param list<string> $basicHeaders
-     * @param list<string> $statusHeaders
+     * @param list<string> $headers
+     * @param list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}> $headerGroups
      * @param list<array{year:int,week:int,key:string}> $timeline
      */
-    private function writeHeaders(Worksheet $sheet, array $layout, array $basicHeaders, array $statusHeaders, array $timeline): void
+    private function writeHeaders(Worksheet $sheet, array $layout, array $headers, array $headerGroups, array $timeline): void
     {
         $end = $this->getTimelineEndColumn($layout, count($timeline));
-        $sheet->mergeCells($this->range($layout['basicStart'], 1, $layout['basicEnd'], 1));
-        $sheet->setCellValue($this->cell($layout['basicStart'], 1), $this->translations['BASIC_INFO']);
-        $sheet->mergeCells($this->range($layout['statusStart'], 1, $layout['statusEnd'], 1));
-        $sheet->setCellValue($this->cell($layout['statusStart'], 1), $this->translations['STATUS_INFO']);
+        foreach ($headerGroups as $group) {
+            if ($group['end'] > $group['start']) {
+                $sheet->mergeCells($this->range($group['start'], 1, $group['end'], 1));
+            }
+            $sheet->setCellValue($this->cell($group['start'], 1), $group['name']);
+        }
         $sheet->mergeCells($this->range($layout['verortung'], 1, $layout['verortung'], 5));
         $sheet->setCellValue($this->cell($layout['verortung'], 1), $this->translations['LOCATION']);
         $sheet->mergeCells($this->range($layout['ganttLabel'], 1, $end, 1));
@@ -291,17 +346,16 @@ class GanttXlsxBuilder
         ] as $index => $label) {
             $sheet->setCellValue($this->cell($layout['ganttLabel'], $index + 2), $label);
         }
-        foreach ($basicHeaders as $index => $header) {
-            $sheet->setCellValue($this->cell($layout['basicStart'] + $index, 4), $header);
-        }
-        foreach ($statusHeaders as $index => $header) {
-            $column = $layout['statusStart'] + $index;
+        foreach ($headers as $index => $header) {
+            $column = $layout['columnsStart'] + $index;
             $sheet->setCellValue($this->cell($column, 4), $header);
-            $color = $this->resolveColor($this->statusHeadingColors[$index] ?? null, 'A5A5A5');
+            $group = $this->findHeaderGroup($headerGroups, $column);
+            $defaultColor = $group['orientation'] === 'vertical' ? 'A5A5A5' : 'FFFFFF';
+            $color = $this->resolveColor($this->headingColors[$index] ?? null, $defaultColor);
             $this->fill($sheet, $this->cell($column, 4), $color);
         }
         $this->writeTimelineHeaders($sheet, $layout, $timeline);
-        $this->styleHeaders($sheet, $layout, count($timeline));
+        $this->styleHeaders($sheet, $layout, $headerGroups, count($timeline));
     }
 
     /**
@@ -379,23 +433,30 @@ class GanttXlsxBuilder
     /**
      * Applies all fixed header typography, alignment, and borders.
      */
-    private function styleHeaders(Worksheet $sheet, array $layout, int $timelineCount): void
+    private function styleHeaders(Worksheet $sheet, array $layout, array $headerGroups, int $timelineCount): void
     {
         $end = $this->getTimelineEndColumn($layout, $timelineCount);
         $sheet->getStyle($this->range(1, 1, $end, 5))->applyFromArray([
             'font' => ['name' => 'AvenirNext LT Com Regular', 'color' => ['argb' => 'FF000000']],
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER, 'horizontal' => Alignment::HORIZONTAL_CENTER, 'wrapText' => true],
         ]);
-        foreach ([[$layout['basicStart'], $layout['basicEnd']], [$layout['statusStart'], $layout['statusEnd']],
-                     [$layout['verortung'], $layout['verortung']], [$layout['ganttLabel'], $end]] as [$start, $stop]) {
-            $sheet->getStyle($this->range($start, 1, $stop, 1))->getFont()->setBold(true)->setSize(12);
+        foreach ($headerGroups as $group) {
+            $sheet->getStyle($this->range($group['start'], 1, $group['end'], 1))->getFont()->setBold(true)->setSize(12);
+            if ($group['orientation'] === 'vertical') {
+                $sheet->getStyle($this->range($group['start'], 4, $group['end'], 4))->applyFromArray([
+                    'font' => ['bold' => true, 'size' => 11],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_LEFT,
+                        'vertical' => Alignment::VERTICAL_CENTER,
+                        'textRotation' => 90,
+                        'wrapText' => true,
+                    ],
+                ]);
+            } else {
+                $sheet->getStyle($this->range($group['start'], 4, $group['end'], 4))->getFont()->setBold(true)->setSize(12);
+            }
         }
-        $sheet->getStyle($this->range($layout['basicStart'], 4, $layout['basicEnd'], 4))->getFont()->setBold(true)->setSize(12);
-        $sheet->getStyle($this->range($layout['statusStart'], 4, $layout['statusEnd'], 4))->applyFromArray([
-            'font' => ['bold' => true, 'size' => 11],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT, 'vertical' => Alignment::VERTICAL_CENTER, 'textRotation' => 90, 'wrapText' => true],
-        ]);
-        foreach (range($layout['statusStart'], $layout['statusEnd']) as $column) {
+        foreach (range($layout['columnsStart'], $layout['columnsEnd']) as $column) {
             $rgb = $sheet->getStyle($this->cell($column, 4))->getFill()->getStartColor()->getRGB();
             $textColor = $this->resolveColor(
                 ColorTools::pickTextColorForBackgroundColor('#' . $rgb, $this->textColorPreference),
@@ -403,6 +464,8 @@ class GanttXlsxBuilder
             );
             $sheet->getStyle($this->cell($column, 4))->getFont()->getColor()->setARGB('FF' . $textColor);
         }
+        $sheet->getStyle($this->cell($layout['verortung'], 1))->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle($this->range($layout['ganttLabel'], 1, $end, 1))->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle($this->range($layout['ganttLabel'], 2, $layout['ganttLabel'], 5))->getFont()->setSize(8);
         if ($timelineCount > 0) {
             $sheet->getStyle($this->range($layout['timelineStart'], 2, $end, 2))->getFont()->setBold(true)->setSize(14);
@@ -421,23 +484,23 @@ class GanttXlsxBuilder
             $sheet->getStyle($this->range($layout['timelineStart'], 5, $end, 5))->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
         }
         $sheet->getStyle($this->range(1, 4, $layout['ganttLabel'], 5))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
-        $this->mediumOutline($sheet, 1, 1, $layout['basicEnd'], 5);
-        $this->mediumOutline($sheet, $layout['statusStart'], 1, $layout['statusEnd'], 5);
+        foreach ($headerGroups as $group) {
+            $this->mediumOutline($sheet, $group['start'], 1, $group['end'], 5);
+            $this->mediumOutline($sheet, $group['start'], 1, $group['end'], 1);
+        }
         $this->mediumOutline($sheet, $layout['ganttLabel'], 1, $layout['ganttLabel'], 5);
-        $this->mediumOutline($sheet, 1, 1, $layout['basicEnd'], 1);
-        $this->mediumOutline($sheet, $layout['statusStart'], 1, $layout['statusEnd'], 1);
         $this->mediumOutline($sheet, $layout['ganttLabel'], 1, $end, 1);
     }
 
     /**
-     * Writes merged basic/status cells and packed Gantt task lanes.
+     * Writes grouped column values and packed Gantt task lanes.
      *
-     * @param list<string> $basicHeaders
-     * @param list<string> $statusHeaders
+     * @param list<string> $headers
+     * @param list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}> $headerGroups
      * @param list<array{year:int,week:int,key:string}> $timeline
      * @param list<array<string,mixed>> $items
      */
-    private function writeDataRows(Worksheet $sheet, array $layout, array $basicHeaders, array $statusHeaders, array $timeline, array $items): void
+    private function writeDataRows(Worksheet $sheet, array $layout, array $headers, array $headerGroups, array $timeline, array $items): void
     {
         $timelineIndex = [];
         foreach ($timeline as $index => $week) {
@@ -466,11 +529,13 @@ class GanttXlsxBuilder
             'alignment' => ['vertical' => Alignment::VERTICAL_CENTER],
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['argb' => 'FF808080']]],
         ]);
-        if ($statusHeaders !== []) {
-            $sheet->getStyle($this->range($layout['statusStart'], self::DATA_START_ROW, $layout['statusEnd'], $lastRow))->applyFromArray([
-                'font' => ['size' => 10],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            ]);
+        foreach ($headerGroups as $group) {
+            if ($group['orientation'] === 'vertical') {
+                $sheet->getStyle($this->range($group['start'], self::DATA_START_ROW, $group['end'], $lastRow))->applyFromArray([
+                    'font' => ['size' => 10],
+                    'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                ]);
+            }
         }
 
         foreach ($rowPlans as $plan) {
@@ -478,13 +543,12 @@ class GanttXlsxBuilder
             $lanes = $plan['lanes'];
             $row = $plan['startRow'];
             $endRow = $plan['endRow'];
-            $this->writeValueSection($sheet, 1, $basicHeaders, $item['BasicInfo'] ?? [], $row, $endRow);
-            $this->writeValueSection($sheet, $layout['statusStart'], $statusHeaders, $item['StatusInfo'] ?? [], $row, $endRow);
+            $this->writeValueSection($sheet, $layout['columnsStart'], $headers, $item['Columns'] ?? [], $row, $endRow);
             if ($this->mergeCells && $endRow > $row) {
                 $sheet->mergeCells($this->range($layout['verortung'], $row, $layout['verortung'], $endRow));
             }
             foreach ($this->getValueRows($row, $endRow) as $valueRow) {
-                $sheet->setCellValue($this->cell($layout['verortung'], $valueRow), $item['BasicInfo']['Verortung'] ?? '');
+                $sheet->setCellValue($this->cell($layout['verortung'], $valueRow), $item['Columns']['Verortung'] ?? '');
             }
             $sheet->getStyle($this->range($layout['verortung'], $row, $layout['verortung'], $endRow))->getFont()->setBold(true);
             foreach ($lanes as $laneIndex => $tasks) {
@@ -511,7 +575,7 @@ class GanttXlsxBuilder
                     ]);
                 }
             }
-            $sheet->getStyle($this->range($layout['basicStart'], $endRow, $timelineEnd, $endRow))
+            $sheet->getStyle($this->range($layout['columnsStart'], $endRow, $timelineEnd, $endRow))
                 ->getBorders()->getBottom()->setBorderStyle(Border::BORDER_MEDIUM);
         }
     }
@@ -646,18 +710,17 @@ class GanttXlsxBuilder
     /**
      * Applies fixed dimensions, panes, filters, and print settings.
      */
-    private function applyWorksheetSettings(Worksheet $sheet, array $layout, int $timelineCount): void
+    private function applyWorksheetSettings(Worksheet $sheet, array $layout, array $headerGroups, int $timelineCount): void
     {
         $end = $this->getTimelineEndColumn($layout, $timelineCount);
         $lastRow = max(self::DATA_START_ROW, $sheet->getHighestDataRow());
         foreach ([1 => 22.5, 2 => 25.45, 3 => 36.75, 4 => 147.75, 5 => 23.2] as $row => $height) {
             $sheet->getRowDimension($row)->setRowHeight($height);
         }
-        foreach (range(1, $layout['basicEnd']) as $offset => $column) {
-            $sheet->getColumnDimensionByColumn($column)->setWidth([13.15, 13.0, 12.6, 14.45, 12, 15.15][$offset] ?? 13);
-        }
-        foreach (range($layout['statusStart'], $layout['statusEnd']) as $column) {
-            $sheet->getColumnDimensionByColumn($column)->setWidth(5.5);
+        foreach ($headerGroups as $group) {
+            foreach (range($group['start'], $group['end']) as $column) {
+                $sheet->getColumnDimensionByColumn($column)->setWidth($group['column_width']);
+            }
         }
         $sheet->getColumnDimensionByColumn($layout['spacer'])->setWidth(6.13);
         $sheet->getColumnDimensionByColumn($layout['verortung'])->setWidth(16.2);
@@ -685,6 +748,22 @@ class GanttXlsxBuilder
             ->setBottom($margins['bottom'])
             ->setHeader($margins['header'])
             ->setFooter($margins['footer']);
+    }
+
+    /**
+     * Returns the configured group containing an absolute workbook column.
+     *
+     * @param list<array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}> $headerGroups
+     * @return array{name:string,column_count:int,column_width:float,orientation:string,start:int,end:int}
+     */
+    private function findHeaderGroup(array $headerGroups, int $column): array
+    {
+        foreach ($headerGroups as $group) {
+            if ($column >= $group['start'] && $column <= $group['end']) {
+                return $group;
+            }
+        }
+        throw new \LogicException('No XLSX header group contains column ' . $column . '.');
     }
 
     /**

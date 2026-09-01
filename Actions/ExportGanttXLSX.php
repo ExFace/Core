@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\CommonLogic\Actions\XLSXHeaderGroups;
 use exface\Core\CommonLogic\Actions\XLSXPrintSettings;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\CommonLogic\Model\Expression;
@@ -27,8 +28,7 @@ use exface\Core\Widgets\Gantt;
  * lifecycle, so the browser only sends the active filters, sorters, and widget context. All rows
  * and nested task data are then read by the server.
  *
- * Use `basic_info_columns` and `status_info_columns` to map Gantt data column names to the captions
- * expected by the spreadsheet.
+ * Use `header_groups` to divide the exported columns into formatted sections.
  *
  * @author Sergej Riel
  */
@@ -36,16 +36,14 @@ class ExportGanttXLSX extends ExportJSON
 {
     private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
 
-    private array $basicInfoColumns = [];
-    private array $statusInfoColumns = [];
-    private array $basicInfoColumnOverrides = [];
-    private array $statusInfoColumnOverrides = [];
+    private array $columns = [];
     private array $semanticColors = [];
     private bool $mergeCells = false;
     private float $textColorPreference = 0.5;
     private int $freezeColumns = 0;
-    private int $basicInfoColumnCount = 6;
     private ?XLSXPrintSettings $xlsxPrintSettings = null;
+    /** @var list<XLSXHeaderGroups> */
+    private array $headerGroups = [];
     private ?string $headingColor = null;
 
     /**
@@ -95,22 +93,16 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Splits requested business columns into basic and status mappings for the spreadsheet builder.
+     * Captures requested business columns in their export order for the spreadsheet builder.
      *
-     * System columns and the nested task column are excluded before the configured number of
-     * columns is assigned to `BasicInfo`; all remaining columns are assigned to `StatusInfo`.
+     * System columns and the nested task column are excluded.
      *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::writeHeader()
      */
     protected function writeHeader(array $exportedColumns): array
     {
-        $this->basicInfoColumns = [];
-        $this->statusInfoColumns = [];
-        $basicInfoColumnOverrides = $this->getBasicInfoColumns();
-        $statusInfoColumnOverrides = $this->getStatusInfoColumns();
-        $basicInfoColumnCount = $this->getBasicInfoColumnCount();
-        $businessColumnIndex = 0;
+        $this->columns = [];
 
         foreach ($exportedColumns as $column) {
             if (! $column instanceof DataColumn
@@ -124,19 +116,18 @@ class ExportGanttXLSX extends ExportJSON
                 continue;
             }
 
-            $isBasicInfo = $businessColumnIndex < $basicInfoColumnCount;
-            $overrides = $isBasicInfo ? $basicInfoColumnOverrides : $statusInfoColumnOverrides;
-            $caption = $overrides[$source] ?? $column->getCaption() ?? $source;
+            $caption = $column->getCaption() ?? $source;
             if ($caption === '') {
                 $caption = $source;
             }
-
-            if ($isBasicInfo) {
-                $this->basicInfoColumns[$source] = $caption;
-            } else {
-                $this->statusInfoColumns[$source] = $caption;
+            if (in_array($caption, $this->columns, true)) {
+                throw new ActionConfigurationError(
+                    $this,
+                    'Cannot export multiple Gantt columns with the same caption "' . $caption . '".'
+                );
             }
-            $businessColumnIndex++;
+
+            $this->columns[$source] = $caption;
         }
 
         return [];
@@ -183,6 +174,7 @@ class ExportGanttXLSX extends ExportJSON
         if ($dataSheet->isEmpty()) {
             throw new ActionInputMissingError($this, 'Cannot export Gantt data: no rows match the current filters.');
         }
+        $this->validateHeaderGroupColumnCount();
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
         try {
@@ -194,7 +186,11 @@ class ExportGanttXLSX extends ExportJSON
                 $this->getDefaultTaskDurationDays(),
                 $this->getXLSXPrintSettings()->toArray(),
                 $this->getWorkbookTranslations(),
-                $this->getStatusHeadingColors($dataSheet)
+                $this->getHeadingColors($dataSheet),
+                array_map(
+                    static fn(XLSXHeaderGroups $group): array => $group->toArray(),
+                    $this->getHeaderGroups()
+                )
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
@@ -214,7 +210,7 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Converts raw Gantt rows into the three sections consumed by the spreadsheet builder.
+     * Converts raw Gantt rows into generic column values and nested tasks for the builder.
      * 
      * @param array $rows
      * @return array
@@ -230,11 +226,10 @@ class ExportGanttXLSX extends ExportJSON
             }
 
             $result[] = [
-                'BasicInfo' => $this->mapSection($row, $this->basicInfoColumns),
+                'Columns' => $this->mapColumns($row),
                 'VerortungZuMassnahmeSichtbar' => [
                     'rows' => $this->mapTaskRows($row[$taskColumns['nested']] ?? [], $taskColumns),
                 ],
-                'StatusInfo' => $this->mapSection($row, $this->statusInfoColumns),
             ];
         }
 
@@ -247,16 +242,15 @@ class ExportGanttXLSX extends ExportJSON
 
 
     /**
-     * Maps configured source columns and companion color columns to spreadsheet fields.
+     * Maps exported columns and their companion colors to generic spreadsheet fields.
      * 
      * @param array $row
-     * @param array $mapping
      * @return array
      */
-    private function mapSection(array $row, array $mapping): array
+    private function mapColumns(array $row): array
     {
         $result = [];
-        foreach ($mapping as $source => $target) {
+        foreach ($this->columns as $source => $target) {
             $result[$target] = $row[$source] ?? null;
             $colorSource = '_' . $source . 'Farbe';
             if (array_key_exists($colorSource, $row)) {
@@ -265,9 +259,9 @@ class ExportGanttXLSX extends ExportJSON
         }
 
         $timeStatusColor = self::TIME_STATUS_COLOR_COLUMN;
-        if (isset($mapping['VerortungStatus__ZeitlicherStatus__WertAggregation'])
+        if (isset($this->columns['VerortungStatus__ZeitlicherStatus__WertAggregation'])
             && array_key_exists($timeStatusColor, $row)) {
-            $target = $mapping['VerortungStatus__ZeitlicherStatus__WertAggregation'];
+            $target = $this->columns['VerortungStatus__ZeitlicherStatus__WertAggregation'];
             $result[$target . '_Farbe'] = $row[$timeStatusColor];
         }
 
@@ -366,8 +360,6 @@ class ExportGanttXLSX extends ExportJSON
         $translations = [];
         foreach ([
             'SHEET_TITLE',
-            'BASIC_INFO',
-            'STATUS_INFO',
             'LOCATION',
             'GANTT',
             'YEAR',
@@ -401,94 +393,9 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Map Gantt columns to the basic-information captions in the workbook.
-     * Use requested Gantt data column names as keys and the desired workbook captions as values.
-     * Supplied entries override captions in the configured number of BasicInfo columns.
-     *
-     * @uxon-property basic_info_columns
-     * @uxon-type {string => string}
-     *
-     * @param UxonObject $mapping
-     * @return ExportGanttXLSX
-     */
-    public function setBasicInfoColumns(UxonObject $mapping): ExportGanttXLSX
-    {
-        $this->basicInfoColumnOverrides = $mapping->toArray();
-        return $this;
-    }
-
-    /**
-     * Returns the configured caption overrides for BasicInfo columns.
-     *
-     * @return array<string, string>
-     */
-    public function getBasicInfoColumns(): array
-    {
-        return $this->basicInfoColumnOverrides;
-    }
-
-    /**
-     * Map Gantt columns to the status captions in the workbook.
-     * Use requested Gantt data column names as keys and the desired workbook captions as values.
-     * Supplied entries override captions after the configured number of BasicInfo columns. A
-     * companion color column named `_<data column name>Farbe` is applied automatically when
-     * available.
-     *
-     * @uxon-property status_info_columns
-     * @uxon-type {string => string}
-     *
-     * @param UxonObject $mapping
-     * @return ExportGanttXLSX
-     */
-    public function setStatusInfoColumns(UxonObject $mapping): ExportGanttXLSX
-    {
-        $this->statusInfoColumnOverrides = $mapping->toArray();
-        return $this;
-    }
-
-    /**
-     * Returns the configured caption overrides for StatusInfo columns.
-     *
-     * @return array<string, string>
-     */
-    public function getStatusInfoColumns(): array
-    {
-        return $this->statusInfoColumnOverrides;
-    }
-
-    /**
-     * Define how many requested business columns form the BasicInfo section.
-     *
-     * All subsequent business columns form the StatusInfo section.
-     *
-     * @uxon-property basic_info_column_count
-     * @uxon-type integer
-     * @uxon-default 6
-     *
-     * @param int $value
-     * @return ExportGanttXLSX
-     */
-    public function setBasicInfoColumnCount(int $value): ExportGanttXLSX
-    {
-        if ($value < 0) {
-            throw new ActionConfigurationError($this, '`basic_info_column_count` cannot be negative.');
-        }
-        $this->basicInfoColumnCount = $value;
-        return $this;
-    }
-
-    /**
-     * Returns the number of requested business columns assigned to BasicInfo.
-     */
-    public function getBasicInfoColumnCount(): int
-    {
-        return $this->basicInfoColumnCount;
-    }
-
-    /**
      * Merge location information vertically when overlapping tasks occupy multiple rows.
      *
-     * Keep this disabled to repeat the BasicInfo and StatusInfo values in every task lane instead.
+     * Keep this disabled to repeat exported column values in every task lane instead.
      *
      * @uxon-property merge_cells
      * @uxon-type boolean
@@ -570,7 +477,64 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Define the background color of status heading cells.
+     * Define consecutive visual groups for the exported columns.
+     *
+     * The sum of all `column_count` values must match the number of exported business columns.
+     *
+     * @uxon-property header_groups
+     * @uxon-type \exface\Core\CommonLogic\Actions\XLSXHeaderGroups[]
+     * @uxon-template [{"name":"","column_count":1,"column_width":13,"orientation":"horizontal"}]
+     *
+     * @param UxonObject $value
+     * @return $this
+     */
+    public function setHeaderGroups(UxonObject $value): ExportGanttXLSX
+    {
+        $this->headerGroups = [];
+        foreach ($value->toArray() as $groupUxon) {
+            if (! is_array($groupUxon)) {
+                throw new ActionConfigurationError($this, 'Every `header_groups` entry must be an object.');
+            }
+            $this->headerGroups[] = new XLSXHeaderGroups($this, new UxonObject($groupUxon));
+        }
+        return $this;
+    }
+
+    /**
+     * Returns the configured header groups in their declared order.
+     *
+     * @return list<XLSXHeaderGroups>
+     */
+    public function getHeaderGroups(): array
+    {
+        return $this->headerGroups;
+    }
+
+    /**
+     * Ensures configured header groups cover every exported business column exactly once.
+     */
+    private function validateHeaderGroupColumnCount(): void
+    {
+        $groups = $this->getHeaderGroups();
+        if ($groups === []) {
+            return;
+        }
+        $configuredCount = array_sum(array_map(
+            static fn($group): int => $group->getColumnCount(),
+            $groups
+        ));
+        $exportedCount = count($this->columns);
+        if ($configuredCount !== $exportedCount) {
+            throw new ActionConfigurationError(
+                $this,
+                '`header_groups` contain ' . $configuredCount
+                . ' columns, but the export contains ' . $exportedCount . '.'
+            );
+        }
+    }
+
+    /**
+     * Define the background color of exported column heading cells.
      *
      * Use placeholders to resolve a different color for each exported status column, for example
      * `=Lookup('ExcelHeadingColor', 'my.App.KPIDefinition', 'Code == [#~column:attribute_alias#]')`.
@@ -617,15 +581,15 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Resolves heading colors in the same order as the exported StatusInfo columns.
+     * Resolves heading colors in the same order as the exported columns.
      *
      * @param DataSheetInterface $dataSheet
      * @return list<string|null>
      */
-    private function getStatusHeadingColors(DataSheetInterface $dataSheet): array
+    private function getHeadingColors(DataSheetInterface $dataSheet): array
     {
         $colors = [];
-        foreach (array_keys($this->statusInfoColumns) as $source) {
+        foreach (array_keys($this->columns) as $source) {
             $column = $dataSheet->getColumns()->get($source);
             $colors[] = $column instanceof DataColumnInterface
                 ? $this->getHeadingColor($column)

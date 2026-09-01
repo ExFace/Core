@@ -436,8 +436,6 @@
     "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "Der angegebene Datenzeitraum liegt vollständig in der Vergangenheit oder Zukunft und enthält das heutige Datum nicht.",
     "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TITLE": "Der heutige Tag ist nicht enthalten.",
     "WIDGET.GANTT_CHARD.EXCEL.SHEET_TITLE": "Terminübersicht",
-    "WIDGET.GANTT_CHARD.EXCEL.BASIC_INFO": "Mast-Basis-Informationen",
-    "WIDGET.GANTT_CHARD.EXCEL.STATUS_INFO": "Relevanz + Status",
     "WIDGET.GANTT_CHARD.EXCEL.LOCATION": "Verortung",
     "WIDGET.GANTT_CHARD.EXCEL.GANTT": "Ablauf-Gantt",
     "WIDGET.GANTT_CHARD.EXCEL.YEAR": "Jahr 20..",
