@@ -144,6 +144,24 @@ class ActionInputValidator
             }
         }
 
+        // Widgets based on a related object (e.g. InputTags for 3-table tagging) send their input
+        // as a nested subsheet in a single column named after the relation from the parent object.
+        // TODO Future improvement: validate the subsheet contents recursively by building the
+        // expected columns against the child widget's own object and checking the nested rows the
+        // same way as the top level (also handling arbitrary nesting depth).
+        if($inputWidget instanceof iContainOtherWidgets) {
+            $inputObject = $inputWidget->getMetaObject();
+            foreach ($inputWidget->getInputWidgets() as $child) {
+                if(($child instanceof iTakeInputAsDataSubsheet)
+                    && $child->isSubsheetForObject($inputObject)
+                    && null !== $relPath = $child->getObjectRelationPathFromParent()
+                ) {
+                    $name = $relPath->toString();
+                    $expectedColumns[$name] = $name;
+                }
+            }
+        }
+
         $this->addColumnsInjectedAtRuntime($expectedColumns);
         
         return $expectedColumns;
