@@ -17,12 +17,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 class GanttXlsxBuilder
 {
     private const DATA_START_ROW = 6;
-    private const STATUS_HEADER_COLORS = [
-        'A5A5A5', 'D9E1F2', 'D9E1F2', 'F2E3B3', 'F2D06B', 'D98943', 'D96D48', 'FFB1A8',
-        'D9C7A7', '65B6BF', '176A73', '83A603', '618C03', '365902', 'A68660', '555643',
-        '4E7FBF', '4E7FBF', '4E7FBF', '4E7FBF', '4E7FBF', '4E7FBF', '23468C', '23468C',
-        '4D6C73', '85A0A6', 'A8BBBF', 'C1D4D9', '9C797C', '9C797C',
-    ];
 
     private array $semanticColors;
     private bool $mergeCells;
@@ -31,6 +25,7 @@ class GanttXlsxBuilder
     private int $defaultTaskDurationDays;
     private array $printSettings;
     private array $translations;
+    private array $statusHeadingColors;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -42,6 +37,7 @@ class GanttXlsxBuilder
      * @param int $defaultTaskDurationDays
      * @param array<string, mixed> $printSettings
      * @param array<string, string> $translations
+     * @param list<string|null> $statusHeadingColors
      */
     public function __construct(
         array $semanticColors = [],
@@ -50,7 +46,8 @@ class GanttXlsxBuilder
         int $freezeColumns = 0,
         int $defaultTaskDurationDays = 2,
         array $printSettings = [],
-        array $translations = []
+        array $translations = [],
+        array $statusHeadingColors = []
     )
     {
         if ($freezeColumns < 0) {
@@ -110,6 +107,7 @@ class GanttXlsxBuilder
             );
         }
         $this->translations = $translations;
+        $this->statusHeadingColors = $statusHeadingColors;
     }
 
     /**
@@ -299,7 +297,8 @@ class GanttXlsxBuilder
         foreach ($statusHeaders as $index => $header) {
             $column = $layout['statusStart'] + $index;
             $sheet->setCellValue($this->cell($column, 4), $header);
-            $this->fill($sheet, $this->cell($column, 4), self::STATUS_HEADER_COLORS[$index] ?? 'A5A5A5');
+            $color = $this->resolveColor($this->statusHeadingColors[$index] ?? null, 'A5A5A5');
+            $this->fill($sheet, $this->cell($column, 4), $color);
         }
         $this->writeTimelineHeaders($sheet, $layout, $timeline);
         $this->styleHeaders($sheet, $layout, count($timeline));

@@ -179,6 +179,11 @@ white according to the same weighted WCAG contrast calculation as the browser-si
 their configured background color. The calculation uses the active facade configuration option
 `WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE`, so browser and workbook apply the same preference.
 
+Set `heading_color` to a color or formula to control the StatusInfo heading backgrounds. Formula
+placeholders such as `[#~column:attribute_alias#]`, `[#~column:name#]`, and
+`[#~column:formula#]` are resolved separately for each exported status column. Missing or invalid
+colors use the neutral gray fallback.
+
 ## Workbook structure
 
 `GanttXlsxBuilder` preserves the supplied workbook design:

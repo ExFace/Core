@@ -3,12 +3,16 @@ namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Actions\XLSXPrintSettings;
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Utils\GanttXlsxBuilder;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
+use exface\Core\Factories\FormulaFactory;
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
@@ -42,6 +46,7 @@ class ExportGanttXLSX extends ExportJSON
     private int $freezeColumns = 0;
     private int $basicInfoColumnCount = 6;
     private ?XLSXPrintSettings $xlsxPrintSettings = null;
+    private ?string $headingColor = null;
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -188,7 +193,8 @@ class ExportGanttXLSX extends ExportJSON
                 $this->getFreezeColumns(),
                 $this->getDefaultTaskDurationDays(),
                 $this->getXLSXPrintSettings()->toArray(),
-                $this->getWorkbookTranslations()
+                $this->getWorkbookTranslations(),
+                $this->getStatusHeadingColors($dataSheet)
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
@@ -561,5 +567,70 @@ class ExportGanttXLSX extends ExportJSON
             $this->xlsxPrintSettings = new XLSXPrintSettings($this);
         }
         return $this->xlsxPrintSettings;
+    }
+
+    /**
+     * Define the background color of status heading cells.
+     *
+     * Use placeholders to resolve a different color for each exported status column, for example
+     * `=Lookup('ExcelHeadingColor', 'my.App.KPIDefinition', 'Code == [#~column:attribute_alias#]')`.
+     *
+     * @uxon-property heading_color
+     * @uxon-type string
+     *
+     * @param string $colorOrFormula
+     * @return ExportGanttXLSX
+     */
+    protected function setHeadingColor(string $colorOrFormula): ExportGanttXLSX
+    {
+        $this->headingColor = $colorOrFormula;
+        return $this;
+    }
+
+    /**
+     * Resolves the configured heading color for a specific exported DataSheet column.
+     *
+     * @param DataColumnInterface $dataSheetColumn
+     * @return string|null
+     */
+    protected function getHeadingColor(DataColumnInterface $dataSheetColumn): ?string
+    {
+        if ($this->headingColor === null) {
+            return null;
+        }
+
+        $color = $this->headingColor;
+        if (! Expression::detectFormula($color)) {
+            return $color;
+        }
+
+        $placeholders = [
+            '~column:attribute_alias' => $dataSheetColumn->getAttributeAlias(),
+            '~column:name' => $dataSheetColumn->getName(),
+            '~column:formula' => $dataSheetColumn->getFormula(),
+        ];
+        $formulaString = StringDataType::replacePlaceholders($color, $placeholders);
+        $formula = FormulaFactory::createFromString($this->getWorkbench(), $formulaString);
+        $result = $formula->evaluate();
+
+        return $result === null ? null : (string) $result;
+    }
+
+    /**
+     * Resolves heading colors in the same order as the exported StatusInfo columns.
+     *
+     * @param DataSheetInterface $dataSheet
+     * @return list<string|null>
+     */
+    private function getStatusHeadingColors(DataSheetInterface $dataSheet): array
+    {
+        $colors = [];
+        foreach (array_keys($this->statusInfoColumns) as $source) {
+            $column = $dataSheet->getColumns()->get($source);
+            $colors[] = $column instanceof DataColumnInterface
+                ? $this->getHeadingColor($column)
+                : null;
+        }
+        return $colors;
     }
 }
