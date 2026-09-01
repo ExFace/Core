@@ -82,7 +82,7 @@ Other export properties remain inherited, including `filename`, `downloadable`,
 `lazy_export` is the exception: it is fixed to `false` and configuring it as `true` raises a
 configuration error because the timeline requires all rows.
 
-Set `merge_cells` to `true` to merge exported values and the dedicated location value vertically
+Set `merge_cells` to `true` to merge exported values and the dedicated ID value vertically
 when overlapping tasks require multiple lanes. It defaults to `false`; in that mode, values are
 repeated in every occupied task lane without merging cells.
 
@@ -145,6 +145,7 @@ groups:
  
 {
     "action_alias": "exface.Core.ExportGanttXLSX",
+    "id_attribute_alias": "LOCATION_CODE",
     "header_groups": [
         {
             "name": "Mast-Basis-Informationen",
@@ -183,8 +184,10 @@ Cell colors are mapped automatically when the input row contains a companion col
 columns selected by the Gantt export request.
 
 If a Gantt column has no explicit caption, its attribute name from the metamodel is used
-automatically. One column must still resolve to `Verortung`, because this value is also shown in the
-dedicated location column.
+automatically. Set `id_attribute_alias` to copy an exported attribute into the dedicated column
+before the Gantt timeline. Its exported caption becomes the five-row header. If the property is
+omitted, the first exported column of the first header group is used. A configured ID attribute that
+is not included in the current export raises a configuration error.
 
 Semantic companion colors such as `~OK`, `~WARNING`, and `~ERROR` are resolved with the semantic
 CSS color map of the facade that triggered the export. This keeps workbook colors aligned with the
@@ -208,14 +211,14 @@ horizontal groups use white and vertical groups use neutral gray.
 - Worksheet name: `Terminübersicht`
 - Five header rows and data beginning in row 6
 - Configurable column groups with merged group headers, widths, and caption orientations
-- A separate location column followed by weekly timeline columns
+- A dedicated ID column selected by `id_attribute_alias`, followed by weekly timeline columns
 - Timeline grouping by execution year, quarter, month, and calendar week
 - Quarter-bounded date range derived from all valid nested tasks
 - ISO week 53 in years that contain it, including its days in the following calendar year
 - Overlapping measures packed into separate lanes
 - Task bars filled with their configured colors
 - Merged exported value cells across all lanes of a location
-- A continuous thick black bottom border from the first exported column through the timeline after every location
+- A continuous medium black bottom border from the first exported column through the timeline after every location
 - Fixed row heights, column widths, borders, freeze pane, filter, and print settings
 
 If a task supplies only a valid start date, its end is calculated by adding the task configuration's

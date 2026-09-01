@@ -27,6 +27,7 @@ class GanttXlsxBuilder
     private array $translations;
     private array $headingColors;
     private array $headerGroups;
+    private ?string $idColumn;
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -40,6 +41,7 @@ class GanttXlsxBuilder
      * @param array<string, string> $translations
      * @param list<string|null> $headingColors
      * @param list<array<string,mixed>> $headerGroups
+     * @param string|null $idColumn
      */
     public function __construct(
         array $semanticColors = [],
@@ -50,7 +52,8 @@ class GanttXlsxBuilder
         array $printSettings = [],
         array $translations = [],
         array $headingColors = [],
-        array $headerGroups = []
+        array $headerGroups = [],
+        ?string $idColumn = null
     )
     {
         if ($freezeColumns < 0) {
@@ -81,7 +84,6 @@ class GanttXlsxBuilder
         ];
         $requiredTranslations = [
             'SHEET_TITLE',
-            'LOCATION',
             'GANTT',
             'YEAR',
             'QUARTER',
@@ -110,6 +112,7 @@ class GanttXlsxBuilder
         $this->translations = $translations;
         $this->headingColors = $headingColors;
         $this->headerGroups = $headerGroups;
+        $this->idColumn = $idColumn;
     }
 
     /**
@@ -126,6 +129,7 @@ class GanttXlsxBuilder
         if ($headers === []) {
             throw new \RuntimeException('Gantt export data must contain at least one exported column.');
         }
+        $idColumn = $this->resolveIdColumn($headers);
         $headerGroups = $this->resolveHeaderGroups(count($headers));
         $timeline = $this->buildTimeline($items);
         $layout = $this->calculateLayout(count($headers));
@@ -134,8 +138,8 @@ class GanttXlsxBuilder
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle($this->translations['SHEET_TITLE']);
         $spreadsheet->getDefaultStyle()->getFont()->setName('AvenirNext LT Com Regular')->setSize(12);
-        $this->writeHeaders($sheet, $layout, $headers, $headerGroups, $timeline);
-        $this->writeDataRows($sheet, $layout, $headers, $headerGroups, $timeline, $items);
+        $this->writeHeaders($sheet, $layout, $headers, $headerGroups, $timeline, $idColumn);
+        $this->writeDataRows($sheet, $layout, $headers, $headerGroups, $timeline, $items, $idColumn);
         $this->applyWorksheetSettings($sheet, $layout, $headerGroups, count($timeline));
 
         $directory = dirname($outputPath);
@@ -191,6 +195,20 @@ class GanttXlsxBuilder
             }
         }
         return array_keys($headers);
+    }
+
+    /**
+     * Resolves the dedicated ID column, defaulting to the first exported column.
+     *
+     * @param list<string> $headers
+     */
+    private function resolveIdColumn(array $headers): string
+    {
+        $idColumn = $this->idColumn ?? $headers[0];
+        if (! in_array($idColumn, $headers, true)) {
+            throw new \InvalidArgumentException('The XLSX ID column "' . $idColumn . '" is not an exported column.');
+        }
+        return $idColumn;
     }
 
     /**
@@ -330,7 +348,7 @@ class GanttXlsxBuilder
             'columnsStart' => 1,
             'columnsEnd' => $columnCount,
             'spacer' => $columnCount + 1,
-            'verortung' => $columnCount + 2,
+            'idColumn' => $columnCount + 2,
             'ganttLabel' => $columnCount + 3,
             'timelineStart' => $columnCount + 4,
         ];
@@ -343,8 +361,16 @@ class GanttXlsxBuilder
      * @param list<string> $headers
      * @param list<array<string,mixed>> $headerGroups
      * @param list<array{year:int,week:int,key:string}> $timeline
+     * @param string $idColumn
      */
-    private function writeHeaders(Worksheet $sheet, array $layout, array $headers, array $headerGroups, array $timeline): void
+    private function writeHeaders(
+        Worksheet $sheet,
+        array $layout,
+        array $headers,
+        array $headerGroups,
+        array $timeline,
+        string $idColumn
+    ): void
     {
         $end = $this->getTimelineEndColumn($layout, count($timeline));
         foreach ($headerGroups as $group) {
@@ -353,8 +379,8 @@ class GanttXlsxBuilder
             }
             $sheet->setCellValue($this->cell($group['start'], 1), $group['name']);
         }
-        $sheet->mergeCells($this->range($layout['verortung'], 1, $layout['verortung'], 5));
-        $sheet->setCellValue($this->cell($layout['verortung'], 1), $this->translations['LOCATION']);
+        $sheet->mergeCells($this->range($layout['idColumn'], 1, $layout['idColumn'], 5));
+        $sheet->setCellValue($this->cell($layout['idColumn'], 1), $idColumn);
         $sheet->mergeCells($this->range($layout['ganttLabel'], 1, $end, 1));
         $sheet->setCellValue($this->cell($layout['ganttLabel'], 1), $this->translations['GANTT']);
         foreach ([
@@ -483,7 +509,7 @@ class GanttXlsxBuilder
             );
             $sheet->getStyle($this->cell($column, 4))->getFont()->getColor()->setARGB('FF' . $textColor);
         }
-        $sheet->getStyle($this->cell($layout['verortung'], 1))->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle($this->cell($layout['idColumn'], 1))->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle($this->range($layout['ganttLabel'], 1, $end, 1))->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle($this->range($layout['ganttLabel'], 2, $layout['ganttLabel'], 5))->getFont()->setSize(8);
         if ($timelineCount > 0) {
@@ -518,8 +544,17 @@ class GanttXlsxBuilder
      * @param list<array<string,mixed>> $headerGroups
      * @param list<array{year:int,week:int,key:string}> $timeline
      * @param list<array<string,mixed>> $items
+     * @param string $idColumn
      */
-    private function writeDataRows(Worksheet $sheet, array $layout, array $headers, array $headerGroups, array $timeline, array $items): void
+    private function writeDataRows(
+        Worksheet $sheet,
+        array $layout,
+        array $headers,
+        array $headerGroups,
+        array $timeline,
+        array $items,
+        string $idColumn
+    ): void
     {
         $timelineIndex = [];
         foreach ($timeline as $index => $week) {
@@ -572,12 +607,12 @@ class GanttXlsxBuilder
                 $endRow
             );
             if ($this->mergeCells && $endRow > $row) {
-                $sheet->mergeCells($this->range($layout['verortung'], $row, $layout['verortung'], $endRow));
+                $sheet->mergeCells($this->range($layout['idColumn'], $row, $layout['idColumn'], $endRow));
             }
             foreach ($this->getValueRows($row, $endRow) as $valueRow) {
-                $sheet->setCellValue($this->cell($layout['verortung'], $valueRow), $item['Columns']['Verortung'] ?? '');
+                $sheet->setCellValue($this->cell($layout['idColumn'], $valueRow), $item['Columns'][$idColumn] ?? null);
             }
-            $sheet->getStyle($this->range($layout['verortung'], $row, $layout['verortung'], $endRow))->getFont()->setBold(true);
+            $sheet->getStyle($this->range($layout['idColumn'], $row, $layout['idColumn'], $endRow))->getFont()->setBold(true);
             foreach ($lanes as $laneIndex => $tasks) {
                 foreach ($tasks as $task) {
                     $taskRow = $row + $laneIndex;
@@ -768,7 +803,7 @@ class GanttXlsxBuilder
             }
         }
         $sheet->getColumnDimensionByColumn($layout['spacer'])->setWidth(6.13);
-        $sheet->getColumnDimensionByColumn($layout['verortung'])->setWidth(16.2);
+        $sheet->getColumnDimensionByColumn($layout['idColumn'])->setWidth(16.2);
         $sheet->getColumnDimensionByColumn($layout['ganttLabel'])->setWidth(6.13);
         if ($timelineCount > 0) {
             foreach (range($layout['timelineStart'], $end) as $column) {

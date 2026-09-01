@@ -28,7 +28,8 @@ use exface\Core\Widgets\Gantt;
  * lifecycle, so the browser only sends the active filters, sorters, and widget context. All rows
  * and nested task data are then read by the server.
  *
- * Use `header_groups` to divide the exported columns into formatted sections.
+ * Use `header_groups` to divide the exported columns into formatted sections and
+ * `id_attribute_alias` to select the column repeated before the Gantt timeline.
  *
  * @author Sergej Riel
  */
@@ -37,6 +38,8 @@ class ExportGanttXLSX extends ExportJSON
     private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
 
     private array $columns = [];
+    /** @var array<string, string|null> */
+    private array $columnAttributeAliases = [];
     private array $semanticColors = [];
     private bool $mergeCells = false;
     private float $textColorPreference = 0.5;
@@ -45,6 +48,7 @@ class ExportGanttXLSX extends ExportJSON
     /** @var list<XLSXHeaderGroups> */
     private array $headerGroups = [];
     private ?string $headingColor = null;
+    private ?string $idAttributeAlias = null;
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -103,6 +107,7 @@ class ExportGanttXLSX extends ExportJSON
     protected function writeHeader(array $exportedColumns): array
     {
         $this->columns = [];
+        $this->columnAttributeAliases = [];
 
         foreach ($exportedColumns as $column) {
             if (! $column instanceof DataColumn
@@ -128,6 +133,7 @@ class ExportGanttXLSX extends ExportJSON
             }
 
             $this->columns[$source] = $caption;
+            $this->columnAttributeAliases[$source] = $column->getAttributeAlias();
         }
 
         return [];
@@ -176,6 +182,7 @@ class ExportGanttXLSX extends ExportJSON
         }
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
+        $idColumn = $this->resolveIdColumnCaption();
         try {
             (new GanttXlsxBuilder(
                 $this->semanticColors,
@@ -189,7 +196,8 @@ class ExportGanttXLSX extends ExportJSON
                 array_map(
                     static fn(XLSXHeaderGroups $group): array => $group->toArray(),
                     $this->getHeaderGroups()
-                )
+                ),
+                $idColumn
             ))
                 ->build($mappedData, $this->getFilePathAbsolute());
         } catch (\Throwable $e) {
@@ -359,7 +367,6 @@ class ExportGanttXLSX extends ExportJSON
         $translations = [];
         foreach ([
             'SHEET_TITLE',
-            'LOCATION',
             'GANTT',
             'YEAR',
             'QUARTER',
@@ -508,6 +515,56 @@ class ExportGanttXLSX extends ExportJSON
     public function getHeaderGroups(): array
     {
         return $this->headerGroups;
+    }
+
+    /**
+     * Select the exported attribute copied into the dedicated column before the Gantt timeline.
+     *
+     * The selected attribute must be part of the columns included in the export. Leave this
+     * property unset to use the first exported column.
+     *
+     * @uxon-property id_attribute_alias
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return $this
+     */
+    public function setIdAttributeAlias(string $value): ExportGanttXLSX
+    {
+        $this->idAttributeAlias = $value;
+        return $this;
+    }
+
+    /**
+     * Returns the optional attribute alias used for the dedicated ID column.
+     */
+    public function getIdAttributeAlias(): ?string
+    {
+        return $this->idAttributeAlias;
+    }
+
+    /**
+     * Resolves the dedicated ID column to its exported caption.
+     */
+    private function resolveIdColumnCaption(): string
+    {
+        if ($this->columns === []) {
+            throw new ActionConfigurationError($this, 'The Gantt XLSX export requires at least one exported column.');
+        }
+        if ($this->idAttributeAlias === null) {
+            return (string) reset($this->columns);
+        }
+
+        foreach ($this->columnAttributeAliases as $source => $attributeAlias) {
+            if ($attributeAlias === $this->idAttributeAlias) {
+                return $this->columns[$source];
+            }
+        }
+
+        throw new ActionConfigurationError(
+            $this,
+            'The `id_attribute_alias` "' . $this->idAttributeAlias . '" is not included in the exported columns.'
+        );
     }
 
     /**
