@@ -163,11 +163,12 @@ groups:
  
 ```
 
-Groups consume columns in their export order. The sum of all `column_count` values must equal the
-number of exported business columns; otherwise the export reports a configuration error.
-`column_width` is applied to every column in the group. `orientation` controls whether the
-individual column captions are horizontal or rotated by 90 degrees. If `header_groups` is omitted,
-all exported columns form one unnamed horizontal group with width `13`.
+Groups consume columns in their export order. `column_count` defines a positional target rather
+than a strict total: when users export fewer columns, trailing groups are shortened or omitted.
+Columns beyond the configured total are assigned to the last group. `column_width` is applied to
+every column in the resulting group. `orientation` controls whether the individual column captions
+are horizontal or rotated by 90 degrees. If `header_groups` is omitted, all exported columns form
+one unnamed horizontal group with width `13`.
 
 Cell colors are mapped automatically when the input row contains a companion column named
 `_<source column>Farbe`. The temporal status color uses

@@ -270,6 +270,7 @@ class GanttXlsxBuilder
 
         $groups = [];
         $start = 1;
+        $remaining = $columnCount;
         foreach ($configuredGroups as $group) {
             if (! is_array($group)
                 || ! isset($group['name'], $group['column_count'], $group['column_width'], $group['orientation'])) {
@@ -281,6 +282,10 @@ class GanttXlsxBuilder
             if ($count < 1 || $width <= 0 || ! in_array($orientation, ['horizontal', 'vertical'], true)) {
                 throw new \InvalidArgumentException('Invalid XLSX header group settings.');
             }
+            if ($remaining === 0) {
+                break;
+            }
+            $count = min($count, $remaining);
             $groups[] = [
                 'name' => (string) $group['name'],
                 'column_count' => $count,
@@ -290,12 +295,12 @@ class GanttXlsxBuilder
                 'end' => $start + $count - 1,
             ];
             $start += $count;
+            $remaining -= $count;
         }
-        if ($start - 1 !== $columnCount) {
-            throw new \InvalidArgumentException(
-                'XLSX header groups contain ' . ($start - 1)
-                . ' columns, but the export contains ' . $columnCount . '.'
-            );
+        if ($remaining > 0) {
+            $lastIndex = array_key_last($groups);
+            $groups[$lastIndex]['column_count'] += $remaining;
+            $groups[$lastIndex]['end'] += $remaining;
         }
         return $groups;
     }

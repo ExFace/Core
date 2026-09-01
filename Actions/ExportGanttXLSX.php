@@ -174,7 +174,6 @@ class ExportGanttXLSX extends ExportJSON
         if ($dataSheet->isEmpty()) {
             throw new ActionInputMissingError($this, 'Cannot export Gantt data: no rows match the current filters.');
         }
-        $this->validateHeaderGroupColumnCount();
 
         $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
         try {
@@ -479,7 +478,8 @@ class ExportGanttXLSX extends ExportJSON
     /**
      * Define consecutive visual groups for the exported columns.
      *
-     * The sum of all `column_count` values must match the number of exported business columns.
+     * Group sizes are adjusted to the columns currently selected by the user. Missing trailing
+     * columns shorten or omit groups, while additional columns are assigned to the last group.
      *
      * @uxon-property header_groups
      * @uxon-type \exface\Core\CommonLogic\Actions\XLSXHeaderGroups[]
@@ -508,29 +508,6 @@ class ExportGanttXLSX extends ExportJSON
     public function getHeaderGroups(): array
     {
         return $this->headerGroups;
-    }
-
-    /**
-     * Ensures configured header groups cover every exported business column exactly once.
-     */
-    private function validateHeaderGroupColumnCount(): void
-    {
-        $groups = $this->getHeaderGroups();
-        if ($groups === []) {
-            return;
-        }
-        $configuredCount = array_sum(array_map(
-            static fn($group): int => $group->getColumnCount(),
-            $groups
-        ));
-        $exportedCount = count($this->columns);
-        if ($configuredCount !== $exportedCount) {
-            throw new ActionConfigurationError(
-                $this,
-                '`header_groups` contain ' . $configuredCount
-                . ' columns, but the export contains ' . $exportedCount . '.'
-            );
-        }
     }
 
     /**
