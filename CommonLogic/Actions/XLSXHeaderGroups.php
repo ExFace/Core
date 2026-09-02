@@ -20,7 +20,7 @@ use exface\Core\Interfaces\iCanBeConvertedToUxon;
  *     "column_count": 8,
  *     "column_width": 5.5,
  *     "orientation": "vertical",
- *     "empty_cell_filler": "n/a",
+ *     "empty_cell_text": "n/a",
  *     "empty_cell_color": "#eeeeee"
  * }
  * 
@@ -38,7 +38,7 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
     private int $columnCount = 0;
     private float $columnWidth = 13.0;
     private string $orientation = 'horizontal';
-    private ?string $emptyCellFiller = null;
+    private ?string $emptyCellText = null;
     private ?string $emptyCellColor = null;
 
     /**
@@ -165,23 +165,23 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
     /**
      * Define the text displayed in empty data cells of this group.
      *
-     * @uxon-property empty_cell_filler
+     * @uxon-property empty_cell_text
      * @uxon-type string
      * @param string $value
      * @return $this
      */
-    public function setEmptyCellFiller(string $value): XLSXHeaderGroups
+    public function setEmptyCellText(string $value): XLSXHeaderGroups
     {
-        $this->emptyCellFiller = $value;
+        $this->emptyCellText = $value;
         return $this;
     }
 
     /**
      * Returns the text displayed in empty data cells of this group.
      */
-    public function getEmptyCellFiller(): ?string
+    public function getEmptyCellText(): ?string
     {
-        return $this->emptyCellFiller;
+        return $this->emptyCellText;
     }
 
     /**
@@ -217,7 +217,7 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
      *     column_count:int,
      *     column_width:float,
      *     orientation:string,
-     *     empty_cell_filler:string|null,
+     *     empty_cell_text:string|null,
      *     empty_cell_color:string|null
      * }
      */
@@ -228,7 +228,7 @@ class XLSXHeaderGroups implements iCanBeConvertedToUxon
             'column_count' => $this->getColumnCount(),
             'column_width' => $this->getColumnWidth(),
             'orientation' => $this->getOrientation(),
-            'empty_cell_filler' => $this->getEmptyCellFiller(),
+            'empty_cell_text' => $this->getEmptyCellText(),
             'empty_cell_color' => $this->getEmptyCellColor(),
         ];
     }

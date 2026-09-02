@@ -282,7 +282,7 @@ class GanttXlsxBuilder
                 'column_count' => $columnCount,
                 'column_width' => 13.0,
                 'orientation' => 'horizontal',
-                'empty_cell_filler' => null,
+                'empty_cell_text' => null,
                 'empty_cell_color' => null,
             ]];
         }
@@ -295,7 +295,7 @@ class GanttXlsxBuilder
                 throw new \InvalidArgumentException('Every XLSX header group must be an object.');
             }
             $group += [
-                'empty_cell_filler' => null,
+                'empty_cell_text' => null,
                 'empty_cell_color' => null,
             ];
             if (! isset($group['name'], $group['column_count'], $group['column_width'], $group['orientation'])) {
@@ -316,8 +316,8 @@ class GanttXlsxBuilder
                 'column_count' => $count,
                 'column_width' => $width,
                 'orientation' => $orientation,
-                'empty_cell_filler' => is_string($group['empty_cell_filler'])
-                    ? $group['empty_cell_filler']
+                'empty_cell_text' => is_string($group['empty_cell_text'])
+                    ? $group['empty_cell_text']
                     : null,
                 'empty_cell_color' => is_string($group['empty_cell_color'])
                     ? $group['empty_cell_color']
@@ -675,7 +675,7 @@ class GanttXlsxBuilder
             $value = $values[$header] ?? null;
             $isEmpty = $value === null || (is_string($value) && trim($value) === '');
             if ($isEmpty) {
-                $value = $group['empty_cell_filler'];
+                $value = $group['empty_cell_text'];
             }
             $value = is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : $value;
             foreach ($this->getValueRows($startRow, $endRow) as $valueRow) {

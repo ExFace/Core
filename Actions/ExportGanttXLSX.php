@@ -281,9 +281,9 @@ class ExportGanttXLSX extends ExportJSON
 
     /**
      * Resolves exported cell colors from their Gantt column widgets.
-     *
-     * @param array<string, mixed> $row
-     * @return array<string, mixed>
+     * 
+     * @param array $row
+     * @return array
      */
     private function mapColumnColors(array $row): array
     {

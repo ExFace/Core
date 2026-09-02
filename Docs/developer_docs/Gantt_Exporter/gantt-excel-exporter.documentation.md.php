@@ -151,7 +151,7 @@ groups:
             "column_count": 8,
             "column_width": 5.5,
             "orientation": "vertical",
-            "empty_cell_filler": "-",
+            "empty_cell_text": "-",
             "empty_cell_color": "#eeeeee"
         }
     ]
@@ -166,7 +166,7 @@ every column in the resulting group. `orientation` controls whether the individu
 are horizontal or rotated by 90 degrees. If `header_groups` is omitted, all exported columns form
 one unnamed horizontal group with width `13`.
 
-`empty_cell_filler` defines the text written when a grouped data cell contains `null`, an empty
+`empty_cell_text` defines the text written when a grouped data cell contains `null`, an empty
 string, or only whitespace. If the property is omitted, the cell remains empty. Numeric zero and
 boolean values are retained. Set `empty_cell_color` to color empty cells and automatically select
 a contrasting text color. Without `empty_cell_color`, empty cells keep their normal background.
