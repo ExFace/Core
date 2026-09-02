@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Parts\Maps\DataLinesLayer;
 use exface\Core\Widgets\Image;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Interfaces\Widgets\iSpecifyInputRows;
 use exface\Core\Widgets\Parts\Maps\DataShapesLayer;
 use exface\Core\Exceptions\Facades\FacadeLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
@@ -2098,7 +2099,7 @@ JS;
         $widget = $this->getWidget();
         $rows = '';
 
-        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iSpecifyInputRows) {
             $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
             $customMode = null;

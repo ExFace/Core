@@ -3,6 +3,8 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Interfaces\Widgets\iSpecifyInputRows;
+use exface\Core\Widgets\Traits\iSpecifyInputRowsTrait;
 
 /**
  * Special button type for wizards - allows to navigate between wizard steps.
@@ -15,8 +17,10 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * @author Andrej Kabachnik   
  */
-class WizardButton extends Button
+class WizardButton extends Button implements iSpecifyInputRows
 {
+    use iSpecifyInputRowsTrait;
+    
     const GO_TO_STEP_NONE = 'none';
     const GO_TO_STEP_NEXT = 'next';
     const GO_TO_STEP_PREVIOUS = 'previous';

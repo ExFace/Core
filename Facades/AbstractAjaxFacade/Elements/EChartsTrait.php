@@ -31,6 +31,7 @@ use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
 use exface\Core\Exceptions\Facades\FacadeOutputError;
 use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Interfaces\Widgets\iSpecifyInputRows;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
 use exface\Core\Widgets\Parts\Charts\VisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\Interfaces\SplittableChartSeriesInterface;
@@ -3849,7 +3850,7 @@ JS;
         $widget = $this->getWidget();
         $rows = '';
         
-        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iSpecifyInputRows) {
             $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
             $customMode = null;

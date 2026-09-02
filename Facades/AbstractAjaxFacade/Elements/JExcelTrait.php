@@ -33,6 +33,7 @@ use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Interfaces\Widgets\iSpecifyInputRows;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
 
@@ -1110,6 +1111,29 @@ JS;
         _dropdownColWidthLocks: {},
         _valueGetterRow: null,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
+        // TEMPORARY perf-measurement instrumentation - remove once validation perf work is done (see Docs/.../Spreadsheet_validation_performance.md)
+        _perf: {
+            calls: {getData: 0, getCell: 0, validateValue: 0, validateCell: 0, validateAll: 0, refreshConditionalProperties: 0, conditionize: 0, isDropdownValueValid: 0, updateDependantColumns: 0},
+            timeMs: {validateAll: 0, refreshConditionalProperties: 0}
+        },
+        _perfNow: function(){
+            return (window.performance && performance.now) ? performance.now() : Date.now();
+        },
+        resetPerfStats: function(){
+            var o = this._perf;
+            for (var k in o.calls) { o.calls[k] = 0; }
+            for (var t in o.timeMs) { o.timeMs[t] = 0; }
+            return this;
+        },
+        getPerfStats: function(){
+            return JSON.parse(JSON.stringify(this._perf));
+        },
+        logPerfStats: function(){
+            console.table(this._perf.calls);
+            console.log('Validation timing (ms):', this._perf.timeMs);
+            return this._perf;
+        },
+        // TEMPORARY perf-measurement instrumentation - end
         getDoNotValidate: function(){
             return this._doNotValidate;
         },
@@ -1124,7 +1148,11 @@ JS;
             return this._dom;
         },
         getData: function() {
+            this._perf.calls.getData++; // TEMPORARY perf-measurement
             return this.convertArrayToData(this.getJExcel().getData(false));
+        },
+        getDataChanged: function() {
+            return this.convertArrayToData(this.getJExcel().getData(false), true);
         },
         getDataLastLoaded: function(){
             return this._initData;
@@ -1292,6 +1320,7 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
+            this._perf.calls.validateValue++; // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return true;
@@ -1312,6 +1341,7 @@ JS;
             return mResult;
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
+            this._perf.calls.validateCell++; // TEMPORARY perf-measurement
             var mValidationResult;
             var oCol = this.getColumnModel(iCol);
             var bRequired = oCol.checkRequired(iRow);
@@ -1370,6 +1400,7 @@ JS;
             return mValue;
         },
         validateAll: function() {
+            this._perf.calls.validateAll++; var _perfT0 = this._perfNow(); // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return;
@@ -1390,6 +1421,7 @@ JS;
                 
                 aRow.forEach(function(mValue, iColIdx) {
                     var mValidated;                    
+                    oWidget._perf.calls.getCell++; // TEMPORARY perf-measurement
                     var oCell = oWidget.getJExcel().getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1));
                     aCells.push(oCell);
                     mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true);
@@ -1403,8 +1435,10 @@ JS;
                     });
                 }
             });
+            this._perf.timeMs.validateAll += this._perfNow() - _perfT0; // TEMPORARY perf-measurement
         },
         refreshConditionalProperties: function() {
+            this._perf.calls.refreshConditionalProperties++; var _perfT0 = this._perfNow(); // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return;
@@ -1420,6 +1454,7 @@ JS;
             }
 
             for (i in this._cols) {
+                oWidget._perf.calls.conditionize++; // TEMPORARY perf-measurement
                 this._cols[i].conditionize(this);
             }
 
@@ -1436,8 +1471,10 @@ JS;
                     }
                 }
             }
+            this._perf.timeMs.refreshConditionalProperties += this._perfNow() - _perfT0; // TEMPORARY perf-measurement
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
+            this._perf.calls.isDropdownValueValid++; // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return true;
@@ -1468,7 +1505,7 @@ JS;
 
             return true;
         },
-        convertArrayToData: function(aDataArray) {
+        convertArrayToData: function(aDataArray, bChangedOnly) {
             var aData = [];
             var iDataCnt = aDataArray.length;
             var jExcel = $(this._dom);
@@ -1478,6 +1515,7 @@ JS;
             aDataArray.forEach(function(aRow, i){
                 var oRow = {};
                 var bEmptyRow = true;
+                var bChanged = false;
 
                 if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
                     return;
@@ -1487,6 +1525,10 @@ JS;
                     var oCol = oWidget.getColumnModel(iColIdx);
                     var sColName = oWidget.getColumnName(iColIdx);
                     if (sColName) {
+                        // Check the raw (unparsed) value against the initially loaded value
+                        if (bChangedOnly === true && oWidget.hasChanged(iColIdx, i, val)) {
+                            bChanged = true;
+                        }
                         val = oCol.parser ? oCol.parser(val) : val;
                         if (val !== undefined && val !== '' && val !== null && oCol.hidden === false) {
                             bEmptyRow = false;
@@ -1494,6 +1536,10 @@ JS;
                         oRow[sColName] = val;
                     }
                 });
+
+                if (bChangedOnly === true && bChanged === false) {
+                    return;
+                }
 
                 if (bEmptyRow === false || bAllowEmptyRows === true) {
                     if (oWidget._rowNumberColName !== null) {
@@ -1666,6 +1712,7 @@ JS;
             });
         },
         updateDependantColumns: function(iColIdx, iRowIdx, mValue) {
+            this._perf.calls.updateDependantColumns++; // TEMPORARY perf-measurement
             let oJExcel = this.getJExcel();
             
             // loop through each dependency/relation
@@ -1832,6 +1879,7 @@ JS;
                         var oJExcel = oWidget.getJExcel();
                         var aCells = [];
                         oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
+                            oWidget._perf.calls.getCell++; // TEMPORARY perf-measurement
                             aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
                         });
                         $conditionsJs
@@ -2658,7 +2706,7 @@ JS;
         // Determine the columns we need in the actions data
         $colNamesList = implode(',', $widget->getActionDataColumnNames());
         
-        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iSpecifyInputRows) {
             $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
             $customMode = null;
@@ -2666,7 +2714,23 @@ JS;
         
         $relPathToParent = $widget->getObjectRelationPathToParent();
         
+        // By default all rows are passed to the action. If the button explicitly requests only
+        // changed rows via `input_rows: changed`, use the getDataChanged() getter instead.
+        $dataGetterFn = 'getData';
+        
         switch (true) {
+            // If the button explicitly asks for only changed rows
+            case $customMode === DataButton::INPUT_ROWS_CHANGED:
+                $dataGetterFn = 'getDataChanged';
+                $data = <<<JS
+    {
+        oId: '{$widgetObj->getId()}',
+        rows: aRows
+    }
+    
+JS;
+                break;
+                
             // If there is no action or the action 
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
@@ -2781,7 +2845,7 @@ JS;
             }
 
             var aRows;            
-            aRows = jqEl[0].exfWidget.getData();
+            aRows = jqEl[0].exfWidget.{$dataGetterFn}();
             
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
