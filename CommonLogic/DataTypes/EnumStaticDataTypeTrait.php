@@ -51,7 +51,10 @@ trait EnumStaticDataTypeTrait {
     private static $cacheValuesNC = [];
     
     /**
-     * Returns all possible value-label pairs as an array
+     * Returns all possible constant-value pairs as an array.
+     * 
+     * NOTE: the return format is DIFFERENT from getValues()! This method returns constant names as keys, while 
+     * `getValues()` returns numeric keys.
      *
      * @return array Constant name as key, constant value as value
      */
@@ -219,11 +222,11 @@ trait EnumStaticDataTypeTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabels()
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValues()
      */
     public function getValues()
     {
-        return $this::getValuesStatic();
+        return array_values($this::getValuesStatic());
     }
     
     /**
