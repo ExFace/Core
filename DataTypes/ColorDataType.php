@@ -197,9 +197,10 @@ class ColorDataType extends AbstractDataType
      * Turns any supported color notation into numeric channels `[red, green, blue, alpha]` or NULL if unparsable.
      * 
      * Accepts HTML color names (`DeepSkyBlue`), hex values with 3, 4, 6 or 8 digits (`#abc`, `#0a6ed1`)
-     * and the CSS functions `rgb()`/`rgba()`. Red, green and blue are returned as integers `0-255`,
-     * alpha as a float `0-1` (`1` if the notation does not carry an alpha channel). The keyword
-     * `transparent` yields an alpha of `0`, so callers can tell "no color" from "black".
+     * and the CSS functions `rgb()`/`rgba()` and `hsl()`/`hsla()`. Red, green and blue are returned
+     * as integers `0-255`, alpha as a float `0-1` (`1` if the notation does not carry an alpha
+     * channel). The keyword `transparent` yields an alpha of `0`, so callers can tell "no color"
+     * from "black".
      * 
      * @param string $color
      * @return array|NULL [int $red, int $green, int $blue, float $alpha]
@@ -241,31 +242,206 @@ class ColorDataType extends AbstractDataType
             ];
         }
         
-        // rgb(10, 110, 209) / rgba(10 110 209 / 50%) and everything in between: the separators are
-        // matched loosely on purpose - browsers serialize computed styles in several of these forms.
+        // Browsers serialize computed RGB styles with either commas or spaces, and CSS Color 4 also
+        // permits slash-separated alpha. Validate every token and range before casting: PHP would
+        // otherwise turn malformed input like rgb(foo, 0, 0) into a valid-looking black.
         if (preg_match('/^rgba?\s*\(([^\)]*)\)$/i', $color, $matches) === 1) {
             $parts = preg_split('/[\s,\/]+/', trim($matches[1]), -1, PREG_SPLIT_NO_EMPTY);
-            if (count($parts) < 3) {
+            if (count($parts) < 3 || count($parts) > 4) {
                 return null;
             }
             $channels = [];
             for ($i = 0; $i < 3; $i++) {
                 $part = $parts[$i];
                 if (substr($part, -1) === '%') {
-                    $channels[] = (int) round(((float) substr($part, 0, -1)) * 255 / 100);
+                    $number = substr($part, 0, -1);
+                    if (! is_numeric($number) || (float) $number < 0 || (float) $number > 100) {
+                        return null;
+                    }
+                    $channels[] = (int) round(((float) $number) * 255 / 100);
                 } else {
+                    if (! is_numeric($part) || (float) $part < 0 || (float) $part > 255) {
+                        return null;
+                    }
                     $channels[] = (int) round((float) $part);
                 }
             }
             $alpha = 1.0;
             if (isset($parts[3])) {
-                $alpha = substr($parts[3], -1) === '%' ? ((float) substr($parts[3], 0, -1)) / 100 : (float) $parts[3];
+                $alphaPart = $parts[3];
+                if (substr($alphaPart, -1) === '%') {
+                    $number = substr($alphaPart, 0, -1);
+                    if (! is_numeric($number) || (float) $number < 0 || (float) $number > 100) {
+                        return null;
+                    }
+                    $alpha = (float) $number / 100;
+                } else {
+                    if (! is_numeric($alphaPart) || (float) $alphaPart < 0 || (float) $alphaPart > 1) {
+                        return null;
+                    }
+                    $alpha = (float) $alphaPart;
+                }
             }
             $channels[] = $alpha;
             return $channels;
         }
+
+        if (preg_match('/^hsla?\s*\(([^\)]*)\)$/i', $color, $matches) === 1) {
+            $parts = preg_split('/[\s,\/]+/', trim($matches[1]), -1, PREG_SPLIT_NO_EMPTY);
+            if (count($parts) < 3 || count($parts) > 4) {
+                return null;
+            }
+            $hue = self::parseCssHue($parts[0]);
+            $saturation = self::parseCssPercentage($parts[1]);
+            $lightness = self::parseCssPercentage($parts[2]);
+            if ($hue === null || $saturation === null || $lightness === null) {
+                return null;
+            }
+            $alpha = 1.0;
+            if (isset($parts[3])) {
+                $alpha = self::parseCssAlpha($parts[3]);
+                if ($alpha === null) {
+                    return null;
+                }
+            }
+            return self::hslToRgba($hue, $saturation, $lightness, $alpha);
+        }
         
         return null;
+    }
+
+    /**
+     * Checks whether a value is a supported CSS color literal.
+     *
+     * WHY THIS EXISTS: callers must reject a typo before trying family matching. Without this guard,
+     * PHP's numeric casts could make malformed CSS look like a real color and produce a misleading
+     * "wrong family" assertion instead of identifying the invalid expectation.
+     *
+     * Qualified family expressions such as `light blue` are intentionally not CSS colors; callers
+     * that support those should validate them separately with parseColorSpec().
+     *
+     * @param string $color
+     * @return bool
+     */
+    public static function isCssColor(string $color) : bool
+    {
+        return self::parseToRgba($color) !== null;
+    }
+
+    /**
+     * Checks whether two CSS color literals represent exactly the same RGBA value.
+     *
+     * WHY CHANNELS ARE COMPARED INSTEAD OF STRINGS: CSS permits many spellings for one color -
+     * `blue`, `#0000ff`, `rgb(0, 0, 255)` and `hsl(240, 100%, 50%)` are identical. Normalizing both
+     * sides prevents notation differences from turning an exact visual match into a failure.
+     *
+     * @param string $left
+     * @param string $right
+     * @return bool
+     */
+    public static function areColorsEqual(string $left, string $right) : bool
+    {
+        $leftRgba = self::parseToRgba($left);
+        $rightRgba = self::parseToRgba($right);
+        if ($leftRgba === null || $rightRgba === null) {
+            return false;
+        }
+        return $leftRgba[0] === $rightRgba[0]
+            && $leftRgba[1] === $rightRgba[1]
+            && $leftRgba[2] === $rightRgba[2]
+            && abs($leftRgba[3] - $rightRgba[3]) < 0.0001;
+    }
+
+    /**
+     * Converts a CSS hue token into normalized degrees or NULL when malformed.
+     *
+     * WHY UNITS ARE HANDLED HERE: CSS accepts degrees, radians, gradians and turns. Keeping their
+     * conversion in one helper ensures HSL parsing and any future color helpers normalize them alike.
+     *
+     * @param string $value
+     * @return float|NULL
+     */
+    private static function parseCssHue(string $value) : ?float
+    {
+        if (preg_match('/^([+-]?(?:\d+\.?\d*|\.\d+))(deg|grad|rad|turn)?$/i', $value, $matches) !== 1) {
+            return null;
+        }
+        $hue = (float) $matches[1];
+        switch (mb_strtolower($matches[2] ?? 'deg')) {
+            case 'grad': $hue *= 0.9; break;
+            case 'rad': $hue = rad2deg($hue); break;
+            case 'turn': $hue *= 360; break;
+        }
+        $hue = fmod($hue, 360);
+        return $hue < 0 ? $hue + 360 : $hue;
+    }
+
+    /**
+     * Parses a CSS percentage into a `0-1` float or NULL when malformed or out of range.
+     *
+     * @param string $value
+     * @return float|NULL
+     */
+    private static function parseCssPercentage(string $value) : ?float
+    {
+        if (substr($value, -1) !== '%') {
+            return null;
+        }
+        $number = substr($value, 0, -1);
+        if (! is_numeric($number) || (float) $number < 0 || (float) $number > 100) {
+            return null;
+        }
+        return (float) $number / 100;
+    }
+
+    /**
+     * Parses a CSS alpha token into a `0-1` float or NULL when malformed or out of range.
+     *
+     * @param string $value
+     * @return float|NULL
+     */
+    private static function parseCssAlpha(string $value) : ?float
+    {
+        if (substr($value, -1) === '%') {
+            return self::parseCssPercentage($value);
+        }
+        if (! is_numeric($value) || (float) $value < 0 || (float) $value > 1) {
+            return null;
+        }
+        return (float) $value;
+    }
+
+    /**
+     * Converts normalized HSL channels and alpha into `[red, green, blue, alpha]`.
+     *
+     * WHY THIS RETURNS THE SAME SHAPE AS parseToRgba(): exact comparison and family detection should
+     * not care whether the user supplied RGB or HSL syntax.
+     *
+     * @param float $hue Hue in degrees.
+     * @param float $saturation Saturation from 0 to 1.
+     * @param float $lightness Lightness from 0 to 1.
+     * @param float $alpha Alpha from 0 to 1.
+     * @return array [int $red, int $green, int $blue, float $alpha]
+     */
+    private static function hslToRgba(float $hue, float $saturation, float $lightness, float $alpha) : array
+    {
+        $chroma = (1 - abs(2 * $lightness - 1)) * $saturation;
+        $x = $chroma * (1 - abs(fmod($hue / 60, 2) - 1));
+        switch (true) {
+            case $hue < 60: [$r, $g, $b] = [$chroma, $x, 0]; break;
+            case $hue < 120: [$r, $g, $b] = [$x, $chroma, 0]; break;
+            case $hue < 180: [$r, $g, $b] = [0, $chroma, $x]; break;
+            case $hue < 240: [$r, $g, $b] = [0, $x, $chroma]; break;
+            case $hue < 300: [$r, $g, $b] = [$x, 0, $chroma]; break;
+            default: [$r, $g, $b] = [$chroma, 0, $x];
+        }
+        $match = $lightness - $chroma / 2;
+        return [
+            (int) round(($r + $match) * 255),
+            (int) round(($g + $match) * 255),
+            (int) round(($b + $match) * 255),
+            $alpha
+        ];
     }
     
     /**
