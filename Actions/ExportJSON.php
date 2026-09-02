@@ -143,7 +143,8 @@ class ExportJSON extends ReadData implements iExportData
 
     private $exportMapper = null;
     private $exportAllWidgetColumns = false;
-    
+    private $paginationDisabled = false;
+
     /**
      * 
      * {@inheritDoc}
@@ -417,7 +418,7 @@ class ExportJSON extends ReadData implements iExportData
         // - Without a UID there is no stable sort order to paginate over, so everything is read
         //   in a single request - see readPageWithoutUid().
         // Both return a generator of page sheets, so the per-page processing below stays shared.
-        if ($dataSheetMaster->getMetaObject()->hasUidAttribute()) {
+        if ($dataSheetMaster->getMetaObject()->hasUidAttribute() && !$this->isPaginationDisabled()) {
             $pages = $this->readPagesByUid($dataSheetMaster, $exportMapper);
         } else {
             $pages = $this->readPageWithoutUid($dataSheetMaster, $exportMapper);
@@ -1317,6 +1318,32 @@ class ExportJSON extends ReadData implements iExportData
     protected function setFormatEnumsAsLabels(bool $trueOrFalse) : ExportJSON
     {
         $this->formatEnums = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return bool
+     */
+    public function isPaginationDisabled(): bool
+    {
+        return $this->paginationDisabled;
+    }
+
+    /**
+     * Set to TRUE to disable pagination and read all data in a single request.
+     * This can lower the performance but will keep the original sorting of the rows.
+     * 
+     * @uxon-property pagination_disabled
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $paginationDisabled
+     * @return ExportJSON
+     */
+    public function setPaginationDisabled(bool $paginationDisabled): ExportJSON
+    {
+        $this->paginationDisabled = $paginationDisabled;
         return $this;
     }
 }
