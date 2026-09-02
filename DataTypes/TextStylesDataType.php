@@ -38,7 +38,7 @@ class TextStylesDataType extends StringDataType implements EnumDataTypeInterface
         if (empty($this->labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (static::getValuesStatic() as $val) {
+            foreach (static::getValuesOfConstants() as $val) {
                 $this->labels[$val] = $translator->translate('WIDGET.TEXT.STYLE_' . $val);
             }
         }
