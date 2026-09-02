@@ -1332,7 +1332,9 @@ class ExportJSON extends ReadData implements iExportData
 
     /**
      * Set to TRUE to disable pagination and read all data in a single request.
-     * This can lower the performance but will keep the original sorting of the rows.
+     * 
+     * Pagination is a crucial performance improvement and requires sorting your data by UID. 
+     * Disabling it guarantees your sorting order at the cost of performance.
      * 
      * @uxon-property pagination_disabled
      * @uxon-type boolean
