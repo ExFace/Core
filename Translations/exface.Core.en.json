@@ -450,7 +450,6 @@
     "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "The given data interval is entirely in the past or future and does not include today's date.",
     "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TITLE": "Today is not included.",
     "WIDGET.GANTT_CHARD.EXCEL.SHEET_TITLE": "Schedule overview",
-    "WIDGET.GANTT_CHARD.EXCEL.LOCATION": "Location",
     "WIDGET.GANTT_CHARD.EXCEL.GANTT": "Schedule Gantt",
     "WIDGET.GANTT_CHARD.EXCEL.YEAR": "Year 20..",
     "WIDGET.GANTT_CHARD.EXCEL.QUARTER": "Quarter",
