@@ -174,8 +174,8 @@ a contrasting text color. Without `empty_cell_color`, empty cells keep their nor
 Cell colors are derived from each Gantt column's cell widget. A `ColorIndicator` contributes its
 configured `color` binding, including attribute, formula, or DataSheet column bindings and optional
 color scales. The action reads the binding alongside the exported value and passes the resolved
-color to the builder separately. The generic `_<source data column>Farbe` companion field remains
-available as a fallback for rows that already contain one.
+color to the builder separately. Columns without a `ColorIndicator` color binding are exported
+without a value-dependent background color.
 
 If a Gantt column has no explicit caption, its attribute name from the metamodel is used
 automatically. Set `id_attribute_alias` to copy an exported attribute into the dedicated column

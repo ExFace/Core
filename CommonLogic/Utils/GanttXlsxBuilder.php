@@ -28,6 +28,7 @@ class GanttXlsxBuilder
     private array $headingColors;
     private array $headerGroups;
     private ?string $idColumn;
+    private array $styleIndexCache = [];
 
     /**
      * Creates a builder that resolves semantic colors with the active facade's CSS color map.
@@ -124,6 +125,7 @@ class GanttXlsxBuilder
      */
     public function build($data, string $outputPath): void
     {
+        $this->styleIndexCache = [];
         $items = $this->extractItems($data);
         $headers = $this->collectHeaders($items);
         if ($headers === []) {
@@ -591,6 +593,10 @@ class GanttXlsxBuilder
             }
         }
 
+        $valueRows = [];
+        $idRows = [];
+        $cellStyleRanges = [];
+        $separatorRows = [];
         foreach ($rowPlans as $plan) {
             $item = $plan['item'];
             $lanes = $plan['lanes'];
@@ -604,13 +610,16 @@ class GanttXlsxBuilder
                 $item['columns'] ?? [],
                 $item['column_colors'] ?? [],
                 $row,
-                $endRow
+                $endRow,
+                $valueRows,
+                $cellStyleRanges
             );
             if ($this->mergeCells && $endRow > $row) {
                 $sheet->mergeCells($this->range($layout['idColumn'], $row, $layout['idColumn'], $endRow));
             }
-            foreach ($this->getValueRows($row, $endRow) as $valueRow) {
-                $sheet->setCellValue($this->cell($layout['idColumn'], $valueRow), $item['columns'][$idColumn] ?? null);
+            $idValue = $item['columns'][$idColumn] ?? null;
+            for ($valueRow = $row; $valueRow <= $endRow; $valueRow++) {
+                $idRows[] = [$this->mergeCells && $valueRow > $row ? null : $idValue];
             }
             $sheet->getStyle($this->range($layout['idColumn'], $row, $layout['idColumn'], $endRow))->getFont()->setBold(true);
             foreach ($lanes as $laneIndex => $tasks) {
@@ -637,11 +646,13 @@ class GanttXlsxBuilder
                     ]);
                 }
             }
-            $sheet->getStyle($this->range($layout['columnsStart'], $endRow, $timelineEnd, $endRow))
-                ->getBorders()->getBottom()
-                ->setBorderStyle(Border::BORDER_MEDIUM)
-                ->getColor()->setARGB('FF000000');
+            $separatorRows[] = $endRow;
         }
+
+        $sheet->fromArray($valueRows, null, $this->cell($layout['columnsStart'], self::DATA_START_ROW), true);
+        $sheet->fromArray($idRows, null, $this->cell($layout['idColumn'], self::DATA_START_ROW), true);
+        $this->applyQueuedCellStyles($sheet, $cellStyleRanges);
+        $this->applyBottomSeparators($sheet, $separatorRows, $layout['columnsStart'], $timelineEnd);
     }
 
     /**
@@ -651,6 +662,8 @@ class GanttXlsxBuilder
      * @param list<array<string,mixed>> $headerGroups
      * @param mixed $values
      * @param mixed $colors
+     * @param list<list<mixed>> $valueRows
+     * @param array<string,array{background:string,text:string,columns:array<int,list<array{0:int,1:int}>>}> $styleRanges
      */
     private function writeValueSection(
         Worksheet $sheet,
@@ -660,11 +673,15 @@ class GanttXlsxBuilder
         $values,
         $colors,
         int $startRow,
-        int $endRow
+        int $endRow,
+        array &$valueRows,
+        array &$styleRanges
     ): void
     {
         $values = is_array($values) ? $values : [];
         $colors = is_array($colors) ? $colors : [];
+        $rowCount = $endRow - $startRow + 1;
+        $sectionRows = array_fill(0, $rowCount, array_fill(0, count($headers), null));
         foreach ($headers as $index => $header) {
             $column = $startColumn + $index;
             $group = $this->findHeaderGroup($headerGroups, $column);
@@ -678,8 +695,8 @@ class GanttXlsxBuilder
                 $value = $group['empty_cell_text'];
             }
             $value = is_array($value) ? json_encode($value, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : $value;
-            foreach ($this->getValueRows($startRow, $endRow) as $valueRow) {
-                $sheet->setCellValue($this->cell($column, $valueRow), $value);
+            foreach ($this->getValueRows(0, $rowCount - 1) as $valueRow) {
+                $sectionRows[$valueRow][$index] = $value;
             }
             $color = $isEmpty
                 ? $this->resolveColor($group['empty_cell_color'])
@@ -689,8 +706,91 @@ class GanttXlsxBuilder
                     ColorTools::pickTextColorForBackgroundColor('#' . $color, $this->textColorPreference ),
                     '000000'
                 );
-                $this->fillWithTextColor($sheet, $range, $color, $textColor);
+                $this->queueCellStyleRange($styleRanges, $column, $startRow, $endRow, $color, $textColor);
             }
+        }
+        array_push($valueRows, ...$sectionRows);
+    }
+
+    /**
+     * Coalesces adjacent vertical ranges that use the same background and text colors.
+     *
+     * @param array<string,array{background:string,text:string,columns:array<int,list<array{0:int,1:int}>>}> $styleRanges
+     */
+    private function queueCellStyleRange(
+        array &$styleRanges,
+        int $column,
+        int $startRow,
+        int $endRow,
+        string $backgroundRgb,
+        string $textRgb
+    ): void
+    {
+        $key = $backgroundRgb . ':' . $textRgb;
+        if (! isset($styleRanges[$key])) {
+            $styleRanges[$key] = [
+                'background' => $backgroundRgb,
+                'text' => $textRgb,
+                'columns' => [],
+            ];
+        }
+        $ranges = &$styleRanges[$key]['columns'][$column];
+        if (! isset($ranges)) {
+            $ranges = [];
+        }
+        $lastIndex = count($ranges) - 1;
+        if ($lastIndex >= 0 && $ranges[$lastIndex][1] + 1 >= $startRow) {
+            $ranges[$lastIndex][1] = max($ranges[$lastIndex][1], $endRow);
+            return;
+        }
+        $ranges[] = [$startRow, $endRow];
+    }
+
+    /**
+     * Applies all queued color combinations to their coalesced cell ranges.
+     *
+     * @param array<string,array{background:string,text:string,columns:array<int,list<array{0:int,1:int}>>}> $styleRanges
+     */
+    private function applyQueuedCellStyles(Worksheet $sheet, array $styleRanges): void
+    {
+        foreach ($styleRanges as $styleRange) {
+            $style = [
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => 'FF' . strtoupper($styleRange['background'])],
+                ],
+                'font' => ['color' => ['argb' => 'FF' . strtoupper($styleRange['text'])]],
+            ];
+            foreach ($styleRange['columns'] as $column => $ranges) {
+                foreach ($ranges as [$startRow, $endRow]) {
+                    $this->applyCachedStyle($sheet, $column, $startRow, $column, $endRow, $style);
+                }
+            }
+        }
+    }
+
+    /**
+     * Applies the location separators in one pass while reusing derived cell styles.
+     *
+     * @param list<int> $rows
+     */
+    private function applyBottomSeparators(
+        Worksheet $sheet,
+        array $rows,
+        int $startColumn,
+        int $endColumn
+    ): void
+    {
+        $style = [
+            'borders' => [
+                'bottom' => [
+                    'borderStyle' => Border::BORDER_MEDIUM,
+                    'color' => ['argb' => 'FF000000'],
+                ],
+            ],
+        ];
+        foreach ($rows as $row) {
+            $this->applyCachedStyle($sheet, $startColumn, $row, $endColumn, $row, $style);
         }
     }
 
@@ -945,19 +1045,49 @@ class GanttXlsxBuilder
     /** Applies a solid RGB fill to a cell range. */
     private function fill(Worksheet $sheet, string $range, string $rgb): void
     {
-        $sheet->getStyle($range)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF' . strtoupper($rgb));
-    }
-
-    /** Applies a solid background and contrasting text color in one style operation. */
-    private function fillWithTextColor(Worksheet $sheet, string $range, string $backgroundRgb, string $textRgb): void
-    {
-        $sheet->getStyle($range)->applyFromArray([
+        [$start, $end] = Coordinate::rangeBoundaries($range);
+        $this->applyCachedStyle($sheet, $start[0], $start[1], $end[0], $end[1], [
             'fill' => [
                 'fillType' => Fill::FILL_SOLID,
-                'startColor' => ['argb' => 'FF' . strtoupper($backgroundRgb)],
+                'startColor' => ['argb' => 'FF' . strtoupper($rgb)],
             ],
-            'font' => ['color' => ['argb' => 'FF' . strtoupper($textRgb)]],
         ]);
+    }
+
+    /**
+     * Applies a style array by assigning cached derived style indexes to all cells in a range.
+     *
+     * @param array<string,mixed> $style
+     */
+    private function applyCachedStyle(
+        Worksheet $sheet,
+        int $startColumn,
+        int $startRow,
+        int $endColumn,
+        int $endRow,
+        array $style
+    ): void
+    {
+        $styleHash = md5(serialize($style));
+        for ($column = $startColumn; $column <= $endColumn; $column++) {
+            for ($row = $startRow; $row <= $endRow; $row++) {
+                $cell = $sheet->getCellByColumnAndRow($column, $row);
+                $baseStyleIndex = $cell->getXfIndex();
+                $cacheKey = $baseStyleIndex . ':' . $styleHash;
+                if (! isset($this->styleIndexCache[$cacheKey])) {
+                    $workbook = $sheet->getParentOrThrow();
+                    $derivedStyle = clone $workbook->getCellXfByIndex($baseStyleIndex);
+                    $derivedStyle->applyFromArray($style);
+                    $existingStyle = $workbook->getCellXfByHashCode($derivedStyle->getHashCode());
+                    if ($existingStyle === false) {
+                        $workbook->addCellXf($derivedStyle);
+                        $existingStyle = $derivedStyle;
+                    }
+                    $this->styleIndexCache[$cacheKey] = $existingStyle->getIndex();
+                }
+                $cell->setXfIndex($this->styleIndexCache[$cacheKey]);
+            }
+        }
     }
 
     /** Applies a medium black outline to a rectangular range. */

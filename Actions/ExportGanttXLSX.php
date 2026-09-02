@@ -299,13 +299,7 @@ class ExportGanttXLSX extends ExportJSON
                 }
                 if ($colorValue !== null && $colorValue !== '') {
                     $result[$target] = $colorValue;
-                    continue;
                 }
-            }
-            //TODO: Find a way to remove the hardcoded "Farbe" from here and fetch it instead.
-            $conventionalColorSource = '_' . $source . 'Farbe';
-            if (array_key_exists($conventionalColorSource, $row)) {
-                $result[$target] = $row[$conventionalColorSource];
             }
         }
 
