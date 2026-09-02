@@ -32,6 +32,9 @@ use exface\Core\Widgets\Gantt;
  * Use `header_groups` to divide the exported columns into formatted sections and
  * `id_attribute_alias` to select the column repeated before the Gantt timeline.
  *
+ * Development instructions:
+ * [ExportGanttXLSX.instructions.md](../Docs/Components/Actions/ExportGanttXLSX.instructions.md).
+ *
  * @author Sergej Riel
  */
 class ExportGanttXLSX extends ExportJSON

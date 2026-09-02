@@ -20,6 +20,13 @@ it will then get its own action alias. So an action alias can reference an
 action saved in the model or a "naked" prototype. In both cases, additional 
 UXON properties can be specified wherever the action is used.
 
+## Component-specific development instructions
+
+Before modifying an action, inspect its class-level docblock for a linked instruction file under
+`Docs/Components/Actions`. If the docblock links such a file, read and follow it before making any
+changes. Treat these component instructions as additional constraints and keep them current when
+the action's architecture, contract, mapping, or required validation changes.
+
 ## Action workflow
 
 Technically actions handle task objects 
