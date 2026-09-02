@@ -20,7 +20,7 @@ use exface\Core\DataTypes\ByteSizeDataType;
  */
 class HttpMessageDebugger implements iCanGenerateDebugWidgets
 {
-    const MAX_BODY_PRINT_SIZE = 100*1024; // 100 kb in bytes
+    const MAX_BODY_PRINT_SIZE = 400*1024; // 100 kb in bytes
     const MAX_PARAM_PRINT_SIZE = 10*1024; // 10 kb in bytes 
     
     private ?RequestInterface $request = null;
