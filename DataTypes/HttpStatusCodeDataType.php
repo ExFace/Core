@@ -101,7 +101,7 @@ class HttpStatusCodeDataType extends IntegerDataType implements EnumDataTypeInte
     {
         $labels = [];
         $showVals = $this->getShowValues();
-        foreach ($this::getValuesStatic() as $val) {
+        foreach ($this::getValuesOfConstants() as $val) {
             $labels[$val] = ($showVals ? $val . ' ' : '') . $this::getStatusMessage($val);
         }
         return $labels;

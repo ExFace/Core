@@ -18,9 +18,9 @@ class TimeZoneDataType extends StringDataType implements EnumDataTypeInterface
      * Returns all possible values as an array
      *
      * @return string[] Constant name in key, constant value in value
-     * @see EnumStaticDataTypeTrait::getValuesStatic()
+     * @see EnumStaticDataTypeTrait::getValuesOfConstants()
      */
-    public static function getValuesStatic()
+    public static function getValuesOfConstants()
     {
         $class = get_called_class();
         if (! array_key_exists($class, TimeZoneDataType::$cache)) {
@@ -38,7 +38,7 @@ class TimeZoneDataType extends StringDataType implements EnumDataTypeInterface
      */
     public function getLabels()
     {
-        return $this::getValuesStatic();
+        return $this::getValuesOfConstants();
     }
     
     /**

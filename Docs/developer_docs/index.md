@@ -5,8 +5,9 @@
 1. [Getting started](contributing/Contributing_on_GitHub.md): git branches, pull requests, etc.
 2. [Programming languages and code conventions](code_conventions/index.md)
 3. Apps from a technical point of view
- - [The app as dependency container](app_as_container.md)
- - [Installing an app](App_installers/index.md) - initializing app dependencies like SQL schemas, facade routes, etc.
+   - [The app as dependency container](app_as_container.md)
+   - [Installing an app](App_installers/index.md) - initializing app dependencies like SQL schemas, facade routes, etc.
+   - [Exporting and importing models as files](Model_files_and_versioning.md)
 4. [The workbench in detail](workbench.md)
 5. [Using metamodel components in the code via selectors](Using_metamodel_components_in_the_code_via_selectors.md)
 6. [Logging](Logging/index.md)

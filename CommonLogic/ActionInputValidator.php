@@ -4,10 +4,14 @@ namespace exface\Core\CommonLogic;
 
 use exface\Core\Exceptions\Actions\ActionTaskInvalidException;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveConfigurator;
+use exface\Core\Interfaces\Widgets\iInjectInputColumns;
+use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 
 /**
@@ -116,14 +120,73 @@ class ActionInputValidator
             );
         }
         
-        if($inputWidget instanceof iHaveColumns) {
-            foreach ($inputWidget->getColumns() as $column) {
-                $name = $column->getDataColumnName();
-                $expectedColumns[$name] = $name;
+        // Collect columns declared by the input widget itself and by any data widget nested inside it
+        // (e.g. a DataSpreadSheet placed inside a Dialog). Nested data widgets based on the same object
+        // as their container contribute their columns as flat rows to the input data - just like the
+        // top level widget would. Widgets based on a related object are handled as subsheets below.
+        $this->addColumnsFromDataWidgets($expectedColumns, $inputWidget, $inputWidget->getMetaObject());
+
+        // Widgets based on a related object (e.g. InputTags for 3-table tagging) send their input
+        // as a nested subsheet in a single column named after the relation from the parent object.
+        // TODO Future improvement: validate the subsheet contents recursively by building the
+        // expected columns against the child widget's own object and checking the nested rows the
+        // same way as the top level (also handling arbitrary nesting depth).
+        if($inputWidget instanceof iContainOtherWidgets) {
+            $inputObject = $inputWidget->getMetaObject();
+            foreach ($inputWidget->getInputWidgets() as $child) {
+                if(($child instanceof iTakeInputAsDataSubsheet)
+                    && $child->isSubsheetForObject($inputObject)
+                    && null !== $relPath = $child->getObjectRelationPathFromParent()
+                ) {
+                    $name = $relPath->toString();
+                    $expectedColumns[$name] = $name;
+                }
             }
         }
+
+        // Widgets based on a related object (e.g. InputTags for 3-table tagging) send their input
+        // as a nested subsheet in a single column named after the relation from the parent object.
+        // TODO Future improvement: validate the subsheet contents recursively by building the
+        // expected columns against the child widget's own object and checking the nested rows the
+        // same way as the top level (also handling arbitrary nesting depth).
+        if($inputWidget instanceof iContainOtherWidgets) {
+            $inputObject = $inputWidget->getMetaObject();
+            foreach ($inputWidget->getInputWidgets() as $child) {
+                if(($child instanceof iTakeInputAsDataSubsheet)
+                    && $child->isSubsheetForObject($inputObject)
+                    && null !== $relPath = $child->getObjectRelationPathFromParent()
+                ) {
+                    $name = $relPath->toString();
+                    $expectedColumns[$name] = $name;
+                }
+            }
+        }
+
+        $this->addColumnsInjectedAtRuntime($expectedColumns);
         
         return $expectedColumns;
+    }
+
+    /**
+     * Adds columns that the triggering widget declares as trusted (injected into the input at runtime).
+     * 
+     * Some actions add columns to their input data on the client side (e.g. the `dump_setup()` function
+     * of a `DataTable` or a map drop-zone). The triggering button opts out of the forgery false positive
+     * by listing these columns via `input_columns_trusted` - a server-side declaration that cannot be
+     * forged from the client.
+     * 
+     * @param array $target
+     * @return void
+     */
+    protected function addColumnsInjectedAtRuntime(array &$target) : void
+    {
+        $trigger = $this->getTriggerWidget();
+        if(! $trigger instanceof iInjectInputColumns) {
+            return;
+        }
+        foreach ($trigger->getInputColumnsTrusted() as $name) {
+            $target[$name] = $name;
+        }
     }
 
     /**
@@ -133,14 +196,8 @@ class ActionInputValidator
      */
     protected function getInputWidget() : WidgetInterface|null
     {
-        $task = $this->getTask();
-        $action = $this->getAction();
-        
-        if($task->isTriggeredByWidget()) {
-            $widget = $task->getWidgetTriggeredBy();
-        } elseif ($action->isDefinedInWidget()) {
-            $widget = $action->getWidgetDefinedIn();
-        } else {
+        $widget = $this->getTriggerWidget();
+        if($widget === null) {
             return null;
         }
 
@@ -149,6 +206,59 @@ class ActionInputValidator
         }
 
         return $widget;
+    }
+
+    /**
+     * Returns the widget that triggered the action (e.g. the button), before resolving its input widget.
+     * 
+     * @return WidgetInterface|null
+     */
+    protected function getTriggerWidget() : ?WidgetInterface
+    {
+        $task = $this->getTask();
+        $action = $this->getAction();
+
+        if($task->isTriggeredByWidget()) {
+            return $task->getWidgetTriggeredBy();
+        }
+        if($action->isDefinedInWidget()) {
+            return $action->getWidgetDefinedIn();
+        }
+        return null;
+    }
+
+    /**
+     * Recursively collects the columns of the given widget and of any data widget nested inside it,
+     * as long as the widget is based on the same object as the input (`$inputObject`).
+     * 
+     * This is needed for input widgets that are containers (e.g. a Dialog) holding a data widget like
+     * a DataSpreadSheet: the data widget contributes its columns directly to the flat input data, but
+     * `prepareDataSheetToRead()` may skip them once the container has already added system columns.
+     * Data widgets based on a related object are subsheets and are handled separately by the caller.
+     * 
+     * @param array               $target
+     * @param WidgetInterface     $widget
+     * @param MetaObjectInterface $inputObject
+     * @return void
+     */
+    protected function addColumnsFromDataWidgets(
+        array &$target,
+        WidgetInterface $widget,
+        MetaObjectInterface $inputObject
+    ) : void
+    {
+        if($widget instanceof iHaveColumns && $widget->getMetaObject()->is($inputObject)) {
+            foreach ($widget->getColumns() as $column) {
+                $name = $column->getDataColumnName();
+                $target[$name] = $name;
+            }
+        }
+
+        if($widget instanceof iContainOtherWidgets) {
+            foreach ($widget->getWidgets() as $child) {
+                $this->addColumnsFromDataWidgets($target, $child, $inputObject);
+            }
+        }
     }
 
     /**
@@ -194,6 +304,12 @@ class ActionInputValidator
 
         $action = $this->getAction();
         $task = $this->getTask();
+
+        // Input synthesized server-side by a preceding action (e.g. within an action chain) cannot be
+        // forged by the client, so it is exempt from the column forgery check.
+        if($task->isInputDataTrusted()) {
+            return;
+        }
         
         // See if the task has input data.
         if(!$task->hasInputData()) {
@@ -218,14 +334,16 @@ class ActionInputValidator
         }
 
         if(!empty($unexpectedColumns)) {
+            $message = 'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
+                '": ' . implode(', ', $unexpectedColumns) . '!';
+
             $error = new ActionTaskInvalidException(
                 $action,
                 $task,
-                'Unexpected task input columns detected for action "' . $action->getAliasWithNamespace() .
-                '": ' . implode(', ', $unexpectedColumns) . '!'
+                $message,
+                '87OS4GW'
             );
             
-            $error->setUseExceptionMessageAsTitle(true);
             foreach (array_keys($unexpectedColumns) as $unexpectedColumn) {
                 $error->addIssue(ActionTaskInvalidException::ISSUE_UNEXPECTED_COLUMN, $unexpectedColumn);
             }

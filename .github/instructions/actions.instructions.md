@@ -1,6 +1,6 @@
 ---
 description: "Use when working with action prototype classes"
-name: "Actions"
+name: "Developing action prototypes"
 applyTo: "Actions/*.php"
 ---
 # Actions
@@ -19,6 +19,9 @@ An actions UXON a be saved in the model as "object action" to be reusable -
 it will then get its own action alias. So an action alias can reference an 
 action saved in the model or a "naked" prototype. In both cases, additional 
 UXON properties can be specified wherever the action is used.
+
+Actions can be triggered by widgets in the UI, by scheduled tasks, by CLI
+commands or from model components like behaviors or even other actions.
 
 ## Component-specific development instructions
 
@@ -71,6 +74,64 @@ call services, etc. Some of the most common result types are:
 
 An transaction object can be passed to the action along the task to make it 
 reuse a data source transaction instead of starting one for itself.
+
+## Important action types
+
+### CLI actions
+
+To expose an action through `vendor/bin/action`, implement
+`\exface\Core\Interfaces\Actions\iCanBeCalledFromCLI`. The interface requires
+two methods returning `ServiceParameter` instances:
+
+- `getCliArguments()` defines positional arguments.
+- `getCliOptions()` defines named options such as `--app=my.App`.
+
+Create parameters with `\exface\Core\CommonLogic\Actions\ServiceParameter`.
+Set at least a name and a useful description because these are shown by
+`--help`. Use `setRequired(true)` for mandatory positional arguments. An option
+without a default value requires a value; an option with a default value has an
+optional value. Return an empty array when an action has no arguments or
+options. See `Actions/GenerateModelFromDataSource.php` for an example.
+
+The `ConsoleFacade` creates a `CliTask` and maps both arguments and options 
+into its generic parameter bag. Action code should normally use
+`$task->hasParameter('name')` and `$task->getParameter('name')`; this keeps the
+business logic independent of the concrete task type. Use the CLI-specific
+methods only when behavior genuinely depends on `CliTaskInterface`.
+
+When an action already accepts an input DataSheet from the UI, keep one shared
+execution path. Override or add a focused input-building method that returns
+the supplied input unchanged and otherwise translates CLI parameters into an
+equivalent DataSheet. Derive values from richer selectors where sensible: for
+example, an object can provide its app and data source when those options were
+omitted. Validate all required combinations and throw an action input exception
+before performing side effects.
+
+For long-running actions, use a streaming result (usually via
+`AbstractActionDeferred`). The console adapter writes every message yielded by
+a `ResultMessageStreamInterface`; regular results are printed as one message.
+
+Document the exact command and examples in the action docblock. Command aliases
+use a colon before the action name, for example:
+
+```shell
+vendor/bin/action exface.Core:GenerateModelFromDataSource --object=my.App.order
+vendor/bin/action axenox.PackageManager:InstallApp exface.Core,axenox.MyApp
+```
+
+After implementation, validate syntax and command registration without running
+the action's side effects:
+
+```shell
+php -l Actions/ExampleAction.php
+vendor/bin/action exface.Core:ExampleAction --help
+```
+
+The help output must list the intended usage, arguments, option names,
+descriptions and required markers. CLI availability does not bypass action
+authorization or input validation. Ensure the action can safely run without a
+trigger widget and never trust selectors or configuration merely because they
+came from a command line.
 
 ## Action validation and security
 

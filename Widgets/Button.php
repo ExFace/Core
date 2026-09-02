@@ -19,6 +19,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iDefineAction;
+use exface\Core\Interfaces\Widgets\iInjectInputColumns;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
@@ -52,7 +53,7 @@ use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
  * @author Andrej Kabachnik
  *
  */
-class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled
+class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled, iInjectInputColumns
 {
     use iCanBeAlignedTrait;
 
@@ -117,7 +118,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $appearance = self::APPEARANCE_DEFAULT;
 
     private $inputDataUxon = null;
-
     private $hiddenIfInputInvalid = false;
 
     private $disabledIfInputInvalid = true;
@@ -125,6 +125,11 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $showIcon = null;
 
     private $addedWidgets = [];
+
+    /**
+     * @var string[]
+     */
+    private $trustedInputColumns = [];
 
     /**
      *
@@ -141,6 +146,55 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         parent::init();
         $this->setHiddenIfAccessDenied($this->getWorkbench()->getConfig()->getOption('WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED'));
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iInjectInputColumns::getInputColumnsTrusted()
+     */
+    public function getInputColumnsTrusted() : array
+    {
+        return $this->trustedInputColumns;
+    }
+
+    /**
+     * Declare column names that this button's action adds to its input data as trusted 
+     * so they are not flagged as forgeries. You don't have to declare columns that are naturally part of the 
+     * input data (like input widgets, table columns, and so on).
+     * 
+     * For example, a button whose `custom_request_data_script` injects two columns client-side:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Button",
+     *  "input_columns_trusted": ["SCANNED_AT", "DEVICE_ID"],
+     *  "facade_options": {
+     *      "exface.UI5Facade.UI5Facade": {
+     *          "custom_request_data_script": "var oRow = requestData.rows[0]; oRow['SCANNED_AT'] = Date.now(); oRow['DEVICE_ID'] = getDeviceId(); return true;"
+     *      }
+     *  },
+     *  "action": {"alias": "my.App.SaveScan"}
+     * }
+     * ```
+     * 
+     * Only the listed columns are accepted - any other undeclared column would be flagged as a forgery.
+     * 
+     * @uxon-property input_columns_trusted
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $columnNames
+     * @return Button
+     */
+    public function setInputColumnsTrusted($columnNames) : Button
+    {
+        // TODO If a real use case ever needs to inject a *dynamic* set of columns (e.g. a Shape-B
+        // custom_request_data_script whose column names are not fixed), add a coarser opt-out here that
+        // trusts the whole client payload for this button. Deliberately omitted for now: no such surface
+        // exists yet and the lever would invite bypassing the forgery check where an allow-list suffices.
+        $this->trustedInputColumns = $columnNames instanceof UxonObject ? $columnNames->toArray() : $columnNames;
+        return $this;
     }
 
     public function getAction()

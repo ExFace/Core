@@ -68,7 +68,7 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
         if (empty($this->labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (OfflineStrategyDataType::getValuesStatic() as $val) {
+            foreach (static::getValuesOfConstants() as $val) {
                 $this->labels[$val] = $translator->translate('OFFLINE.STRATEGY.' . mb_strtoupper($val));
             }
         }
@@ -83,7 +83,7 @@ class OfflineStrategyDataType extends StringDataType implements EnumDataTypeInte
      */
     public static function getStrategies(array $exceptions = []) : array
     {
-        $all = array_keys(static::getValuesStatic());
+        $all = array_keys(static::getValuesOfConstants());
         if (! empty($exceptions)) {
             return array_diff($all, $exceptions);
         }

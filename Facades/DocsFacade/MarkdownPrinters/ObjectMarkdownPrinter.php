@@ -14,7 +14,6 @@ use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\QueryBuilderFactory;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
-use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Model\MetaAttributeListInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -306,7 +305,8 @@ MD;
         $heading = MarkdownDataType::buildMarkdownHeader($heading, $headingLevel);
         $subsections = '';
         foreach ($behaviors as $behavior) {
-            $subsections .= $this->buildMdBehaviorSection($behavior, $headingLevel+1);
+            $behaviorPrinter = new BehaviorMarkdownPrinter($behavior, $headingLevel+1);
+            $subsections .= $behaviorPrinter->getMarkdown();
         }
         return <<<MD
 {$heading}
@@ -314,23 +314,6 @@ MD;
 {$subsections}
 MD;
 
-    }
-    
-    protected function buildMdBehaviorSection(BehaviorInterface $behavior, int $headingLevel = 3) : string
-    {
-        $heading = MarkdownDataType::buildMarkdownHeader($behavior->getName(), $headingLevel);
-        $prototypeClass = '\\' . get_class($behavior);
-        $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($behavior);
-        return <<<MD
-
-{$heading}
-
-- Prototype: [$prototypeClass]($prototypeLink)
-
-```
-{$behavior->exportUxonObject()->toJson(true)}
-```
-MD;
     }
     
     protected function buildMdAttributeProperties(MetaAttributeInterface $attr) : string

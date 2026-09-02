@@ -74,6 +74,11 @@ The class-level Docblock must include the following:
 - description listing most important UXON properties and use cases. It 
   should include typical example UXONs.
 
+If a component can be used in multiple scenarios, add an `## Examples` section
+with a sub-chapter for very typical use case. Explain the scenario and the
+critical properties required for it. If examples are present already, do not 
+change their structure - only update syntax if needed or add new examples.
+
 ### Method annotations for UXON properties
 
 Setter methods for UXON properties MUST have `@uxon-` annotations in their 

@@ -47,6 +47,8 @@ class GenericTask implements TaskInterface
     
     private $inputData = null;
     
+    private $inputDataTrusted = false;
+    
     private $transaction = null;
     
     private $object = null;
@@ -159,6 +161,27 @@ class GenericTask implements TaskInterface
     public function setInputData(DataSheetInterface $dataSheet): TaskInterface
     {
         $this->inputData = $dataSheet;
+        return $this;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::isInputDataTrusted()
+     */
+    public function isInputDataTrusted() : bool
+    {
+        return $this->inputDataTrusted;
+    }
+
+    /**
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Tasks\TaskInterface::setInputDataTrusted()
+     */
+    public function setInputDataTrusted(bool $value) : TaskInterface
+    {
+        $this->inputDataTrusted = $value;
         return $this;
     }
 
@@ -623,6 +646,11 @@ class GenericTask implements TaskInterface
                     break;
                 case 'widget_id':
                     $this->setWidgetIdTriggeredBy($val);
+                    break;
+                // This property is security critical and should only be set via code, not through the Uxon import.
+                // We fail silently (i.e. remove the property) to obfuscate this sensitive information.
+                case 'input_data_trusted':
+                    $uxon->unsetProperty('input_data_trusted');
                     break;
             }
         }

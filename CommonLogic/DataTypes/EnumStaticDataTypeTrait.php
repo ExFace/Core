@@ -51,11 +51,14 @@ trait EnumStaticDataTypeTrait {
     private static $cacheValuesNC = [];
     
     /**
-     * Returns all possible value-label pairs as an array
+     * Returns all possible constant-value pairs as an array.
+     * 
+     * NOTE: the return format is different from `getValues()` as `getValuesStatic()`! This method returns constant 
+     * names as keys, while the other (public) ones return numeric keys.
      *
      * @return array Constant name as key, constant value as value
      */
-    public static function getValuesStatic()
+    protected static function getValuesOfConstants()
     {
         $class = get_called_class();
         if (! array_key_exists($class, static::$cache)) {
@@ -65,6 +68,16 @@ trait EnumStaticDataTypeTrait {
         
         return static::$cache[$class];
     }
+
+    /**
+     * Returns an array of enum values with numeric keys - this is a static version of `getValues()`.
+     * 
+     * @return array
+     */
+    public static function getValuesStatic()
+    {
+        return array_values(static::getValuesOfConstants());
+    }
     
     /**
      * Returns the names of the constants (keys of the value cache array) as a numeric array.
@@ -73,7 +86,7 @@ trait EnumStaticDataTypeTrait {
      */
     public static function getConstantNames()
     {
-        return array_keys(static::getValuesStatic());
+        return array_keys(static::getValuesOfConstants());
     }
     
     /**
@@ -93,7 +106,7 @@ trait EnumStaticDataTypeTrait {
             // original array in case there were multiple keys with the same value. Since we
             // need the first key to match, we first reverse the array, than flip it and then
             // uppercase all keys.
-            static::$cacheValuesNC[$class] = array_change_key_case(array_flip(array_reverse(static::getValuesStatic())), CASE_UPPER);
+            static::$cacheValuesNC[$class] = array_change_key_case(array_flip(array_reverse(static::getValuesOfConstants())), CASE_UPPER);
         }
 
         // Search over the case-insensitive cache
@@ -122,7 +135,7 @@ trait EnumStaticDataTypeTrait {
         // the constant name with an case-insensitive search. Since there are really
         // a lot of validations on static enums like ComparatorDataType, this should
         // speed up the "regular" cases.
-        $exactMatch = in_array($value, static::getValuesStatic());
+        $exactMatch = in_array($value, static::getValuesOfConstants());
         if ($exactMatch === false) {
             return static::findConstant($value) !== false;
         }
@@ -140,7 +153,7 @@ trait EnumStaticDataTypeTrait {
      */
     public static function __callStatic($name, $arguments)
     {
-        $array = static::getValuesStatic();
+        $array = static::getValuesOfConstants();
         if (isset($array[$name])) {
             if (! ($arguments[0] instanceof Workbench)) {
                 throw new BadMethodCallException("Argument 1 passed to " . get_called_class() . "::" . $name . "() must implement interface \exface\Core\CommonLogic\Workbench, " . gettype($arguments[0]) . " given!");
@@ -180,7 +193,7 @@ trait EnumStaticDataTypeTrait {
             throw new DataTypeCastingError('Value "' . $value . '" does not fit into the enumeration data type ' . get_called_class() . '!');
         }
         
-        return static::getValuesStatic()[$constName];
+        return static::getValuesOfConstants()[$constName];
     }
 
     /**
@@ -219,11 +232,11 @@ trait EnumStaticDataTypeTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getLabels()
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValues()
      */
     public function getValues()
     {
-        return $this::getValuesStatic();
+        return array_values($this::getValuesOfConstants());
     }
     
     /**
