@@ -101,36 +101,29 @@ Before workbook generation, every main Gantt row is converted into this structur
 ```
  
 {
-    "Columns": {
-        "Verortung": "7110-221A_",
-        "Bautyp": "Neubaumast",
-        "Gesamtfortschritt": "88%",
-        "Gesamtfortschritt_Farbe": "~WARNING"
+    "columns": {
+        "Location": "A-101",
+        "Type": "Foundation",
+        "Progress": "88%"
     },
-    "VerortungZuMassnahmeSichtbar": {
-        "rows": [
-            {
-                "DurchfuehrungVon": "2025-10-06",
-                "DurchfuehrungBis": "2025-11-19",
-                "LABEL": "Fundament(-sanierung)",
-                "FarbeAnzeige": "#ce4646"
-            }
-        ]
-    }
+    "column_colors": {
+        "Progress": "~WARNING"
+    },
+    "tasks": [
+        {
+            "start": "2025-10-06",
+            "end": "2025-11-19",
+            "title": "Preparation",
+            "color": "#ce4646"
+        }
+    ]
 }
  
 ```
 
-The nested task source columns are resolved from the Gantt's `tasks` configuration:
-
-- `object_relation_path_to_parent` determines the nested DataSheet column.
-- `start_time` supplies `DurchfuehrungVon`.
-- `end_time` supplies `DurchfuehrungBis`.
-- `title` supplies `LABEL`.
-- `color` supplies `FarbeAnzeige`.
-
-Known BMDB column names remain fallback values for compatibility if no defining Gantt can be
-resolved.
+The action normalizes all source-specific task columns to the generic keys shown above. The nested
+data, start, end, title, and color column names are taken directly from the defining Gantt widget's
+`tasks` configuration, matching the column resolution used by the Gantt facade.
 
 ## Column selection and header groups
 
@@ -178,10 +171,11 @@ string, or only whitespace. If the property is omitted, the cell remains empty. 
 boolean values are retained. Set `empty_cell_color` to color empty cells and automatically select
 a contrasting text color. Without `empty_cell_color`, empty cells keep their normal background.
 
-Cell colors are mapped automatically when the input row contains a companion column named
-`_<source column>Farbe`. The temporal status color uses
-`VerortungStatus__ZeitlicherStatus__Farbe`, which the action always requests in addition to the
-columns selected by the Gantt export request.
+Cell colors are derived from each Gantt column's cell widget. A `ColorIndicator` contributes its
+configured `color` binding, including attribute, formula, or DataSheet column bindings and optional
+color scales. The action reads the binding alongside the exported value and passes the resolved
+color to the builder separately. The generic `_<source data column>Farbe` companion field remains
+available as a fallback for rows that already contain one.
 
 If a Gantt column has no explicit caption, its attribute name from the metamodel is used
 automatically. Set `id_attribute_alias` to copy an exported attribute into the dedicated column

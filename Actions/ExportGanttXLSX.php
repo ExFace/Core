@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\CommonLogic\Actions\XLSXHeaderGroups;
 use exface\Core\CommonLogic\Actions\XLSXPrintSettings;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -13,12 +14,12 @@ use exface\Core\Exceptions\Actions\ActionInputMissingError;
 use exface\Core\Exceptions\Actions\ActionRuntimeError;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Factories\FormulaFactory;
-use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\DataColumn;
+use exface\Core\Widgets\ColorIndicator;
 use exface\Core\Widgets\Gantt;
 
 /**
@@ -35,8 +36,6 @@ use exface\Core\Widgets\Gantt;
  */
 class ExportGanttXLSX extends ExportJSON
 {
-    private const TIME_STATUS_COLOR_COLUMN = 'VerortungStatus__ZeitlicherStatus__Farbe';
-
     private array $columns = [];
     /** @var array<string, string|null> */
     private array $columnAttributeAliases = [];
@@ -49,6 +48,8 @@ class ExportGanttXLSX extends ExportJSON
     private array $headerGroups = [];
     private ?string $headingColor = null;
     private ?string $idAttributeAlias = null;
+    /** @var array<string, array{column_name:string|null, indicator:ColorIndicator}> */
+    private array $columnColorBindings = [];
 
     /**
      * Initializes the action for a non-lazy XLSX export that requires the complete result set.
@@ -64,7 +65,7 @@ class ExportGanttXLSX extends ExportJSON
     }
 
     /**
-     * Adds the temporal status color required by the workbook alongside the requested Gantt columns.
+     * Adds color bindings from the Gantt column widgets alongside the requested columns.
      *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ExportJSON::getDataSheetToRead()
@@ -79,8 +80,23 @@ class ExportGanttXLSX extends ExportJSON
         }
 
         $dataSheet = parent::getDataSheetToRead($task);
-        if (! $dataSheet->getColumns()->getByExpression(self::TIME_STATUS_COLOR_COLUMN)) {
-            $dataSheet->getColumns()->addFromExpression(self::TIME_STATUS_COLOR_COLUMN);
+        $this->columnColorBindings = [];
+        $gantt = $this->getInputGantt();
+        foreach ($gantt?->getColumns() ?? [] as $column) {
+            if (! $column instanceof DataColumn) {
+                continue;
+            }
+            $cellWidget = $column->getCellWidget();
+            if (! $cellWidget instanceof ColorIndicator) {
+                continue;
+            }
+
+            $colorBinding = $cellWidget->getColorBinding();
+            $colorBinding->prepareDataSheetToRead($dataSheet);
+            $this->columnColorBindings[$column->getDataColumnName()] = [
+                'column_name' => $colorBinding->getDataColumnName(),
+                'indicator' => $cellWidget,
+            ];
         }
         return $dataSheet;
     }
@@ -181,7 +197,7 @@ class ExportGanttXLSX extends ExportJSON
             throw new ActionInputMissingError($this, 'Cannot export Gantt data: no rows match the current filters.');
         }
 
-        $mappedData = ['Verortungen' => $this->mapGanttRows($dataSheet->getRows())];
+        $mappedData = $this->mapGanttRows($dataSheet->getRows());
         $idColumn = $this->resolveIdColumnCaption();
         try {
             (new GanttXlsxBuilder(
@@ -233,10 +249,9 @@ class ExportGanttXLSX extends ExportJSON
             }
 
             $result[] = [
-                'Columns' => $this->mapColumns($row),
-                'VerortungZuMassnahmeSichtbar' => [
-                    'rows' => $this->mapTaskRows($row[$taskColumns['nested']] ?? [], $taskColumns),
-                ],
+                'columns' => $this->mapColumns($row),
+                'column_colors' => $this->mapColumnColors($row),
+                'tasks' => $this->mapTaskRows($row[$taskColumns['nested']] ?? [], $taskColumns),
             ];
         }
 
@@ -259,17 +274,39 @@ class ExportGanttXLSX extends ExportJSON
         $result = [];
         foreach ($this->columns as $source => $target) {
             $result[$target] = $row[$source] ?? null;
-            $colorSource = '_' . $source . 'Farbe';
-            if (array_key_exists($colorSource, $row)) {
-                $result[$target . '_Farbe'] = $row[$colorSource];
-            }
         }
 
-        $timeStatusColor = self::TIME_STATUS_COLOR_COLUMN;
-        if (isset($this->columns['VerortungStatus__ZeitlicherStatus__WertAggregation'])
-            && array_key_exists($timeStatusColor, $row)) {
-            $target = $this->columns['VerortungStatus__ZeitlicherStatus__WertAggregation'];
-            $result[$target . '_Farbe'] = $row[$timeStatusColor];
+        return $result;
+    }
+
+    /**
+     * Resolves exported cell colors from their Gantt column widgets.
+     *
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function mapColumnColors(array $row): array
+    {
+        $result = [];
+        foreach ($this->columns as $source => $target) {
+            $binding = $this->columnColorBindings[$source] ?? null;
+            if ($binding !== null) {
+                $indicator = $binding['indicator'];
+                $colorSource = $binding['column_name'];
+                $colorValue = $colorSource === null ? $indicator->getColor() : ($row[$colorSource] ?? null);
+                if ($indicator->hasColorScale()) {
+                    $colorValue = $indicator->getColorForValue($colorValue);
+                }
+                if ($colorValue !== null && $colorValue !== '') {
+                    $result[$target] = $colorValue;
+                    continue;
+                }
+            }
+            //TODO: Find a way to remove the hardcoded "Farbe" from here and fetch it instead.
+            $conventionalColorSource = '_' . $source . 'Farbe';
+            if (array_key_exists($conventionalColorSource, $row)) {
+                $result[$target] = $row[$conventionalColorSource];
+            }
         }
 
         return $result;
@@ -279,7 +316,7 @@ class ExportGanttXLSX extends ExportJSON
      * Converts a nested Gantt task sheet into the builder's stable task field names.
      *
      * @param mixed $nestedData
-     * @param array{nested:string,start:string,end:string,title:string,color:string} $columns
+     * @param array{nested:string,start:string,end:string|null,title:string,color:string|null} $columns
      * @return list<array<string, mixed>>
      */
     private function mapTaskRows($nestedData, array $columns): array
@@ -298,48 +335,40 @@ class ExportGanttXLSX extends ExportJSON
                 continue;
             }
             $result[] = [
-                'DurchfuehrungVon' => $row[$columns['start']] ?? null,
-                'DurchfuehrungBis' => $row[$columns['end']] ?? null,
-                'LABEL' => $row[$columns['title']] ?? '',
-                'FarbeAnzeige' => $row[$columns['color']] ?? null,
+                'start' => $row[$columns['start']] ?? null,
+                'end' => $columns['end'] === null ? null : ($row[$columns['end']] ?? null),
+                'title' => $row[$columns['title']] ?? '',
+                'color' => $columns['color'] === null ? null : ($row[$columns['color']] ?? null),
             ];
         }
         return $result;
     }
 
     /**
-     * Resolves nested task column names from the defining Gantt with payload-compatible fallbacks.
+     * Resolves nested task column names from the defining Gantt widget.
      *
-     * @return array{nested:string,start:string,end:string,title:string,color:string}
+     * @return array{nested:string,start:string,end:string|null,title:string,color:string|null}
      */
     private function getTaskColumnNames(): array
     {
-        $columns = [
-            'nested' => 'VerortungZuMassnahmeSichtbar',
-            'start' => 'Massnahme__DurchfuehrungVon',
-            'end' => 'Massnahme__DurchfuehrungBis',
-            'title' => 'Massnahme__MassnahmeTyp__LABEL',
-            'color' => 'Massnahme__MassnahmeTyp__FarbeAnzeige',
-        ];
-
         $inputWidget = $this->getInputGantt();
         if ($inputWidget === null) {
-            return $columns;
+            throw new ActionConfigurationError($this, 'The Gantt XLSX export must be defined in a button of a Gantt widget.');
         }
 
         $tasks = $inputWidget->getTasksConfig();
-        if ($tasks->getNestedDataColumn() !== null) {
-            $columns['nested'] = $tasks->getNestedDataColumn()->getDataColumnName();
+        $nestedDataColumn = $tasks->getNestedDataColumn();
+        if ($nestedDataColumn === null) {
+            throw new ActionConfigurationError($this, 'The Gantt XLSX export requires nested task data in the defining Gantt widget.');
         }
-        $columns['start'] = $tasks->getStartTimeColumn()->getDataColumnName();
-        if ($tasks->getEndTimeColumn() !== null) {
-            $columns['end'] = $tasks->getEndTimeColumn()->getDataColumnName();
-        }
-        $columns['title'] = $tasks->getTitleColumn()->getDataColumnName();
-        if ($tasks->getColorColumn() !== null) {
-            $columns['color'] = $tasks->getColorColumn()->getDataColumnName();
-        }
-        return $columns;
+
+        return [
+            'nested' => $nestedDataColumn->getDataColumnName(),
+            'start' => $tasks->getStartTimeColumn()->getDataColumnName(),
+            'end' => $tasks->getEndTimeColumn()?->getDataColumnName(),
+            'title' => $tasks->getTitleColumn()->getDataColumnName(),
+            'color' => $tasks->getColorColumn()?->getDataColumnName(),
+        ];
     }
 
     /**
@@ -531,6 +560,10 @@ class ExportGanttXLSX extends ExportJSON
      */
     public function setIdAttributeAlias(string $value): ExportGanttXLSX
     {
+        $value = trim($value);
+        if ($value === '') {
+            throw new ActionConfigurationError($this, '`id_attribute_alias` cannot be empty.');
+        }
         $this->idAttributeAlias = $value;
         return $this;
     }

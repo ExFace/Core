@@ -151,7 +151,7 @@ class GanttXlsxBuilder
     }
 
     /**
-     * Validates and extracts the normalized location records.
+     * Validates and extracts the normalized export rows.
      *
      * @param mixed $data
      * @return list<array<string, mixed>>
@@ -161,20 +161,19 @@ class GanttXlsxBuilder
         if (! is_array($data)) {
             throw new \RuntimeException('Gantt export data must be an array.');
         }
-        $items = $data['Verortungen'] ?? $data;
-        if (! is_array($items) || $items === []) {
-            throw new \RuntimeException('Gantt export data must contain non-empty "Verortungen".');
+        if ($data === []) {
+            throw new \RuntimeException('Gantt export data must contain at least one row.');
         }
-        foreach ($items as $item) {
+        foreach ($data as $item) {
             if (! is_array($item)) {
-                throw new \RuntimeException('Each Gantt location must be an object.');
+                throw new \RuntimeException('Each Gantt export row must be an object.');
             }
         }
-        return array_values($items);
+        return array_values($data);
     }
 
     /**
-     * Collects section headers in input order while omitting color helper fields.
+     * Collects section headers in input order.
      *
      * @param list<array<string, mixed>> $items
      * @return list<string>
@@ -183,12 +182,12 @@ class GanttXlsxBuilder
     {
         $headers = [];
         foreach ($items as $item) {
-            $values = $item['Columns'] ?? [];
+            $values = $item['columns'] ?? [];
             if (! is_array($values)) {
                 continue;
             }
             foreach (array_keys($values) as $key) {
-                if (! is_string($key) || str_ends_with($key, '_Farbe')) {
+                if (! is_string($key)) {
                     continue;
                 }
                 $headers[$key] = true;
@@ -265,7 +264,7 @@ class GanttXlsxBuilder
      */
     private function extractRawTasks(array $item): array
     {
-        $rows = $item['VerortungZuMassnahmeSichtbar']['rows'] ?? [];
+        $rows = $item['tasks'] ?? [];
         return is_array($rows) ? array_values(array_filter($rows, 'is_array')) : [];
     }
 
@@ -602,7 +601,8 @@ class GanttXlsxBuilder
                 $layout['columnsStart'],
                 $headers,
                 $headerGroups,
-                $item['Columns'] ?? [],
+                $item['columns'] ?? [],
+                $item['column_colors'] ?? [],
                 $row,
                 $endRow
             );
@@ -610,7 +610,7 @@ class GanttXlsxBuilder
                 $sheet->mergeCells($this->range($layout['idColumn'], $row, $layout['idColumn'], $endRow));
             }
             foreach ($this->getValueRows($row, $endRow) as $valueRow) {
-                $sheet->setCellValue($this->cell($layout['idColumn'], $valueRow), $item['Columns'][$idColumn] ?? null);
+                $sheet->setCellValue($this->cell($layout['idColumn'], $valueRow), $item['columns'][$idColumn] ?? null);
             }
             $sheet->getStyle($this->range($layout['idColumn'], $row, $layout['idColumn'], $endRow))->getFont()->setBold(true);
             foreach ($lanes as $laneIndex => $tasks) {
@@ -650,6 +650,7 @@ class GanttXlsxBuilder
      * @param list<string> $headers
      * @param list<array<string,mixed>> $headerGroups
      * @param mixed $values
+     * @param mixed $colors
      */
     private function writeValueSection(
         Worksheet $sheet,
@@ -657,11 +658,13 @@ class GanttXlsxBuilder
         array $headers,
         array $headerGroups,
         $values,
+        $colors,
         int $startRow,
         int $endRow
     ): void
     {
         $values = is_array($values) ? $values : [];
+        $colors = is_array($colors) ? $colors : [];
         foreach ($headers as $index => $header) {
             $column = $startColumn + $index;
             $group = $this->findHeaderGroup($headerGroups, $column);
@@ -680,7 +683,7 @@ class GanttXlsxBuilder
             }
             $color = $isEmpty
                 ? $this->resolveColor($group['empty_cell_color'])
-                : $this->resolveColor($values[$header . '_Farbe'] ?? $values[preg_replace('/\s+/', '', $header) . '_Farbe'] ?? null);
+                : $this->resolveColor($colors[$header] ?? null);
             if ($color !== null) {
                 $textColor = $this->resolveColor(
                     ColorTools::pickTextColorForBackgroundColor('#' . $color, $this->textColorPreference ),
@@ -725,7 +728,8 @@ class GanttXlsxBuilder
                 continue;
             }
             $tasks[] = [
-                'label' => (string) ($row['LABEL'] ?? ''), 'color' => $this->resolveColor($row['FarbeAnzeige'] ?? null, 'D9D9D9'),
+                'label' => (string) ($row['title'] ?? ''),
+                'color' => $this->resolveColor($row['color'] ?? null, 'D9D9D9'),
                 'startIndex' => min($timelineIndex[$startKey], $timelineIndex[$endKey]),
                 'endIndex' => max($timelineIndex[$startKey], $timelineIndex[$endKey]),
                 'inferredInterval' => $interval['inferred'],
@@ -743,8 +747,8 @@ class GanttXlsxBuilder
      */
     private function resolveTaskInterval(array $task): ?array
     {
-        $start = $this->parseDate($task['DurchfuehrungVon'] ?? null);
-        $end = $this->parseDate($task['DurchfuehrungBis'] ?? null);
+        $start = $this->parseDate($task['start'] ?? null);
+        $end = $this->parseDate($task['end'] ?? null);
         if ($start === null && $end === null) {
             return null;
         }
