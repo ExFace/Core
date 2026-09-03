@@ -282,6 +282,7 @@
     "MESSAGE.SELECT_EXACTLY_X_ROWS": "Bitte genau %number% Datensatz auswählen!|Bitte genau %number% Datensätze auswählen!",
     "MESSAGE.SELECT_AT_MOST_X_ROWS": "Bitte maximal %number% Datensatz auswählen!|Bitte maximal %number% Datensätze auswählen!",
     "MESSAGE.SELECT_AT_LEAST_X_ROWS": "Bitte mindestens %number% Datensatz auswählen!|Bitte mindestens %number% Datensätze auswählen!",
+    "MESSAGE.NO_CHANGES_TO_SAVE": "Keine Änderungen zum Speichern.",
     "MESSAGE.SELECT_X_TO_Y_ROWS": "Bitte %min% bis %max% Datensätze auswählen!",
     "OFFLINE.ACTIONS.ACTION_QUEUED": "Aktion in Offline-Puffer gespeichert. Sie wird ausgeführt, sobald Sie wieder online sind!",
     "OFFLINE.ACTIONS.NETWORK.ACTION_QUEUE_FAILED": "Aktion kann nicht offline ausgeführt werden!",

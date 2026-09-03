@@ -19,6 +19,7 @@ class DataButton extends Button
     const INPUT_ROWS_ALL = 'all';
     const INPUT_ROWS_ALL_AS_SUBSHEET = 'all_as_subsheet';
     const INPUT_ROWS_SELECTED = 'selected';
+    const INPUT_ROWS_CHANGED = 'changed';
     const INPUT_ROWS_AUTO = 'auto';
     const INPUT_ROWS_NONE = 'none';
     
@@ -172,8 +173,12 @@ class DataButton extends Button
      * occasions the option needs to be overridden manually: e.g. if a CallWebService action is actually
      * modifying data, it may need all the rows instead of the selected ones.
      * 
+     * Use `changed` to only pass rows, that were actually modified by the user. This is particularly
+     * useful for editable spreadsheets, that would otherwise save all their rows regardless of whether
+     * they changed or not.
+     * 
      * @uxon-property input_rows
-     * @uxon-type [auto,all,all_as_subsheet,selected,none]
+     * @uxon-type [auto,all,all_as_subsheet,selected,changed,none]
      * @uxon-default auto
      *
      * @param string $value
