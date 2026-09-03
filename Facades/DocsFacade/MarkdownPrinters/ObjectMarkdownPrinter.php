@@ -84,12 +84,18 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
         $heading = MarkdownDataType::buildMarkdownHeader('Metaobject "' . $metaObject->getName() . '"', $headingLevel);
         
         $description = $metaObject->getShortDescription();
-        
-        $connectorClass = PhpClassDataType::findClassNameWithoutNamespace($metaObject->getDataConnection());
-        $connectorLink = DocsFacade::buildUrlToDocsForUxonPrototype($metaObject->getDataConnection());
-        $queryBuilder = QueryBuilderFactory::createForObject($metaObject);
-        $queryBuilderClass = PhpClassDataType::findClassNameWithoutNamespace($queryBuilder);
-        $queryBuilderLink = DocsFacade::buildUrlToDocsForUxonPrototype($queryBuilder);
+
+        if ($metaObject->hasDataSource()) {
+            $dataConnection = $metaObject->getDataConnection();
+            $connectorClass = PhpClassDataType::findClassNameWithoutNamespace($dataConnection);
+            $connectorLink = DocsFacade::buildUrlToDocsForUxonPrototype($dataConnection);
+            $queryBuilder = QueryBuilderFactory::createForObject($metaObject);
+            $queryBuilderClass = PhpClassDataType::findClassNameWithoutNamespace($queryBuilder);
+            $queryBuilderLink = DocsFacade::buildUrlToDocsForUxonPrototype($queryBuilder);
+            $dataSourceMarkdown = "- Data Source: **{$metaObject->getDataSource()->getName()}**, query builder: [{$queryBuilderClass}]($queryBuilderLink), connector: [{$connectorClass}]({$connectorLink})";
+        } else {
+            $dataSourceMarkdown = '- Data Source: **None**';
+        }
         
         $importantAttributes = '';
         if ($metaObject->hasUidAttribute()) {
@@ -112,7 +118,7 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
 - Alias: **{$metaObject->getAliasWithNamespace()}**
 - UID: `{$metaObject->getId()}`
 {$parentObjectLinks}
-- Data Source: **{$metaObject->getDataSource()->getName()}**, query builder: [{$queryBuilderClass}]($queryBuilderLink), connector: [{$connectorClass}]({$connectorLink})
+{$dataSourceMarkdown}
 {$importantAttributes}
 
 {$description}
