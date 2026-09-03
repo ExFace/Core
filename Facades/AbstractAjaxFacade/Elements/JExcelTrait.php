@@ -46,6 +46,8 @@ use exface\Core\CommonLogic\UxonObject;
  * - getJExcel() : Object
  * - getDom() : DomElement
  * - getData() : array - returns the current array of data rows
+ * - getDataChanged() : array - returns only the rows the user actually changed (uses the change earmark)
+ * - getChangedRowIndexes() : Object - map {rowIdx: true} of rows with at least one earmarked (changed) cell
  * - getDataLastLoaded() : array - returns the array of data rows as received from the server or dataGetter.
  * - getColumnName(iColIdx) : string
  * - getColumnIndex(string colName) : int
@@ -1126,6 +1128,21 @@ JS;
         getData: function() {
             return this.convertArrayToData(this.getJExcel().getData(false));
         },
+        getDataChanged: function() {
+            return this.convertArrayToData(this.getJExcel().getData(false), true);
+        },
+        getChangedRowIndexes: function() {
+            // Rows are earmarked cell-wise with the `exf-spreadsheet-change` class in validateCell().
+            // Reading that marker back is far cheaper than re-comparing every cell of every row.
+            var oChangedRows = {};
+            $(this._dom).find('tbody td.exf-spreadsheet-change').each(function(){
+                var sY = this.getAttribute('data-y');
+                if (sY !== null && sY !== '') {
+                    oChangedRows[parseInt(sY, 10)] = true;
+                }
+            });
+            return oChangedRows;
+        },
         getDataLastLoaded: function(){
             return this._initData;
         },
@@ -1438,7 +1455,6 @@ JS;
             }
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
-
             if (this.getDoNotValidate() === true) {
                 return true;
             }
@@ -1468,18 +1484,25 @@ JS;
 
             return true;
         },
-        convertArrayToData: function(aDataArray) {
+        convertArrayToData: function(aDataArray, bChangedOnly) {
             var aData = [];
             var iDataCnt = aDataArray.length;
             var jExcel = $(this._dom);
             var oColNames = this._colNames;
             var oWidget = this;
             var bAllowEmptyRows = {$allowEmptyRows};
+            // Only visit rows the user actually changed, using the visual earmark instead of
+            // comparing every cell of every row (see getChangedRowIndexes()).
+            var oChangedRows = bChangedOnly === true ? this.getChangedRowIndexes() : null;
             aDataArray.forEach(function(aRow, i){
                 var oRow = {};
                 var bEmptyRow = true;
 
                 if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
+                    return;
+                }
+
+                if (bChangedOnly === true && oChangedRows[i] !== true) {
                     return;
                 }
 
@@ -2666,7 +2689,23 @@ JS;
         
         $relPathToParent = $widget->getObjectRelationPathToParent();
         
+        // By default all rows are passed to the action. If the button explicitly requests only
+        // changed rows via `input_rows: changed`, use the getDataChanged() getter instead.
+        $dataGetterFn = 'getData';
+        
         switch (true) {
+            // If the button explicitly asks for only changed rows
+            case $customMode === DataButton::INPUT_ROWS_CHANGED:
+                $dataGetterFn = 'getDataChanged';
+                $data = <<<JS
+    {
+        oId: '{$widgetObj->getId()}',
+        rows: aRows
+    }
+    
+JS;
+                break;
+                
             // If there is no action or the action 
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
@@ -2781,7 +2820,7 @@ JS;
             }
 
             var aRows;            
-            aRows = jqEl[0].exfWidget.getData();
+            aRows = jqEl[0].exfWidget.{$dataGetterFn}();
             
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
