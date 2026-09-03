@@ -46,6 +46,8 @@ use exface\Core\CommonLogic\UxonObject;
  * - getJExcel() : Object
  * - getDom() : DomElement
  * - getData() : array - returns the current array of data rows
+ * - getDataChanged() : array - returns only the rows the user actually changed (uses the change earmark)
+ * - getChangedRowIndexes() : Object - map {rowIdx: true} of rows with at least one earmarked (changed) cell
  * - getDataLastLoaded() : array - returns the array of data rows as received from the server or dataGetter.
  * - getColumnName(iColIdx) : string
  * - getColumnIndex(string colName) : int
@@ -1153,6 +1155,18 @@ JS;
         getDataChanged: function() {
             return this.convertArrayToData(this.getJExcel().getData(false), true);
         },
+        getChangedRowIndexes: function() {
+            // Rows are earmarked cell-wise with the `exf-spreadsheet-change` class in validateCell().
+            // Reading that marker back is far cheaper than re-comparing every cell of every row.
+            var oChangedRows = {};
+            $(this._dom).find('tbody td.exf-spreadsheet-change').each(function(){
+                var sY = this.getAttribute('data-y');
+                if (sY !== null && sY !== '') {
+                    oChangedRows[parseInt(sY, 10)] = true;
+                }
+            });
+            return oChangedRows;
+        },
         getDataLastLoaded: function(){
             return this._initData;
         },
@@ -1511,12 +1525,18 @@ JS;
             var oColNames = this._colNames;
             var oWidget = this;
             var bAllowEmptyRows = {$allowEmptyRows};
+            // Only visit rows the user actually changed, using the visual earmark instead of
+            // comparing every cell of every row (see getChangedRowIndexes()).
+            var oChangedRows = bChangedOnly === true ? this.getChangedRowIndexes() : null;
             aDataArray.forEach(function(aRow, i){
                 var oRow = {};
                 var bEmptyRow = true;
-                var bChanged = false;
 
                 if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
+                    return;
+                }
+
+                if (bChangedOnly === true && oChangedRows[i] !== true) {
                     return;
                 }
 
@@ -1524,10 +1544,6 @@ JS;
                     var oCol = oWidget.getColumnModel(iColIdx);
                     var sColName = oWidget.getColumnName(iColIdx);
                     if (sColName) {
-                        // Check the raw (unparsed) value against the initially loaded value
-                        if (bChangedOnly === true && oWidget.hasChanged(iColIdx, i, val)) {
-                            bChanged = true;
-                        }
                         val = oCol.parser ? oCol.parser(val) : val;
                         if (val !== undefined && val !== '' && val !== null && oCol.hidden === false) {
                             bEmptyRow = false;
@@ -1535,10 +1551,6 @@ JS;
                         oRow[sColName] = val;
                     }
                 });
-
-                if (bChangedOnly === true && bChanged === false) {
-                    return;
-                }
 
                 if (bEmptyRow === false || bAllowEmptyRows === true) {
                     if (oWidget._rowNumberColName !== null) {
