@@ -23,6 +23,13 @@ UXON properties can be specified wherever the action is used.
 Actions can be triggered by widgets in the UI, by scheduled tasks, by CLI
 commands or from model components like behaviors or even other actions.
 
+## Component-specific development instructions
+
+Before modifying an action, inspect its class-level docblock for a linked instruction file under
+`Docs/Components/Actions`. If the docblock links such a file, read and follow it before making any
+changes. Treat these component instructions as additional constraints and keep them current when
+the action's architecture, contract, mapping, or required validation changes.
+
 ## Action workflow
 
 Technically actions handle task objects 
