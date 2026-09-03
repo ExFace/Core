@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Selectors\UxonSnippetSelectorInterface;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Uxon\UxonSnippetCall;
@@ -21,6 +22,17 @@ abstract class UxonSnippetFactory extends AbstractStaticFactory
     private static $prototypeClasses = [];
 
     private static $resolver = null;
+
+    /**
+     * Instantiates a snippet from an existing selector.
+     *
+     * @param UxonSnippetSelectorInterface $selector
+     * @return UxonSnippetInterface
+     */
+    public static function createFromSelector(UxonSnippetSelectorInterface $selector) : UxonSnippetInterface
+    {
+        return $selector->getWorkbench()->model()->getModelLoader()->loadSnippet($selector);
+    }
 
     /**
      * Instantiates a new snippet for the given selector loading its contents from the model.

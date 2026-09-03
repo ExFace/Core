@@ -267,6 +267,67 @@
       ]
     }
   },
+  "snippet": {
+    "name": "UXON snippet",
+    "description": "Reusable UXON configuration templates that can be included by alias and supplied with parameters",
+    "uxon_properties": [
+      "~snippet"
+    ],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\UxonSnippetSelector",
+      "factory": "\\exface\\Core\\Factories\\UxonSnippetFactory::createFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.UXON_SNIPPET",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS_WITH_NS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "ALIAS_WITH_NS"
+        }
+      ]
+    },
+    "search_prototype_data": {
+      "object_alias": "exface.Core.UXON_SNIPPET_PROTOTYPE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "NAME"
+        },
+        {
+          "attribute_alias":  "PATHNAME_RELATIVE",
+          "name": "Selector"
+        }
+      ]
+    }
+  },
   "communication_template": {
     "name": "Communication template",
     "description": "Templates for communication messages (email, sms, push notifications, etc.)",
