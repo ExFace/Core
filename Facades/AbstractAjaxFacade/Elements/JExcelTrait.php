@@ -1111,6 +1111,7 @@ JS;
         _autoColumnWidth: {$autoColumnWidth},
         _dropdownColWidthLocks: {},
         _valueGetterRow: null,
+        _jsColsCfgCache: null,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
         getDoNotValidate: function(){
             return this._doNotValidate;
@@ -1166,6 +1167,13 @@ JS;
         },
         getColumnModel: function(iColIdx) {
             return (this._cols[this.getColumnName(iColIdx)] || {});
+        },
+        getJExcelColumnConfig: function(iColIdx) {
+            // getConfig() is expensive; the returned columns config is stable, so cache it
+            if (this._jsColsCfgCache === null) {
+                this._jsColsCfgCache = this.getJExcel().getConfig().columns;
+            }
+            return (this._jsColsCfgCache[iColIdx] || {});
         },
         lockDropdownColumnWidth: function(iColIdx, domCell) {
             // only needed in auto column width mode
@@ -1281,7 +1289,7 @@ JS;
             }
 
             // Checkboxes cannot distinguish `false` and `null` or empty. Catch that here 
-            if ((this.getJExcel().getConfig().columns[iCol] || {}).type === 'checkbox') {
+            if (this.getJExcelColumnConfig(iCol).type === 'checkbox') {
                 if (mValue === false && (mInitVal === null || mInitVal === '' || mInitVal === undefined) && mInitVal !== true && mInitVal !== 1) {
                     return false;
                 }
@@ -1309,7 +1317,6 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
-
             if (this.getDoNotValidate() === true) {
                 return true;
             }
@@ -1328,7 +1335,7 @@ JS;
             
             return mResult;
         },
-        validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
+        validateCell: function (cell, iCol, iRow, mValue, bParseValue, iTotalRows) {
             var mValidationResult;
             var oCol = this.getColumnModel(iCol);
             var bRequired = oCol.checkRequired(iRow);
@@ -1340,12 +1347,14 @@ JS;
             }
 
             // if were in a spare row, we dont need to validate
-            var aData = this.getJExcel().getData() || [];
+            // Only the row count is needed here; callers doing a full pass (validateAll) pass it
+            // in to avoid rebuilding the whole data array via getData() for every single cell.
+            var iRowCount = (iTotalRows === undefined || iTotalRows === null) ? (this.getJExcel().getData() || []).length : iTotalRows;
             var iSpareRows = {$this->getMinSpareRows()}; 
 
             // spare rows do not need to be validated, however if a new value is entered into that otherwise empty (spare) row, we still need to validate it. 
             // the issue here is that jexcel adds a new spare rows AFTER this validation has run, so we would otherwise skip the validation for the new value.
-            var bIsSpareRow = (iRow >= aData.length - iSpareRows);
+            var bIsSpareRow = (iRow >= iRowCount - iSpareRows);
             var bValueEmpty = (mValue === '' || mValue === null || mValue === undefined);
             if (this.getDoNotValidate() === true || (bIsSpareRow && bValueEmpty)) {
                 return mValue;
@@ -1387,7 +1396,6 @@ JS;
             return mValue;
         },
         validateAll: function() {
-
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -1409,7 +1417,7 @@ JS;
                     var mValidated;                    
                     var oCell = oWidget.getJExcel().getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1));
                     aCells.push(oCell);
-                    mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true);
+                    mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true, iDataCnt);
                     if (mValidated !== '' && mValidated !== null && mValidated !== undefined) {
                         bRowEmpty = false;
                     }                   
@@ -1422,7 +1430,6 @@ JS;
             });
         },
         refreshConditionalProperties: function() {
-
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -2853,6 +2860,7 @@ JS;
     // when re-setting data (e.g. zwischenspeichern), the element doesnt get destroyed, 
     // so we need to set the loading flag again
     jqCtrl[0].exfWidget.bLoaded = false;
+    jqCtrl[0].exfWidget._jsColsCfgCache = null;
 
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
