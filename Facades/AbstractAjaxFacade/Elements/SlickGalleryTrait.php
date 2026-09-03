@@ -18,7 +18,6 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Actions\DownloadFile;
 use exface\Core\Widgets\DataButton;
-use exface\Core\Interfaces\Widgets\iSpecifyInputRows;
 
 /**
  * Helps implement ImageCarousel widgets with jQuery and the slick.
@@ -432,7 +431,7 @@ JS;
         // Determine the columns we need in the actions data
         $colNamesList = implode(',', $widget->getActionDataColumnNames());
         
-        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iSpecifyInputRows) {
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
             $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
             $customMode = null;

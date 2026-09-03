@@ -33,7 +33,6 @@ use exface\Core\Widgets\InputText;
 use exface\Core\Widgets\Text;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
-use exface\Core\Interfaces\Widgets\iSpecifyInputRows;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
 
@@ -2706,7 +2705,7 @@ JS;
         // Determine the columns we need in the actions data
         $colNamesList = implode(',', $widget->getActionDataColumnNames());
         
-        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof iSpecifyInputRows) {
+        if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
             $customMode = $action->getWidgetDefinedIn()->getInputRows();
         } else {
             $customMode = null;
