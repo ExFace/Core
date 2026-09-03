@@ -305,5 +305,66 @@
         }
       ]
     }
+  },
+  "connection": {
+    "name": "Data connection",
+    "description": "Connections to external data sources (databases, APIs, etc.). While the data source defines the type of source (e.g. MySQL, JSON API, etc.), the connection defines the concrete IP address or URL, the authentication credentials, etc.",
+    "uxon_properties": [
+      "connection_alias"
+    ],
+    "selector":  {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\DataConnectionSelector",
+      "factory": "\\exface\\Core\\Factories\\DataConnectionFactory::createFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.CONNECTION",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS_WITH_NS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "ALIAS_WITH_NS"
+        }
+      ]
+    },
+    "search_prototype_data": {
+      "object_alias": "exface.Core.DATA_CONNECTOR",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias":  "NAME"
+        },
+        {
+          "attribute_alias":  "PATHNAME_RELATIVE",
+          "name": "Selector"
+        }
+      ]
+    }
   }
 }
