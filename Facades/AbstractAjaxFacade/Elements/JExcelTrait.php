@@ -1128,29 +1128,7 @@ JS;
         _rcpDirtyRows: null,
         _rcpFullPending: false,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
-        // TEMPORARY perf-measurement instrumentation - remove once validation perf work is done (see Docs/.../Spreadsheet_validation_performance.md)
-        _perf: {
-            calls: {getData: 0, getCell: 0, validateValue: 0, validateCell: 0, validateAll: 0, refreshConditionalProperties: 0, conditionize: 0, isDropdownValueValid: 0, updateDependantColumns: 0},
-            timeMs: {validateAll: 0, refreshConditionalProperties: 0}
-        },
-        _perfNow: function(){
-            return (window.performance && performance.now) ? performance.now() : Date.now();
-        },
-        resetPerfStats: function(){
-            var o = this._perf;
-            for (var k in o.calls) { o.calls[k] = 0; }
-            for (var t in o.timeMs) { o.timeMs[t] = 0; }
-            return this;
-        },
-        getPerfStats: function(){
-            return JSON.parse(JSON.stringify(this._perf));
-        },
-        logPerfStats: function(){
-            console.table(this._perf.calls);
-            console.log('Validation timing (ms):', this._perf.timeMs);
-            return this._perf;
-        },
-        // TEMPORARY perf-measurement instrumentation - end
+
         getDoNotValidate: function(){
             return this._doNotValidate;
         },
@@ -1165,7 +1143,6 @@ JS;
             return this._dom;
         },
         getData: function() {
-            this._perf.calls.getData++; // TEMPORARY perf-measurement
             // During a refreshConditionalProperties pass the converted data is cached, so self-referencing
             // conditions read it once instead of rebuilding it per row (was O(rows^2), see _dataCache).
             if (this._dataCache !== null) {
@@ -1364,7 +1341,6 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
-            this._perf.calls.validateValue++; // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return true;
@@ -1385,7 +1361,6 @@ JS;
             return mResult;
         },
         validateCell: function (cell, iCol, iRow, mValue, bParseValue, iTotalRows) {
-            this._perf.calls.validateCell++; // TEMPORARY perf-measurement
             var mValidationResult;
             var oCol = this.getColumnModel(iCol);
             var bRequired = oCol.checkRequired(iRow);
@@ -1446,7 +1421,6 @@ JS;
             return mValue;
         },
         validateAll: function() {
-            this._perf.calls.validateAll++; var _perfT0 = this._perfNow(); // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return;
@@ -1467,7 +1441,6 @@ JS;
                 
                 aRow.forEach(function(mValue, iColIdx) {
                     var mValidated;                    
-                    oWidget._perf.calls.getCell++; // TEMPORARY perf-measurement
                     var oCell = oWidget.getJExcel().getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1));
                     aCells.push(oCell);
                     mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true, iDataCnt);
@@ -1481,7 +1454,6 @@ JS;
                     });
                 }
             });
-            this._perf.timeMs.validateAll += this._perfNow() - _perfT0; // TEMPORARY perf-measurement
         },
         scheduleRefreshConditionalProperties: function(iRow) {
             // Coalesce bursts of changes (typing, paste) into a single pass on the next animation
@@ -1535,7 +1507,6 @@ JS;
             }
         },
         refreshConditionalPropertiesForRow: function(iRow) {
-            this._perf.calls.refreshConditionalProperties++; var _perfT0 = this._perfNow(); // TEMPORARY perf-measurement
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -1553,7 +1524,6 @@ JS;
                     if (this._cols[i].isSelfReferencing !== true) {
                         continue;
                     }
-                    oWidget._perf.calls.conditionize++; // TEMPORARY perf-measurement
                     this._cols[i].conditionize(this, iRow);
                 }
             } finally {
@@ -1568,10 +1538,8 @@ JS;
                     }
                 }
             }
-            this._perf.timeMs.refreshConditionalProperties += this._perfNow() - _perfT0; // TEMPORARY perf-measurement
         },
         refreshConditionalProperties: function() {
-            this._perf.calls.refreshConditionalProperties++; var _perfT0 = this._perfNow(); // TEMPORARY perf-measurement
 
             // A direct (synchronous) full pass supersedes any queued one and covers every row,
             // so drop the pending schedule and the row-scoped dirty set.
@@ -1597,7 +1565,6 @@ JS;
             this._dataCache = this.convertArrayToData(oJExcel.getData(false));
             try {
                 for (i in this._cols) {
-                    oWidget._perf.calls.conditionize++; // TEMPORARY perf-measurement
                     this._cols[i].conditionize(this);
                 }
             } finally {
@@ -1617,10 +1584,8 @@ JS;
                     }
                 }
             }
-            this._perf.timeMs.refreshConditionalProperties += this._perfNow() - _perfT0; // TEMPORARY perf-measurement
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
-            this._perf.calls.isDropdownValueValid++; // TEMPORARY perf-measurement
 
             if (this.getDoNotValidate() === true) {
                 return true;
@@ -1856,7 +1821,6 @@ JS;
             });
         },
         updateDependantColumns: function(iColIdx, iRowIdx, mValue) {
-            this._perf.calls.updateDependantColumns++; // TEMPORARY perf-measurement
             let oJExcel = this.getJExcel();
             
             // loop through each dependency/relation
@@ -2026,11 +1990,9 @@ JS;
                         // A sparse array keeps the real row index, so downstream forEach callbacks
                         // (which use iRowIdx for setValueGetterRow/hasChanged) still get the right index.
                         if (iOnlyRow !== undefined && iOnlyRow !== null) {
-                            oWidget._perf.calls.getCell++; // TEMPORARY perf-measurement
                             aCells[iOnlyRow] = oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iOnlyRow + 1));
                         } else {
                             oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
-                                oWidget._perf.calls.getCell++; // TEMPORARY perf-measurement
                                 aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
                             });
                         }
