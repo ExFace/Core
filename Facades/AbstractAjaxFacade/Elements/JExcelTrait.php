@@ -843,7 +843,7 @@ JS;
                 // refresh the conditional properties of spreadsheet onchange
                 // dont conditionize while lazy loading is in progress, otherwise disabled cells do not load data
                 if (!instance.isLazyLoadingInProgress && value != oldValue){
-                    instance.exfWidget.scheduleRefreshConditionalProperties(row);
+                    instance.exfWidget.refreshConditionalProperties();
                 }
             }, 0);
         },
@@ -985,16 +985,6 @@ JS;
                     return false;
                 }
             }
-
-            // Grow the table in a single insertRow() call before jspreadsheet's paste() runs. Otherwise
-            // paste() appends each out-of-bounds row individually (insertRow is O(rows) -> paste is O(rows^2)).
-            if (el.jspreadsheet.options.allowInsertRow == true && aPastedData.length > 0) {
-                var iRowsNeeded = parseInt(y) + aPastedData.length;
-                var iRowsNow = el.jspreadsheet.getData().length;
-                if (iRowsNeeded > iRowsNow) {
-                    el.jspreadsheet.insertRow(iRowsNeeded - iRowsNow);
-                }
-            }
             
             // if pasted data contains dropdown columns, get the source arrays
             // this way, we can then set the actual value (id) and not just the label on paste
@@ -1122,13 +1112,7 @@ JS;
         _dropdownColWidthLocks: {},
         _valueGetterRow: null,
         _jsColsCfgCache: null,
-        _dataCache: null,
-        _rcpHandle: null,
-        _rcpUsesRaf: false,
-        _rcpDirtyRows: null,
-        _rcpFullPending: false,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
-
         getDoNotValidate: function(){
             return this._doNotValidate;
         },
@@ -1143,11 +1127,6 @@ JS;
             return this._dom;
         },
         getData: function() {
-            // During a refreshConditionalProperties pass the converted data is cached, so self-referencing
-            // conditions read it once instead of rebuilding it per row (was O(rows^2), see _dataCache).
-            if (this._dataCache !== null) {
-                return this._dataCache;
-            }
             return this.convertArrayToData(this.getJExcel().getData(false));
         },
         getDataChanged: function() {
@@ -1290,10 +1269,7 @@ JS;
                 mInitVal = '';
             }
 
-            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal, true);
-            // The write above changes the data - drop the conditionize-pass cache so any subsequent
-            // self-referencing condition re-reads fresh values instead of the stale cache.
-            this._dataCache = null;
+            this.getJExcel().setValueFromCoords(iCol, iRow, mInitVal, true);            
         },
         hasChanged: function(iCol, iRow, mValue){
             var mInitVal = this.getInitValue(iCol, iRow);
@@ -1341,7 +1317,6 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
-
             if (this.getDoNotValidate() === true) {
                 return true;
             }
@@ -1421,7 +1396,6 @@ JS;
             return mValue;
         },
         validateAll: function() {
-
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -1455,98 +1429,7 @@ JS;
                 }
             });
         },
-        scheduleRefreshConditionalProperties: function(iRow) {
-            // Coalesce bursts of changes (typing, paste) into a single pass on the next animation
-            // frame instead of running a full-table conditionize once per change. Track which rows
-            // changed so the flush can do a cheap row-scoped pass instead of a full-table one.
-            if (iRow === undefined || iRow === null) {
-                this._rcpFullPending = true;
-            } else {
-                if (this._rcpDirtyRows === null) {
-                    this._rcpDirtyRows = {};
-                }
-                this._rcpDirtyRows[iRow] = true;
-            }
-            if (this._rcpHandle !== null) {
-                return;
-            }
-            var oWidget = this;
-            var fnRun = function() {
-                oWidget._rcpHandle = null;
-                oWidget.flushScheduledRefreshConditionalProperties();
-            };
-            if (window.requestAnimationFrame) {
-                this._rcpUsesRaf = true;
-                this._rcpHandle = window.requestAnimationFrame(fnRun);
-            } else {
-                this._rcpUsesRaf = false;
-                this._rcpHandle = setTimeout(fnRun, 16);
-            }
-        },
-        cancelScheduledRefreshConditionalProperties: function() {
-            if (this._rcpHandle === null) {
-                return;
-            }
-            if (this._rcpUsesRaf && window.cancelAnimationFrame) {
-                window.cancelAnimationFrame(this._rcpHandle);
-            } else {
-                clearTimeout(this._rcpHandle);
-            }
-            this._rcpHandle = null;
-        },
-        flushScheduledRefreshConditionalProperties: function() {
-            // A full pass supersedes any row-scoped work; otherwise only re-evaluate changed rows.
-            if (this._rcpFullPending === true || this._rcpDirtyRows === null) {
-                this.refreshConditionalProperties();
-                return;
-            }
-            var oDirty = this._rcpDirtyRows;
-            this._rcpDirtyRows = null;
-            for (var r in oDirty) {
-                this.refreshConditionalPropertiesForRow(parseInt(r, 10));
-            }
-        },
-        refreshConditionalPropertiesForRow: function(iRow) {
-            if (this.getDoNotValidate() === true) {
-                return;
-            }
-            var oWidget = this;
-            var oJExcel = oWidget.getJExcel();
-            var numRows = oJExcel.getData().length;
-            if (numRows === 0 || iRow === undefined || iRow === null || iRow < 0 || iRow >= numRows) {
-                return;
-            }
-            // Only self-referencing columns can change from an in-sheet edit - non-self-ref conditions
-            // depend on external widgets, so scope the conditionize to the single changed row.
-            this._dataCache = this.convertArrayToData(oJExcel.getData(false));
-            try {
-                for (var i in this._cols) {
-                    if (this._cols[i].isSelfReferencing !== true) {
-                        continue;
-                    }
-                    this._cols[i].conditionize(this, iRow);
-                }
-            } finally {
-                this._dataCache = null;
-            }
-            // Re-check filtered-dropdown validity for the changed row only.
-            var aColOpts = oJExcel.options.columns;
-            for (var c = 0; c < aColOpts.length; c++) {
-                if (aColOpts[c] && aColOpts[c].type == 'autocomplete' && typeof(aColOpts[c].filter) == 'function') {
-                    if (!this.isDropdownValueValid(c, iRow)) {
-                        oJExcel.setValueFromCoords(c, iRow, '', true);
-                    }
-                }
-            }
-        },
         refreshConditionalProperties: function() {
-
-            // A direct (synchronous) full pass supersedes any queued one and covers every row,
-            // so drop the pending schedule and the row-scoped dirty set.
-            this.cancelScheduledRefreshConditionalProperties();
-            this._rcpDirtyRows = null;
-            this._rcpFullPending = false;
-
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -1560,15 +1443,8 @@ JS;
                 return;
             }
 
-            // Cache the converted data for the whole conditionize pass so self-referencing conditions
-            // read it once instead of calling getData() per row (turns O(rows^2) into O(rows)).
-            this._dataCache = this.convertArrayToData(oJExcel.getData(false));
-            try {
-                for (i in this._cols) {
-                    this._cols[i].conditionize(this);
-                }
-            } finally {
-                this._dataCache = null;
+            for (i in this._cols) {
+                this._cols[i].conditionize(this);
             }
 
             // if a dropdown source has filters, check if the set value is in the filtered source (jexcel by default just consideres the unfiltered source array)
@@ -1586,7 +1462,6 @@ JS;
             }
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
-
             if (this.getDoNotValidate() === true) {
                 return true;
             }
@@ -1986,16 +1861,9 @@ JS;
                         var iColIdx = {$colIdx};
                         var oJExcel = oWidget.getJExcel();
                         var aCells = [];
-                        // Row-scoped conditionize: when a single row changed, only look up that cell.
-                        // A sparse array keeps the real row index, so downstream forEach callbacks
-                        // (which use iRowIdx for setValueGetterRow/hasChanged) still get the right index.
-                        if (iOnlyRow !== undefined && iOnlyRow !== null) {
-                            aCells[iOnlyRow] = oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iOnlyRow + 1));
-                        } else {
-                            oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
-                                aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
-                            });
-                        }
+                        oJExcel.getColumnData(iColIdx).forEach(function(mVal, iRowIdx){
+                            aCells.push(oJExcel.getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1)));
+                        });
                         $conditionsJs
 JS;
             }
@@ -2063,7 +1931,7 @@ JS;
                     dropdownIdField: {$this->escapeString($dropdownId)},
                     dropdownLabelField: {$this->escapeString($dropdownLabel)},
                     system: {$systemFlagJs},
-                    conditionize: function(oWidget, iOnlyRow){
+                    conditionize: function(oWidget){
                         $conditionsJs
                     }
                 }, 
