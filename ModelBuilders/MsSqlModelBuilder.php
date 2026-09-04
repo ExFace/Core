@@ -159,6 +159,43 @@ class MsSqlModelBuilder extends AbstractSqlModelBuilder
         }
         return $rows;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findForeignKeyRelations()
+     */
+    protected function findForeignKeyRelations(string $table, SqlDataConnectorInterface $connector) : array
+    {
+        $schema = static::getSchemaFromAlias($table);
+        $tableName = static::getTableNameFromAlias($table);
+        $qualifiedTable = $schema ? $schema . '.' . $tableName : $tableName;
+        $sql = "SELECT
+                    source_column.name AS COLUMN_NAME,
+                    SCHEMA_NAME(target_table.schema_id) AS REFERENCED_TABLE_SCHEMA,
+                    target_table.name AS REFERENCED_TABLE_NAME,
+                    target_column.name AS REFERENCED_COLUMN_NAME
+                FROM sys.foreign_key_columns foreign_key
+                JOIN sys.tables target_table
+                    ON target_table.object_id = foreign_key.referenced_object_id
+                JOIN sys.columns source_column
+                    ON source_column.object_id = foreign_key.parent_object_id
+                    AND source_column.column_id = foreign_key.parent_column_id
+                JOIN sys.columns target_column
+                    ON target_column.object_id = foreign_key.referenced_object_id
+                    AND target_column.column_id = foreign_key.referenced_column_id
+                WHERE foreign_key.parent_object_id = OBJECT_ID(" . static::quoteSqlLiteral($qualifiedTable) . ")
+                ORDER BY foreign_key.constraint_column_id";
+
+        $relations = [];
+        foreach ($connector->runSql($sql)->getResultArray() as $row) {
+            $relations[] = [
+                'column' => $row['COLUMN_NAME'],
+                'table' => $row['REFERENCED_TABLE_SCHEMA'] . '.' . $row['REFERENCED_TABLE_NAME'],
+                'key' => $row['REFERENCED_COLUMN_NAME']
+            ];
+        }
+        return $relations;
+    }
     
     /**
      * 

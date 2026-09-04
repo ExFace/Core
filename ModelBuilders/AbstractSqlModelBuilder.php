@@ -51,21 +51,21 @@ use exface\Core\DataTypes\BinaryDataType;
  * changed manually (e.g. into an SQL statement instead of a simple column name), the
  * next import will create a new attribute for the table column.
  * 
- * Relations can be automatically created using a regular expression on column names. The
- * regular expression mask must be defined in the custom data connection property 
- * `relation_matcher` and must contain the following named character groups:
+ * Relations are automatically created from foreign key constraints. If no foreign key is
+ * declared for a column, a relation can additionally be inferred using a regular expression
+ * on its name. The regular expression mask must be defined in the custom data connection
+ * property `relation_matcher` and must contain the following named character groups:
  * 
  * - `table` - the name of the target table, the foreign key points to,
  * - `key` - the key column in the target table,
  * - `alias` - the alias to be used for the relation in the metamodel.
  * 
- * A column is concidered a relation (foreign key) if all three values are found. This works 
+ * A column is considered a relation if all three values are found. This works
  * well if foreign keys contain the target table and key in their name, which is quite typical: 
  * e.g. `product_id` for a foreign key, pointing to the `id` column of the `product` table - 
  * the corresponding matcher would be `/(?<alias>(?<table>.*))_(?<key>id)/i`. Concrete
- * SqlModelBuilder implementations for specific databases may include other methods of
- * foreign key detection (e.g. constraints) - please refer to the documentation of the
- * respective model builder.
+ * SqlModelBuilder implementations for specific databases analyze their native constraint
+ * metadata before applying this fallback.
  * 
  * A relation property `DELETE_WITH_RELATED_OBJECT` is set automatically if the foreign key
  * column is required (not nullable). The property `COPY_WITH_RELATED_OBJECT` is never set.
@@ -475,6 +475,17 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             return $parts[0];
         }
     }
+
+    /**
+     * Quotes a string for use as an SQL literal in metadata queries.
+     *
+     * @param string $value
+     * @return string
+     */
+    protected static function quoteSqlLiteral(string $value) : string
+    {
+        return "'" . str_replace("'", "''", $value) . "'";
+    }
     
     /**
      * Erstellt eine Relation, wenn die Datenadresse mit _OID endet und der Wert davor exakt der Adresse
@@ -490,10 +501,22 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
             throw new InvalidArgumentException('Invalid data sheet passed to relation finder: expected "exface.Core.ATTRIBUTE", received "' . $attributeSheet->getMetaObject()->getAliasWithNamespace() . '"!');
         }
         
+        $foreignKeysByColumn = [];
+        foreach ($this->findForeignKeyRelations($object->getDataAddress(), $object->getDataConnection()) as $foreignKey) {
+            $foreignKeysByColumn[mb_strtolower($foreignKey['column'])] = $foreignKey;
+        }
+
         $found_relations = false;
         foreach ($attributeSheet->getRows() as $row) {
             $address = $row['DATA_ADDRESS'];
-            $relation = $this->findRelation($object->getDataAddress(), $address, $object->getDataConnection());
+            $relation = $foreignKeysByColumn[mb_strtolower($address)] ?? [];
+            if (! empty($relation)) {
+                unset($relation['column']);
+                $matchedRelation = $this->findRelation($object->getDataAddress(), $address, $object->getDataConnection());
+                $relation['alias'] = $matchedRelation['alias'] ?? static::getTableNameFromAlias($relation['table']);
+            } else {
+                $relation = $this->findRelation($object->getDataAddress(), $address, $object->getDataConnection());
+            }
             if (! empty($relation)) {
                 $relatedTable = $relation['table'];
                 $ds = DataSheetFactory::createFromObjectIdOrAlias($object->getWorkbench(), 'exface.Core.OBJECT');
@@ -527,6 +550,21 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
         
         return $attributeSheet;
     }
+
+    /**
+     * Returns foreign keys declared for the given table.
+     *
+     * Each returned row must contain `column`, `table`, and `key`. Concrete SQL
+     * model builders override this method using their database's metadata catalog.
+     *
+     * @param string $table
+     * @param SqlDataConnectorInterface $connector
+     * @return array[]
+     */
+    protected function findForeignKeyRelations(string $table, SqlDataConnectorInterface $connector) : array
+    {
+        return [];
+    }
     
     /**
      * Checks, if the given table column is a foreign key: returns an empty array (if not) or the following structure:
@@ -544,9 +582,7 @@ abstract class AbstractSqlModelBuilder extends AbstractModelBuilder implements M
      * quite typical: e.g. `product_id` for a foreign key, pointing to the `id`
      * column of the `product` table.
      * 
-     * If foreign key constraints are used, this method should be overridden or
-     * extended to read the foreign keys metadata from the DB. This is why the
-     * connector is a mandatory argument.
+    * Foreign key constraints are analyzed separately before this fallback is called.
      * 
      * @param string $table
      * @param string $column
