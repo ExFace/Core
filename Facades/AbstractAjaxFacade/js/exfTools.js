@@ -1365,6 +1365,151 @@
 			
 			    return `${parseFloat((fBytes / Math.pow(k, i)).toFixed(dm))} ${aSizes[i]}`;
 			}
+		},
+
+		/**
+		 * Lightweight in-browser performance profiler for temporary JS optimization work.
+		 *
+		 * This is a DEVELOPMENT-ONLY tool. Use it freely to time round-trips and execution blocks
+		 * while you are investigating a bottleneck, then remove every reference to it once you are
+		 * done. It intentionally logs an error to the console on instantiation to remind you that the
+		 * instrumentation is still in the code and must be taken out before committing.
+		 *
+		 * When to use: reach for this when you need precise per-function call counts and timing
+		 * attribution in a specific hot spot - e.g. hot loops in facade widgets, validation passes,
+		 * render bottlenecks or server round-trips. For a broad first pass, prefer the browser's
+		 * built-in profiler; use this once you have narrowed the problem down to concrete code paths.
+		 *
+		 * Rules:
+		 *   - You may liberally use it to time round-trips and execution blocks during optimization.
+		 *   - Always remove any references to it once you are done.
+		 *
+		 * Usage:
+		 *   var oProfiler = exfTools.perf.createProfiler({calls: ['getData', 'validate'], timeMs: ['validate']});
+		 *   oProfiler.count('getData');                 // increment a call counter
+		 *   oProfiler.measure('validate', function(){   // time a synchronous block (safe on throw)
+		 *       // ... work to measure ...
+		 *   });
+		 *   oProfiler.start('validate'); ...; oProfiler.stop('validate'); // manual timing alternative
+		 *   oProfiler.log();                            // console.table(calls) + timing table
+		 *   oProfiler.reset();                          // zero all counters/timers before the next run
+		 *
+		 * The returned profiler exposes plain `calls` and `timeMs` objects, so counters may also be
+		 * incremented inline (`oProfiler.calls.getData++`) in extremely hot paths where a function
+		 * call would itself distort the measurement.
+		 */
+		perf: {
+
+			/**
+			 * Creates a new performance profiler instance.
+			 *
+			 * @param {{calls: string[], timeMs: string[]}} [oInit] - optional names to pre-register
+			 *        (initialized to 0) so the logged tables have a stable, complete key order.
+			 * @return {object}
+			 */
+			createProfiler: function(oInit) {
+				// Non-critical reminder: this instrumentation is temporary and must be removed once done.
+				console.error('exfTools.perf profiler instantiated - this is TEMPORARY instrumentation, remove all references before committing!');
+				var oProfiler = {
+					calls: {},
+					timeMs: {},
+					_running: {},
+
+					/**
+					 * Returns a high-resolution timestamp in milliseconds (falls back to Date.now()).
+					 * @return {number}
+					 */
+					now: function() {
+						return (window.performance && performance.now) ? performance.now() : Date.now();
+					},
+
+					/**
+					 * Increments a named call counter.
+					 * @param {string} sName
+					 * @param {number} [iBy] - default 1
+					 * @return {object} this
+					 */
+					count: function(sName, iBy) {
+						this.calls[sName] = (this.calls[sName] || 0) + (iBy === undefined ? 1 : iBy);
+						return this;
+					},
+
+					/**
+					 * Starts a named timer. Call stop() with the same name to accumulate the elapsed time.
+					 * @param {string} sName
+					 * @return {object} this
+					 */
+					start: function(sName) {
+						this._running[sName] = this.now();
+						return this;
+					},
+
+					/**
+					 * Stops a previously started named timer and accumulates the elapsed milliseconds.
+					 * @param {string} sName
+					 * @return {object} this
+					 */
+					stop: function(sName) {
+						if (this._running[sName] !== undefined) {
+							this.timeMs[sName] = (this.timeMs[sName] || 0) + (this.now() - this._running[sName]);
+							delete this._running[sName];
+						}
+						return this;
+					},
+
+					/**
+					 * Times a synchronous callback under the given name. The timer is stopped even if
+					 * the callback throws, so it is safe to wrap try/finally-style code.
+					 * @param {string} sName
+					 * @param {function} fnCallback
+					 * @return {*} whatever fnCallback returns
+					 */
+					measure: function(sName, fnCallback) {
+						this.start(sName);
+						try {
+							return fnCallback();
+						} finally {
+							this.stop(sName);
+						}
+					},
+
+					/**
+					 * Resets all registered counters and timers back to 0.
+					 * @return {object} this
+					 */
+					reset: function() {
+						for (var k in this.calls) { this.calls[k] = 0; }
+						for (var t in this.timeMs) { this.timeMs[t] = 0; }
+						this._running = {};
+						return this;
+					},
+
+					/**
+					 * Returns a deep copy of the current stats, safe to log or diff.
+					 * @return {{calls: object, timeMs: object}}
+					 */
+					getStats: function() {
+						return JSON.parse(JSON.stringify({calls: this.calls, timeMs: this.timeMs}));
+					},
+
+					/**
+					 * Prints the current stats to the console (call counts as a table, timers as a list).
+					 * @return {{calls: object, timeMs: object}} the same stats returned by getStats()
+					 */
+					log: function() {
+						console.table(this.calls);
+						console.log('Timing (ms):', this.timeMs);
+						return this.getStats();
+					}
+				};
+
+				if (oInit) {
+					(oInit.calls || []).forEach(function(sName) { oProfiler.calls[sName] = 0; });
+					(oInit.timeMs || []).forEach(function(sName) { oProfiler.timeMs[sName] = 0; });
+				}
+
+				return oProfiler;
+			}
 		}
 	}
 	
