@@ -38,6 +38,7 @@
         - [PHP naming conventions](developer_docs/code_conventions/PHP/Naming_conventions.md)
         - [Using traits](developer_docs/code_conventions/PHP/Using_traits.md)
     - [Component selectors as references between code and model](developer_docs/Using_metamodel_components_in_the_code_via_selectors.md)
+    - [Configuring component discovery and save templates](developer_docs/Component_registry.md)
     - Contributing
       - [Proposing a change via GitHub](developer_docs/contributing/Contributing_on_GitHub.md)
       - [Setting up Eclipse IDE](developer_docs/contributing/Setting_up_Eclipse_IDE.md)

@@ -10,9 +10,10 @@
    - [Exporting and importing models as files](Model_files_and_versioning.md)
 4. [The workbench in detail](workbench.md)
 5. [Using metamodel components in the code via selectors](Using_metamodel_components_in_the_code_via_selectors.md)
-6. [Logging](Logging/index.md)
-7. [Moving model components between apps](Moving_objects_to_another_app.md)
-8. [Working offline](Offline/index.md)
+6. [Configuring component discovery and save templates](Component_registry.md)
+7. [Logging](Logging/index.md)
+8. [Moving model components between apps](Moving_objects_to_another_app.md)
+9. [Working offline](Offline/index.md)
 
 ## Technical overview
 

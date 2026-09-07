@@ -48,6 +48,21 @@ class ComponentRegistry implements ComponentRegistryInterface
         }
         return $keys;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see ComponentRegistryInterface::getComponentSaveData()
+     */
+    public function getComponentSaveData(string $component) : ?UxonObject
+    {
+        $componentModel = $this->getComponentModel($component);
+        if ($componentModel === null) {
+            throw new InvalidArgumentException('Unknown component type "' . $component . '"');
+        }
+
+        $saveData = new UxonObject($componentModel['save_component_data'] ?? []);
+        return $saveData->isEmpty() ? null : $saveData;
+    }
     
     protected function canInstantiate(string $component) : bool
     {
