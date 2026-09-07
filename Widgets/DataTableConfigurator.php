@@ -65,9 +65,10 @@ class DataTableConfigurator extends DataConfigurator
      * 
      * Regardless of the format, every setup is also checked for being orphaned via a cheap existence
      * check: if its slug no longer points to an existing screen (neither a page nor an object action
-     * with that alias exists), the `ORPHANED_FLAG` is set - and cleared again once the screen exists.
-     * Old-format setups whose page still exists but whose widget cannot be found are counted as "could
-     * not be resolved" and flagged as orphaned too.
+     * with that alias exists), the `ORPHANED_FLAG` is set. Old-format setups whose page still exists
+     * but whose widget cannot be found are counted as "could not be resolved" and flagged as orphaned
+     * too. Setups that already carry the flag are skipped entirely - the flag is never cleared again,
+     * so re-resolving their widgets on every run would be wasted effort.
      * 
      * Finally, setups with the same creator, name, slug, widget id and object are deduplicated - the
      * newest one remains active, older ones are flagged as orphaned. This happens after the conversion,
@@ -106,11 +107,19 @@ class DataTableConfigurator extends DataConfigurator
         $ds->getColumns()->addMultiple(['UID', 'NAME', 'SLUG', 'WIDGET_ID', 'OBJECT', 'ORPHANED_FLAG', 'CREATED_BY_USER', 'MODIFIED_ON']);
         $ds->dataRead();
 
+        // Setups already flagged as orphaned are final - there is no point in resolving their widgets
+        // again on every cleanup.
+        $totalCnt = $ds->countRows();
+        $rows = array_values(array_filter($ds->getRows(), function($row) {
+            return (int) ($row['ORPHANED_FLAG'] ?? 0) !== 1;
+        }));
+        $skippedCnt = $totalCnt - count($rows);
+
         // Existence-based orphan detection (independent of the old/new format): a setup is orphaned
         // if its slug no longer points to an existing screen - i.e. neither a page (page alias) nor
         // an object action (action alias) with that alias exists anymore. This does not resolve the
         // actual widget, so it is cheap.
-        $slugs = array_values(array_unique(array_filter(array_column($ds->getRows(), 'SLUG'), function($s) {
+        $slugs = array_values(array_unique(array_filter(array_column($rows, 'SLUG'), function($s) {
             return $s !== null && $s !== '';
         })));
         $existingScreens = [];
@@ -139,7 +148,7 @@ class DataTableConfigurator extends DataConfigurator
         // whether it is orphaned. Deduplication must happen afterwards because setups of the same
         // dialog opened from different pages only become identical once converted.
         $results = [];
-        foreach ($ds->getRows() as $row) {
+        foreach ($rows as $row) {
             $widgetId = $row['WIDGET_ID'] ?? '';
             $slug = $row['SLUG'] ?? '';
             $newSlug = $slug;
@@ -226,7 +235,6 @@ class DataTableConfigurator extends DataConfigurator
         }
 
         // Pass 3: collect the changes and count the results.
-        $totalCnt = count($results);
         $convertibleCnt = 0;
         $unresolvedCnt = 0;
         $screenGoneCnt = 0;
@@ -254,7 +262,6 @@ class DataTableConfigurator extends DataConfigurator
                 $updatedValues['SLUG'] = $result['slug'];
                 $updatedValues['WIDGET_ID'] = $result['widget_id'];
             }
-            // Reconcile the orphaned flag in both directions (set when orphaned, clear when found).
             if ($newFlag !== $storedFlag) {
                 $updatedValues['ORPHANED_FLAG'] = $newFlag;
             }
@@ -273,7 +280,7 @@ class DataTableConfigurator extends DataConfigurator
             $updateSheet->dataUpdate();
         }
 
-        $event->addResultMessage('Widget setup cleanup: read ' . $totalCnt . ' setup(s) - ' . $convertibleCnt . ' converted to the new format, ' . ($unresolvedCnt + $screenGoneCnt + $duplicateCnt) . ' orphaned (' . $unresolvedCnt . ' could not be resolved, ' . $screenGoneCnt . ' screen removed, ' . $duplicateCnt . ' duplicate), ' . $alreadyNewCnt . ' already in the new format.');
+        $event->addResultMessage('Widget setup cleanup: read ' . $totalCnt . ' setup(s), skipped ' . $skippedCnt . ' already flagged as orphaned - ' . $convertibleCnt . ' converted to the new format, ' . ($unresolvedCnt + $screenGoneCnt + $duplicateCnt) . ' newly orphaned (' . $unresolvedCnt . ' could not be resolved, ' . $screenGoneCnt . ' screen removed, ' . $duplicateCnt . ' duplicate), ' . $alreadyNewCnt . ' already in the new format.');
     }
 
     /**
