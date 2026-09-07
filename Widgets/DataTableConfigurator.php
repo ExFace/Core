@@ -68,14 +68,14 @@ class DataTableConfigurator extends DataConfigurator
      * with that alias exists), the `ORPHANED_FLAG` is set - and cleared again once the screen exists.
      * Old-format setups whose page still exists but whose widget cannot be found are counted as "could
      * not be resolved" and flagged as orphaned too.
-    * Older duplicates with the same creator, name, slug, widget id and object are also flagged as
-    * orphaned; the newest setup remains active.
+     * 
+     * Finally, setups with the same creator, name, slug, widget id and object are deduplicated - the
+     * newest one remains active, older ones are flagged as orphaned. This happens after the conversion,
+     * because setups of the same dialog opened from different pages only become identical once converted.
      * 
      * The behavior is controlled via the following config options of `exface.Core`:
      * 
      * - `WIDGETS.SETUPS.CLEANUP.ENABLED` - set to FALSE to skip this cleanup entirely.
-     * - `WIDGETS.SETUPS.CLEANUP.DRY_RUN` - if TRUE (default), only reports what would be converted
-     * without changing any data. Set to FALSE to actually persist the conversion.
      * - `WIDGETS.SETUPS.CLEANUP.MAX_SEARCH_DEPTH` - how deep to search for a widget by its id.
      * Finding widgets is expensive and can run into infinite loops, so the search is bounded.
      * 
@@ -93,7 +93,6 @@ class DataTableConfigurator extends DataConfigurator
 
         // Do not run unless all config options are present.
         if (! $config->hasOption('WIDGETS.SETUPS.CLEANUP.ENABLED')
-            || ! $config->hasOption('WIDGETS.SETUPS.CLEANUP.DRY_RUN')
             || ! $config->hasOption('WIDGETS.SETUPS.CLEANUP.MAX_SEARCH_DEPTH')
         ) {
             return;
@@ -101,46 +100,11 @@ class DataTableConfigurator extends DataConfigurator
         if ($config->getOption('WIDGETS.SETUPS.CLEANUP.ENABLED') !== true) {
             return;
         }
-        $dryRun = $config->getOption('WIDGETS.SETUPS.CLEANUP.DRY_RUN') !== false;
         $maxDepth = (int) $config->getOption('WIDGETS.SETUPS.CLEANUP.MAX_SEARCH_DEPTH');
 
         $ds = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.WIDGET_SETUP');
         $ds->getColumns()->addMultiple(['UID', 'NAME', 'SLUG', 'WIDGET_ID', 'OBJECT', 'ORPHANED_FLAG', 'CREATED_BY_USER', 'MODIFIED_ON']);
         $ds->dataRead();
-
-        // Keep only the newest setup per creator/name/screen/widget/object combination.
-        $duplicateUids = [];
-        $newestRowsByDuplicateKey = [];
-        foreach ($ds->getRows() as $row) {
-            $duplicateKey = json_encode([
-                $row['CREATED_BY_USER'] ?? null,
-                $row['NAME'] ?? null,
-                $row['SLUG'] ?? null,
-                $row['WIDGET_ID'] ?? null,
-                $row['OBJECT'] ?? null
-            ]);
-            $newestRow = $newestRowsByDuplicateKey[$duplicateKey] ?? null;
-            if ($newestRow === null) {
-                $newestRowsByDuplicateKey[$duplicateKey] = $row;
-                continue;
-            }
-
-            $rowOrphaned = (int) ($row['ORPHANED_FLAG'] ?? 0);
-            $newestOrphaned = (int) ($newestRow['ORPHANED_FLAG'] ?? 0);
-            $rowModifiedOn = $row['MODIFIED_ON'] ?? '';
-            $newestModifiedOn = $newestRow['MODIFIED_ON'] ?? '';
-            $rowIsNewer = $rowOrphaned < $newestOrphaned
-                || ($rowOrphaned === $newestOrphaned && (
-                    $rowModifiedOn > $newestModifiedOn
-                    || ($rowModifiedOn === $newestModifiedOn && ($row['UID'] ?? '') > ($newestRow['UID'] ?? ''))
-                ));
-            if ($rowIsNewer) {
-                $duplicateUids[$newestRow['UID']] = true;
-                $newestRowsByDuplicateKey[$duplicateKey] = $row;
-            } else {
-                $duplicateUids[$row['UID']] = true;
-            }
-        }
 
         // Existence-based orphan detection (independent of the old/new format): a setup is orphaned
         // if its slug no longer points to an existing screen - i.e. neither a page (page alias) nor
@@ -170,30 +134,21 @@ class DataTableConfigurator extends DataConfigurator
 
         // Cache pages by slug to avoid instantiating the same widget tree more than once.
         $pages = [];
-        $totalCnt = 0;
-        $convertibleCnt = 0;
-        $unresolvedCnt = 0;
-        $screenGoneCnt = 0;
-        $duplicateCnt = 0;
-        $alreadyNewCnt = 0;
-        $convertedUids = [];
 
-        // Setups to update - only written to the data source when not a dry run.
-        $updateSheet = DataSheetFactory::createFromObject($ds->getMetaObject());
-
+        // Pass 1: resolve every setup to its canonical (converted) slug and widget id and determine
+        // whether it is orphaned. Deduplication must happen afterwards because setups of the same
+        // dialog opened from different pages only become identical once converted.
+        $results = [];
         foreach ($ds->getRows() as $row) {
-            $totalCnt++;
             $widgetId = $row['WIDGET_ID'] ?? '';
             $slug = $row['SLUG'] ?? '';
-            $storedFlag = (int) ($row['ORPHANED_FLAG'] ?? 0);
-            $updatedValues = [];
+            $newSlug = $slug;
+            $newWidgetId = $widgetId;
+            $category = 'already_new';
 
-            $isDuplicate = isset($duplicateUids[$row['UID']]);
-            $isOrphan = $isDuplicate || $slug === '' || ! isset($existingScreens[$slug]);
-            if ($isDuplicate) {
-                $duplicateCnt++;
-            } elseif ($isOrphan) {
-                $screenGoneCnt++;
+            $isOrphan = $slug === '' || ! isset($existingScreens[$slug]);
+            if ($isOrphan) {
+                $category = 'screen_gone';
             } elseif ($widgetId !== '' && stripos($widgetId, 'button') !== false) {
                 // Old-format candidate: the slug was the alias of the page the widget lived on and the
                 // widget id includes the prefix of the button that opened the dialog.
@@ -205,42 +160,102 @@ class DataTableConfigurator extends DataConfigurator
                     }
                 }
                 $page = $pages[$slug];
-                if ($page === null) {
-                    // Slug exists as an action, but not as a page - already converted.
-                    $alreadyNewCnt++;
-                } else {
+                if ($page !== null) {
                     // Finding a widget by its full autogenerated id can be very expensive and even run
                     // into infinite loops if the widget no longer exists. Bound the search depth.
                     try {
                         $widget = $page->getWidget($widgetId, null, $maxDepth);
                         $container = $widget->findUiContainer();
-                        if ($container instanceof UiPageInterface) {
-                            // Widget sits directly on the page - already in the correct format.
-                            $alreadyNewCnt++;
-                        } else {
-                            if (! $dryRun) {
-                                $updatedValues = [
-                                    'SLUG' => $container->getSlug(),
-                                    'WIDGET_ID' => $widget->getIdWithinUiContainer()
-                                ];
-                            }
-                            $convertedUids[] = $row['UID'];
-                            $convertibleCnt++;
+                        // A widget sitting directly on the page is already in the correct format.
+                        if (! ($container instanceof UiPageInterface)) {
+                            $newSlug = $container->getSlug();
+                            $newWidgetId = $widget->getIdWithinUiContainer();
+                            $category = 'converted';
                         }
                     } catch (\Throwable $e) {
                         // Page exists, but the widget could not be found - treat as orphaned.
-                        $unresolvedCnt++;
+                        $category = 'unresolved';
                         $isOrphan = true;
                     }
                 }
-            } else {
-                // Page setup or already converted new-format dialog setup.
-                $alreadyNewCnt++;
+                // If the page could not be loaded, the slug exists as an action - already converted.
             }
 
+            $results[] = [
+                'row' => $row,
+                'slug' => $newSlug,
+                'widget_id' => $newWidgetId,
+                'orphan' => $isOrphan,
+                'category' => $category
+            ];
+        }
+
+        // Pass 2: keep only the newest setup per creator/name/screen/widget/object combination -
+        // based on the canonical values from pass 1.
+        $newestByDuplicateKey = [];
+        foreach ($results as $idx => $result) {
+            $row = $result['row'];
+            $duplicateKey = json_encode([
+                $row['CREATED_BY_USER'] ?? null,
+                $row['NAME'] ?? null,
+                $result['slug'],
+                $result['widget_id'],
+                $row['OBJECT'] ?? null
+            ]);
+            $newestIdx = $newestByDuplicateKey[$duplicateKey] ?? null;
+            if ($newestIdx === null) {
+                $newestByDuplicateKey[$duplicateKey] = $idx;
+                continue;
+            }
+
+            $newest = $results[$newestIdx];
+            $newestRow = $newest['row'];
+            $rowModifiedOn = $row['MODIFIED_ON'] ?? '';
+            $newestModifiedOn = $newestRow['MODIFIED_ON'] ?? '';
+            $rowIsNewer = ($result['orphan'] === false && $newest['orphan'] === true)
+                || ($result['orphan'] === $newest['orphan'] && (
+                    $rowModifiedOn > $newestModifiedOn
+                    || ($rowModifiedOn === $newestModifiedOn && ($row['UID'] ?? '') > ($newestRow['UID'] ?? ''))
+                ));
+            $loserIdx = $rowIsNewer ? $newestIdx : $idx;
+            $results[$loserIdx]['orphan'] = true;
+            $results[$loserIdx]['category'] = 'duplicate';
+            if ($rowIsNewer) {
+                $newestByDuplicateKey[$duplicateKey] = $idx;
+            }
+        }
+
+        // Pass 3: collect the changes and count the results.
+        $totalCnt = count($results);
+        $convertibleCnt = 0;
+        $unresolvedCnt = 0;
+        $screenGoneCnt = 0;
+        $duplicateCnt = 0;
+        $alreadyNewCnt = 0;
+        $updateSheet = DataSheetFactory::createFromObject($ds->getMetaObject());
+
+        foreach ($results as $result) {
+            $row = $result['row'];
+            $slug = $row['SLUG'] ?? '';
+            $widgetId = $row['WIDGET_ID'] ?? '';
+            $storedFlag = (int) ($row['ORPHANED_FLAG'] ?? 0);
+            $newFlag = $result['orphan'] ? 1 : 0;
+            $updatedValues = [];
+
+            switch ($result['category']) {
+                case 'duplicate': $duplicateCnt++; break;
+                case 'screen_gone': $screenGoneCnt++; break;
+                case 'unresolved': $unresolvedCnt++; break;
+                case 'converted': $convertibleCnt++; break;
+                default: $alreadyNewCnt++; break;
+            }
+
+            if ($result['slug'] !== $slug || $result['widget_id'] !== $widgetId) {
+                $updatedValues['SLUG'] = $result['slug'];
+                $updatedValues['WIDGET_ID'] = $result['widget_id'];
+            }
             // Reconcile the orphaned flag in both directions (set when orphaned, clear when found).
-            $newFlag = $isOrphan ? 1 : 0;
-            if ($newFlag !== $storedFlag && ! $dryRun) {
+            if ($newFlag !== $storedFlag) {
                 $updatedValues['ORPHANED_FLAG'] = $newFlag;
             }
             if (! empty($updatedValues)) {
@@ -254,12 +269,11 @@ class DataTableConfigurator extends DataConfigurator
             }
         }
 
-        // if its not a dry run, save the results
-        if (! $dryRun && ! $updateSheet->isEmpty()) {
+        if (! $updateSheet->isEmpty()) {
             $updateSheet->dataUpdate();
         }
 
-        $event->addResultMessage('Widget setup cleanup (' . ($dryRun ? 'dry run' : 'applied') . '): read ' . $totalCnt . ' setup(s) - ' . $convertibleCnt . ($dryRun ? ' can be converted to the new format' : ' converted to the new format') . ', ' . ($unresolvedCnt + $screenGoneCnt + $duplicateCnt) . ' orphaned (' . $unresolvedCnt . ' could not be resolved, ' . $screenGoneCnt . ' screen removed, ' . $duplicateCnt . ' duplicate), ' . $alreadyNewCnt . ' already in the new format.' . (empty($convertedUids) ? '' : ' Converted UIDs: ' . implode(', ', $convertedUids) . '.'));
+        $event->addResultMessage('Widget setup cleanup: read ' . $totalCnt . ' setup(s) - ' . $convertibleCnt . ' converted to the new format, ' . ($unresolvedCnt + $screenGoneCnt + $duplicateCnt) . ' orphaned (' . $unresolvedCnt . ' could not be resolved, ' . $screenGoneCnt . ' screen removed, ' . $duplicateCnt . ' duplicate), ' . $alreadyNewCnt . ' already in the new format.');
     }
 
     /**
