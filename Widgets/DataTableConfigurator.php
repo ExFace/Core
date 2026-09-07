@@ -31,6 +31,8 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
  */
 class DataTableConfigurator extends DataConfigurator
 {
+    const CLEANUP_AREA_SETUPS = 'widget_setups';
+    
     private $tabColumns = null;
     private UxonObject|null $columnsUxon = null;
     private int $columnsDefaultVisibility = WidgetVisibilityDataType::OPTIONAL;
@@ -82,8 +84,10 @@ class DataTableConfigurator extends DataConfigurator
      */
     public static function onCleanUp(OnCleanUpEvent $event) : void
     {
-
-
+        if (! $event->includesArea(self::CLEANUP_AREA_SETUPS)) {
+            return;
+        }
+        
         $workbench = $event->getWorkbench();
         $config = $workbench->getConfig();
 
