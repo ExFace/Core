@@ -326,6 +326,11 @@ trait iHaveColumnsAndColumnGroupsTrait
                 throw new InvalidArgumentException('Cannot search for column widgets by "' . gettype($expressionOrString) . '": only expression strings or objects allowed!');
         }
         foreach ($this->getColumns() as $col) {
+            // Check calculation expression separately due to inconsistencies in DataColumn::getExpression() for 
+            // columns with `calculation` instead of `attribute_alias` set.
+            if ($col->isCalculated() && $col->getCalculationExpression()->__toString() === $str) {
+                return $col;
+            }
             if ($col->getExpression()->__toString() === $str) {
                 return $col;
             }
