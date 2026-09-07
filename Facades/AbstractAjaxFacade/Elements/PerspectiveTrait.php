@@ -256,6 +256,7 @@ JS;
             'settings' => $this->getWidget()->isDisabled() !== true,
             'group_by' => $this->getPerspectiveDimensionCaptions($layout->getPivotRows()),
             'split_by' => $this->getPerspectiveDimensionCaptions($layout->getPivotColumns()),
+            'split_rollup_mode' => $layout->getShowRowTotals() ? 'rollup' : 'flat',
             'columns' => [],
             'aggregates' => new \stdClass()
         ];

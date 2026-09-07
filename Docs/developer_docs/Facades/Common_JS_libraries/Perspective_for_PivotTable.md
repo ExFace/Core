@@ -256,6 +256,7 @@ separators are not yet mapped; Perspective uses browser `Intl.NumberFormat` beha
 | `rows` | `group_by` |
 | `columns` | `split_by` |
 | `values` | `columns` plus one entry per value in `aggregates` |
+| `show_row_totals` | `split_rollup_mode`: `rollup` when enabled, otherwise `flat` |
 | `view` | `plugin`, and for heatmap/table-bar views also `columns_config` |
 | Widget enabled | Settings panel is opened. |
 | Widget disabled | Settings panel is closed and opening it is prevented. |
@@ -297,10 +298,13 @@ The three heatmap variants currently have the same styling. Stacked and unstacke
 currently select the same plugin and rely on its defaults. `export_tsv` is not a dedicated view;
 Perspective's own export menu remains available in interactive mode.
 
-Perspective provides hierarchy rollups for `group_by`, but the current trait does not explicitly
-map `show_row_totals`, `show_column_totals`, `show_row_subtotals`, or
-`show_column_subtotals`. Treat their current behavior as a Perspective default, not as full
-compatibility with the PivotTable widget model.
+Perspective's native split rollup provides the grand total columns requested by
+`show_row_totals`. It places totals before the split groups and also emits intermediate subtotal
+columns when multiple `split_by` dimensions are configured. Perspective does not provide separate
+options for grand-total-only rollups or totals-after ordering. The current trait does not
+explicitly map `show_column_totals`, `show_row_subtotals`, or `show_column_subtotals`; treat their
+current behavior as a Perspective default, not as full compatibility with the PivotTable widget
+model.
 
 ## Formulas and calculated columns
 
