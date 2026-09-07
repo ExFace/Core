@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2024-05-06 09:18:18",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-11-08 15:56:55",
+    "modified_on": "2026-09-07 09:23:46",
     "contents": {
         "widget_type": "PivotTable",
         "object_alias": "exface.Core.MONITOR_ACTION",
@@ -58,6 +58,22 @@
             "USER__USERNAME",
             "DATE"
         ],
+        "pivot_layout": {
+            "columns": [
+                "=Date(DATE, 'yyyy')",
+                "=Date(DATE, 'MM')"
+            ],
+            "rows": [
+                "PAGE__APP__NAME",
+                "PAGE__LABEL"
+            ],
+            "values": [
+                {
+                    "attribute_alias": "UID:COUNT",
+                    "aggregator": "SUM"
+                }
+            ]
+        },
         "columns": [
             {
                 "attribute_alias": "PAGE__APP__NAME"
@@ -91,6 +107,10 @@
             {
                 "calculation": "=Date(DATE, 'ww')",
                 "caption": "Week"
+            },
+            {
+                "calculation": "=Date(DATE, 'yyyy')",
+                "caption": "Year"
             },
             {
                 "attribute_alias": "UID:COUNT",
