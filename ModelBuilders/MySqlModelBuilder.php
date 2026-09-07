@@ -6,6 +6,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 /**
  * 
@@ -128,6 +129,41 @@ class MySqlModelBuilder extends AbstractSqlModelBuilder
         }
         
         return $rows;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findForeignKeyRelations()
+     */
+    protected function findForeignKeyRelations(string $table, SqlDataConnectorInterface $connector) : array
+    {
+        $schema = static::getSchemaFromAlias($table);
+        $tableName = static::getTableNameFromAlias($table);
+        $sql = "SELECT
+                    COLUMN_NAME,
+                    TABLE_SCHEMA,
+                    REFERENCED_TABLE_SCHEMA,
+                    REFERENCED_TABLE_NAME,
+                    REFERENCED_COLUMN_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = " . ($schema ? static::quoteSqlLiteral($schema) : 'DATABASE()') . "
+                AND TABLE_NAME = " . static::quoteSqlLiteral($tableName) . "
+                AND REFERENCED_TABLE_NAME IS NOT NULL
+                ORDER BY ORDINAL_POSITION";
+
+        $relations = [];
+        foreach ($connector->runSql($sql)->getResultArray() as $row) {
+            $relatedTable = $row['REFERENCED_TABLE_NAME'];
+            if (strcasecmp($row['REFERENCED_TABLE_SCHEMA'], $row['TABLE_SCHEMA']) !== 0) {
+                $relatedTable = $row['REFERENCED_TABLE_SCHEMA'] . '.' . $relatedTable;
+            }
+            $relations[] = [
+                'column' => $row['COLUMN_NAME'],
+                'table' => $relatedTable,
+                'key' => $row['REFERENCED_COLUMN_NAME']
+            ];
+        }
+        return $relations;
     }
     
     /**
