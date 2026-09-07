@@ -23,6 +23,7 @@ Each top-level key is a component type. Common properties include:
   "save_component_data": {
     "object_alias": "exface.Core.OBJECT",
     "columns": [
+      { "attribute_alias": "UID" },
       { "attribute_alias": "NAME" },
       { "attribute_alias": "ALIAS" },
       { "attribute_alias": "APP" },
@@ -31,6 +32,7 @@ Each top-level key is a component type. Common properties include:
         "nested_data": {
           "object_alias": "exface.Core.ATTRIBUTE",
           "columns": [
+            { "attribute_alias": "UID" },
             { "attribute_alias": "NAME" },
             { "attribute_alias": "ALIAS" },
             { "attribute_alias": "DATATYPE" }
@@ -46,7 +48,7 @@ The `columns` list is a security boundary. If it is present, consumers must trea
 
 Use the DataColumn property `nested_data` for child DataSheets. `nested_data_template` is not a valid DataColumn UXON property. Nested writes require a suitable relation, and DataSheet currently supports nested creation only for one-to-many relations.
 
-Do not include a UID column in a template intended only for creation. `DataSheet::dataSave()` switches to update behavior when a UID column is present. Tools that accept existing components should handle those UIDs as references separately unless editing is explicitly part of their contract.
+Include the UID column when a consumer supports editing existing components. `DataSheet::dataSave()` creates rows when no UID column is present and updates rows when a UID is supplied. The UID must remain nullable so the same template can support creation without allowing arbitrary filters as update selectors. Technical optimistic-lock values do not belong in the template; consumers should enrich them from the current data before saving rows with a UID.
 
 Core supplies defaults, fixed values, relation keys for nested children, context values, behaviors, authorization checks, and required-value validation during DataSheet writes. Schema consumers may expose configured attributes with defaults or fixed values as nullable so Core can supply their values. Core does not invent missing business values. Every required writable attribute without a Core-provided value must therefore be included in the template.
 

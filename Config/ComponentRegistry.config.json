@@ -18,6 +18,9 @@
       "object_alias": "exface.Core.OBJECT",
       "columns": [
         {
+          "attribute_alias": "UID"
+        },
+        {
           "attribute_alias": "NAME"
         },
         {
@@ -34,6 +37,9 @@
           "nested_data": {
             "object_alias": "exface.Core.ATTRIBUTE",
             "columns": [
+              {
+                "attribute_alias": "UID"
+              },
               {
                 "attribute_alias": "NAME"
               },
@@ -77,6 +83,79 @@
       }
     }
   },
+  "attribute": {
+    "name": "Meta attribute",
+    "description": "Attributes of objects in the metamodel",
+    "uxon_properties": [
+      "attribute_alias"
+    ],
+    "save_component_data": {
+      "object_alias": "exface.Core.ATTRIBUTE",
+      "columns": [
+        {
+          "attribute_alias": "UID"
+        },
+        {
+          "attribute_alias": "OBJECT"
+        },
+        {
+          "attribute_alias": "NAME"
+        },
+        {
+          "attribute_alias": "ALIAS"
+        },
+        {
+          "attribute_alias": "DATATYPE"
+        },
+        {
+          "attribute_alias": "DATA_ADDRESS"
+        },
+        {
+          "attribute_alias": "TYPE"
+        },
+        {
+          "attribute_alias": "REQUIREDFLAG"
+        },
+        {
+          "attribute_alias": "EDITABLEFLAG"
+        },
+        {
+          "attribute_alias": "WRITABLEFLAG"
+        }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.ATTRIBUTE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "OBJECT__ALIAS_WITH_NS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias": "OBJECT__ALIAS_WITH_NS"
+        },
+        {
+          "attribute_alias": "ALIAS"
+        }
+      ]
+    }
+  },
   "action": {
     "name": "Action",
     "description": "Actions to be called by widgets, background processes or through facades directly. Aliases refer to prototypes (with default configuration) or action models saved per object",
@@ -99,6 +178,7 @@
     "save_component_data": {
       "object_alias": "exface.Core.OBJECT_ACTION",
       "columns": [
+        { "attribute_alias": "UID" },
         { "attribute_alias": "OBJECT" },
         { "attribute_alias": "ACTION_PROTOTYPE" },
         { "attribute_alias": "ALIAS" },
@@ -188,6 +268,7 @@
     "save_component_data": {
       "object_alias": "exface.Core.PAGE",
       "columns": [
+        { "attribute_alias": "UID" },
         { "attribute_alias": "ALIAS" },
         { "attribute_alias": "APP" },
         { "attribute_alias": "TEMPLATE" },
@@ -307,6 +388,7 @@
     "save_component_data": {
       "object_alias": "exface.Core.OBJECT_BEHAVIORS",
       "columns": [
+        { "attribute_alias": "UID" },
         { "attribute_alias": "BEHAVIOR" },
         { "attribute_alias": "CONFIG_UXON" },
         { "attribute_alias": "OBJECT" },
@@ -381,6 +463,7 @@
     "save_component_data": {
       "object_alias": "exface.Core.UXON_SNIPPET",
       "columns": [
+        { "attribute_alias": "UID" },
         { "attribute_alias": "DESCRIPTION" },
         { "attribute_alias": "APP" },
         { "attribute_alias": "UXON_SCHEMA" },
@@ -455,6 +538,7 @@
     "save_component_data": {
       "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
       "columns": [
+        { "attribute_alias": "UID" },
         { "attribute_alias": "APP" },
         { "attribute_alias": "COMMUNICATION_CHANNEL" },
         { "attribute_alias": "ALIAS" },
@@ -505,6 +589,7 @@
     "save_component_data": {
       "object_alias": "exface.Core.CONNECTION",
       "columns": [
+        { "attribute_alias": "UID" },
         { "attribute_alias": "APP" },
         { "attribute_alias": "TIME_ZONE" },
         { "attribute_alias": "LABEL" },
