@@ -16,6 +16,7 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BinaryDataType;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 /**
  * Generates metamodel from PostgreSQL tables and views
@@ -135,6 +136,46 @@ class PostgreSqlModelBuilder extends AbstractSqlModelBuilder
         return $rows;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findForeignKeyRelations()
+     */
+    protected function findForeignKeyRelations(string $table, SqlDataConnectorInterface $connector) : array
+    {
+        $schema = static::getSchemaFromAlias($table) ?: 'public';
+        $tableName = static::getTableNameFromAlias($table);
+        $sql = 'SELECT
+                    source.column_name AS "COLUMN_NAME",
+                    target.table_schema AS "REFERENCED_TABLE_SCHEMA",
+                    target.table_name AS "REFERENCED_TABLE_NAME",
+                    target.column_name AS "REFERENCED_COLUMN_NAME"
+                FROM information_schema.key_column_usage source
+                JOIN information_schema.referential_constraints relation
+                    USING (constraint_catalog, constraint_schema, constraint_name)
+                JOIN information_schema.key_column_usage target
+                    ON relation.unique_constraint_catalog = target.constraint_catalog
+                    AND relation.unique_constraint_schema = target.constraint_schema
+                    AND relation.unique_constraint_name = target.constraint_name
+                    AND source.position_in_unique_constraint = target.ordinal_position
+                WHERE source.table_schema = ' . static::quoteSqlLiteral($schema) . '
+                AND source.table_name = ' . static::quoteSqlLiteral($tableName) . '
+                ORDER BY source.ordinal_position';
+
+        $relations = [];
+        foreach ($connector->runSql($sql)->getResultArray() as $row) {
+            $relations[] = [
+                'column' => $row['COLUMN_NAME'],
+                'table' => $row['REFERENCED_TABLE_SCHEMA'] . '.' . $row['REFERENCED_TABLE_NAME'],
+                'key' => $row['REFERENCED_COLUMN_NAME']
+            ];
+        }
+        return $relations;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::guessDataType()
+     */
     protected function guessDataType(MetaObjectInterface $object, string $sql_data_type, $length = null, $scale = null) : DataTypeInterface
     {
         $workbench = $object->getWorkbench();
