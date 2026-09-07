@@ -42,6 +42,8 @@ use exface\Core\Widgets\Button;
  */
 class NotificationContext extends AbstractContext
 {
+    const CLEANUP_AREA_NOTIFICATIONS = 'notifications';
+    
     private $notificationsSheet = null;
 
     private $announcementsSheet = null;
@@ -639,6 +641,10 @@ class NotificationContext extends AbstractContext
      */
     public function onCleanupRemoveOldNotifications(OnCleanUpEvent $event)
     {
+        if (! $event->isAreaToBeCleaned(self::CLEANUP_AREA_NOTIFICATIONS)) {
+            return;
+        }
+        
         $daysBack = $event->getWorkbench()->getConfig()->getOption('CONTEXTS.NOTIFICATIONCONTEXT.DELETE_NOTIFICATIONS_AFTER_DAYS');
         if ($daysBack <= 0) {
             return;
