@@ -162,6 +162,30 @@ HTML;
     }
 
     /**
+     * Returns an Intl locale matching the configured ExFace date format.
+     *
+     * @return string
+     */
+    protected function getPerspectiveFormattingLocale() : string
+    {
+        $locale = $this->getPerspectiveLocale();
+        $dateFormat = DateDataType::getFormatFromLocale($this->getWorkbench());
+
+        switch ($dateFormat) {
+            case 'dd.MM.yyyy':
+                return 'en-CH';
+            case 'dd/MM/yyyy':
+                return 'en-GB';
+            case 'MM/dd/yyyy':
+                return 'en-US';
+            case 'yyyy-MM-dd':
+                return 'en-CA';
+            default:
+                return $locale;
+        }
+    }
+
+    /**
      * Returns the built-in Perspective translation stylesheet URL when available.
      *
      * @return string|null
@@ -199,7 +223,7 @@ HTML;
         $disabledJs = $widget->isDisabled() === true ? 'true' : 'false';
         $elementIdJs = json_encode($this->getId());
         $objectAliasJs = json_encode($widget->getMetaObject()->getAliasWithNamespace());
-        $localeJs = json_encode($this->getPerspectiveLocale());
+        $localeJs = json_encode($this->getPerspectiveFormattingLocale());
 
         return <<<JS
 

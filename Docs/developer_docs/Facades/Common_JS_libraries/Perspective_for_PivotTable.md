@@ -262,10 +262,15 @@ French, Japanese, Portuguese, and Chinese. The integration loads the matching la
 
 Perspective 5.3 creates date and number formatters directly from `navigator.languages` and does
 not expose a viewer-level locale option. Before loading Perspective, the render function therefore
-prepends the session locale to `navigator.languages`, preserving the browser languages as
-fallbacks. This makes date, datetime, and number output use the authenticated user's locale rather
-than the browser default. The override is page-wide, which matches ExFace's page-wide session
-locale; changing the session language requires reloading the page.
+prepends a formatting locale to `navigator.languages`, preserving the browser languages as
+fallbacks. The formatting locale is derived from `LOCALIZATION.DATE.DATE_FORMAT`, independently
+of the viewer language. The supported patterns are `dd.MM.yyyy`, `dd/MM/yyyy`, `MM/dd/yyyy`, and
+`yyyy-MM-dd`; other patterns fall back to the session locale. Thus an English session configured
+with `dd.MM.yyyy` keeps English configurator text but renders dates such as `07.09.2026`.
+
+This override is page-wide and also controls Perspective's number formatting. It matches ExFace's
+page-wide localization settings; changing the session language or date format requires reloading
+the page.
 
 ## Mapping PivotLayout to Perspective
 
