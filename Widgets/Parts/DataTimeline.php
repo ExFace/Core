@@ -178,13 +178,15 @@ class DataTimeline implements WidgetPartInterface
     
     private ?array $views = null;
     private ?UxonObject $viewsUxon = null;
-    
+
+    private bool $fillPaddingToBorder = false;
     private $granularity = null;
     private $initial_view_name = null;
     private bool $row_zoom = false;
     private $workday_start_time = null;
     private $workday_end_time = null;
     private ?string $popup_on = null;
+    private ?DataTimelinePopupAggregation $popupAggregation = null;
     
     public function exportUxonObject()
     {
@@ -198,6 +200,33 @@ class DataTimeline implements WidgetPartInterface
         }
         
         return $uxon;
+    }
+
+    /**
+     * Returns whether the padded date range fills the visible Gantt window.
+     *
+     * @return bool
+     */
+    public function getFillPaddingToBorder() : bool
+    {
+        return $this->fillPaddingToBorder;
+    }
+
+    /**
+     * Extends the padded date range so the rendered timeline fills the visible timeline window. If disabled, in Gantt the timeline will end at latest task enddate + padding.
+     * Use it to fill empty space.
+     *
+     * @uxon-property fill_padding_to_border
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $fillToBorder
+     * @return $this
+     */
+    public function setFillPaddingToBorder(bool $fillToBorder) : DataTimeline
+    {
+        $this->fillPaddingToBorder = $fillToBorder;
+        return $this;
     }
     
     /**
@@ -314,6 +343,40 @@ class DataTimeline implements WidgetPartInterface
         }
 
         throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline popup_on value "' . $value . '": please use click or hover!');
+    }
+
+    /**
+     * Returns the aggregation popup configuration.
+     * @experimental
+     * 
+     * @return DataTimelinePopupAggregation
+     */
+    public function getPopupAggregation() : DataTimelinePopupAggregation
+    {
+        if ($this->popupAggregation === null) {
+            $this->popupAggregation = new DataTimelinePopupAggregation($this);
+        }
+        return $this->popupAggregation;
+    }
+
+    /**
+     * Configure how aggregation popups display their member tasks. @experimental: Every property inside is experemental! Do not use it in Prod yet.
+     *
+     * @uxon-property popup_aggregation
+     * @uxon-type \exface\Core\Widgets\Parts\DataTimelinePopupAggregation
+     * @uxon-template {"style": "list", "include_upper_row_tasks": false, "expand_tasks": false, "gantt_width": 550}
+     *
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setPopupAggregation(UxonObject $uxon) : DataTimeline
+    {
+        if ($this->popupAggregation === null) {
+            $this->popupAggregation = new DataTimelinePopupAggregation($this, $uxon);
+        } else {
+            $this->popupAggregation->importUxonObject($uxon);
+        }
+        return $this;
     }
     
     /**

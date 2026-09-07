@@ -83,6 +83,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     private $granularity = null;
     private ?string $date_format = null;
     private ?string $padding = null;
+    private ?string $todayButtonLeftScrollPadding = null;
     private ?string $snap_at = null;
     private ?int $upper_text_frequency = null;
     private ?WidgetDimension $columnWidth = null;
@@ -232,6 +233,37 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     public function setPadding(string $padding) : DataTimelineView
     {
         $this->padding = $padding;
+        return $this;
+    }
+
+    /**
+     * Returns the left-side offset used when the Today button scrolls.
+     *
+     * @return string|null
+     */
+    public function getTodayButtonLeftScrollPadding() : ?string
+    {
+        return $this->todayButtonLeftScrollPadding;
+    }
+
+    /**
+     * Defines the left-side offset used when the Today button scrolls. Example values: "1d", "7d", "1m", or "1y".
+     * The value consists of a number followed by a unit, where the unit can be:
+     * - "d" for days
+     * - "m" for months
+     * - "y" for years
+     *
+     * @uxon-property today_button_left_scroll_padding
+     * @uxon-type string
+     * @uxon-template "5d"
+     * @uxon-default null
+     *
+     * @param string $padding
+     * @return $this
+     */
+    public function setTodayButtonLeftScrollPadding(string $padding) : DataTimelineView
+    {
+        $this->todayButtonLeftScrollPadding = $this->isValidTodayButtonLeftScrollPadding($padding) ? $padding : null;
         return $this;
     }
 
@@ -400,6 +432,24 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
         $const = 'self::SNAP_AT_' . mb_strtoupper($snap_at);
         if (! defined($const)) {
             throw new WidgetConfigurationError($this->getWidget(), 'Invalid snap_at value: "' . $snap_at . '": please use daily, weekly,or monthly!');
+        }
+        return true;
+    }
+
+    /**
+     * Validates that the Today button scroll padding consists of an integer followed by d, m, or y.
+     *
+     * @param string $padding
+     * @return bool
+     * @throws WidgetConfigurationError
+     */
+    public function isValidTodayButtonLeftScrollPadding(string $padding) : bool
+    {
+        if (preg_match('/^\d+[dmy]$/', $padding) !== 1) {
+            throw new WidgetConfigurationError(
+                $this->getWidget(),
+                'Invalid today_button_left_scroll_padding value "' . $padding . '": please use an integer followed by d, m, or y!'
+            );
         }
         return true;
     }
