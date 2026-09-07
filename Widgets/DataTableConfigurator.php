@@ -85,7 +85,7 @@ class DataTableConfigurator extends DataConfigurator
      */
     public static function onCleanUp(OnCleanUpEvent $event) : void
     {
-        if (! $event->includesArea(self::CLEANUP_AREA_SETUPS)) {
+        if (! $event->isAreaToBeCleaned(self::CLEANUP_AREA_SETUPS)) {
             return;
         }
         
