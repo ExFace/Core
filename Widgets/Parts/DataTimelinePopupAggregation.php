@@ -131,7 +131,7 @@ class DataTimelinePopupAggregation implements WidgetPartInterface
     }
 
     /**
-     * Shows a compact Gantt chart next to the aggregation popup task list. @experimental: Do not use it in PROD yet!
+     * Shows a compact Gantt chart next to the aggregation popup task list. Use it in combination with the Uxon property "style: table" to achieve the best visual result! @experimental: Do not use it in PROD yet!
      *
      * @uxon-property expand_tasks
      * @uxon-type boolean
