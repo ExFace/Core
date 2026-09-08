@@ -185,6 +185,19 @@
 	function _matchTimeRelative (sExpr) {
 		return /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sExpr);
 	};
+
+	/**
+	 * Matches an explicit clock time in a date-time string.
+	 *
+	 * Captures hours, minutes, optional seconds, and optional fractional seconds.
+	 * For example, `2025-12-31 13:44` and `2025-12-31T13:44:22.123` match.
+	 *
+	 * @param {string} sExpr
+	 * @returns {array|null}
+	 */
+	function _matchTime (sExpr) {
+		return /(?:^|[T\s])(\d{1,2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?\s*(?:am|pm)?(?:\s|$)/i.exec(sExpr);
+	};
 	
 	/**
 	 * Returns TRUE if the values of the given rows match.
@@ -217,6 +230,62 @@
 		 * 
 		 */
 		date: {
+			/**
+			 * Returns the precision explicitly present in a date-time filter value.
+			 *
+			 * Relative date expressions such as `-1d` are treated as day values. Invalid values return null.
+			 * Possible precision values are `day`, `minute`, `second`, and `millisecond`.
+			 *
+			 * @param {*} mDate
+			 * @param {string} [sDateFormat]
+			 * @param {Object} [oParserParams]
+			 * @returns {'day'|'minute'|'second'|'millisecond'|null}
+			 */
+			getDateTimePrecision: function(mDate, sDateFormat, oParserParams) {
+				if (typeof mDate !== 'string' || this.parse(mDate, sDateFormat, oParserParams) === null) {
+					return null;
+				}
+				if (_matchDateRelative(mDate, oParserParams) !== null) {
+					return 'day';
+				}
+				if (_matchTimeRelative(mDate) !== null) {
+					return 'second';
+				}
+				var aTime = _matchTime(mDate);
+				if (aTime === null) {
+					return 'day';
+				}
+				if (aTime[4] !== undefined) {
+					return 'millisecond';
+				}
+				return aTime[3] === undefined ? 'minute' : 'second';
+			},
+
+			/**
+			 * Returns inclusive bounds for a filter if the given date-time value is not precise down to a second.
+			 *
+			 * For date-time filters incomplete values like `31.12.2025` or `31.12.2025 13:34` are actually ranges
+			 * rather then atomic values. This method will parse them into a JS object, while returning null for
+			 * values containing seconds or milliseconds, as well as invalid values.
+			 *
+			 * @param {*} mDate
+			 * @param {string} [sDateFormat]
+			 * @param {Object} [oParserParams]
+			 * @returns {{from: Date, to: Date, precision: string}|null}
+			 */
+			findFilterRange: function(mDate, sDateFormat, oParserParams) {
+				var sPrecision = this.getDateTimePrecision(mDate, sDateFormat, oParserParams);
+				if (sPrecision !== 'day' && sPrecision !== 'minute') {
+					return null;
+				}
+				var oDate = this.parse(mDate, sDateFormat, oParserParams);
+				return {
+					from: moment(oDate).startOf(sPrecision).toDate(),
+					to: moment(oDate).endOf(sPrecision).milliseconds(0).toDate(),
+					precision: sPrecision
+				};
+			},
+
 			/**
 			 * Parses a string date into a JS Date object.
 			 * 
@@ -1145,6 +1214,7 @@
 			 * Collection of tools to work with condition comparators
 			 */
 			filterComparator: {
+				_rightListComparators: ['[', '![', '[=', '![=', '][', '!][', '[[', '![['],
 
 				/**
 				 * Raw operator prefixes for filtering
@@ -1189,8 +1259,8 @@
 				 * Parses a canonical filter condition value with an optional data-type parser.
 				 *
 				 * BETWEEN is structured as two bounds and serialized as `from..to` for transport.
-				 * IN and NOT_IN retain their list string because their individual values are parsed
-				 * by the filter consumer. All other comparators contain one scalar value.
+				 * Comparators with a list on the right retain their list string because their individual
+				 * values are parsed by the filter consumer. All other comparators contain one scalar value.
 				 *
 				 * @param {object} oCondition Canonical filter condition.
 				 * @param {function} [fnParser] Data-type parser for scalar values.
@@ -1212,7 +1282,7 @@
 							hasValue: mValueFrom !== '' || mValueTo !== ''
 						};
 					}
-					if (typeof fnParser === 'function' && sComparator !== '[' && sComparator !== '![') {
+					if (typeof fnParser === 'function' && this._rightListComparators.indexOf(sComparator) === -1) {
 						mValue = fnParser(mValue);
 					}
 					return {
