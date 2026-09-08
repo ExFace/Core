@@ -36,7 +36,7 @@ class MetaAttributeTypeDataType extends StringDataType implements EnumDataTypeIn
         if (empty($this->labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (static::getValuesStatic() as $const => $val) {
+            foreach (static::getValuesOfConstants() as $const => $val) {
                 $this->labels[$val] = $translator->translate('GLOBAL.MODEL.ATTRIBUTE_TYPE.' . $const);
             }
         }

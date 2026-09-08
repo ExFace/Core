@@ -35,10 +35,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  *          - <alias_of_role>
  *              - 14_USER_ROLE.json
  *              - 16_AUTHORIZATION_POLICY.json
- * - 00_APP.json <- entities without an object binding are stored as data sheet UXON
- * - 01_DATATYPE.json
+ * - 00_APP.json <- Data of the app itself
+ * - 01_DATATYPE.json <- entities without an object binding are stored as data sheet UXON
  * - ...
- * - 99_PAGES
+ * - 99_PAGES <- pages are stored separately in a different JSON format, not as exported DataSheet
  *      - app.alias.page_alias_1.json
  *      - app.alias.page_alias_2.json
  *      - ... 

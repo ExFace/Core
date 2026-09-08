@@ -46,6 +46,8 @@ use exface\Core\CommonLogic\UxonObject;
  * - getJExcel() : Object
  * - getDom() : DomElement
  * - getData() : array - returns the current array of data rows
+ * - getDataChanged() : array - returns only the rows the user actually changed (uses the change earmark)
+ * - getChangedRowIndexes() : Object - map {rowIdx: true} of rows with at least one earmarked (changed) cell
  * - getDataLastLoaded() : array - returns the array of data rows as received from the server or dataGetter.
  * - getColumnName(iColIdx) : string
  * - getColumnIndex(string colName) : int
@@ -1109,6 +1111,7 @@ JS;
         _autoColumnWidth: {$autoColumnWidth},
         _dropdownColWidthLocks: {},
         _valueGetterRow: null,
+        _jsColsCfgCache: null,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
         getDoNotValidate: function(){
             return this._doNotValidate;
@@ -1125,6 +1128,21 @@ JS;
         },
         getData: function() {
             return this.convertArrayToData(this.getJExcel().getData(false));
+        },
+        getDataChanged: function() {
+            return this.convertArrayToData(this.getJExcel().getData(false), true);
+        },
+        getChangedRowIndexes: function() {
+            // Rows are earmarked cell-wise with the `exf-spreadsheet-change` class in validateCell().
+            // Reading that marker back is far cheaper than re-comparing every cell of every row.
+            var oChangedRows = {};
+            $(this._dom).find('tbody td.exf-spreadsheet-change').each(function(){
+                var sY = this.getAttribute('data-y');
+                if (sY !== null && sY !== '') {
+                    oChangedRows[parseInt(sY, 10)] = true;
+                }
+            });
+            return oChangedRows;
         },
         getDataLastLoaded: function(){
             return this._initData;
@@ -1149,6 +1167,13 @@ JS;
         },
         getColumnModel: function(iColIdx) {
             return (this._cols[this.getColumnName(iColIdx)] || {});
+        },
+        getJExcelColumnConfig: function(iColIdx) {
+            // getConfig() is expensive; the returned columns config is stable, so cache it
+            if (this._jsColsCfgCache === null) {
+                this._jsColsCfgCache = this.getJExcel().getConfig().columns;
+            }
+            return (this._jsColsCfgCache[iColIdx] || {});
         },
         lockDropdownColumnWidth: function(iColIdx, domCell) {
             // only needed in auto column width mode
@@ -1264,7 +1289,7 @@ JS;
             }
 
             // Checkboxes cannot distinguish `false` and `null` or empty. Catch that here 
-            if ((this.getJExcel().getConfig().columns[iCol] || {}).type === 'checkbox') {
+            if (this.getJExcelColumnConfig(iCol).type === 'checkbox') {
                 if (mValue === false && (mInitVal === null || mInitVal === '' || mInitVal === undefined) && mInitVal !== true && mInitVal !== 1) {
                     return false;
                 }
@@ -1292,7 +1317,6 @@ JS;
             return bChanged;
         },
         validateValue: function(iCol, iRow, mValue) {
-
             if (this.getDoNotValidate() === true) {
                 return true;
             }
@@ -1311,7 +1335,7 @@ JS;
             
             return mResult;
         },
-        validateCell: function (cell, iCol, iRow, mValue, bParseValue) {
+        validateCell: function (cell, iCol, iRow, mValue, bParseValue, iTotalRows) {
             var mValidationResult;
             var oCol = this.getColumnModel(iCol);
             var bRequired = oCol.checkRequired(iRow);
@@ -1323,12 +1347,14 @@ JS;
             }
 
             // if were in a spare row, we dont need to validate
-            var aData = this.getJExcel().getData() || [];
+            // Only the row count is needed here; callers doing a full pass (validateAll) pass it
+            // in to avoid rebuilding the whole data array via getData() for every single cell.
+            var iRowCount = (iTotalRows === undefined || iTotalRows === null) ? (this.getJExcel().getData() || []).length : iTotalRows;
             var iSpareRows = {$this->getMinSpareRows()}; 
 
             // spare rows do not need to be validated, however if a new value is entered into that otherwise empty (spare) row, we still need to validate it. 
             // the issue here is that jexcel adds a new spare rows AFTER this validation has run, so we would otherwise skip the validation for the new value.
-            var bIsSpareRow = (iRow >= aData.length - iSpareRows);
+            var bIsSpareRow = (iRow >= iRowCount - iSpareRows);
             var bValueEmpty = (mValue === '' || mValue === null || mValue === undefined);
             if (this.getDoNotValidate() === true || (bIsSpareRow && bValueEmpty)) {
                 return mValue;
@@ -1370,7 +1396,6 @@ JS;
             return mValue;
         },
         validateAll: function() {
-
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -1392,7 +1417,7 @@ JS;
                     var mValidated;                    
                     var oCell = oWidget.getJExcel().getCell(jspreadsheet.getColumnName(iColIdx) + (iRowIdx + 1));
                     aCells.push(oCell);
-                    mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true);
+                    mValidated = oWidget.validateCell(oCell, iColIdx, iRowIdx, mValue, true, iDataCnt);
                     if (mValidated !== '' && mValidated !== null && mValidated !== undefined) {
                         bRowEmpty = false;
                     }                   
@@ -1405,7 +1430,6 @@ JS;
             });
         },
         refreshConditionalProperties: function() {
-
             if (this.getDoNotValidate() === true) {
                 return;
             }
@@ -1438,7 +1462,6 @@ JS;
             }
         },
         isDropdownValueValid: function(iCol, iRow, mValue = null) {
-
             if (this.getDoNotValidate() === true) {
                 return true;
             }
@@ -1468,18 +1491,25 @@ JS;
 
             return true;
         },
-        convertArrayToData: function(aDataArray) {
+        convertArrayToData: function(aDataArray, bChangedOnly) {
             var aData = [];
             var iDataCnt = aDataArray.length;
             var jExcel = $(this._dom);
             var oColNames = this._colNames;
             var oWidget = this;
             var bAllowEmptyRows = {$allowEmptyRows};
+            // Only visit rows the user actually changed, using the visual earmark instead of
+            // comparing every cell of every row (see getChangedRowIndexes()).
+            var oChangedRows = bChangedOnly === true ? this.getChangedRowIndexes() : null;
             aDataArray.forEach(function(aRow, i){
                 var oRow = {};
                 var bEmptyRow = true;
 
                 if (i >= (iDataCnt - {$this->getMinSpareRows()})) {
+                    return;
+                }
+
+                if (bChangedOnly === true && oChangedRows[i] !== true) {
                     return;
                 }
 
@@ -2666,7 +2696,23 @@ JS;
         
         $relPathToParent = $widget->getObjectRelationPathToParent();
         
+        // By default all rows are passed to the action. If the button explicitly requests only
+        // changed rows via `input_rows: changed`, use the getDataChanged() getter instead.
+        $dataGetterFn = 'getData';
+        
         switch (true) {
+            // If the button explicitly asks for only changed rows
+            case $customMode === DataButton::INPUT_ROWS_CHANGED:
+                $dataGetterFn = 'getDataChanged';
+                $data = <<<JS
+    {
+        oId: '{$widgetObj->getId()}',
+        rows: aRows
+    }
+    
+JS;
+                break;
+                
             // If there is no action or the action 
             case $customMode === DataButton::INPUT_ROWS_ALL:
             case $action === null:
@@ -2781,7 +2827,7 @@ JS;
             }
 
             var aRows;            
-            aRows = jqEl[0].exfWidget.getData();
+            aRows = jqEl[0].exfWidget.{$dataGetterFn}();
             
             // Remove any keys, that are not in the columns of the widget
             aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
@@ -2814,6 +2860,7 @@ JS;
     // when re-setting data (e.g. zwischenspeichern), the element doesnt get destroyed, 
     // so we need to set the loading flag again
     jqCtrl[0].exfWidget.bLoaded = false;
+    jqCtrl[0].exfWidget._jsColsCfgCache = null;
 
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}

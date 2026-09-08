@@ -37,7 +37,7 @@ class CodeDataType extends TextDataType
      * @param string|null $language
      * @return $this
      */
-    protected function setLanguage(?string $language): CodeDataType
+    public function setLanguage(?string $language): CodeDataType
     {
         $this->language = $language;
         return $this;

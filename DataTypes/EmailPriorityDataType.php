@@ -50,7 +50,7 @@ class EmailPriorityDataType extends NumberDataType implements EnumDataTypeInterf
         if (empty($this->labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (EmailPriorityDataType::getValuesStatic() as $const => $val) {
+            foreach (static::getValuesOfConstants() as $const => $val) {
                 $this->labels[$val] = $translator->translate('EMAIL.PRIORITY.' . $const);
             }
         }
@@ -65,7 +65,7 @@ class EmailPriorityDataType extends NumberDataType implements EnumDataTypeInterf
      */
     protected function getConstantName($value) : ?string
     {
-        foreach (static::getValuesStatic() as $const => $val) {
+        foreach (static::getValuesOfConstants() as $const => $val) {
             if ($value === $val || $value === $const) {
                 return $const;
             }
@@ -81,7 +81,7 @@ class EmailPriorityDataType extends NumberDataType implements EnumDataTypeInterf
     protected static function getValueFromName(string $name, bool $strict = true) : ?int
     {
         $name = mb_strtoupper($name);
-        foreach (static::getValuesStatic() as $const => $val) {
+        foreach (static::getValuesOfConstants() as $const => $val) {
             if ($name === $const) {
                 return $val;
             }

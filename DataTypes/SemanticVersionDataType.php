@@ -26,7 +26,11 @@ class SemanticVersionDataType extends AbstractDataType
     {
         if (SemanticVersionDataType::isValueEmpty($string) === true){
             return $string;
-        } 
+        }
+
+        if (is_float($string) && is_finite($string)) {
+            $string = json_encode($string, JSON_PRESERVE_ZERO_FRACTION);
+        }
         
         $parser = new VersionParser();
         try {

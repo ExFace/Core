@@ -49,10 +49,14 @@ completely replaces the UI. Most facades are separate apps.
 
 ## Main components
 
-The workbench works with a metamodel describing data, UI, actions, security 
-- basically everything. The model is kept in a database and consist of JSON 
-  objects. This particular JSON is called UXON - User Experience Object 
-  Notation. See [UXON instructions](instructions/uxon.instructions.md).
+The workbench works with a metamodel describing data, UI, actions, security - 
+basically everything. The model is kept in a database and consist of JSON 
+objects. This particular JSON is called UXON - User Experience Object Notation. 
+See [UXON instructions](instructions/uxon.instructions.md).
+
+Most components described below are implemented as PHP classes, that take UXON
+as configuration. When you work with these classes, make sure to read the UXON
+instructions and add appropriate UXON annotations to your code.
 
 ### The `$workbench` class
 
@@ -121,6 +125,26 @@ by an expression relative to the main object:
 
 Expressions, that do not reference data are called "static" expressions, while 
 those depending on data are referred to as "non-static" or "data-driven".
+
+### Data types
+
+The platform has its own extensobl data type system, that works across all 
+data sources. Each metaobject attribute or action parameter will reference a 
+data type model. These type models also have UIDs, aliases, UXON 
+configuration and a corresponding prototype class from the `DataTypes` 
+folder of any app. E.g. the type model `exface.Core.Number2` based on the 
+`\exface\Core\DataTypes\NumberDataType` limits the number of decimal places 
+to 2.
+
+Data type prototypes have another important role: they contain collections 
+of static helper methods for their type of data. For example, the 
+`FilePathDataType` offers methods to work with file paths: e.g. `join()`, 
+`isAbsolute()`, etc. Similarly, methods to work with arrays or JSON can be 
+found in the `ArrayDataType` and `JsonDataType` prototypes.
+
+If you need helper methods for a certain type of data, check the 
+corresponding data type prototype class first. If there is nothing there 
+already, see if you can add a static method to a suitable prototype class.
 
 ### Actions and behaviors - business logic
 

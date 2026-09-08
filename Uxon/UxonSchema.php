@@ -1057,7 +1057,7 @@ class UxonSchema implements UxonSchemaInterface
      */
     protected function getMetamodelComparators() : array
     {
-        return array_values(ComparatorDataType::getValuesStatic());
+        return ComparatorDataType::getValuesStatic();
     }
     
     /**

@@ -38,7 +38,7 @@ class QueuedTaskStateDataType extends IntegerDataType implements EnumDataTypeInt
         if (empty($this->labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (static::getValuesStatic() as $const => $val) {
+            foreach (static::getValuesOfConstants() as $const => $val) {
                 $this->labels[$val] = $translator->translate('TASK.QUEUE.' . $const);
             }
         }
