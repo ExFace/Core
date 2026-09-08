@@ -1139,6 +1139,125 @@
 				 	return 0;
 				});
 				return aRows;
+			},
+
+			/**
+			 * Collection of tools to work with condition comparators
+			 */
+			filterComparator: {
+
+				/**
+				 * Raw operator prefixes for filtering
+				 * Order matters: longer prefixes must come first to avoid partial matches.
+				 */
+				_comparatorMap: [
+					'[!==', // ComparatorDataType::LIST_EACH_EQUALS_NOT
+					']!==', // ComparatorDataType::LIST_ANY_EQUALS_NOT
+					'![=',  // ComparatorDataType::NOT_IS_IN
+					'![[',  // ComparatorDataType::LIST_NOT_SUBSET
+					'!][',  // ComparatorDataType::LIST_NOT_INTERSECTS
+					'[!=',  // ComparatorDataType::LIST_EACH_IS_NOT
+					'[==',  // ComparatorDataType::LIST_EACH_EQUALS
+					'[<=',  // ComparatorDataType::LIST_EACH_LESS_THAN_OR_EQUALS
+					'[>=',  // ComparatorDataType::LIST_EACH_GREATER_THAN_OR_EQUALS
+					']!=',  // ComparatorDataType::LIST_ANY_IS_NOT
+					']==',  // ComparatorDataType::LIST_ANY_EQUALS
+					']<=',  // ComparatorDataType::LIST_ANY_LESS_THAN_OR_EQUALS
+					']>=',  // ComparatorDataType::LIST_ANY_GREATER_THAN_OR_EQUALS
+					'!==',  // ComparatorDataType::EQUALS_NOT
+					'![',   // ComparatorDataType::NOT_IN
+					'[[',   // ComparatorDataType::LIST_SUBSET
+					'[=',   // ComparatorDataType::IS_IN
+					'[<',   // ComparatorDataType::LIST_EACH_LESS_THAN
+					'[>',   // ComparatorDataType::LIST_EACH_GREATER_THAN
+					'][',   // ComparatorDataType::LIST_INTERSECTS
+					']=',   // ComparatorDataType::LIST_ANY_IS
+					']<',   // ComparatorDataType::LIST_ANY_LESS_THAN
+					']>',   // ComparatorDataType::LIST_ANY_GREATER_THAN
+					'==',   // ComparatorDataType::EQUALS
+					'!=',   // ComparatorDataType::IS_NOT
+					'>=',   // ComparatorDataType::GREATER_THAN_OR_EQUALS
+					'<=',   // ComparatorDataType::LESS_THAN_OR_EQUALS
+					'..',   // ComparatorDataType::BETWEEN
+					'[',    // ComparatorDataType::IN
+					'>',    // ComparatorDataType::GREATER_THAN
+					'<',    // ComparatorDataType::LESS_THAN
+					'='     // ComparatorDataType::IS
+				],
+
+				/**
+				 * Parses a canonical filter condition value with an optional data-type parser.
+				 *
+				 * BETWEEN is structured as two bounds and serialized as `from..to` for transport.
+				 * IN and NOT_IN retain their list string because their individual values are parsed
+				 * by the filter consumer. All other comparators contain one scalar value.
+				 *
+				 * @param {object} oCondition Canonical filter condition.
+				 * @param {function} [fnParser] Data-type parser for scalar values.
+				 * @returns {{ value: *, hasValue: boolean, value_from?: *, value_to?: * }}
+				 */
+				parseValue: function(oCondition, fnParser) {
+					oCondition = oCondition || {};
+					var sComparator = oCondition.comparator;
+					var mValue = oCondition.value;
+					if (sComparator === '..') {
+						var mValueFrom = oCondition.value_from === undefined || oCondition.value_from === null ? '' : oCondition.value_from;
+						var mValueTo = oCondition.value_to === undefined || oCondition.value_to === null ? '' : oCondition.value_to;
+						var mParsedFrom = typeof fnParser === 'function' && mValueFrom !== '' ? fnParser(mValueFrom) : mValueFrom;
+						var mParsedTo = typeof fnParser === 'function' && mValueTo !== '' ? fnParser(mValueTo) : mValueTo;
+						return {
+							value: String(mParsedFrom) + '..' + String(mParsedTo),
+							value_from: mParsedFrom,
+							value_to: mParsedTo,
+							hasValue: mValueFrom !== '' || mValueTo !== ''
+						};
+					}
+					if (typeof fnParser === 'function' && sComparator !== '[' && sComparator !== '![') {
+						mValue = fnParser(mValue);
+					}
+					return {
+						value: mValue,
+						hasValue: mValue !== null && mValue !== undefined && mValue !== ''
+					};
+				},
+
+				/**
+				 * Extracts a comparator prefix from a header filter input value.
+				 *
+				 * Returns an object `{ comparator: string|null, value: string }` where `comparator` is the
+				 * raw comparator prefix (e.g., '==', '!=', '>=') and `value` is the remaining
+				 * filter value after stripping the prefix. A BETWEEN expression additionally contains
+				 * `value_from` and `value_to`. If no comparator matches, `comparator` is null and `value`
+				 * is the original input unchanged.
+				 *
+				 * @param {string} sInput - Raw value including comparator
+				 * @returns {{ comparator: string|null, value: string, value_from?: string, value_to?: string }}
+				 */
+				extract: function(sInput) {
+					if (typeof sInput !== 'string') {
+						return { comparator: null, value: sInput };
+					}
+					var iBetween = sInput.indexOf('..');
+					if (iBetween > -1) {
+						return {
+							comparator: '..',
+							value: sInput,
+							value_from: sInput.slice(0, iBetween),
+							value_to: sInput.slice(iBetween + 2)
+						};
+					}
+					var aMap = this._comparatorMap;
+					for (var i = 0; i < aMap.length; i++) {
+						var sPrefix = aMap[i];
+						if (sInput.indexOf(sPrefix) === 0) {
+							return {
+								comparator: sPrefix,
+								value: sInput.slice(sPrefix.length)
+							};
+						}
+					}
+					return { comparator: null, value: sInput };
+				}
 			}
 		},
 		
@@ -1216,69 +1335,6 @@
 				}
 				return await navigator.clipboard.readText();
 			}*/
-		},
-
-		/**
-		 * Filter operator tools for column header filters
-		 * 
-		 * Extracts operator prefixes typed into column header filter inputs.
-		 * 
-		 * Supported prefixes (longest match wins):
-		 * - `!==` (not equals)
-		 * - `==`  (equals)
-		 * - `!=`  (not contains)
-		 * - `>=`  (greater than or equal)
-		 * - `<=`  (less than or equal)
-		 * - `>`   (greater than)
-		 * - `<`   (less than)
-		 * - `=`   (equals/contains)
-		 * 
-		 * If no known prefix is found, defaults to no operator.
-		 */
-		filter: {
-
-			/**
-			 * Raw operator prefixes for filtering 
-			 * Order matters: longer prefixes must come first to avoid partial matches.
-			 */
-			_operatorMap: [
-				'!==',
-				'==',
-				'!=',
-				'>=',
-				'<=',
-				'>',
-				'<',
-				'='
-			],
-
-			/**
-			 * Extracts an operator prefix from a header filter input value.
-			 * 
-			 * Returns an object `{ operator: string, value: string }` where `operator` is the
-			 * raw operator prefix (e.g., '==', '!=', '>=') and `value` is the remaining 
-			 * filter value after stripping the prefix. If no prefix matches, `operator` is empty string
-			 * and `value` is the original input unchanged.
-			 * 
-			 * @param {string} sInput - Raw value including operator
-			 * @returns {{ operator: string, value: string }}
-			 */
-			parseOperator: function(sInput) {
-				if (typeof sInput !== 'string') {
-					return { operator: '', value: sInput };
-				}
-				var aMap = this._operatorMap;
-				for (var i = 0; i < aMap.length; i++) {
-					var sPrefix = aMap[i];
-					if (sInput.indexOf(sPrefix) === 0) {
-						return {
-							operator: sPrefix,
-							value: sInput.slice(sPrefix.length)
-						};
-					}
-				}
-				return { operator: '', value: sInput };
-			}
 		},
 		
 		/**
