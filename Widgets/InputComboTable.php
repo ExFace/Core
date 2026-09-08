@@ -227,11 +227,6 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         // Disable widget setups to prevent recursion due to tables inside the setups table buttons
         $table->setConfiguratorSetupsEnabled(false);
         $table->getPaginator()->setCountAllRows(false);
-        // The autosuggest columns are defined explicitly below (and in addComboColumns()). Disable the
-        // implicit auto-adding of default-display columns, otherwise a premature getColumns() call (e.g.
-        // triggered by a behavior when importing the table UXON initializes the configurator) would add
-        // them on the still-empty table and initTable() would then add them again - resulting in duplicates.
-        $table->setColumnsAutoAddDefaultDisplayAttributes(false);
         
         // Now see if the user had already defined a table in UXON
         /* @var $table_uxon \exface\Core\CommonLogic\UxonObject */
@@ -239,7 +234,16 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         if (! $table_uxon->isEmpty()) {
             // Do not allow custom widget types
             $table_uxon->unsetProperty('widget_type');
+            // Only disable the implicit auto-adding of default-display columns for the duration of the
+            // import, not for the entire table lifetime. A behavior may initialize the configurator while
+            // importing the table UXON and call getColumns() on the still-empty table, which would auto-add
+            // the default columns prematurely - the manual column setup below would then add them again,
+            // resulting in duplicates. Restoring auto-adding right after the import keeps it working as a
+            // fallback for cases not covered by the manual setup below (e.g. an unbound combo with a custom
+            // table object), where those default columns would otherwise be missing entirely.
+            $table->setColumnsAutoAddDefaultDisplayAttributes(false);
             $table->importUxonObject($table_uxon);
+            $table->setColumnsAutoAddDefaultDisplayAttributes(true);
         }
         
         // A combo bound to the LABEL attribute should behave like a relation: show the objects
