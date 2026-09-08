@@ -116,6 +116,8 @@ Rules:
   has migrations, analyse them to understand the existing naming patterns.
 - Use named objects where possible: e.g. named contraints, indexes, etc. 
   This makes DOWN scripts more reliable.
+  - Use prefixes like `IDX_`, `FK_`, `CHK_`, `UQ_` for indexes, foreign keys, 
+    check constraints, and unique constraints.
 - Avoid (not)exists errors: When adding or removing objects, check if they 
   exist first.
 - Validate scripts thoroughly! Errors during installation can corrupt the DB 

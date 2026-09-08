@@ -3,6 +3,7 @@ namespace exface\Core\ModelBuilders;
 
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\DataConnectors\OracleSqlConnector;
+use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 
 /**
  * 
@@ -72,6 +73,48 @@ class OracleSqlModelBuilder extends AbstractSqlModelBuilder
             $rows[$nr]['NAME'] = $this->generateLabel($row['NAME']);
         }
         return $rows;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\ModelBuilders\AbstractSqlModelBuilder::findForeignKeyRelations()
+     */
+    protected function findForeignKeyRelations(string $table, SqlDataConnectorInterface $connector) : array
+    {
+        $owner = static::getSchemaFromAlias($table);
+        $tableName = static::getTableNameFromAlias($table);
+        $sql = "SELECT
+                    source_column.COLUMN_NAME,
+                    relation.OWNER AS TABLE_SCHEMA,
+                    target_column.OWNER AS REFERENCED_TABLE_SCHEMA,
+                    target_column.TABLE_NAME AS REFERENCED_TABLE_NAME,
+                    target_column.COLUMN_NAME AS REFERENCED_COLUMN_NAME
+                FROM ALL_CONSTRAINTS relation
+                JOIN ALL_CONS_COLUMNS source_column
+                    ON source_column.OWNER = relation.OWNER
+                    AND source_column.CONSTRAINT_NAME = relation.CONSTRAINT_NAME
+                JOIN ALL_CONS_COLUMNS target_column
+                    ON target_column.OWNER = relation.R_OWNER
+                    AND target_column.CONSTRAINT_NAME = relation.R_CONSTRAINT_NAME
+                    AND target_column.POSITION = source_column.POSITION
+                WHERE relation.CONSTRAINT_TYPE = 'R'
+                AND relation.OWNER = " . ($owner ? 'UPPER(' . static::quoteSqlLiteral($owner) . ')' : 'USER') . "
+                AND relation.TABLE_NAME = UPPER(" . static::quoteSqlLiteral($tableName) . ")
+                ORDER BY source_column.POSITION";
+
+        $relations = [];
+        foreach ($connector->runSql($sql)->getResultArray() as $row) {
+            $relatedTable = $row['REFERENCED_TABLE_NAME'];
+            if (strcasecmp($row['REFERENCED_TABLE_SCHEMA'], $row['TABLE_SCHEMA']) !== 0) {
+                $relatedTable = $row['REFERENCED_TABLE_SCHEMA'] . '.' . $relatedTable;
+            }
+            $relations[] = [
+                'column' => $row['COLUMN_NAME'],
+                'table' => $relatedTable,
+                'key' => $row['REFERENCED_COLUMN_NAME']
+            ];
+        }
+        return $relations;
     }
 }
 ?>

@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Widgets\Parts\Pivot;
 
+use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\CommonLogic\UxonObject;
@@ -59,7 +60,16 @@ class PivotDimension implements WidgetPartInterface
      */
     public function getDataColumn() : DataColumn
     {
-        return $this->getPivotTable()->getColumnByAttributeAlias($this->getAttributeAlias());
+        $exprString = $this->getAttributeAlias();
+        if (Expression::detectCalculation($exprString)) {
+            $col = $this->getPivotTable()->getColumnByExpression($exprString);
+        } else {
+            $col = $this->getPivotTable()->getColumnByAttributeAlias($this->getAttributeAlias());
+        }
+        if ($col === null) {
+            throw new WidgetConfigurationError($this->getPivotTable(), 'Pivot dimension "' . $this->getAttributeAlias() . '" does not exist in the pivot table!');
+        }
+        return $col;
     }
     
     /**

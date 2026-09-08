@@ -19,7 +19,7 @@ class DataSourceSelector extends AbstractSelector implements DataSourceSelectorI
     
     use AliasSelectorTrait;
     
-    const METAMODEL_SOURCE_ALIAS = 'METAMODEL_SOURCE';
+    const METAMODEL_SOURCE_ALIAS = 'exface.Core.METAMODEL_SOURCE';
     
     const METAMODEL_SOURCE_UID = '0x32000000000000000000000000000000';
     

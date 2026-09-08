@@ -4,6 +4,7 @@ namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -70,6 +71,10 @@ MD;
         } else {
             $parentLink = 'No parent - the page is a root node in the menu';
         }
+        $pageUid = $page->getUid();
+        $uidLine = is_string($pageUid) && UUIDDataType::isHexNumber($pageUid)
+            ? '- UID: `' . $pageUid . '`'
+            : '';
         
         return <<<MD
 {$headingPage}
@@ -77,6 +82,7 @@ MD;
 {$this->escapeMarkdownText($page->getIntro())}
 
 - Alias: {$page->getAliasWithNamespace()}
+{$uidLine}
 - Menu parent: {$parentLink}
 - Root widget: $rootWidgetLink
 

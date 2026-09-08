@@ -1,0 +1,6 @@
+.exf-perspective-viewer,
+.exf-perspective-viewer > [slot^="PERSPECTIVE_GENERATED_ID"] {
+    font-family: inherit !important;
+    font-size: 12px !important;
+    --psp-interface-monospace--font-family: inherit;
+}

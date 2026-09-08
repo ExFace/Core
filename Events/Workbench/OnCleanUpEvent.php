@@ -83,4 +83,12 @@ class OnCleanUpEvent extends AbstractEvent
     {
         return $this->resultMessages;
     }
+
+    /**
+     * @return string[]|null
+     */
+    public function getAreas() : ?array
+    {
+        return $this->areas;
+    }
 }

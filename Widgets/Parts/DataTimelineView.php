@@ -83,6 +83,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     private $granularity = null;
     private ?string $date_format = null;
     private ?string $padding = null;
+    private ?string $todayButtonLeftScrollPadding = null;
     private ?string $snap_at = null;
     private ?int $upper_text_frequency = null;
     private ?WidgetDimension $columnWidth = null;
@@ -217,7 +218,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     
     /**
      * Sets the padding of the timeline view.
-     * In frappe-gantt, this is the extra space before the start of the first task and after the end date of the last task inside the timeline.
+     * In Gantt, this is the extra space before the start of the first task and after the end date of the last task inside the timeline.
      * Examples: 
      * - "7d" adds 7 days of padding on both sides.
      * - "1m" adds 1 month of padding on both sides.
@@ -236,6 +237,37 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     }
 
     /**
+     * Returns the left-side offset used when the Today button scrolls.
+     *
+     * @return string|null
+     */
+    public function getTodayButtonLeftScrollPadding() : ?string
+    {
+        return $this->todayButtonLeftScrollPadding;
+    }
+
+    /**
+     * Defines the left-side offset used when the Today button scrolls. Example values: "1d", "7d", "1m", or "1y".
+     * The value consists of a number followed by a unit, where the unit can be:
+     * - "d" for days
+     * - "m" for months
+     * - "y" for years
+     *
+     * @uxon-property today_button_left_scroll_padding
+     * @uxon-type string
+     * @uxon-template "5d"
+     * @uxon-default null
+     *
+     * @param string $padding
+     * @return $this
+     */
+    public function setTodayButtonLeftScrollPadding(string $padding) : DataTimelineView
+    {
+        $this->todayButtonLeftScrollPadding = $this->isValidTodayButtonLeftScrollPadding($padding) ? $padding : null;
+        return $this;
+    }
+
+    /**
      * @return string|null
      */
     public function getSnapAt() : ?string
@@ -245,7 +277,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     
     /**
      * Sets the snap_at of the timeline view.
-     * In frappe-gantt, this defines the snapping behavior when dragging tasks.
+     * In Gantt, this defines the snapping behavior when dragging tasks.
      * Possible values:
      * - "daily" (snaps to each day)
      * - "weekly" (snaps to each week)
@@ -273,7 +305,7 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
     
     /**
      * Sets the upper_text_frequency of the timeline view.
-     * In frappe-gantt, this defines how often the upper header text is displayed.
+     * In Gantt, this defines how often the upper header text is displayed.
      * For example, a value of 4 means the upper header text is shown every 4 units of the granularity.
      * 
      * @uxon-property upper_text_frequency
@@ -400,6 +432,24 @@ class DataTimelineView implements WidgetPartInterface, iHaveIcon
         $const = 'self::SNAP_AT_' . mb_strtoupper($snap_at);
         if (! defined($const)) {
             throw new WidgetConfigurationError($this->getWidget(), 'Invalid snap_at value: "' . $snap_at . '": please use daily, weekly,or monthly!');
+        }
+        return true;
+    }
+
+    /**
+     * Validates that the Today button scroll padding consists of an integer followed by d, m, or y.
+     *
+     * @param string $padding
+     * @return bool
+     * @throws WidgetConfigurationError
+     */
+    public function isValidTodayButtonLeftScrollPadding(string $padding) : bool
+    {
+        if (preg_match('/^\d+[dmy]$/', $padding) !== 1) {
+            throw new WidgetConfigurationError(
+                $this->getWidget(),
+                'Invalid today_button_left_scroll_padding value "' . $padding . '": please use an integer followed by d, m, or y!'
+            );
         }
         return true;
     }

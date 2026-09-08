@@ -30,6 +30,7 @@ use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\Widgets\DataButton;
 
 /**
  *
@@ -250,6 +251,22 @@ JS;
             $max = null;
         }
         
+        // If this button only submits changed rows (input_rows: changed) and the user did not
+        // change anything, there is simply nothing to save. Show a friendly hint and skip the
+        // action instead of raising the "select at least X" error.
+        $noChangesCheckJs = '';
+        $widget = $this->getWidget();
+        if (($min ?? 0) > 0 && $widget instanceof DataButton && $widget->getInputRows() === DataButton::INPUT_ROWS_CHANGED) {
+            $noChangesMsgJs = json_encode($this->getWorkbench()->getCoreApp()->getTranslator()->translate('MESSAGE.NO_CHANGES_TO_SAVE'));
+            $noChangesCheckJs = <<<JS
+
+                        if (oInputData.rows.length === 0) {
+                            {$this->buildJsShowMessageSuccess($noChangesMsgJs)}
+                            return false;
+                        }
+JS;
+        }
+        
         if (($min ?? 0) === 0 && $max === null) {
             return 'true';
         }
@@ -278,6 +295,7 @@ JS;
                         if (! Array.isArray(oInputData.rows)){
                             return false;   
                         }
+                        {$noChangesCheckJs}
                         {$js_check_input_rows} 
                         return true;
                     })($jsRequestData)

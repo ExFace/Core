@@ -2,6 +2,7 @@
 
 namespace exface\Core\Interfaces;
 
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 
@@ -16,6 +17,14 @@ interface ComponentRegistryInterface extends WorkbenchDependantInterface
      * @return string[]
      */
     public function getComponentKeys(?string $havingKey = null) : array;
+
+    /**
+     * Returns the configured DataSheet template for saving the component type.
+     *
+     * @param string $component
+     * @return UxonObject|null
+     */
+    public function getComponentSaveData(string $component) : ?UxonObject;
 
     /**
      * @param string $component

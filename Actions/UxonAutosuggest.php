@@ -16,8 +16,6 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\UxonSchemaInterface;
-use exface\Core\Factories\UxonSchemaFactory;
-use exface\Core\Interfaces\iCanBeConvertedToUxon;
 use exface\Core\Uxon\QueryBuilderSchema;
 
 /**
@@ -61,6 +59,7 @@ class UxonAutosuggest extends AbstractAction
     const PARAM_TYPE = 'input';
     
     const TYPE_FIELD = 'field';
+    const TYPE_VALUE = 'value';
     const TYPE_PRESET = 'preset';
     const TYPE_DETAILS = 'details';
     const TYPE_MODEL_BROWSER = 'modelbrowser';
@@ -99,6 +98,7 @@ class UxonAutosuggest extends AbstractAction
             case strcasecmp($type, self::TYPE_MODEL_BROWSER) === 0:
                 $options = $this->suggestModelBrowser($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
                 break;
+            // self::TYPE_VALUE is the default case, so we can just use default here
             default:
                 $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
                 break;

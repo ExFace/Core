@@ -17,7 +17,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  * 
  * ## Examples
  * 
- * In frappe-gantt, to show a timeline with months at the top and days below:
+ * In Gantt, to show a timeline with months at the top and days below:
  * ```
  *      "header_lines": [
  *          {
