@@ -64,6 +64,7 @@ class ShowLookupDialog extends ShowDialog
     // Defaults
     private ?UxonObject $paginatorUxon = null;
     private ?bool $hideHeader = null;
+    private ?UxonObject $confirmationButtonUxon = null;
 
     /**
      * 
@@ -120,8 +121,8 @@ class ShowLookupDialog extends ShowDialog
                 } // END if ($targetWidget instanceof iUseInputWidget)
             } // END if ($this->isDefinedInWidget())
             
-            // Add the "OK" button
-            $btnUxon = new UxonObject([
+            // Generate the "OK" button.
+            $btnArray = [
                 'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWLOOKUPDIALOG.SAVE_BUTTON"),
                 'visibility' => WidgetVisibilityDataType::PROMOTED,
                 'icon' => Icons::CHECK,
@@ -130,8 +131,16 @@ class ShowLookupDialog extends ShowDialog
                     'target_widget_id' => $this->getTargetWidgetId(),
                     'input_rows_min' => 0
                 ]
-            ]);
-            $btn = $dialog->createButton($btnUxon)->setInputWidget($data_table);
+            ];
+
+            // Apply confirmation button overrides if defined
+            if (null !== $confirmationButtonUxon = $this->getConfirmationButton()) {
+                $confArray = $confirmationButtonUxon->toArray();
+                $btnArray = array_merge($btnArray, $confArray);
+            }
+
+            // Add "OK" button.
+            $btn = $dialog->createButton(new UxonObject($btnArray))->setInputWidget($data_table);
             $dialog->addButton($btn);
             
             // Press "OK" button automatically on double-click in single-select lookups 
@@ -503,5 +512,26 @@ class ShowLookupDialog extends ShowDialog
     protected function getHideHeader() : ?bool
     {
         return $this->hideHeader;
+    }
+
+    /**
+     * Overwrite properties of the confirmation button for this dialog.
+     * 
+     * @uxon-property confirmation_button
+     * @uxon-type \exface\Core\Widgets\DialogButton
+     * @uxon-template {"visibility":"promoted","icon":"check"}
+     */
+    protected function setConfirmationButton(UxonObject $uxon) : ShowLookupDialog
+    {
+        $this->confirmationButtonUxon = $uxon;
+        return $this;
+    }
+
+    /**
+     * @return UxonObject|null
+     */
+    protected function getConfirmationButton() : ?UxonObject
+    {
+        return $this->confirmationButtonUxon;
     }
 }
