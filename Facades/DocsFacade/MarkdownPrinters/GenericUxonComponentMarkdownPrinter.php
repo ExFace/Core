@@ -4,6 +4,7 @@ namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpClassDataType;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
@@ -50,13 +51,23 @@ class GenericUxonComponentMarkdownPrinter implements MarkdownInstancePrinterInte
             $alias = '`' . $this->component->getAliasWithNamespace() . '`';
         } else {
             $alias = '';
-        }        
+        }
+        $uid = null;
+        if (method_exists($this->component, 'getUid')) {
+            $uid = $this->component->getUid();
+        } elseif (method_exists($this->component, 'getId')) {
+            $uid = $this->component->getId();
+        }
+        $uidLine = is_string($uid) && UUIDDataType::isHexNumber($uid)
+            ? '- UID: `' . $uid . '`'
+            : '';
         $prototypeClass = '\\' . get_class($this->component);
         $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($this->component);
         return <<<MD
 {$heading}
 
 - Alias: {$alias}
+{$uidLine}
 - Prototype: [$prototypeClass]($prototypeLink)
 
 ## UXON configuration

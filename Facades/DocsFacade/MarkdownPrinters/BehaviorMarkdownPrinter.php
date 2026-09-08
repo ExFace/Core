@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
 use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
@@ -43,11 +44,16 @@ class BehaviorMarkdownPrinter extends AbstractMarkdownPrinter implements Markdow
         $prototypeClass = '\\' . get_class($behavior);
         $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($behavior);
         $objectLink = DocsFacade::buildUrlToDocsForMetaObject($behavior->getObject());
+        $behaviorKey = array_search($behavior, $behavior->getObject()->getBehaviors()->getAll(), true);
+        $uidLine = is_string($behaviorKey) && UUIDDataType::isHexNumber($behaviorKey)
+            ? '- UID: `' . $behaviorKey . '`'
+            : '';
 
         return <<<MD
 
 {$heading}
 
+{$uidLine}
 - Prototype: [$prototypeClass]($prototypeLink)
 - Object: [{$behavior->getObject()->__toString()}]({$objectLink})
 

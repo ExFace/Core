@@ -117,6 +117,11 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
 
 - Alias: **{$metaObject->getAliasWithNamespace()}**
 - UID: `{$metaObject->getId()}`
+- Data Address:
+
+```
+{$metaObject->getDataAddress()}
+```
 {$parentObjectLinks}
 {$dataSourceMarkdown}
 {$importantAttributes}
