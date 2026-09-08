@@ -2523,17 +2523,28 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $valueRaw = $value;
         // Check if the value is of valid type.
         try {
-            // Pay attention to comparators expecting concatennated values (like IN) - the concatennated value will not validate against
+            // Pay attention to comparators expecting concatenated values (like IN) - the concatenated value will not validate against
             // the data type, but the separated parts should
             switch (true) {
                 // Do not do any parsing if the value is SQL
                 case $valueIsSQL === true:
                     break;
+                    
+                // Parse the two sides of BETWEEN separately and use 
+                case $comparator === ComparatorDataType::BETWEEN:
+                    $values = explode(ComparatorDataType::BETWEEN, $value ?? '');
+                    if (count($values) !== 2) {
+                        throw new QueryBuilderException('Invalid value for BETWEEN comparator: "' . $value . '"');
+                    }
+                    $values[0] = $this->prepareWhereValue($values[0], $data_type, $dataAddressProps);
+                    $values[1] = $this->prepareWhereValue($values[1], $data_type, $dataAddressProps);
+                    $value = $values[0] . ' AND ' . $values[1];
+                    return $subject . " BETWEEN " . $value;
                 
                 // In case of list comparators, the value might be a list, so split it into single
                 // values first.
                 // NOTE in case of lists we need to cast every value separately! Single values are not casted in this
-                // CASE{} block, but further down the code for every comparator separately (ony if needed!)
+                // CASE{} block, but further down the code for every comparator separately (only if needed!)
                 case $comparator === ComparatorDataType::IN:
                 case $comparator === ComparatorDataType::NOT_IN:
                     $values = explode($value_list_delimiter, $value ?? '');

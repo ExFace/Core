@@ -212,7 +212,7 @@
     "GLOBAL.AGGREGATOR_FUNCTIONS.COUNT": "Count",
     "GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Count distinct",
     "GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Count if",
-    "GLOBAL.COMPARATOR.IS_NAME": "Is",
+    "GLOBAL.COMPARATOR.IS_NAME": "Is (contains)",
     "GLOBAL.COMPARATOR.IS_HINT": "Matches values universally. String comparisons are case-insensitive and match when the left value contains the right value.",
     "GLOBAL.COMPARATOR.IS_NOT_NAME": "Is not",
     "GLOBAL.COMPARATOR.IS_NOT_HINT": "Matches when \"Is\" does not match.",

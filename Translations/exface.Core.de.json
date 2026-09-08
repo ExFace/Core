@@ -209,7 +209,7 @@
     "GLOBAL.AGGREGATOR_FUNCTIONS.COUNT": "Anzahl",
     "GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_DISTINCT": "Anzahl unterschiedlicher Werte",
     "GLOBAL.AGGREGATOR_FUNCTIONS.COUNT_IF": "Anzahl mit Filter",
-    "GLOBAL.COMPARATOR.IS_NAME": "Entspricht",
+    "GLOBAL.COMPARATOR.IS_NAME": "Entspricht (enthält)",
     "GLOBAL.COMPARATOR.IS_HINT": "Vergleicht Werte universell. Zeichenketten werden ohne Beachtung der Groß- und Kleinschreibung verglichen und stimmen überein, wenn der linke Wert den rechten enthält.",
     "GLOBAL.COMPARATOR.IS_NOT_NAME": "Entspricht nicht",
     "GLOBAL.COMPARATOR.IS_NOT_HINT": "Trifft zu, wenn \"Entspricht\" nicht zutrifft.",
