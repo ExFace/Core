@@ -17,7 +17,15 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  */
 trait JqueryFilterTrait {
 
-    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null)
+    /**
+     * Builds a JavaScript expression returning the current filter condition.
+     *
+     * @param string|null $valueJs
+     * @param MetaObjectInterface|null $baseObject
+     * @param bool|null $hidden Whether to include the hidden state in the condition.
+     * @return string
+     */
+    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null, ?bool $hidden = null)
     {
         $widget = $this->getWidget();
         if ($widget->hasCustomConditionGroup() === true) {
@@ -26,25 +34,34 @@ trait JqueryFilterTrait {
         if ($widget->isDisplayOnly() === true) {
             return '';
         }
-        $value = is_null($valueJs) ? $this->buildJsValueGetter() : $valueJs;
+        $value = $valueJs ?? $this->buildJsValueGetter();
         if ($widget->getAttributeAlias() === '' || $widget->getAttributeAlias() === null) {
             throw new WidgetConfigurationError($widget, 'Invalid filter configuration for filter "' . $widget->getCaption() . '": missing expression (e.g. attribute_alias)!');
         }
+
+        $comparator = $this->buildJsComparatorGetter();
+        $formatter = $this->getFacade()->getDataTypeFormatter($widget->getValueDataType());
+        $filterParser = $formatter->buildJsFilterParser('mValue', 'sComparator');
+        $hiddenProperty = $hidden === null ? '' : '"hidden" : ' . $this->escapeBool($hidden) . ',';
 
         if ($baseObject === null || ! $baseObject->isExactly($widget->getMetaObject())) {
             $metaObjectAliasJs = "\"object_alias\" : \"{$widget->getMetaObject()->getAliasWithNamespace()}\",";
         } else {
             $metaObjectAliasJs = '';
         }
-        return <<<JSON
-{
-  "expression" : "{$widget->getAttributeAlias()}",
-  "comparator" : {$this->buildJsComparatorGetter()},
-  "value" : $value,
-  "apply_to_aggregates" : {$this->escapeBool($widget->willApplyToAggregatedValues())},
-  {$metaObjectAliasJs}
-}
-JSON;
+        return <<<JS
+(function(mValue, sComparator) {
+    var oParsed = {$filterParser};
+    return {
+        "expression" : "{$widget->getAttributeAlias()}",
+        "comparator" : oParsed.comparator,
+        "value" : oParsed.value,
+        "apply_to_aggregates" : {$this->escapeBool($widget->willApplyToAggregatedValues())},
+        {$hiddenProperty}
+        {$metaObjectAliasJs}
+    };
+})({$value}, {$comparator})
+JS;
     }
     
     public function buildJsCustomConditionGroup($valueJs = null) : string

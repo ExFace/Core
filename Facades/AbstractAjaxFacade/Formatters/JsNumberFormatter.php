@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\DataTypes\PercentDataType;
@@ -143,6 +144,38 @@ JS;
             // JS number!
             return mNumber === '' ? null : parseFloat(mNumber);
         }({$jsInput})
+JS;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFilterParser()
+     */
+    public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
+    {
+        $valueParserJs = $this->buildJsFormatParser('mRangeValue');
+        $defaultParserJs = parent::buildJsFilterParser('mFilterValue', 'sComparator');
+        $between = ComparatorDataType::BETWEEN;
+
+        // Numbers can be used with BETWEEN comparator - in this case, we need to parse the two sides separately
+        return <<<JS
+(function(mFilterValue, sComparator) {
+    if (sComparator === '{$between}') {
+        var iSeparator = String(mFilterValue).indexOf('{$between}');
+        var mValueFrom = iSeparator === -1 ? mFilterValue : String(mFilterValue).slice(0, iSeparator);
+        var mValueTo = iSeparator === -1 ? '' : String(mFilterValue).slice(iSeparator + 2);
+        var fnParse = function(mRangeValue) {
+            return {$valueParserJs};
+        };
+        var mParsedFrom = mValueFrom === '' ? '' : fnParse(mValueFrom);
+        var mParsedTo = mValueTo === '' ? '' : fnParse(mValueTo);
+        return {
+            comparator: sComparator,
+            value: String(mParsedFrom) + '{$between}' + String(mParsedTo)
+        };
+    }
+    return {$defaultParserJs};
+})({$jsValue}, {$jsComparator})
 JS;
     }
 

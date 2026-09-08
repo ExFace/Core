@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Interfaces\Facades\FacadeInterface;
@@ -165,6 +166,75 @@ function() {
                 return (dateObj ? {$this->buildJsFormatDateObjectToInternal('dateObj')} : '');
             }()
         
+JS;
+    }
+
+    /**
+     * Parses date filter values while preserving the precision expressed by the user.
+     *
+     * A partial DateTime equality is converted to an inclusive range so it matches every
+     * value within the entered period. For example, `31.12.2025` becomes the complete day
+     * and `31.12.2025 13:44` becomes the complete minute. Relative values use the same
+     * logic: `-1d` becomes the complete previous day, while `-1h` remains a scalar value.
+     *
+     * Explicit ranges are parsed endpoint by endpoint and may be open. For example,
+     * `31.12.2025..01.01.2026`, `31.12.2025..`, and `..01.01.2026` keep the `..`
+     * comparator while their non-empty endpoints are converted to the internal format.
+     *
+     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFilterParser()
+     */
+    public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
+    {
+        $formatQuoted = $this->escapeFormatString($this->getFormat());
+        // Generate the fallback against the IIFE's local variables so the original value and
+        // comparator expressions are evaluated only once when the generated parser executes.
+        $defaultParserJs = parent::buildJsFilterParser('mFilterValue', 'sComparator');
+        $valueParserJs = $this->buildJsFormatParser('mRangeValue');
+        $betweenDelimiter = ComparatorDataType::BETWEEN;
+        if ($this->getDataType() instanceof DateTimeDataType) {
+            // DateTime equality needs the user's original precision before normal parsing erases it.
+            // Examples: `31.12.2025` -> that entire day; `31.12.2025 13:44` -> that entire minute.
+            $rangeFromJs = $this->buildJsFormatDateObjectToInternal('oRange.from');
+            $rangeToJs = $this->buildJsFormatDateObjectToInternal('oRange.to');
+            $partialRangeParserJs = <<<JS
+
+    if (sComparator === '=' || sComparator === '==') {
+        var oRange = exfTools.date.findFilterRange(mFilterValue, {$formatQuoted});
+        if (oRange !== null) {
+            var sValueFrom = {$rangeFromJs};
+            var sValueTo = {$rangeToJs};
+            return {
+                comparator: '{$betweenDelimiter}',
+                value: sValueFrom + '{$betweenDelimiter}' + sValueTo
+            };
+        }
+    }
+JS;
+        } else {
+            $partialRangeParserJs = '';
+        }
+
+        // Explicit BETWEEN values are split before parsing because each endpoint is an independent
+        // date expression. Empty endpoints stay empty: `31.12.2025..` and `..01.01.2026` are valid.
+        return <<<JS
+(function(mFilterValue, sComparator) {
+    {$partialRangeParserJs}
+    if (sComparator === '{$betweenDelimiter}') {
+        var iSeparator = String(mFilterValue).indexOf('{$betweenDelimiter}');
+        var mValueFrom = iSeparator === -1 ? mFilterValue : String(mFilterValue).slice(0, iSeparator);
+        var mValueTo = iSeparator === -1 ? '' : String(mFilterValue).slice(iSeparator + 2);
+        var fnParse = function(mRangeValue) {
+            return {$valueParserJs};
+        };
+        var mParsedFrom = mValueFrom === '' ? '' : fnParse(mValueFrom);
+        var mParsedTo = mValueTo === '' ? '' : fnParse(mValueTo);
+        return {
+            comparator: sComparator,
+            value: String(mParsedFrom) + '{$betweenDelimiter}' + String(mParsedTo)
+        };
+    }
+    return {$defaultParserJs};
+})({$jsValue}, {$jsComparator})
 JS;
     }
     

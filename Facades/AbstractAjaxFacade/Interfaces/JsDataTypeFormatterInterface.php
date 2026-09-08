@@ -65,6 +65,18 @@ interface JsDataTypeFormatterInterface
      */
     public function buildJsFormatParser($jsInput);
 
+    /**
+     * Builds a JavaScript expression that returns an object with:
+     *
+     * - `comparator`: normalized ComparatorDataType value
+     * - `value`: normalized scalar or serialized range value
+     *
+     * @param string $jsValue JavaScript expression evaluating to the raw filter value.
+     * @param string $jsComparator JavaScript expression evaluating to a ComparatorDataType value.
+     * @return string
+     */
+    public function buildJsFilterParser(string $jsValue, string $jsComparator) : string;
+
     public function buildJsValidator(string $jsValue) : string;
 
     /**

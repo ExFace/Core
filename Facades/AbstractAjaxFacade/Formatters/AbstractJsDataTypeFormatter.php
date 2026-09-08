@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Formatters;
 
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface;
@@ -81,6 +82,36 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     protected function getJsEmptyCheck(string $jsVar) : string 
     {
         return "({$jsVar} === null || {$jsVar} === undefined || {$jsVar} === '')";
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see JsDataTypeFormatterInterface::buildJsFilterParser()
+     */
+    public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
+    {
+        $parserJs = $this->buildJsFormatParser('mFilterValue');
+        $rightListComparators = array_values(array_filter(
+            ComparatorDataType::getValuesStatic(),
+            function(string $comparator) : bool {
+                return ComparatorDataType::isListComparator($comparator, 'right');
+            }
+        ));
+        $rightListComparatorsJs = json_encode($rightListComparators);
+        // Preserve right-hand lists as a whole. Their individual values are parsed by the filter consumer.
+        // EACH and ANY comparators are intentionally excluded because their right-hand value is scalar.
+        return <<<JS
+(function(mFilterValue, sComparator) {
+    var aRightListComparators = {$rightListComparatorsJs};
+    var fnParse = function(mFilterValue) {
+        return {$parserJs};
+    };
+    return {
+        comparator: sComparator,
+        value: aRightListComparators.indexOf(sComparator) !== -1 ? mFilterValue : fnParse(mFilterValue)
+    };
+})({$jsValue}, {$jsComparator})
+JS;
     }
 
     /**

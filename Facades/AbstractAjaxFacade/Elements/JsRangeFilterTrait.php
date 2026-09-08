@@ -83,14 +83,17 @@ trait JsRangeFilterTrait
     /**
      *
      * @param string|null $valueJs
+     * @param MetaObjectInterface|null $baseObject
+     * @param bool|null $hidden Whether to include the hidden state in the conditions.
+     * @return string
      */
-    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null)
+    public function buildJsConditionGetter($valueJs = null, MetaObjectInterface $baseObject = null, ?bool $hidden = null)
     {
         $conditions = [];
         foreach ($this->getWidgetInlineGroup()->getWidgets() as $filter) {
             $filterEl = $this->getFacade()->getElement($filter);
             if (method_exists($filterEl, 'buildJsConditionGetter') === true) {
-                $conditions[] = $filterEl->buildJsConditionGetter($valueJs, $baseObject);
+                $conditions[] = $filterEl->buildJsConditionGetter($valueJs, $baseObject, $hidden);
             }
         }
         return implode(',', $conditions);
