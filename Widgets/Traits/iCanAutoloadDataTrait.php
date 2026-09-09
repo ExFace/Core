@@ -103,13 +103,13 @@ trait iCanAutoloadDataTrait {
      * 
      * This property is just an alternative spelling of `autoload_disabled_hint`.
      *  
-     * @uxon-property empty_text_if_autoloader_disabled
+     * @uxon-property empty_text_if_autoload_disabled
      * @uxon-type string|metamodel:formula
      * @uxon-translatable true
      * 
      * @see iCanAutoloadData::setAutoloadDisabledHint()
      */
-    public function setEmptyTextIfAutoloaderDisabled(string $text) : iCanAutoloadData
+    public function setEmptyTextIfAutoloadDisabled(string $text) : iCanAutoloadData
     {
         return $this->setAutoloadDisabledHint($text);
     }
@@ -121,10 +121,7 @@ trait iCanAutoloadDataTrait {
      */
     public function getEmptyTextIfInvalidFilters() : string
     {
-        if ($this->empty_text_if_invalid_filters === null) {
-            return $this->translate('WIDGET.DATA.NOT_LOADED');
-        }
-        return $this->empty_text_if_invalid_filters;
+        return $this->empty_text_if_invalid_filters ?? $this->getAutoloadDisabledHint();
     }
 
     /**
