@@ -140,6 +140,8 @@ class Data
     
     private $hide_footer = null;
     
+    private $hide_toolbar = null;
+    
     private $has_system_columns = false;
     
     private $quickSearchWidget = null;
@@ -1338,6 +1340,41 @@ class Data
     public function setHideHeader(bool $value) : iHaveHeader
     {
         $this->hide_header = $value;
+        return $this;
+    }
+    
+    /**
+     *
+     * @return bool|NULL
+     */
+    public function getHideToolbar() : ?bool
+    {
+        return $this->hide_toolbar;
+    }
+    
+    /**
+     * Set to FALSE to force the top toolbar to stay visible even if the header and the caption are hidden.
+     * 
+     * By default, hiding both `hide_header` and `hide_caption` also hides the entire top toolbar - including
+     * any controls placed inside it (e.g. the quick search, action buttons or the paginator for tables
+     * rendered as `sap.ui.table.Table`). If those controls need to stay accessible - e.g. to keep the
+     * pagination buttons reachable for a table placed inside a narrow tab or split panel - set this
+     * property to `false` explicitly.
+     * 
+     * Set to `true` to force-hide the toolbar even if the header or caption would otherwise keep it visible.
+     * 
+     * If not set explicitly (default), the toolbar is hidden only if both `hide_header` and `hide_caption`
+     * are `true`.
+     *
+     * @uxon-property hide_toolbar
+     * @uxon-type boolean
+     *
+     * @param bool $value
+     * @return Data
+     */
+    public function setHideToolbar(bool $value) : Data
+    {
+        $this->hide_toolbar = $value;
         return $this;
     }
     
