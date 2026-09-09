@@ -196,6 +196,14 @@ TODO:
 - debugging
 - logbooks
 
+### Performance profiling
+
+When profiling or optimizing performance, **measure first, never guess** - especially for vague
+requests like "this page is slow". Use the purpose-built, development-only profilers
+(`exfTools.perf` for JS, `DebugStopWatch` for PHP) to find the real bottleneck before changing
+anything, then re-measure to prove the improvement. They are temporary instrumentation that must be
+removed before committing. See [performance profiling tools](instructions/perf-profilers.instructions.md).
+
 ### Tests
 
 We currently do not use unit tests in the core. We do use Behat for 
