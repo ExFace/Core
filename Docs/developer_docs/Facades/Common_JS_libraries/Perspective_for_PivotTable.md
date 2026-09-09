@@ -129,6 +129,7 @@ Add these source paths to the facade configuration:
 "LIBS.PERSPECTIVE.DATAGRID.JS": "npm-asset/perspective-dev--viewer-datagrid/dist/cdn/perspective-viewer-datagrid.js",
 "LIBS.PERSPECTIVE.CHARTS.JS": "npm-asset/perspective-dev--viewer-charts/dist/cdn/perspective-viewer-charts.js",
 "LIBS.PERSPECTIVE.THEME.CSS": "npm-asset/perspective-dev--viewer/dist/css/pro.css",
+"LIBS.PERSPECTIVE.LOCALES_FOLDER": "npm-asset/perspective-dev--viewer/dist/css/intl/",
 "LIBS.PERSPECTIVE.FACADE.CSS": "exface/core/Facades/AbstractAjaxFacade/js/perspective/perspective.css"
 ```
 
@@ -248,6 +249,28 @@ Numeric formatting uses Perspective's `number_format` object with `minimumFracti
 `maximumFractionDigits`, and `useGrouping`. Perspective 5 silently ignores the older/provisional
 `fixed` property. ExFace number prefixes, suffixes, custom decimal separators, and custom group
 separators are not yet mapped; Perspective uses browser `Intl.NumberFormat` behavior.
+
+## Localization
+
+The Perspective viewer uses the ExFace session locale, normalized from forms such as `de_DE` to
+the BCP 47 form `de-DE`. The locale is set as the viewer's `lang` attribute and passed to the
+shared render function.
+
+Perspective 5.3 provides translated configurator labels as CSS bundles for German, Spanish,
+French, Japanese, Portuguese, and Chinese. The integration loads the matching language CSS from
+`LIBS.PERSPECTIVE.LOCALES_FOLDER`; other languages retain Perspective's English labels.
+
+Perspective 5.3 creates date and number formatters directly from `navigator.languages` and does
+not expose a viewer-level locale option. Before loading Perspective, the render function therefore
+prepends a formatting locale to `navigator.languages`, preserving the browser languages as
+fallbacks. The formatting locale is derived from `LOCALIZATION.DATE.DATE_FORMAT`, independently
+of the viewer language. The supported patterns are `dd.MM.yyyy`, `dd/MM/yyyy`, `MM/dd/yyyy`, and
+`yyyy-MM-dd`; other patterns fall back to the session locale. Thus an English session configured
+with `dd.MM.yyyy` keeps English configurator text but renders dates such as `07.09.2026`.
+
+This override is page-wide and also controls Perspective's number formatting. It matches ExFace's
+page-wide localization settings; changing the session language or date format requires reloading
+the page.
 
 ## Mapping PivotLayout to Perspective
 

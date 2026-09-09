@@ -5,6 +5,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\DateTimeDataType;
+use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
@@ -48,6 +49,7 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  * "LIBS.PERSPECTIVE.DATAGRID.JS": "npm-asset/perspective-dev--viewer-datagrid/dist/cdn/perspective-viewer-datagrid.js",
  * "LIBS.PERSPECTIVE.CHARTS.JS": "npm-asset/perspective-dev--viewer-charts/dist/cdn/perspective-viewer-charts.js",
  * "LIBS.PERSPECTIVE.THEME.CSS": "npm-asset/perspective-dev--viewer/dist/css/pro.css",
+ * "LIBS.PERSPECTIVE.LOCALES_FOLDER": "npm-asset/perspective-dev--viewer/dist/css/intl/",
  * "LIBS.PERSPECTIVE.FACADE.CSS": "exface/core/Facades/AbstractAjaxFacade/js/perspective/perspective.css"
  * ```
  *
@@ -122,11 +124,16 @@ trait PerspectiveTrait
     {
         $facade = $this->getFacade();
 
-        return [
+        $includes = [
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.PERSPECTIVE.LOADER.JS') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.PERSPECTIVE.THEME.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.PERSPECTIVE.FACADE.CSS') . '" rel="stylesheet" media="screen">'
         ];
+        $localeStylesheet = $this->buildUrlToPerspectiveLocaleStylesheet();
+        if ($localeStylesheet !== null) {
+            $includes[] = '<link href="' . $localeStylesheet . '" rel="stylesheet" media="screen">';
+        }
+        return $includes;
     }
 
     /**
@@ -136,10 +143,63 @@ trait PerspectiveTrait
      */
     protected function buildHtmlPerspective() : string
     {
+        $language = htmlspecialchars($this->getPerspectiveLocale(), ENT_QUOTES);
         return <<<HTML
 
-<perspective-viewer id="{$this->getId()}" class="exf-perspective-viewer" style="width:100%; height:100%; min-height:100px;"></perspective-viewer>
+<perspective-viewer id="{$this->getId()}" class="exf-perspective-viewer" lang="{$language}" style="width:100%; height:100%; min-height:100px;"></perspective-viewer>
 HTML;
+    }
+
+    /**
+     * Returns the session locale as a BCP 47 language tag.
+     *
+     * @return string
+     */
+    protected function getPerspectiveLocale() : string
+    {
+        $locale = $this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale();
+        return str_replace('_', '-', $locale);
+    }
+
+    /**
+     * Returns an Intl locale matching the configured ExFace date format.
+     *
+     * @return string
+     */
+    protected function getPerspectiveFormattingLocale() : string
+    {
+        $locale = $this->getPerspectiveLocale();
+        $dateFormat = DateDataType::getFormatFromLocale($this->getWorkbench());
+
+        switch ($dateFormat) {
+            case 'dd.MM.yyyy':
+                return 'en-CH';
+            case 'dd/MM/yyyy':
+                return 'en-GB';
+            case 'MM/dd/yyyy':
+                return 'en-US';
+            case 'yyyy-MM-dd':
+                return 'en-CA';
+            default:
+                return $locale;
+        }
+    }
+
+    /**
+     * Returns the built-in Perspective translation stylesheet URL when available.
+     *
+     * @return string|null
+     */
+    protected function buildUrlToPerspectiveLocaleStylesheet() : ?string
+    {
+        $language = LocaleDataType::findLanguage($this->getPerspectiveLocale());
+        if (! in_array($language, ['de', 'es', 'fr', 'ja', 'pt', 'zh'], true)) {
+            return null;
+        }
+
+        $facade = $this->getFacade();
+        return $facade->buildUrlToSource('LIBS.PERSPECTIVE.LOCALES_FOLDER', false)
+            . $language . '.css?' . $facade->getFileVersionHash();
     }
 
     /**
@@ -163,14 +223,29 @@ HTML;
         $disabledJs = $widget->isDisabled() === true ? 'true' : 'false';
         $elementIdJs = json_encode($this->getId());
         $objectAliasJs = json_encode($widget->getMetaObject()->getAliasWithNamespace());
+        $localeJs = json_encode($this->getPerspectiveFormattingLocale());
 
         return <<<JS
 
-    (async function(viewer, data, columns, config, urls, disabled) {
+    (async function(viewer, data, columns, config, urls, disabled, locale) {
         if (!viewer) {
             return;
         }
         try {
+            const browserLanguages = Array.from(navigator.languages || []);
+            if (locale && browserLanguages[0] !== locale) {
+                const localeLowerCase = locale.toLowerCase();
+                const perspectiveLanguages = [locale].concat(browserLanguages.filter(function(language) {
+                    return language.toLowerCase() !== localeLowerCase;
+                }));
+                Intl.DateTimeFormat.supportedLocalesOf([locale]);
+                Object.defineProperty(navigator, 'languages', {
+                    configurable: true,
+                    get: function() {
+                        return perspectiveLanguages;
+                    }
+                });
+            }
             const perspective = await exfLoadPerspective(urls);
             const schema = {};
             const normalizedData = (data || []).map(function(row) {
@@ -239,7 +314,7 @@ HTML;
             console.error('Cannot render Perspective widget {$this->getId()}', error);
             viewer.textContent = error.message || String(error);
         }
-    })(document.getElementById({$elementIdJs}), {$dataJs}, {$columnsJs}, {$configJs}, {$urlsJs}, {$disabledJs})
+    })(document.getElementById({$elementIdJs}), {$dataJs}, {$columnsJs}, {$configJs}, {$urlsJs}, {$disabledJs}, {$localeJs})
 JS;
     }
 
