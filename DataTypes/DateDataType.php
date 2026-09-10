@@ -5,6 +5,7 @@ use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
+use exface\Core\Interfaces\DataTypes\ComparableDataTypeInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -44,7 +45,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
  * @author Andrej Kabachnik
  *
  */
-class DateDataType extends AbstractDataType
+class DateDataType extends AbstractDataType implements ComparableDataTypeInterface
 {
     const TIMESTAMP_MIN_VALUE = 100000;
     

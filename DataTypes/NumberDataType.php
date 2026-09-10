@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\DataTypes\DataTypeConfigurationError;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
+use exface\Core\Interfaces\DataTypes\ComparableDataTypeInterface;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -18,7 +19,7 @@ use exface\Core\Factories\DataTypeFactory;
  * @author Andrej Kabachnik
  *
  */
-class NumberDataType extends AbstractDataType
+class NumberDataType extends AbstractDataType implements ComparableDataTypeInterface
 {
     private $precisionMin = null;
     
