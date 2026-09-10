@@ -3,7 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Shows a pagination-control (e.g. toolbar), displaying the the current position, number of pages, navigation controls, etc.
@@ -35,11 +35,6 @@ use exface\Core\Exceptions\Widgets\WidgetPropertyInvalidValueError;
  */
 class DataPaginator extends AbstractWidget
 {
-    const PAGE_BUTTON_PRIORITY_HIDDEN = 'hidden';
-    const PAGE_BUTTON_PRIORITY_HIGH = 'high';
-    const PAGE_BUTTON_PRIORITY_LOW = 'low';
-    const PAGE_BUTTON_PRIORITY_ALWAYS_VISIBLE = 'always_visible';
-    
     private $dataWidget = null;
     
     private $pageSize = null;
@@ -127,8 +122,8 @@ class DataPaginator extends AbstractWidget
         if (! empty($this->getPageSizes())) {
             $uxon->setProperty('page_sizes', $this->getPageSizes());
         }
-        if ($this->getPageButtonPriority() !== null) {
-            $uxon->setProperty('page_button_priority', $this->getPageButtonPriority());
+        if ($this->getPageButtonOverflowPriority() !== null) {
+            $uxon->setProperty('page_button_overflow_priority', $this->getPageButtonOverflowPriority());
         }
         return $uxon;
     }
@@ -163,9 +158,9 @@ class DataPaginator extends AbstractWidget
     
     /**
      *
-     * @return string|NULL
+     * @return int|NULL
      */
-    public function getPageButtonPriority() : ?string
+    public function getPageButtonOverflowPriority() : ?int
     {
         return $this->pageButtonPriority;
     }
@@ -180,24 +175,27 @@ class DataPaginator extends AbstractWidget
      * for the page buttons:
      * 
      * - `low` - moved into the overflow menu first (default)
-     * - `high` - moved into the overflow menu only after all `low` priority items
-     * - `always_visible` - never moved into the overflow menu - always directly accessible
-     * - `hidden` - simply disappears if there is not enough space (not even available via the overflow menu)
+     * - `normal` - moved into the overflow menu only after all `low` priority items
+     * - `never_overflow` - never moved into the overflow menu - always directly accessible
+     * - `always_overflow` - always placed in the overflow menu, regardless of available space
      * 
-     * @uxon-property page_button_priority
-     * @uxon-type [hidden,high,low,always_visible]
+     * @uxon-property page_button_overflow_priority
+     * @uxon-type [low,normal,always_overflow,never_overflow]
      * 
      * @param string $value
      * @return DataPaginator
      */
-    public function setPageButtonPriority(string $value) : DataPaginator
+    public function setPageButtonOverflowPriority(string $value) : DataPaginator
     {
-        $value = mb_strtolower($value);
-        $refl = new \ReflectionClass($this);
-        if (! in_array($value, $refl->getConstants())) {
-            throw new WidgetPropertyInvalidValueError($this, 'Invalid value "' . $value . '" for property `page_button_priority` of `paginator`: expecting `hidden`, `high`, `low` or `always_visible`!');
+        switch (mb_strtolower($value)) {
+            case 'low': $priority = Button::PRIORITY_LOW; break;
+            case 'normal': $priority = Button::PRIORITY_NORMAL; break;
+            case 'never_overflow': $priority = Button::PRIORITY_NEVER_OVERFLOW; break;
+            case 'always_overflow': $priority = Button::PRIORITY_ALWAYS_OVERFLOW; break;
+            default:
+                throw new WidgetConfigurationError($this, 'Invalid value "' . $value . '" for property `page_button_overflow_priority` of `paginator`: expecting `low`, `normal`, `always_overflow` or `never_overflow`!');
         }
-        $this->pageButtonPriority = $value;
+        $this->pageButtonPriority = $priority;
         return $this;
     }
 }
