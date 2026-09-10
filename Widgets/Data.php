@@ -140,7 +140,7 @@ class Data
     
     private $hide_footer = null;
     
-    private $hide_toolbar = null;
+    private $hide_header_toolbar = null;
     
     private $has_system_columns = false;
     
@@ -1347,9 +1347,9 @@ class Data
      *
      * @return bool|NULL
      */
-    public function getHideToolbar() : ?bool
+    public function getHideHeaderToolbar() : ?bool
     {
-        return $this->hide_toolbar;
+        return $this->hide_header_toolbar;
     }
     
     /**
@@ -1366,15 +1366,15 @@ class Data
      * If not set explicitly (default), the toolbar is hidden only if both `hide_header` and `hide_caption`
      * are `true`.
      *
-     * @uxon-property hide_toolbar
+     * @uxon-property hide_header_toolbar
      * @uxon-type boolean
      *
      * @param bool $value
      * @return Data
      */
-    public function setHideToolbar(bool $value) : Data
+    public function setHideHeaderToolbar(bool $value) : Data
     {
-        $this->hide_toolbar = $value;
+        $this->hide_header_toolbar = $value;
         return $this;
     }
     
