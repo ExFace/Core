@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\Model;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\DataTypes\ComparableDataTypeInterface;
 use exface\Core\Interfaces\Model\ConditionalExpressionInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -224,12 +225,14 @@ class Condition implements ConditionInterface
      */
     protected function guessComparator()
     {
-        if (!$base_object = $this->getExpression()->getMetaObject()){
+        $leftExpr = $this->getExpression();
+        if (!$base_object = $leftExpr->getMetaObject()){
             return ComparatorDataType::IS;
         }
         
         $value = $this->getValue();
-        $expression_string = $this->getExpression()->toString();
+        $expression_string = $leftExpr->toString();
+        $expression_type = $leftExpr->getDataType();
         
         // Determine the comparator if it is not given directly.
         // It can be derived from the value or set to a default value
@@ -298,6 +301,9 @@ class Condition implements ConditionInterface
             case strpos($value, '=') === 0:
                 $comparator = ComparatorDataType::IS;
                 $value = substr($value, 1);
+                break;
+            case ($expression_type instanceof ComparableDataTypeInterface) && mb_stripos($value, ComparatorDataType::BETWEEN) !== false:
+                $comparator = ComparatorDataType::BETWEEN;
                 break;
             default:
                 $comparator = ComparatorDataType::IS;
@@ -599,7 +605,7 @@ class Condition implements ConditionInterface
 
             if ($uxon->hasProperty('value') || $value !== null){
                 $value = $value ?? $uxon->getProperty('value');
-                // Apply th evalue only if it is not empty or ignore_empty_values is off
+                // Apply the value only if it is not empty or ignore_empty_values is off
                 if ($this->ignoreEmptyValues !== true || ($value !== null && $value !== '')) { 
                     if ($value instanceof UxonObject) {
                         if (! $comp || $comp === ComparatorDataType::IS) {

@@ -15,6 +15,8 @@ trait iCanAutoloadDataTrait {
     private string $autoload_data = AutoloadStrategyDataType::ALWAYS;
     
     private ?string $autoload_disabled_hint = null;
+
+    private ?string $empty_text_if_invalid_filters = null;
     
     private bool $autorefresh = true;
     
@@ -91,6 +93,51 @@ trait iCanAutoloadDataTrait {
     public function setAutoloadDisabledHint(string $text) : iCanAutoloadData
     {
         $this->autoload_disabled_hint = $this->evaluatePropertyExpression($text);
+        return $this;
+    }
+
+    /**
+     * Overrides the text shown if autoload_data is set to FALSE or required filters are missing.
+     * 
+     * Use `=TRANSLATE()` to make the text translatable.
+     * 
+     * This property is just an alternative spelling of `autoload_disabled_hint`.
+     *  
+     * @uxon-property empty_text_if_autoload_disabled
+     * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
+     * 
+     * @see iCanAutoloadData::setAutoloadDisabledHint()
+     */
+    public function setEmptyTextIfAutoloadDisabled(string $text) : iCanAutoloadData
+    {
+        return $this->setAutoloadDisabledHint($text);
+    }
+
+    /**
+     * Returns the text shown if any required filters are invalid.
+     *
+     * @see iCanAutoloadData::getEmptyTextIfInvalidFilters()
+     */
+    public function getEmptyTextIfInvalidFilters() : string
+    {
+        return $this->empty_text_if_invalid_filters ?? $this->getAutoloadDisabledHint();
+    }
+
+    /**
+     * Overrides the text shown if any required filters are invalid.
+     * 
+     * Use `=TRANSLATE()` to make the text translatable.
+     * 
+     * @uxon-property empty_text_if_invalid_filters
+     * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
+     * 
+     * @see iCanAutoloadData::setAutoloadDisabledHint()
+     */
+    public function setEmptyTextIfInvalidFilters(string $text) : iCanAutoloadData
+    {
+        $this->empty_text_if_invalid_filters = $this->evaluatePropertyExpression($text);
         return $this;
     }
     

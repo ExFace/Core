@@ -264,7 +264,8 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
     
     const LIST_ANY_GREATER_THAN_OR_EQUALS = ']>=';
 
-    private $labels = [];
+    private array $labels = [];
+    private array $hints = [];
     
     
     /**
@@ -277,12 +278,46 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         if (empty($this->labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (static::getValuesStatic() as $val) {
-                $this->labels[$val] = $translator->translate('GLOBAL.COMPARATOR.' . static::findConstant($val));
+            foreach (static::getValuesOfConstants() as $const => $val) {
+                $transKey = 'GLOBAL.COMPARATOR.' . $const . '_NAME';
+                $trans = $translator->translate($transKey);
+                if ($trans === $transKey){
+                    $trans = str_replace('_', ' ', ucfirst(strtolower($trans)));
+                }
+                $this->labels[$val] = $trans;
             }
         }
         
         return $this->labels;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
+    public function getValueHints(): array
+    {
+        if (empty($this->hints)) {
+            $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+            $reflection = new \ReflectionClass(static::class);
+            
+            foreach (static::getValuesOfConstants() as $const => $val) {
+                $transKey = 'GLOBAL.COMPARATOR.' . $const . '_HINT';
+                $trans = $translator->translate($transKey);
+                if ($trans === $transKey){
+                    $docComment = $reflection->getReflectionConstant($const)->getDocComment();
+                    $hintPattern = '/@const\s+' . preg_quote($const, '/') . '\s+(.+?)(?=\R\s*\*(?:\s*@|\/))/s';
+                    if ($docComment !== false && preg_match($hintPattern, $docComment, $matches) === 1) {
+                        $trans = trim(preg_replace('/\R\s*\*\s?/', ' ', $matches[1]));
+                    } else {
+                        $trans = $this->getLabels()[$val];
+                    }
+                }
+                $this->hints[$val] = $trans;
+            }
+        }
+        
+        return $this->hints;
     }
     
     /**
@@ -407,7 +442,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param string $side
      * @return bool
      */
-    // TODO geb 2024-12-03: Do we really need this switch case? This is actually covered by isExplicit().
+    // TODO geb 2024-12-03: Do we really need this switch case? This is actually covered by isAtomic().
     public static function isListComparator(string $comparator, string $side = null) : bool
     {
         switch ($side) {
@@ -494,7 +529,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
      * @param ConditionInterface $condition
      * @param bool               $trimValues
      * @return ConditionalExpressionInterface
-     * @see ComparatorDataType::isExplicit()
+     * @see ComparatorDataType::isAtomic()
      *
      */
     public static function atomizeCondition(ConditionInterface $condition, bool $trimValues = true) : ConditionalExpressionInterface
@@ -527,6 +562,18 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
             return $condition;
         }
 
+        $workbench = $condition->getWorkbench();
+        $ignoreEmpty = $condition->willIgnoreEmptyValues();
+        $expression = $condition->getExpression();
+        
+        if ($comparator === self::BETWEEN) {
+            list($fromVal, $toVal) = explode(self::BETWEEN, $condition->getValue());
+            $conditionGroup = ConditionGroupFactory::createEmpty($workbench, EXF_LOGICAL_AND, null, $ignoreEmpty);
+            $conditionGroup->addConditionFromExpression($expression, $fromVal, self::GREATER_THAN_OR_EQUALS);
+            $conditionGroup->addConditionFromExpression($expression, $toVal, self::LESS_THAN_OR_EQUALS);
+            return $conditionGroup;
+        }
+
         if($isNegative = self::isNegative($comparator)){
             $comparator = substr($comparator, 1);
         }
@@ -549,10 +596,7 @@ class ComparatorDataType extends StringDataType implements EnumDataTypeInterface
         } else {
             $scalarOperator = EXF_LOGICAL_OR;
         }
-
-        $workbench = $condition->getWorkbench();
-        $ignoreEmpty = $condition->willIgnoreEmptyValues();
-        $expression = $condition->getExpression();
+        
         $conditionGroup = ConditionGroupFactory::createEmpty($workbench, $scalarOperator, null, $ignoreEmpty);
         foreach ($rightSideValues as $value) {
             if($trimValues) {

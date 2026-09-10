@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Selectors;
 
 use exface\Core\CommonLogic\Selectors\Traits\ResolvableNameSelectorTrait;
+use exface\Core\CommonLogic\Selectors\Traits\UidSelectorTrait;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
 
 /**
@@ -15,6 +16,7 @@ use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
 class BehaviorSelector extends AbstractSelector implements BehaviorSelectorInterface
 {
     use ResolvableNameSelectorTrait;
+    use UidSelectorTrait;
     
     /**
      *

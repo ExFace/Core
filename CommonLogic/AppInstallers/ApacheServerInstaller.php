@@ -10,7 +10,7 @@ class ApacheServerInstaller extends AbstractServerInstaller
     {
         parent::__construct($selectorToInstall);
         
-        $this->configInstaller
+        $this->getConfigInstaller()
             ->addContent('Core URLs', $this->getContentCoreUrls())
             ->addContent('Core Security', $this->getContentSecurityRules())
             ->addContent("zlib compression OFF for WebConsoleFacade", 

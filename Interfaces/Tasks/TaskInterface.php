@@ -87,6 +87,33 @@ interface TaskInterface extends WorkbenchDependantInterface, iCanBeConvertedToUx
     public function setInputData(DataSheetInterface $dataSheet) : TaskInterface;
     
     /**
+     * Returns TRUE if this task's input data is trusted, i.e. produced server-side rather than
+     * supplied by the client.
+     * 
+     * The input-forgery validation (see `ActionInputValidator`) only needs to guard client-supplied
+     * data. Validation runs per action, so in an action chain the original client input is checked at
+     * the first action that consumes it (while this flag is still FALSE). Only once a preceding action
+     * replaces the input sheet with its own result does the data become server-synthesized - at that
+     * point this flag is set to TRUE and subsequent actions skip the check. This is safe even for a
+     * hypothetical "echo the input" action: its output was already validated as that action's own
+     * (untrusted) input before it could be passed on to a later write.
+     * 
+     * This flag can only be set server-side and is never populated from request parameters, so it
+     * cannot be used to bypass validation from the client.
+     * 
+     * @return bool
+     */
+    public function isInputDataTrusted() : bool;
+    
+    /**
+     * Marks this task's input data as trusted (server-synthesized) or untrusted (client-supplied).
+     * 
+     * @param bool $value
+     * @return TaskInterface
+     */
+    public function setInputDataTrusted(bool $value) : TaskInterface;
+    
+    /**
      * 
      * @param string $name
      */

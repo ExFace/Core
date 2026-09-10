@@ -12,6 +12,14 @@ use exface\Core\DataTypes\IntegerDataType;
  */
 class InputNumber extends Input
 {
+    /**
+     * Add a value to the current one: e.g. `add(1)`, `add(-1)`
+     *
+     * @uxon-property add
+     *
+     * @var string
+     */
+    const FUNCTION_ADD = 'add';
 
     private $precision_max = null;
     

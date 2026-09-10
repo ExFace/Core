@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\AppInstallers\ApacheServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\AppDocsInstaller;
 use exface\Core\CommonLogic\AppInstallers\NginxServerInstaller;
 use exface\Core\CommonLogic\AppInstallers\StaticEventListenerInstaller;
+use exface\Core\Events\Workbench\OnCleanUpEvent;
 use exface\Core\Exceptions\Installers\InstallerRuntimeError;
 use exface\Core\Facades\HealthCheckFacade;
 use exface\Core\Facades\LogHubFacade;
@@ -64,6 +65,8 @@ class CoreApp extends App
 
         // Static listeners.
         $staticListenersInstaller = new StaticEventListenerInstaller($this->getSelector());
+        // add the cleanup for widget setups
+        $staticListenersInstaller->addListenerToInstall(OnCleanUpEvent::getEventName(),"\\exface\\core\\Widgets\\DataTableConfigurator::onCleanUp");
         $installer->addInstaller($staticListenersInstaller);
         
         // robot.txt

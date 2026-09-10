@@ -44,7 +44,7 @@ class UxonSchemaDataType extends StringDataType implements EnumDataTypeInterface
         if (empty(static::$labels)) {
             $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
             
-            foreach (static::getValuesStatic() as $const => $val) {
+            foreach (static::getValuesOfConstants() as $const => $val) {
                 static::$labels[$val] = $translator->translate('GLOBAL.UXON.SCHEMA.' . $const);
             }
         }

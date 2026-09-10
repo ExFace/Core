@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractHttpFacade\Middleware;
 
 use exface\Core\DataTypes\DateDataType;
+use exface\Core\DataTypes\EncryptedDataType;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -106,6 +107,19 @@ class DataUrlParamReader implements MiddlewareInterface
             }
         }
         
+        // Encrypts data of type EncryptedDataType
+        foreach ($data_sheet->getColumns() as $column) {
+            if ($column->getDataType() instanceof EncryptedDataType) {
+                foreach ($data_sheet->getRows() as $rowIndex => $row) {
+                    $val = $row[$column->getName()] ?? null;
+                    if ($val !== null) {
+                        $encryptedData = $column->getDataType()->parse($val);
+                        $data_sheet->setCellValue($column->getName(), $rowIndex, $encryptedData);
+                    }
+                }
+            }
+        }
+
         return $data_sheet;
     }
     

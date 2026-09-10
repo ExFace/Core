@@ -19,6 +19,7 @@ use exface\Core\Widgets\Traits\iCanBeAlignedTrait;
 use exface\Core\Interfaces\Widgets\iUseInputWidget;
 use exface\Core\Widgets\Traits\iUseInputWidgetTrait;
 use exface\Core\Interfaces\Widgets\iDefineAction;
+use exface\Core\Interfaces\Widgets\iInjectInputColumns;
 use exface\Core\Widgets\Traits\iHaveIconTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Widgets\Traits\iHaveColorTrait;
@@ -52,7 +53,7 @@ use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
  * @author Andrej Kabachnik
  *
  */
-class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled
+class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAction, iDefineAction, iUseInputWidget, iCanBeAligned, iCanBeDisabled, iInjectInputColumns
 {
     use iCanBeAlignedTrait;
 
@@ -73,6 +74,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     const ACCESS_DENIED_TO_ACTION_GENERALLY = 'to_action_generally';
     const ACCESS_DENIED_TO_ACTION_FOR_INPUT = 'to_action_for_button_input_data';
     const ACCESS_DENIED_NEVER = 'never';
+
+    // Numeric on purpose, so they can be compared to each other (e.g. `>`, `<`).
+    const PRIORITY_ALWAYS_OVERFLOW = 0;
+    const PRIORITY_LOW = 20;
+    const PRIORITY_NORMAL = 50;
+    const PRIORITY_NEVER_OVERFLOW = 100;
 
     /**
      * Press the button (default button function)
@@ -117,7 +124,6 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $appearance = self::APPEARANCE_DEFAULT;
 
     private $inputDataUxon = null;
-
     private $hiddenIfInputInvalid = false;
 
     private $disabledIfInputInvalid = true;
@@ -125,6 +131,10 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $showIcon = null;
 
     private $addedWidgets = [];
+    
+    private $priority = null;
+    
+    private $trustedInputColumns = [];
 
     /**
      *
@@ -141,6 +151,55 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         parent::init();
         $this->setHiddenIfAccessDenied($this->getWorkbench()->getConfig()->getOption('WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED'));
+    }
+
+    /**
+     * {@inheritDoc}
+     * 
+     * @see \exface\Core\Interfaces\Widgets\iInjectInputColumns::getInputColumnsTrusted()
+     */
+    public function getInputColumnsTrusted() : array
+    {
+        return $this->trustedInputColumns;
+    }
+
+    /**
+     * Declare column names that this button's action adds to its input data as trusted 
+     * so they are not flagged as forgeries. You don't have to declare columns that are naturally part of the 
+     * input data (like input widgets, table columns, and so on).
+     * 
+     * For example, a button whose `custom_request_data_script` injects two columns client-side:
+     * 
+     * ```
+     * {
+     *  "widget_type": "Button",
+     *  "input_columns_trusted": ["SCANNED_AT", "DEVICE_ID"],
+     *  "facade_options": {
+     *      "exface.UI5Facade.UI5Facade": {
+     *          "custom_request_data_script": "var oRow = requestData.rows[0]; oRow['SCANNED_AT'] = Date.now(); oRow['DEVICE_ID'] = getDeviceId(); return true;"
+     *      }
+     *  },
+     *  "action": {"alias": "my.App.SaveScan"}
+     * }
+     * ```
+     * 
+     * Only the listed columns are accepted - any other undeclared column would be flagged as a forgery.
+     * 
+     * @uxon-property input_columns_trusted
+     * @uxon-type array
+     * @uxon-template [""]
+     * 
+     * @param UxonObject|string[] $columnNames
+     * @return Button
+     */
+    public function setInputColumnsTrusted($columnNames) : Button
+    {
+        // TODO If a real use case ever needs to inject a *dynamic* set of columns (e.g. a Shape-B
+        // custom_request_data_script whose column names are not fixed), add a coarser opt-out here that
+        // trusts the whole client payload for this button. Deliberately omitted for now: no such surface
+        // exists yet and the lever would invite bypassing the forgery check where an allow-list suffices.
+        $this->trustedInputColumns = $columnNames instanceof UxonObject ? $columnNames->toArray() : $columnNames;
+        return $this;
     }
 
     public function getAction()
@@ -739,9 +798,44 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         $constName = 'self::APPEARANCE_' . strtoupper($value);
         if (! defined($constName)) {
-            throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
+            throw new WidgetConfigurationError($this, 'Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
         }
         $this->appearance = constant($constName);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getOverflowPriority() : ?int
+    {
+        return $this->priority;
+    }
+    
+    /**
+     * Explicitly control if/when this button may be moved into an overflow menu ("...") if its toolbar runs out of space.
+     * 
+     * If not set explicitly, the facade will derive a reasonable priority from the button's `visibility`.
+     * 
+     * - `low` - moved into the overflow menu first
+     * - `normal` - moved into the overflow menu only after all `low` priority items
+     * - `never_overflow` - never moved into the overflow menu - always directly accessible
+     * - `always_overflow` - always placed in the overflow menu, regardless of available space
+     * 
+     * @uxon-property overflow_priority
+     * @uxon-type [low,normal,always_overflow,never_overflow]
+     * 
+     * @param string $value
+     * @return Button
+     */
+    public function setOverflowPriority(string $value) : Button
+    {
+        $constName = 'self::PRIORITY_' . strtoupper($value);
+        if (! defined($constName)) {
+            throw new WidgetConfigurationError($this, 'Invalid value "' . $value . '" for property `overflow_priority` of widget "' . $this->getWidgetType() . '": expecting `low`, `normal`, `always_overflow` or `never_overflow`.');
+        }
+        $this->priority = constant($constName);
         return $this;
     }
 
@@ -841,6 +935,7 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
         // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
         // button is authorized for the current user and each line of potential input data
+        // the button is hidden as long as no data is selected at all or the user has no permission for the selected data
         if ($this->getHiddenIfAccessDenied() === self::ACCESS_DENIED_TO_ACTION_FOR_INPUT) {
             $inputWidget = $this->getInputWidget();
             $condGrp = ConditionGroupFactory::createFromUxon(
@@ -849,8 +944,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                     'conditions' => [
                         [
                             'expression' => "=IsButtonAuthorized('{$this->getPage()->getAliasWithNamespace()}', '{$this->getId()}')",
-                            'comparator' => ComparatorDataType::EQUALS,
-                            'value' => false
+                            'comparator' => ComparatorDataType::EQUALS_NOT,
+                            'value' => true
                         ]
                     ]
                 ]),

@@ -2,6 +2,7 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\DataTypes\EncryptedDataType;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
@@ -113,7 +114,8 @@ class Login extends AbstractAction implements iModifyContext
     protected function getAuthToken(TaskInterface $task) : AuthenticationTokenInterface
     {
         $inputData = $this->getInputDataSheet($task);
-        $inputRow = $inputData->getRow(0);
+        $inputRow = $inputData->getRowsDecrypted()[0];
+        
         if ($tokenClass = $inputData->getCellValue('AUTH_TOKEN_CLASS', 0)) {
             $reflector = new \ReflectionClass($tokenClass);
             $constructorArgs = [];

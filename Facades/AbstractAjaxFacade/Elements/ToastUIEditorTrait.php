@@ -46,7 +46,7 @@ trait ToastUIEditorTrait
     protected function buildJsMarkdownInitEditor(bool $isViewer = false) : string
     {
         $widget = $this->getWidget();
-        $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
+        $contentJs = $this->escapeMarkdownForInlineJavaScript($widget->getValueWithDefaults());
         $editorOptions = "initialEditType: '" . ($widget->getEditorMode() === InputMarkdown::MODE_WYSIWYG ? 'wysiwyg' : 'markdown') . "'";
         
         return <<<JS
@@ -112,7 +112,7 @@ JS;
     protected function buildJsMarkdownInitViewer() : string
     {
         $widget = $this->getWidget();
-        $contentJs = $this->escapeString($widget->getValueWithDefaults(), true, false);
+        $contentJs = $this->escapeMarkdownForInlineJavaScript($widget->getValueWithDefaults());
         
         return <<<JS
 
@@ -151,6 +151,24 @@ JS;
                 return ed;
             }();
 JS;
+    }
+
+    /**
+     * Escapes initial Markdown for an inline JavaScript string without allowing it to close the script element.
+     *
+     * ToastUI sanitizes rendered HTML, but the browser parses the surrounding script element before ToastUI
+     * receives the Markdown. Escaping the slash in closing script tags keeps such source text inside the string.
+     *
+     * @param mixed $markdown Initial Markdown value.
+     * @return string JavaScript string literal safe for embedding in a script element.
+     */
+    protected function escapeMarkdownForInlineJavaScript($markdown) : string
+    {
+        return str_ireplace(
+            '</script',
+            '<\/script',
+            $this->escapeString($markdown, true, false)
+        );
     }
 
     /**

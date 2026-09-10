@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Actions;
 
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\CommonLogic\Constants\Icons;
@@ -10,7 +11,6 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\Interfaces\Actions\iCallWidgetFunction;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Widgets\Button;
 use exface\Core\Factories\WidgetLinkFactory;
@@ -101,33 +101,18 @@ class CallWidgetFunction extends AbstractAction implements iCallWidgetFunction
     public function getWidget(UiPageInterface $page): WidgetInterface
     {
         $id = $this->getWidgetId();
-        if (mb_substr($this->widgetId, 0, 1) === '~') {
-            if ($this->isDefinedInWidget()){
+        $isDefinedInWidget = $this->isDefinedInWidget();
+        
+        if (mb_substr($id, 0, 1) === '~') {
+            if ($isDefinedInWidget){
                 $link = WidgetLinkFactory::createFromWidget($this->getWidgetDefinedIn(), $this->widgetId);
                 return $link->getTargetWidget();
             }
         }
+        
+        $widgetDefinedIn = $isDefinedInWidget ? $this->getWidgetDefinedIn() : null;
+        $id = WidgetFactory::ensureIdSpace($id, $this->getWidgetIdSpace(), $widgetDefinedIn);
 
-        // If the widget id in the link does not have an id space and the action is called from a button, assume,
-        // that we are in the id space of the button.
-        $idSpaceOfLink = StringDataType::substringBefore($id, UiPage::WIDGET_ID_SPACE_SEPARATOR, null, false, true);
-        if ($idSpaceOfLink === null && ($this->getWidgetIdSpace() !== null || $this->isDefinedInWidget())) {
-            $idSpaceOfAction = $this->getWidgetIdSpace() ?? $this->getWidgetDefinedIn()->getIdSpace();
-            // Don't add the id space if the widget id in the action is a path already and it starts with the id space
-            // TODO we really need a way to tell, if an id string is a path or a manual id. We are only guessing
-            // all the time!
-            switch (true) {
-                // No id space to set - forget it!
-                case $idSpaceOfAction === null:
-                    break;
-                // Root id space - add it explicitly to speed up searching
-                case $idSpaceOfAction === '' || $idSpaceOfAction === $page->getWidgetIdSpaceSeparator():
-                // Otherwise add the id space unless the id actually starts with it
-                case false === StringDataType::startsWith($id, $idSpaceOfAction):
-                    $id = $idSpaceOfAction . $page->getWidgetIdSpaceSeparator() . $id;
-                    break;
-            }
-        }
         return $page->getWidget($id); 
     }
 

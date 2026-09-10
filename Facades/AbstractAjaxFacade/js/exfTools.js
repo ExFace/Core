@@ -185,6 +185,19 @@
 	function _matchTimeRelative (sExpr) {
 		return /^([+\-]?\d{1,3})([HhMmSs]?)$/.exec(sExpr);
 	};
+
+	/**
+	 * Matches an explicit clock time in a date-time string.
+	 *
+	 * Captures hours, minutes, optional seconds, and optional fractional seconds.
+	 * For example, `2025-12-31 13:44` and `2025-12-31T13:44:22.123` match.
+	 *
+	 * @param {string} sExpr
+	 * @returns {array|null}
+	 */
+	function _matchTime (sExpr) {
+		return /(?:^|[T\s])(\d{1,2}):(\d{2})(?::(\d{2})(?:[.,](\d+))?)?\s*(?:am|pm)?(?:\s|$)/i.exec(sExpr);
+	};
 	
 	/**
 	 * Returns TRUE if the values of the given rows match.
@@ -217,6 +230,62 @@
 		 * 
 		 */
 		date: {
+			/**
+			 * Returns the precision explicitly present in a date-time filter value.
+			 *
+			 * Relative date expressions such as `-1d` are treated as day values. Invalid values return null.
+			 * Possible precision values are `day`, `minute`, `second`, and `millisecond`.
+			 *
+			 * @param {*} mDate
+			 * @param {string} [sDateFormat]
+			 * @param {Object} [oParserParams]
+			 * @returns {'day'|'minute'|'second'|'millisecond'|null}
+			 */
+			getDateTimePrecision: function(mDate, sDateFormat, oParserParams) {
+				if (typeof mDate !== 'string' || this.parse(mDate, sDateFormat, oParserParams) === null) {
+					return null;
+				}
+				if (_matchDateRelative(mDate, oParserParams) !== null) {
+					return 'day';
+				}
+				if (_matchTimeRelative(mDate) !== null) {
+					return 'second';
+				}
+				var aTime = _matchTime(mDate);
+				if (aTime === null) {
+					return 'day';
+				}
+				if (aTime[4] !== undefined) {
+					return 'millisecond';
+				}
+				return aTime[3] === undefined ? 'minute' : 'second';
+			},
+
+			/**
+			 * Returns inclusive bounds for a filter if the given date-time value is not precise down to a second.
+			 *
+			 * For date-time filters incomplete values like `31.12.2025` or `31.12.2025 13:34` are actually ranges
+			 * rather then atomic values. This method will parse them into a JS object, while returning null for
+			 * values containing seconds or milliseconds, as well as invalid values.
+			 *
+			 * @param {*} mDate
+			 * @param {string} [sDateFormat]
+			 * @param {Object} [oParserParams]
+			 * @returns {{from: Date, to: Date, precision: string}|null}
+			 */
+			findFilterRange: function(mDate, sDateFormat, oParserParams) {
+				var sPrecision = this.getDateTimePrecision(mDate, sDateFormat, oParserParams);
+				if (sPrecision !== 'day' && sPrecision !== 'minute') {
+					return null;
+				}
+				var oDate = this.parse(mDate, sDateFormat, oParserParams);
+				return {
+					from: moment(oDate).startOf(sPrecision).toDate(),
+					to: moment(oDate).endOf(sPrecision).milliseconds(0).toDate(),
+					precision: sPrecision
+				};
+			},
+
 			/**
 			 * Parses a string date into a JS Date object.
 			 * 
@@ -1139,6 +1208,126 @@
 				 	return 0;
 				});
 				return aRows;
+			},
+
+			/**
+			 * Collection of tools to work with condition comparators
+			 */
+			filterComparator: {
+				_rightListComparators: ['[', '![', '[=', '![=', '][', '!][', '[[', '![['],
+
+				/**
+				 * Raw operator prefixes for filtering
+				 * Order matters: longer prefixes must come first to avoid partial matches.
+				 */
+				_comparatorMap: [
+					'[!==', // ComparatorDataType::LIST_EACH_EQUALS_NOT
+					']!==', // ComparatorDataType::LIST_ANY_EQUALS_NOT
+					'![=',  // ComparatorDataType::NOT_IS_IN
+					'![[',  // ComparatorDataType::LIST_NOT_SUBSET
+					'!][',  // ComparatorDataType::LIST_NOT_INTERSECTS
+					'[!=',  // ComparatorDataType::LIST_EACH_IS_NOT
+					'[==',  // ComparatorDataType::LIST_EACH_EQUALS
+					'[<=',  // ComparatorDataType::LIST_EACH_LESS_THAN_OR_EQUALS
+					'[>=',  // ComparatorDataType::LIST_EACH_GREATER_THAN_OR_EQUALS
+					']!=',  // ComparatorDataType::LIST_ANY_IS_NOT
+					']==',  // ComparatorDataType::LIST_ANY_EQUALS
+					']<=',  // ComparatorDataType::LIST_ANY_LESS_THAN_OR_EQUALS
+					']>=',  // ComparatorDataType::LIST_ANY_GREATER_THAN_OR_EQUALS
+					'!==',  // ComparatorDataType::EQUALS_NOT
+					'![',   // ComparatorDataType::NOT_IN
+					'[[',   // ComparatorDataType::LIST_SUBSET
+					'[=',   // ComparatorDataType::IS_IN
+					'[<',   // ComparatorDataType::LIST_EACH_LESS_THAN
+					'[>',   // ComparatorDataType::LIST_EACH_GREATER_THAN
+					'][',   // ComparatorDataType::LIST_INTERSECTS
+					']=',   // ComparatorDataType::LIST_ANY_IS
+					']<',   // ComparatorDataType::LIST_ANY_LESS_THAN
+					']>',   // ComparatorDataType::LIST_ANY_GREATER_THAN
+					'==',   // ComparatorDataType::EQUALS
+					'!=',   // ComparatorDataType::IS_NOT
+					'>=',   // ComparatorDataType::GREATER_THAN_OR_EQUALS
+					'<=',   // ComparatorDataType::LESS_THAN_OR_EQUALS
+					'..',   // ComparatorDataType::BETWEEN
+					'[',    // ComparatorDataType::IN
+					'>',    // ComparatorDataType::GREATER_THAN
+					'<',    // ComparatorDataType::LESS_THAN
+					'='     // ComparatorDataType::IS
+				],
+
+				/**
+				 * Parses a canonical filter condition value with an optional data-type parser.
+				 *
+				 * BETWEEN is structured as two bounds and serialized as `from..to` for transport.
+				 * Comparators with a list on the right retain their list string because their individual
+				 * values are parsed by the filter consumer. All other comparators contain one scalar value.
+				 *
+				 * @param {object} oCondition Canonical filter condition.
+				 * @param {function} [fnParser] Data-type parser for scalar values.
+				 * @returns {{ value: *, hasValue: boolean, value_from?: *, value_to?: * }}
+				 */
+				parseValue: function(oCondition, fnParser) {
+					oCondition = oCondition || {};
+					var sComparator = oCondition.comparator;
+					var mValue = oCondition.value;
+					if (sComparator === '..') {
+						var mValueFrom = oCondition.value_from === undefined || oCondition.value_from === null ? '' : oCondition.value_from;
+						var mValueTo = oCondition.value_to === undefined || oCondition.value_to === null ? '' : oCondition.value_to;
+						var mParsedFrom = typeof fnParser === 'function' && mValueFrom !== '' ? fnParser(mValueFrom) : mValueFrom;
+						var mParsedTo = typeof fnParser === 'function' && mValueTo !== '' ? fnParser(mValueTo) : mValueTo;
+						return {
+							value: String(mParsedFrom) + '..' + String(mParsedTo),
+							value_from: mParsedFrom,
+							value_to: mParsedTo,
+							hasValue: mValueFrom !== '' || mValueTo !== ''
+						};
+					}
+					if (typeof fnParser === 'function' && this._rightListComparators.indexOf(sComparator) === -1) {
+						mValue = fnParser(mValue);
+					}
+					return {
+						value: mValue,
+						hasValue: mValue !== null && mValue !== undefined && mValue !== ''
+					};
+				},
+
+				/**
+				 * Extracts a comparator prefix from a header filter input value.
+				 *
+				 * Returns an object `{ comparator: string|null, value: string }` where `comparator` is the
+				 * raw comparator prefix (e.g., '==', '!=', '>=') and `value` is the remaining
+				 * filter value after stripping the prefix. A BETWEEN expression additionally contains
+				 * `value_from` and `value_to`. If no comparator matches, `comparator` is null and `value`
+				 * is the original input unchanged.
+				 *
+				 * @param {string} sInput - Raw value including comparator
+				 * @returns {{ comparator: string|null, value: string, value_from?: string, value_to?: string }}
+				 */
+				extract: function(sInput) {
+					if (typeof sInput !== 'string') {
+						return { comparator: null, value: sInput };
+					}
+					var iBetween = sInput.indexOf('..');
+					if (iBetween > -1) {
+						return {
+							comparator: '..',
+							value: sInput,
+							value_from: sInput.slice(0, iBetween),
+							value_to: sInput.slice(iBetween + 2)
+						};
+					}
+					var aMap = this._comparatorMap;
+					for (var i = 0; i < aMap.length; i++) {
+						var sPrefix = aMap[i];
+						if (sInput.indexOf(sPrefix) === 0) {
+							return {
+								comparator: sPrefix,
+								value: sInput.slice(sPrefix.length)
+							};
+						}
+					}
+					return { comparator: null, value: sInput };
+				}
 			}
 		},
 		
@@ -1216,69 +1405,6 @@
 				}
 				return await navigator.clipboard.readText();
 			}*/
-		},
-
-		/**
-		 * Filter operator tools for column header filters
-		 * 
-		 * Extracts operator prefixes typed into column header filter inputs.
-		 * 
-		 * Supported prefixes (longest match wins):
-		 * - `!==` (not equals)
-		 * - `==`  (equals)
-		 * - `!=`  (not contains)
-		 * - `>=`  (greater than or equal)
-		 * - `<=`  (less than or equal)
-		 * - `>`   (greater than)
-		 * - `<`   (less than)
-		 * - `=`   (equals/contains)
-		 * 
-		 * If no known prefix is found, defaults to no operator.
-		 */
-		filter: {
-
-			/**
-			 * Raw operator prefixes for filtering 
-			 * Order matters: longer prefixes must come first to avoid partial matches.
-			 */
-			_operatorMap: [
-				'!==',
-				'==',
-				'!=',
-				'>=',
-				'<=',
-				'>',
-				'<',
-				'='
-			],
-
-			/**
-			 * Extracts an operator prefix from a header filter input value.
-			 * 
-			 * Returns an object `{ operator: string, value: string }` where `operator` is the
-			 * raw operator prefix (e.g., '==', '!=', '>=') and `value` is the remaining 
-			 * filter value after stripping the prefix. If no prefix matches, `operator` is empty string
-			 * and `value` is the original input unchanged.
-			 * 
-			 * @param {string} sInput - Raw value including operator
-			 * @returns {{ operator: string, value: string }}
-			 */
-			parseOperator: function(sInput) {
-				if (typeof sInput !== 'string') {
-					return { operator: '', value: sInput };
-				}
-				var aMap = this._operatorMap;
-				for (var i = 0; i < aMap.length; i++) {
-					var sPrefix = aMap[i];
-					if (sInput.indexOf(sPrefix) === 0) {
-						return {
-							operator: sPrefix,
-							value: sInput.slice(sPrefix.length)
-						};
-					}
-				}
-				return { operator: '', value: sInput };
-			}
 		},
 		
 		/**
@@ -1364,6 +1490,151 @@
 			    const i = Math.floor(Math.log(fBytes) / Math.log(k));
 			
 			    return `${parseFloat((fBytes / Math.pow(k, i)).toFixed(dm))} ${aSizes[i]}`;
+			}
+		},
+
+		/**
+		 * Lightweight in-browser performance profiler for temporary JS optimization work.
+		 *
+		 * This is a DEVELOPMENT-ONLY tool. Use it freely to time round-trips and execution blocks
+		 * while you are investigating a bottleneck, then remove every reference to it once you are
+		 * done. It intentionally logs an error to the console on instantiation to remind you that the
+		 * instrumentation is still in the code and must be taken out before committing.
+		 *
+		 * When to use: reach for this when you need precise per-function call counts and timing
+		 * attribution in a specific hot spot - e.g. hot loops in facade widgets, validation passes,
+		 * render bottlenecks or server round-trips. For a broad first pass, prefer the browser's
+		 * built-in profiler; use this once you have narrowed the problem down to concrete code paths.
+		 *
+		 * Rules:
+		 *   - You may liberally use it to time round-trips and execution blocks during optimization.
+		 *   - Always remove any references to it once you are done.
+		 *
+		 * Usage:
+		 *   var oProfiler = exfTools.perf.createProfiler({calls: ['getData', 'validate'], timeMs: ['validate']});
+		 *   oProfiler.count('getData');                 // increment a call counter
+		 *   oProfiler.measure('validate', function(){   // time a synchronous block (safe on throw)
+		 *       // ... work to measure ...
+		 *   });
+		 *   oProfiler.start('validate'); ...; oProfiler.stop('validate'); // manual timing alternative
+		 *   oProfiler.log();                            // console.table(calls) + timing table
+		 *   oProfiler.reset();                          // zero all counters/timers before the next run
+		 *
+		 * The returned profiler exposes plain `calls` and `timeMs` objects, so counters may also be
+		 * incremented inline (`oProfiler.calls.getData++`) in extremely hot paths where a function
+		 * call would itself distort the measurement.
+		 */
+		perf: {
+
+			/**
+			 * Creates a new performance profiler instance.
+			 *
+			 * @param {{calls: string[], timeMs: string[]}} [oInit] - optional names to pre-register
+			 *        (initialized to 0) so the logged tables have a stable, complete key order.
+			 * @return {object}
+			 */
+			createProfiler: function(oInit) {
+				// Non-critical reminder: this instrumentation is temporary and must be removed once done.
+				console.error('exfTools.perf profiler instantiated - this is TEMPORARY instrumentation, remove all references before committing!');
+				var oProfiler = {
+					calls: {},
+					timeMs: {},
+					_running: {},
+
+					/**
+					 * Returns a high-resolution timestamp in milliseconds (falls back to Date.now()).
+					 * @return {number}
+					 */
+					now: function() {
+						return (window.performance && performance.now) ? performance.now() : Date.now();
+					},
+
+					/**
+					 * Increments a named call counter.
+					 * @param {string} sName
+					 * @param {number} [iBy] - default 1
+					 * @return {object} this
+					 */
+					count: function(sName, iBy) {
+						this.calls[sName] = (this.calls[sName] || 0) + (iBy === undefined ? 1 : iBy);
+						return this;
+					},
+
+					/**
+					 * Starts a named timer. Call stop() with the same name to accumulate the elapsed time.
+					 * @param {string} sName
+					 * @return {object} this
+					 */
+					start: function(sName) {
+						this._running[sName] = this.now();
+						return this;
+					},
+
+					/**
+					 * Stops a previously started named timer and accumulates the elapsed milliseconds.
+					 * @param {string} sName
+					 * @return {object} this
+					 */
+					stop: function(sName) {
+						if (this._running[sName] !== undefined) {
+							this.timeMs[sName] = (this.timeMs[sName] || 0) + (this.now() - this._running[sName]);
+							delete this._running[sName];
+						}
+						return this;
+					},
+
+					/**
+					 * Times a synchronous callback under the given name. The timer is stopped even if
+					 * the callback throws, so it is safe to wrap try/finally-style code.
+					 * @param {string} sName
+					 * @param {function} fnCallback
+					 * @return {*} whatever fnCallback returns
+					 */
+					measure: function(sName, fnCallback) {
+						this.start(sName);
+						try {
+							return fnCallback();
+						} finally {
+							this.stop(sName);
+						}
+					},
+
+					/**
+					 * Resets all registered counters and timers back to 0.
+					 * @return {object} this
+					 */
+					reset: function() {
+						for (var k in this.calls) { this.calls[k] = 0; }
+						for (var t in this.timeMs) { this.timeMs[t] = 0; }
+						this._running = {};
+						return this;
+					},
+
+					/**
+					 * Returns a deep copy of the current stats, safe to log or diff.
+					 * @return {{calls: object, timeMs: object}}
+					 */
+					getStats: function() {
+						return JSON.parse(JSON.stringify({calls: this.calls, timeMs: this.timeMs}));
+					},
+
+					/**
+					 * Prints the current stats to the console (call counts as a table, timers as a list).
+					 * @return {{calls: object, timeMs: object}} the same stats returned by getStats()
+					 */
+					log: function() {
+						console.table(this.calls);
+						console.log('Timing (ms):', this.timeMs);
+						return this.getStats();
+					}
+				};
+
+				if (oInit) {
+					(oInit.calls || []).forEach(function(sName) { oProfiler.calls[sName] = 0; });
+					(oInit.timeMs || []).forEach(function(sName) { oProfiler.timeMs[sName] = 0; });
+				}
+
+				return oProfiler;
 			}
 		}
 	}

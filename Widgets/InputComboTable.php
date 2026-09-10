@@ -163,6 +163,16 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 {
     use iTrackIncomingLinksTrait;
     
+    /**
+     * Add a value to the current one: e.g. `add(1)`, `add(-1)` - only works if the value attribute
+     * has a numeric data type.
+     *
+     * @uxon-property add
+     *
+     * @var string
+     */
+    const FUNCTION_ADD = 'add';
+    
     private $text_column_id = null;
 
     private $value_column_id = null;
@@ -224,7 +234,16 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
         if (! $table_uxon->isEmpty()) {
             // Do not allow custom widget types
             $table_uxon->unsetProperty('widget_type');
+            // Only disable the implicit auto-adding of default-display columns for the duration of the
+            // import, not for the entire table lifetime. A behavior may initialize the configurator while
+            // importing the table UXON and call getColumns() on the still-empty table, which would auto-add
+            // the default columns prematurely - the manual column setup below would then add them again,
+            // resulting in duplicates. Restoring auto-adding right after the import keeps it working as a
+            // fallback for cases not covered by the manual setup below (e.g. an unbound combo with a custom
+            // table object), where those default columns would otherwise be missing entirely.
+            $table->setColumnsAutoAddDefaultDisplayAttributes(false);
             $table->importUxonObject($table_uxon);
+            $table->setColumnsAutoAddDefaultDisplayAttributes(true);
         }
         
         // A combo bound to the LABEL attribute should behave like a relation: show the objects

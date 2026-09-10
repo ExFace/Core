@@ -8,6 +8,7 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Widgets\Button;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Factories\MetaObjectFactory;
@@ -148,6 +149,18 @@ class DropToAction implements WidgetPartInterface
                 'action' => $this->getActionUxon()->toArray()
             ]);
             $this->triggerWidget = WidgetFactory::createFromUxonInParent($this->getWidget(), $btnUxon, $btnType);
+
+            // The drop adds the include_target_columns to the dropped data on the client side. Declaring them
+            // on the trigger lets the action input validation treat them as legitimate instead of a forgery.
+            if ($this->triggerWidget instanceof Button) {
+                $injectedColumns = [];
+                foreach ($this->getIncludeTargetColumnMappings() as $mapping) {
+                    $injectedColumns[] = $mapping->getToExpression()->__toString();
+                }
+                if (! empty($injectedColumns)) {
+                    $this->triggerWidget->setInputColumnsTrusted($injectedColumns);
+                }
+            }
         }
         return $this->triggerWidget;
     }

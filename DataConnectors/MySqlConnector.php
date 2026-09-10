@@ -9,11 +9,15 @@ use exface\Core\Exceptions\DataSources\DataConnectionTransactionStartError;
 use exface\Core\Exceptions\DataSources\DataConnectionCommitFailedError;
 use exface\Core\Exceptions\DataSources\DataConnectionRollbackFailedError;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
+use exface\Core\Exceptions\DataSources\DataQueryConstraintError;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Exceptions\DataSources\DataQueryForeignKeyError;
+use exface\Core\Exceptions\DataSources\DataQueryNotNullConstraintError;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
 use exface\Core\ModelBuilders\MySqlModelBuilder;
 use exface\Core\Interfaces\Exceptions\DataQueryExceptionInterface;
 use exface\Core\Interfaces\DataSources\DataQueryInterface;
+use exface\Core\Exceptions\DataSources\MySqlError;
 use exface\Core\Exceptions\DataSources\DataQueryUniqueConstraintError;
 use exface\Core\QueryBuilders\MySqlBuilder;
 
@@ -52,8 +56,6 @@ use exface\Core\QueryBuilders\MySqlBuilder;
 class MySqlConnector extends AbstractSqlConnector
 {
     const ERROR_CODE_GONE_AWAY = 2006;
-    
-    const ERRRO_CODE_CONTRAINT = 1062;
 
     private $dbase = null;
 
@@ -208,19 +210,22 @@ class MySqlConnector extends AbstractSqlConnector
     }
     
     /**
-     * 
+     *
      * @param DataQueryInterface $query
      * @param string $message
-     * @param string $sqlErrorNo
-     * @param \Exception $sqlException
+     * @param int|null $sqlErrorNo
+     * @param \Exception|null $sqlException
      * @return DataQueryExceptionInterface
      */
-    protected function createQueryError(DataQueryInterface $query, string $message, string $sqlErrorNo = null, \Exception $sqlException = null) : DataQueryExceptionInterface
+    protected function createQueryError(DataQueryInterface $query, string $message, ?int $sqlErrorNo = null, ?\Exception $sqlException = null) : DataQueryExceptionInterface
     {
-        $sqlErrorNo = $sqlErrorNo ?? $sqlException->getCode() ?? null;
-        
+        $sqlErrorNo = $sqlErrorNo ?? ($sqlException ? (int) $sqlException->getCode() : null);
+        $e = new MySqlError($this, $message, '6T2T2UI', $sqlException);
+        $obj = $e->getAffectedObject();
+        $attrVals = $e->getAffectedAttributeValues();
+
         switch ($sqlErrorNo) {
-            case self::ERRRO_CODE_CONTRAINT:
+            case MySqlError::SQL_ERROR_DUPLICATE_ENTRY:
                 // Constraint errors on binary keys will contain the key value in unreadable format like
                 // "Duplicate entry '\x11\xEF\x91{WY\xA7`\x91{\x00PV\xBE\xF7]' for key ...".
                 // Here we attempt to find the binary part and transform it to our standard hex
@@ -229,7 +234,7 @@ class MySqlConnector extends AbstractSqlConnector
                 // or `-\x...'`.
                 $binaryMatches = [];
                 $foundBinaries = preg_match_all("/['\-](\\\\x.*?)['\-]/", $message, $binaryMatches);
-                if ($foundBinaries === 1) {
+                if ($foundBinaries > 0) {
                     foreach ($binaryMatches[1] as $binaryString) {
                         // Decode the binary string
                         $raw_binary = preg_replace_callback('/\\\\x([0-9A-Fa-f]{2})/', function ($matches) {
@@ -241,9 +246,18 @@ class MySqlConnector extends AbstractSqlConnector
                         $message = str_replace($binaryString, $decodedHex, $message);
                     }
                 }
-                return new DataQueryUniqueConstraintError($query, $this, $message, '73II64M', $sqlException);
+                return new DataQueryUniqueConstraintError($query, $this, $message, '73II64M', $e, $obj, $attrVals);
+            //TODO
+            //case MySqlError::SQL_ERROR_NO_REFERENCED_ROW:
+            case MySqlError::SQL_ERROR_ROW_IS_REFERENCED:
+                return new DataQueryForeignKeyError($query, $this, $message, null, $e, $obj, $attrVals, $e->getOtherAffectedObject());
+            case MySqlError::SQL_ERROR_NOT_NULL_VIOLATION:
+                return new DataQueryNotNullConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
             default:
-                return new DataQueryFailedError($query, $message, '6T2T2UI', $sqlException);
+                if ($e->getSqlState() === '23000') {
+                    return new DataQueryConstraintError($query, $this, $message, null, $e, $obj, $attrVals);
+                }
+                return new DataQueryFailedError($query, $message, '6T2T2UI', $e);
         }
     }
 

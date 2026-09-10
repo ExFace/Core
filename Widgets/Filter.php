@@ -461,7 +461,9 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
                 break;
             // Allow multi-select for most widgets if not explicitly turned off
             case $input instanceof iSupportMultiSelect:
-                if ($this->getInputWidgetUxon() === null || ! $this->getInputWidgetUxon()->hasProperty('multi_select')) {
+                if (($this->getInputWidgetUxon() === null || 
+                    ! $this->getInputWidgetUxon()->hasProperty('multi_select')) &&
+                    ! $input->exportUxonObject()->hasProperty('multi_select')) {
                     $input->setMultiSelect($this->getInputWidgetDefaultForMultiSelect());
                 }
                 break;            

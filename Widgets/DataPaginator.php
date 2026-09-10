@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Shows a pagination-control (e.g. toolbar), displaying the the current position, number of pages, navigation controls, etc.
@@ -41,6 +42,8 @@ class DataPaginator extends AbstractWidget
     private $pageSizes = null;
     
     private $useTotalCount = true;
+    
+    private $pageButtonPriority = null;
     
     public function getDataWidget() : Data
     {
@@ -119,6 +122,9 @@ class DataPaginator extends AbstractWidget
         if (! empty($this->getPageSizes())) {
             $uxon->setProperty('page_sizes', $this->getPageSizes());
         }
+        if ($this->getPageButtonOverflowPriority() !== null) {
+            $uxon->setProperty('page_button_overflow_priority', $this->getPageButtonOverflowPriority());
+        }
         return $uxon;
     }
     
@@ -148,5 +154,48 @@ class DataPaginator extends AbstractWidget
     {
         $this->useTotalCount = BooleanDataType::cast($value);
         return $this;
-    }   
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getPageButtonOverflowPriority() : ?int
+    {
+        return $this->pageButtonPriority;
+    }
+    
+    /**
+     * Explicitly control how the previous/next page buttons behave if the surrounding toolbar runs out of space.
+     * 
+     * By default, facades place the paginator inside a toolbar together with other buttons and controls
+     * (e.g. the caption, filters, action buttons, etc.). If that toolbar does not have enough space - e.g.
+     * because the widget is placed in a narrow tab or split panel - some of its contents are moved into an
+     * overflow menu (the "..." button) to save space. This property lets you control that behavior explicitly
+     * for the page buttons:
+     * 
+     * - `low` - moved into the overflow menu first (default)
+     * - `normal` - moved into the overflow menu only after all `low` priority items
+     * - `never_overflow` - never moved into the overflow menu - always directly accessible
+     * - `always_overflow` - always placed in the overflow menu, regardless of available space
+     * 
+     * @uxon-property page_button_overflow_priority
+     * @uxon-type [low,normal,always_overflow,never_overflow]
+     * 
+     * @param string $value
+     * @return DataPaginator
+     */
+    public function setPageButtonOverflowPriority(string $value) : DataPaginator
+    {
+        switch (mb_strtolower($value)) {
+            case 'low': $priority = Button::PRIORITY_LOW; break;
+            case 'normal': $priority = Button::PRIORITY_NORMAL; break;
+            case 'never_overflow': $priority = Button::PRIORITY_NEVER_OVERFLOW; break;
+            case 'always_overflow': $priority = Button::PRIORITY_ALWAYS_OVERFLOW; break;
+            default:
+                throw new WidgetConfigurationError($this, 'Invalid value "' . $value . '" for property `page_button_overflow_priority` of `paginator`: expecting `low`, `normal`, `always_overflow` or `never_overflow`!');
+        }
+        $this->pageButtonPriority = $priority;
+        return $this;
+    }
 }

@@ -29,7 +29,7 @@ class AutoloadStrategyDataType extends StringDataType implements EnumDataTypeInt
      */
     public function getLabels()
     {
-        $vals = $this::getValuesStatic();
+        $vals = $this::getValuesOfConstants();
         $labels = [];
         foreach ($vals as $val){
             $labels[$val] = str_replace('_', ' ', $val);

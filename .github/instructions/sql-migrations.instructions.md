@@ -116,6 +116,8 @@ Rules:
   has migrations, analyse them to understand the existing naming patterns.
 - Use named objects where possible: e.g. named contraints, indexes, etc. 
   This makes DOWN scripts more reliable.
+  - Use prefixes like `IDX_`, `FK_`, `CHK_`, `UQ_` for indexes, foreign keys, 
+    check constraints, and unique constraints.
 - Avoid (not)exists errors: When adding or removing objects, check if they 
   exist first.
 - Validate scripts thoroughly! Errors during installation can corrupt the DB 
@@ -174,6 +176,8 @@ Notes:
   - Do not use `BIT` or other boolean-like types for application boolean fields
     if the app writes numeric values like `1` and `0`. Use `SMALLINT` instead and
     store boolean-like values as `1` and `0`.
+  - Don't forget to handle default constraints when changing/deleting 
+    columns with defaults - SQL Server does not do it automatically!
 
 ## Migration logging expectations
 
@@ -208,7 +212,7 @@ Do:
 - Validate scripts with correct encoding (UTF-8 expected by installers).
 
 Do not:
-- Remove or rename migration files casually (this triggers DOWN behavior).
+- Remove or rename migration files casually (this will take the migration DOWN).
 - Depend on subfolder names for migration identity.
 - Omit DOWN unless. Instead leave a comment there explaining, why this 
   particular script should not be downed.
