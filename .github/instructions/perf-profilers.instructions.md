@@ -1,7 +1,7 @@
 ---
 description: "Use when profiling or optimizing performance, especially for vague requests like 'this page is slow'. Covers the exfTools.perf (JS) and DebugStopWatch (PHP) profilers."
 name: "Performance profiling & optimization"
-applyTo: "Facades/AbstractAjaxFacade/js/exfTools.js, CommonLogic/Utils/DebugStopWatch.php, CommonLogic/DataSheets/CrudCounter.php"
+applyTo: "**"
 ---
 # Performance profiling tools (JS + PHP)
 
@@ -19,6 +19,14 @@ slow, fix it", "make it faster"). In those cases:
 
 Guessing wastes effort on code that is not actually the bottleneck and often makes things worse. If
 you cannot measure for some reason, say so explicitly and ask - do not silently guess.
+
+**Static/complexity analysis is a hypothesis, not a result.** Reading the code and reasoning about
+big-O, nested loops or redundant work is a valid way to *pick where to instrument* - it is NOT a
+substitute for measurement. Never present such reasoning as findings, results or a ranked list of
+bottlenecks, and never optimize on the strength of it alone. Label it explicitly as unverified
+hypotheses, then measure to confirm or refute before reporting conclusions or changing code. This
+applies even when the request is "analyze/report on performance" and not "fix it" - an analysis
+without measurements is incomplete here.
 
 Both profilers are development-only, temporary instrumentation and **must be removed before
 committing** - each deliberately announces itself (a console error / a logged exception) on
