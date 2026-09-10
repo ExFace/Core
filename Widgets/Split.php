@@ -20,8 +20,11 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
  * type of orientation: `SplitVertical` (position panels below-each-other) and `SplitHorizontal` (position
  * panels side-by-side). They are easier to understand for most users.
  *
- * Splits use special panels: SplitPanels. However, you can use any widget in the `panels` or `widgets`
+ * Splits use special panels: `SplitPanel`s. However, you can use any widget in the `panels` or `widgets`
  * arrays - it will be automatically converted to a `SplitPanel`.
+ * 
+ * **NOTE:** Each split must have an `object_alias` or a parent path to an object - just like any other widget. You can
+ * use any of the inner objects if in doubt.
  *
  * @author Andrej Kabachnik
  *        

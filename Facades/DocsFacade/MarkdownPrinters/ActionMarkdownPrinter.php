@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\DocsFacade\MarkdownPrinters;
 
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
@@ -53,6 +54,8 @@ class ActionMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
         $prototypeClass = '\\' . get_class($action);
         $prototypeLink = DocsFacade::buildUrlToDocsForUxonPrototype($action);
         $uxonBlock = MarkdownDataType::escapeCodeBlock($action->exportUxonObject()->toJson(true), 'json');
+        $actionId = (string) $action->getId();
+        $uidLine = UUIDDataType::isHexNumber($actionId) ? '- UID: `' . $actionId . '`' : '';
         
         return <<<MD
 {$heading}
@@ -60,6 +63,7 @@ class ActionMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
 {$this->escapeMarkdownText($action->getHint())}
 
 - Alias: {$action->getAliasWithNamespace()}
+{$uidLine}
 - Prototype: [$prototypeClass]($prototypeLink)
 
 {$uxonBlock}

@@ -14,6 +14,61 @@
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\ObjectMarkdownPrinter"
     },
+    "save_component_data": {
+      "object_alias": "exface.Core.OBJECT",
+      "columns": [
+        {
+          "attribute_alias": "UID"
+        },
+        {
+          "attribute_alias": "NAME"
+        },
+        {
+          "attribute_alias": "ALIAS"
+        },
+        {
+          "attribute_alias": "APP"
+        },
+        {
+          "attribute_alias": "DATA_ADDRESS"
+        },
+        {
+          "attribute_alias": "ATTRIBUTE",
+          "nested_data": {
+            "object_alias": "exface.Core.ATTRIBUTE",
+            "columns": [
+              {
+                "attribute_alias": "UID"
+              },
+              {
+                "attribute_alias": "NAME"
+              },
+              {
+                "attribute_alias": "ALIAS"
+              },
+              {
+                "attribute_alias": "DATATYPE"
+              },
+              {
+                "attribute_alias": "DATA_ADDRESS"
+              },
+              {
+                "attribute_alias": "TYPE"
+              },
+              {
+                "attribute_alias": "REQUIREDFLAG"
+              },
+              {
+                "attribute_alias": "EDITABLEFLAG"
+              },
+              {
+                "attribute_alias": "WRITABLEFLAG"
+              }
+            ]
+          }
+        }
+      ]
+    },
     "search_selector_data": {
       "object_alias": "exface.Core.OBJECT",
       "filters": {
@@ -26,6 +81,79 @@
           }
         ]
       }
+    }
+  },
+  "attribute": {
+    "name": "Meta attribute",
+    "description": "Attributes of objects in the metamodel",
+    "uxon_properties": [
+      "attribute_alias"
+    ],
+    "save_component_data": {
+      "object_alias": "exface.Core.ATTRIBUTE",
+      "columns": [
+        {
+          "attribute_alias": "UID"
+        },
+        {
+          "attribute_alias": "OBJECT"
+        },
+        {
+          "attribute_alias": "NAME"
+        },
+        {
+          "attribute_alias": "ALIAS"
+        },
+        {
+          "attribute_alias": "DATATYPE"
+        },
+        {
+          "attribute_alias": "DATA_ADDRESS"
+        },
+        {
+          "attribute_alias": "TYPE"
+        },
+        {
+          "attribute_alias": "REQUIREDFLAG"
+        },
+        {
+          "attribute_alias": "EDITABLEFLAG"
+        },
+        {
+          "attribute_alias": "WRITABLEFLAG"
+        }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.ATTRIBUTE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          {
+            "expression": "ALIAS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "NAME",
+            "comparator": "=",
+            "value": "[#~query#]"
+          },
+          {
+            "expression": "OBJECT__ALIAS_WITH_NS",
+            "comparator": "=",
+            "value": "[#~query#]"
+          }
+        ]
+      },
+      "columns": [
+        {
+          "attribute_alias": "OBJECT__ALIAS_WITH_NS"
+        },
+        {
+          "attribute_alias": "ALIAS"
+        }
+      ]
     }
   },
   "action": {
@@ -46,6 +174,20 @@
       "app_docs": null,
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\ActionMarkdownPrinter"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.OBJECT_ACTION",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "OBJECT" },
+        { "attribute_alias": "ACTION_PROTOTYPE" },
+        { "attribute_alias": "ALIAS" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "SHORT_DESCRIPTION" },
+        { "attribute_alias": "CONFIG_UXON" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "USE_IN_OBJECT_BASKET_FLAG" }
+      ]
     },
     "search_selector_data": [
       {
@@ -122,6 +264,28 @@
       "app_docs": null,
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\UiPageMarkdownPrinter"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.PAGE",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "ALIAS" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "TEMPLATE" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "INTRO" },
+        { "attribute_alias": "CONTENT" },
+        { "attribute_alias": "MENU_PARENT" },
+        { "attribute_alias": "MENU_POSITION" },
+        { "attribute_alias": "REPLACE_PAGE" },
+        { "attribute_alias": "AUTO_UPDATE_WITH_APP" },
+        { "attribute_alias": "MENU_VISIBLE" },
+        { "attribute_alias": "PUBLISHED" },
+        { "attribute_alias": "MENU_HOME" },
+        { "attribute_alias": "ICON_SET" },
+        { "attribute_alias": "ICON" }
+      ]
     },
     "search_selector_data": {
       "object_alias": "exface.Core.PAGE",
@@ -221,6 +385,20 @@
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\BehaviorMarkdownPrinter"
     },
+    "save_component_data": {
+      "object_alias": "exface.Core.OBJECT_BEHAVIORS",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "BEHAVIOR" },
+        { "attribute_alias": "CONFIG_UXON" },
+        { "attribute_alias": "OBJECT" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "DISABLED_FLAG" },
+        { "attribute_alias": "PRIORITY" }
+      ]
+    },
     "search_selector_data": {
       "object_alias": "exface.Core.BEHAVIOR",
       "filters": {
@@ -281,6 +459,20 @@
       "app_docs": null,
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.UXON_SNIPPET",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "UXON_SCHEMA" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "PROTOTYPE" },
+        { "attribute_alias": "UXON" },
+        { "attribute_alias": "ALIAS" },
+        { "attribute_alias": "OBJECT" }
+      ]
     },
     "search_selector_data": {
       "object_alias": "exface.Core.UXON_SNIPPET",
@@ -343,6 +535,18 @@
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
     },
+    "save_component_data": {
+      "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "COMMUNICATION_CHANNEL" },
+        { "attribute_alias": "ALIAS" },
+        { "attribute_alias": "MESSAGE_UXON" },
+        { "attribute_alias": "OBJECT" },
+        { "attribute_alias": "NAME" }
+      ]
+    },
     "search_selector_data": {
       "object_alias": "exface.Core.COMMUNICATION_TEMPLATE",
       "filters": {
@@ -381,6 +585,19 @@
       "app_docs": null,
       "ai_instructions": null,
       "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.CONNECTION",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "TIME_ZONE" },
+        { "attribute_alias": "LABEL" },
+        { "attribute_alias": "CONNECTOR" },
+        { "attribute_alias": "CONFIG" },
+        { "attribute_alias": "READONLY" },
+        { "attribute_alias": "ALIAS" }
+      ]
     },
     "search_selector_data": {
       "object_alias": "exface.Core.CONNECTION",
