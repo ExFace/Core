@@ -5725,6 +5725,221 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "behavior",
             "THUMBNAIL": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "Gantt with excel export",
+            "CREATED_ON": "2026-09-08 11:50:08",
+            "MODIFIED_ON": "2026-09-09 11:09:46",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f1b3e1ad4da588b3e1025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Gantt with excel export",
+            "DESCRIPTION": "Creates a simple nested Gantt with Excel Export action.",
+            "PROTOTYPE": "exface/core/Widgets/Gantt.php",
+            "UXON": {
+                "widget_type": "Gantt",
+                "object_alias": "<app.namespace.object_alias>",
+                "filters": [
+                    {
+                        "//": "only filters the left table (Gantt object itself)",
+                        "attribute_alias": "<attribute_alias_of_gantt_object>"
+                    },
+                    {
+                        "//": "filters the Gantt table and the task bars",
+                        "attribute_alias": "<attribute_path_with_task_object_alias>"
+                    },
+                    {
+                        "//": "filters only the Gantt bars",
+                        "object_alias": "<taskObjectAlias>",
+                        "attribute_alias": "<attribute_alias_within_task_object>"
+                    }
+                ],
+                "sorters": [
+                    {
+                        "attribute_alias": "LABEL",
+                        "direction": "asc"
+                    },
+                    {
+                        "//": "Attention: sorting over the task data itself can have a big performance impact!"
+                    }
+                ],
+                "columns": [
+                    {
+                        "//": "Columns of the table on the left",
+                        "attribute_alias": "<attribute_alias>"
+                    },
+                    {
+                        "//": "You need a relation to the task object",
+                        "attribute_alias": "<task_object_alias>",
+                        "hidden": true
+                    }
+                ],
+                "tasks": {
+                    "//": "each task is a bar inside the Gantt chart",
+                    "object_alias": "<app.namespace.task_object_alias>",
+                    "// relation": "The object must have a relation to the task",
+                    "object_relation_path_to_parent": "<object_alias>",
+                    "start_time": "<start_attribute_alias>",
+                    "end_time": "<end_attribute_alias>",
+                    "title": "LABEL",
+                    "title_overflow": "clip",
+                    "color": "<color_attribute_alias>"
+                },
+                "timeline": {
+                    "initial_view_name": "Month",
+                    "fill_padding_to_border": true,
+                    "popup_on": "",
+                    "views": [
+                        {
+                            "name": "Day",
+                            "description": "Days View",
+                            "granularity": "days",
+                            "column_width": 35,
+                            "header_lines": [
+                                {
+                                    "interval": "month",
+                                    "date_format_at_border": "MMMM"
+                                },
+                                {
+                                    "interval": "day",
+                                    "date_format": "d"
+                                }
+                            ],
+                            "thick_lines": [
+                                {
+                                    "interval": "week",
+                                    "value": 1
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Week",
+                            "description": "Weeks View",
+                            "granularity": "weeks",
+                            "column_width": 140,
+                            "upper_text_frequency": 4,
+                            "header_lines": [
+                                {
+                                    "interval": "month",
+                                    "date_format_at_border": "MMMM"
+                                },
+                                {
+                                    "date_format": "~weekRange"
+                                }
+                            ],
+                            "thick_lines": [
+                                {
+                                    "interval": "month_range_in_days",
+                                    "from": 1,
+                                    "to": 7
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Month",
+                            "granularity": "months",
+                            "date_format": "YYYY-MM",
+                            "column_width": 120,
+                            "header_lines": [
+                                {
+                                    "interval": "year",
+                                    "date_format_at_border": "YYYY"
+                                },
+                                {
+                                    "date_format": "MMMM"
+                                }
+                            ],
+                            "thick_lines": [
+                                {
+                                    "interval": "month_range_in_days",
+                                    "from": 1,
+                                    "to": 7
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Quartale",
+                            "description": "Quartal view",
+                            "granularity": "weeks",
+                            "column_width": 35,
+                            "header_lines": [
+                                {
+                                    "interval": "month",
+                                    "date_format_at_border": "MMM YY"
+                                },
+                                {
+                                    "date_format": "w",
+                                    "date_format_at_border": "w"
+                                }
+                            ],
+                            "thick_lines": [
+                                {
+                                    "interval": "year_quarter",
+                                    "color": "#9e9e9e"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Year",
+                            "description": "Years view",
+                            "granularity": "years",
+                            "column_width": 120,
+                            "header_lines": [
+                                {
+                                    "interval": "decade",
+                                    "date_format_at_border": "~decade"
+                                },
+                                {
+                                    "interval": "year",
+                                    "date_format": "YYYY"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "buttons": [
+                    {
+                        "caption": "Export Excel Gantt",
+                        "visibility": "optional",
+                        "action": {
+                            "alias": "exface.Core.ExportGanttXLSX",
+                            "//id_attribute_alias": "Defines the column that is shown before the Gantt selection in exported Excel",
+                            "merge_cells": true,
+                            "pagination_disabled": true,
+                            "freeze_columns": 2,
+                            "heading_color": "<color_attribute_alias>",
+                            "header_groups": [
+                                {
+                                    "name": "<caption>",
+                                    "column_count": 999,
+                                    "column_width": 15,
+                                    "orientation": "horizontal"
+                                }
+                            ],
+                            "xlsx_print_settings": {
+                                "// Paper Size": "9 =  A4",
+                                "paper_size": 9,
+                                "orientation": "landscape",
+                                "page_order": "downThenOver",
+                                "scale": 100,
+                                "page_margins": {
+                                    "//": "Default Excel print margins",
+                                    "left": 0.25,
+                                    "right": 0.25,
+                                    "top": 0.75,
+                                    "bottom": 0.75,
+                                    "header": 0.3,
+                                    "footer": 0.3
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": "exface/core/Uxon/Thumbnails/gantt.gif"
         }
     ],
     "totals_rows": [],
