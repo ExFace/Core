@@ -1157,9 +1157,23 @@ JS;
     {
         $targetElement = $this->getFacade()->getElementByWidgetId($action->getTargetWidgetId(), $this->getWidget()->getPage());
         
+        if ($action->hasSendValue()) {
+            $colNameJs = json_encode($action->getSendValueColumnName());
+        
+            if (null !== $rowIdx = $action->getSendValueRowIndex()) {
+                return "(({$jsRequestData}.rows[{$rowIdx}] || {})[{$colNameJs}])";
+            }
+            
+            $aggregatorJs = $action->getSendValueAggregator() !== null ? json_encode($action->getSendValueAggregator()) : 'null';
+            $getterJs = "exfTools.data.aggregateColumnValues({$jsRequestData}.rows, {$colNameJs}, {$aggregatorJs})";
+            $setterJs = $targetElement->buildJsValueSetter($getterJs);
+        } else {
+            $setterJs = $targetElement->buildJsDataSetter($jsRequestData);
+        }
+        
         return <<<JS
 
-                        {$targetElement->buildJsDataSetter($jsRequestData)}
+                        {$setterJs}
                         {$this->buildJsTriggerActionEffects($action)}
                         {$this->buildJsCloseDialog()}
 JS;
