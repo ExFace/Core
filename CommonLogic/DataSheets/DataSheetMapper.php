@@ -24,6 +24,7 @@ use exface\Core\Exceptions\DataSheets\DataMapperRuntimeError;
 use exface\Core\Exceptions\DataSheets\DataMapperConfigurationError;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\CommonLogic\DataSheets\Mappings\ActionToColumnMapping;
+use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnAggregationMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataColumnToFilterMapping;
 use exface\Core\CommonLogic\DataSheets\Mappings\DataFilterToColumnMapping;
@@ -56,6 +57,8 @@ use exface\Core\Interfaces\Exceptions\DataMapperExceptionInterface;
  * - `column_to_column_mappings` transfer values from columns of the from-sheet to columns
  * in the to-sheet. Their `from` expression can also be a calculation allowing to change
  * values within the mapping (e.g. `=(version + 1)` or even use static calculation like `=Now()`.
+ * - `column_aggregation_mappings` aggregate all values of a from-sheet column and write the
+ * result to every row of a to-sheet column.
  * - `column_to_filter_mappings` create filters in the to-sheet from values of from-sheet columns.
  * - `filter_to_column_mappings` fill to-sheet columns with values of from-sheet filters.
  * - `filter_to_filter_mappings` create filters in the to-sheet from from-sheet filters.
@@ -726,6 +729,24 @@ class DataSheetMapper implements DataSheetMapperInterface
     {
         foreach ($uxon as $prop){
             $this->addMapping(new DataColumnMapping($this, $prop));
+        }
+        return $this;
+    }
+
+    /**
+     * Aggregate values from a from-sheet column and write the result to a to-sheet column.
+     *
+     * @uxon-property column_aggregation_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataColumnAggregationMapping[]
+     * @uxon-template [{"from": "", "to": "", "aggregator": ""}]
+     *
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setColumnAggregationMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop) {
+            $this->addMapping(new DataColumnAggregationMapping($this, $prop));
         }
         return $this;
     }
