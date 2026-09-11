@@ -64,6 +64,10 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * applied in `applyCompatibilityFixesToFileContent()` or `applyCompatibilityFixesToDataSheet()`
  * depending on where the changes are easier to implement.
  * 
+ * NOTE: since attribute order from the metamodel is not guaranteed to be stable across DB engines,
+ * `DataInstaller` keeps the exported column order in sync with the previously exported file - see
+ * its class docs for details.
+ * 
  * @author Andrej Kabachnik
  *
  */
