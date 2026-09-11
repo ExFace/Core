@@ -93,6 +93,18 @@ use Throwable;
  * sure all possibly existing entities bound to this app are completely replaced by the contents
  * of the data sheet.
  * 
+ * ### Column order
+ * 
+ * Attributes are exported as columns in the order the metamodel returns them, which is not
+ * guaranteed to be stable across database engines (e.g. MySQL vs. PostgreSQL). To avoid producing
+ * a full-file diff on every export purely due to reordered columns, the column order (and the
+ * matching key order inside every exported row) is aligned with an already existing file for the
+ * same object, if one exists - see `reorderColumnsLikePreviousFile()`. Columns not yet present in
+ * the previous file (newly added attributes) are appended at the end; columns no longer produced
+ * by the sheet (removed/renamed attributes) are simply dropped. Only the very first export of a
+ * new column can still vary in position - once written, its place is locked in for all following
+ * exports.
+ * 
  * ### Folder structure
  * 
  * As shown above, the installer can be easily customized to save data in different file and folder
@@ -650,6 +662,9 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
                 } else {
                     // For changes prettify the rows and dump the new JSON
                     $uxon->setProperty('rows', $this->exportModelRowsPrettified($sheet, $filteredRows));
+                    // Keep the column order stable even if attributes come back from the metamodel
+                    // loader in a different order (e.g. between DB engines without a guaranteed sort)
+                    $uxon = $this->reorderColumnsLikePreviousFile($uxon, $prevPath);
                     $result[array_key_last($result)] .= ' - changed ' . $sheet->countRows();
                     $fileManager->dumpFile($filePath, $uxon->toJson(true));
                 }
@@ -682,12 +697,102 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
             $uxon = $sheet->exportUxonObject();
             $uxon->setProperty('rows', $this->exportModelRowsPrettified($sheet));
+            // Keep the column order stable even if attributes come back from the metamodel
+            // loader in a different order (e.g. between DB engines without a guaranteed sort)
+            $uxon = $this->reorderColumnsLikePreviousFile($uxon, $prevPath);
             $result[0] .= ' - changed ' . $sheet->countRows();
             $contents = $uxon->toJson(true);
             $fileManager->dumpFile($filePath, $contents);
         }
         
         return $result;
+    }
+    
+    /**
+     * Reorders the `columns` (and matching row keys) of a sheet UXON to match the column order
+     * found in an already exported file, so columns keep their position across exports even if
+     * the metamodel loader returns attributes in a different order (e.g. on different DB engines).
+     * 
+     * Columns not present in the previous file (e.g. newly added attributes) are appended at the end.
+     * If the previous file does not exist or has no readable column order, the UXON is left unchanged.
+     * 
+     * @param UxonObject $uxon
+     * @param string $prevFilePath
+     * @return UxonObject
+     */
+    protected function reorderColumnsLikePreviousFile(UxonObject $uxon, string $prevFilePath) : UxonObject
+    {
+        $prevOrder = $this->getColumnNameOrderFromFile($prevFilePath);
+        if (empty($prevOrder) || ! $uxon->hasProperty('columns')) {
+            return $uxon;
+        }
+        
+        $colsByName = [];
+        foreach ($uxon->getProperty('columns')->toArray() as $colArr) {
+            $colsByName[$colArr['name']] = $colArr;
+        }
+        
+        $orderedCols = [];
+        foreach ($prevOrder as $name) {
+            if (array_key_exists($name, $colsByName)) {
+                $orderedCols[$name] = $colsByName[$name];
+                unset($colsByName[$name]);
+            }
+        }
+        // Append columns not present in the previous file (e.g. newly added attributes) at the end
+        foreach ($colsByName as $name => $colArr) {
+            $orderedCols[$name] = $colArr;
+        }
+        $uxon->setProperty('columns', array_values($orderedCols));
+        
+        if ($uxon->hasProperty('rows')) {
+            $colNames = array_keys($orderedCols);
+            $rows = $uxon->getProperty('rows')->toArray();
+            foreach ($rows as $i => $row) {
+                $orderedRow = [];
+                foreach ($colNames as $name) {
+                    if (array_key_exists($name, $row)) {
+                        $orderedRow[$name] = $row[$name];
+                        unset($row[$name]);
+                    }
+                }
+                // Keep any leftover keys not part of the columns list (should not normally happen)
+                $rows[$i] = $orderedRow + $row;
+            }
+            $uxon->setProperty('rows', $rows);
+        }
+        
+        return $uxon;
+    }
+    
+    /**
+     * Reads the order of column names from an already exported model file without instantiating a data sheet
+     * 
+     * @param string $filePath
+     * @return string[]
+     */
+    protected function getColumnNameOrderFromFile(string $filePath) : array
+    {
+        if (! file_exists($filePath)) {
+            return [];
+        }
+        try {
+            $contents = file_get_contents($filePath);
+            $contents = $this->applyCompatibilityFixesToFileContent($filePath, $contents);
+            $uxon = UxonObject::fromJson($contents);
+            if (! $uxon->hasProperty('columns')) {
+                return [];
+            }
+            $names = [];
+            foreach ($uxon->getProperty('columns')->toArray() as $colArr) {
+                if ($name = ($colArr['name'] ?? null)) {
+                    $names[] = $name;
+                }
+            }
+            return $names;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
     
     protected function exportModelRowsPrettified(DataSheetInterface $sheet, array $rows = null) : array
