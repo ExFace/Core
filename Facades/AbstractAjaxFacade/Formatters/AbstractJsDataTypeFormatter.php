@@ -100,15 +100,18 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
         $rightListComparatorsJs = json_encode($rightListComparators);
         // Preserve right-hand lists as a whole. Their individual values are parsed by the filter consumer.
         // EACH and ANY comparators are intentionally excluded because their right-hand value is scalar.
+        // An empty comparator means the server will determine it from the meta model, so the value may still
+        // be a list or contain an inline operator/range - parsing it here as a scalar would corrupt it.
         return <<<JS
 (function(mFilterValue, sComparator) {
     var aRightListComparators = {$rightListComparatorsJs};
     var fnParse = function(mFilterValue) {
         return {$parserJs};
     };
+    var bPreserve = sComparator === null || sComparator === '' || aRightListComparators.indexOf(sComparator) !== -1;
     return {
         comparator: sComparator,
-        value: aRightListComparators.indexOf(sComparator) !== -1 ? mFilterValue : fnParse(mFilterValue)
+        value: bPreserve ? mFilterValue : fnParse(mFilterValue)
     };
 })({$jsValue}, {$jsComparator})
 JS;
