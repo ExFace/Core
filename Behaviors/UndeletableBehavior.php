@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Behaviors;
 
+use exface\Core\CommonLogic\Debugger\LogBooks\BehaviorLogBook;
 use exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Events\DataSheet\OnBeforeDeleteDataEvent;
@@ -159,7 +160,9 @@ class UndeletableBehavior extends AbstractBehavior
             return;
         }
         
-        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event));
+        $logbook = new BehaviorLogBook($this->getAlias(), $this, $event);
+        $logbook->addDataSheet('Event data', $eventDataSheet);
+        $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
         $dataSheet = $eventDataSheet->copy();
         
@@ -183,21 +186,33 @@ class UndeletableBehavior extends AbstractBehavior
         foreach ($this->getDataChecks() as $check) {
             if ($check->isApplicable($dataSheet)) {
                 try {
-                    $check->check($dataSheet);
+                    $check->check($dataSheet, $logbook);
                 } catch (DataCheckExceptionInterface $e) {
-                    if (null !== ($badData = $e->getBadData()) && $badData->countRows() === 1) {
-                        $rows = $badData->getRows();
-                        $idx = array_key_first($rows);
-                        $row = $rows[$idx];
-                        // check if the regarding row has an alias for throwing in the exeption
-                        if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
-                            $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
-                                '%row%' => '"' . $row[$labelAttributeAlias] . '"',
-                                '%object%' => $dataSheet->getMetaObject()->getName()
-                            ]);
+                    if (null !== ($badData = $e->getBadData())) {
+                        if ($badData->countRows() === 1) {
+                            $rows = $badData->getRows();
+                            $idx = array_key_first($rows);
+                            $row = $rows[$idx];
+                            // check if the regarding row has an alias for throwing in the exeption
+                            if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
+                                $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
+                                    '%row%' => '"' . $row[$labelAttributeAlias] . '"',
+                                    '%object%' => $dataSheet->getMetaObject()->getName()
+                                ]);
+                            } else {
+                                $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
+                                    '%row%' => $idx + 1,
+                                    '%object%' => $dataSheet->getMetaObject()->getName()
+                                ]);
+                            }
                         } else {
+                            $rows = $badData->getRows();
+                            $keys = implode(', ', array_map(
+                                fn($key) => $key + 1,
+                                array_keys($rows)
+                            ));
                             $message = $this->translate('BEHAVIOR.UNDELETABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
-                                '%row%' => $idx + 1,
+                                '%row%' => $keys,
                                 '%object%' => $dataSheet->getMetaObject()->getName()
                             ]);
                         }
