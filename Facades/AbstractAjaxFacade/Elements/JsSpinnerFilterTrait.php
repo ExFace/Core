@@ -36,7 +36,7 @@ trait JsSpinnerFilterTrait
             $groupWidgets = new UxonObject([
                 new UxonObject([
                     'widget_type' => 'Button',
-                    'caption' => 'Previous',
+                    'caption' => $this->getWidget()->translate('WIDGET.SPINNERFILTER.PREV_STEP_BUTTON_CAPTION'),
                     'icon' => 'chevron-left',
                     'hide_caption' => true,
                     'width' => $this->buildCssWidthOfStepButton(),
@@ -49,7 +49,7 @@ trait JsSpinnerFilterTrait
                 $inputWidget,
                 new UxonObject([
                     'widget_type' => 'Button',
-                    'caption' => 'Next',
+                    'caption' => $this->getWidget()->translate('WIDGET.SPINNERFILTER.NEXT_STEP_BUTTON_CAPTION'),
                     'icon' => 'chevron-right',
                     'hide_caption' => true,
                     'width' => $this->buildCssWidthOfStepButton(),
@@ -63,6 +63,11 @@ trait JsSpinnerFilterTrait
             
             $wg->setWidgets($groupWidgets);
             $wg->setCaption($widget->getCaption());
+            // The InlineGroup itself is not bound to an attribute, so copy the input widget's
+            // hint explicitly to keep the tooltip consistent with other filters
+            if ($hint = $inputWidget->getHint(false)) {
+                $wg->setHint($hint);
+            }
             
             $this->inlineGroup = $wg;
             $this->getFacade()->getElement($this->inlineGroup)->addElementCssClass('exf-spinner-filter');
