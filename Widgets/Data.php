@@ -886,6 +886,14 @@ class Data
     {
         // TODO move sorters completely to configuration widget!
         // $this->getConfiguratorWidget()->addSorter($attribute_alias, $direction);
+        // Sorting over the same attribute twice has no effect on the data, but would show up
+        // as two identical sorters in the configurator - e.g. if `row_reorder` sorts over an
+        // attribute, that is also listed in `sorters` explicitly.
+        foreach ($this->sorters as $sorter) {
+            if ($sorter->getProperty('attribute_alias') === $attribute_alias) {
+                return $this;
+            }
+        }
         $sorter = new UxonObject();
         $sorter->setProperty('attribute_alias', $attribute_alias);
         $sorter->setProperty('direction', $direction);
