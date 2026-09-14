@@ -437,9 +437,9 @@ class Dialog extends Form implements UiScreenInterface, iAmClosable, iHaveHeader
 
     /**
      * {@inheritDoc}
-     * @see UiScreenInterface::getSlug()
+     * @see UiScreenInterface::getUrlSlug()
      */
-    public function getSlug() : string
+    public function getUrlSlug() : string
     {
         $parent = $this->getParent();
         if (($parent instanceof iTriggerAction) && $parent->getAction() instanceof iShowWidget) {
@@ -447,5 +447,29 @@ class Dialog extends Form implements UiScreenInterface, iAmClosable, iHaveHeader
         } else {
             return $this->getPage()->getAliasWithNamespace();
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getName()
+     */
+    public function getName(): string
+    {
+        return $this->getCaption();
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see UiScreenInterface::getDescription()
+     */
+    public function getDescription(): ?string
+    {
+        $btn = $this->getParent();
+        if ($btn instanceof iTriggerAction) {
+            if (null !== $action = $btn->getAction()) {
+                return $action->getHint();
+            }
+        }
+        return $this->getHint(false);
     }
 }

@@ -8,6 +8,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Interfaces\Widgets\iHaveVisibility;
@@ -139,7 +140,7 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      *
      * @return string
      */
-    public function getIdSpace();
+    public function getIdSpace() : string;
 
     /**
      * Returns TRUE if the id space was set explicitly for this widget.
@@ -543,4 +544,33 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return TourStepInterface[]
      */
     public function getTourSteps() : array;
+
+
+    /**
+     * Returns the UI screen instance this widget belongs to. 
+     * 
+     * A screen represents a "place" in the UI, which is recognizable for the user and is easy to use in communication:
+     * e.g. "See object editor screen for details". Screens are not separate model components, but rather the result
+     * of rendering a page or a special widget type like `Dialog`. This method allows to find the screen a widget
+     * belongs to - that is, the nearest parent dialog or popup or the page itself.
+     * 
+     * @return UiScreenInterface
+     */
+    public function getUiScreen() : UiScreenInterface;
+
+    /**
+     * Returns the id of this widget relative the id space of its screen - see `getUiScreen()`
+     *
+     * If the screen is defined by a widget itself (e.g. a dialog), the returned id does not include
+     * the id space of the screen. So while the full id returned by `getId()` is unique on a UI page, this id here
+     * is relative to the screen. Other screens may use the same id for different widgets. This is an important
+     * difference, when you try to identify widgets. For example, if you have a ShowDialog action, that is used
+     * in different pages, the ids of widgets inside the dialog will be different on each page as they get generated
+     * or at least prefixed automatically. But since the dialogs are separate screens, the widget ids relative to
+     * the screen id space would be the same. This way, you can identify the same widget in screens located in different
+     * parts of the UI reliably.
+     *
+     * @return string
+     */
+    public function getIdInScreen() : string;
 }

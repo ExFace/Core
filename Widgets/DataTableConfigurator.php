@@ -174,11 +174,11 @@ class DataTableConfigurator extends DataConfigurator
                     // into infinite loops if the widget no longer exists. Bound the search depth.
                     try {
                         $widget = $page->getWidget($widgetId, null, $maxDepth);
-                        $container = $widget->findUiContainer();
+                        $screen = $widget->getUiScreen();
                         // A widget sitting directly on the page is already in the correct format.
-                        if (! ($container instanceof UiPageInterface)) {
-                            $newSlug = $container->getSlug();
-                            $newWidgetId = $widget->getIdWithinUiContainer();
+                        if (! ($screen instanceof UiPageInterface)) {
+                            $newSlug = $screen->getUrlSlug();
+                            $newWidgetId = $widget->getIdInScreen();
                             $category = 'converted';
                         }
                     } catch (\Throwable $e) {
@@ -473,8 +473,8 @@ class DataTableConfigurator extends DataConfigurator
     {
         $dataWidget = $this->getDataWidget();
 
-        $screenSlug = $dataWidget->findUiContainer()->getSlug();
-        $widgetId = $dataWidget->getIdWithinUiContainer();
+        $screenSlug = $dataWidget->getUiScreen()->getUrlSlug();
+        $widgetId = $dataWidget->getIdInScreen();
         $objectId = $dataWidget->getMetaObject()->getId();
         
         /* @var $table \exface\Core\Widgets\DataTableResponsive */
