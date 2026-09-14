@@ -2,6 +2,9 @@
 
 <!-- BEGIN SubPageList:depth=20&root=exface/core/Docs -->
   - [Common recipies](Cookbook/index.md)
+  - Components
+    - Actions
+      - [ExportGanttXLSX\.instructions](Components/Actions/ExportGanttXLSX.instructions.md)
   - [Configuring the workbench and it's apps](Administration/index.md)
     - [Configuration](Administration/Configuration/index.md)
       - [Customizing the context bar](Administration/Configuration/Customizing_the_context_bar.md)
@@ -17,6 +20,9 @@
     - Special widgets
       - [Browser\_widget\_\(IFrame\)](Creating_UIs/Special_widgets/Browser_widget_(IFrame).md)
       - [Run CLI commands from the \`Console\` widget](Creating_UIs/Special_widgets/Console_widget.md)
+    - UX Guidelines
+      - [Allgemeine UI Design Prinzipien](Creating_UIs/UX_Guidelines/AllgemeineUIDesignPrinzipien.md)
+      - [PowerUI und widgetspezifische UI Design Prinzipien](Creating_UIs/UX_Guidelines/PUI_WidgetspezifischeUIDesignPrinzipien.md)
   - [Creating metamodels](creating_metamodels/index.md)
     - [Available metaobjects](creating_metamodels/Available_metaobjects.md)
     - [Data source credentials and user\-specific connection settings](creating_metamodels/Data_connection_credentials_and_user-specific_settings.md)
@@ -37,15 +43,21 @@
       - PHP
         - [PHP naming conventions](developer_docs/code_conventions/PHP/Naming_conventions.md)
         - [Using traits](developer_docs/code_conventions/PHP/Using_traits.md)
+    - [Component registry](developer_docs/Component_registry.md)
     - [Component selectors as references between code and model](developer_docs/Using_metamodel_components_in_the_code_via_selectors.md)
-    - [Configuring component discovery and save templates](developer_docs/Component_registry.md)
     - Contributing
       - [Proposing a change via GitHub](developer_docs/contributing/Contributing_on_GitHub.md)
       - [Setting up Eclipse IDE](developer_docs/contributing/Setting_up_Eclipse_IDE.md)
     - [Extending the context bar](developer_docs/Conexts/index.md)
     - Facades
+      - Common JS libraries
+        - [Perspective for PivotTable](developer_docs/Facades/Common_JS_libraries/Perspective_for_PivotTable.md)
       - HTML facades based on AbstractAjaxFacade
         - [Common configuration keys of AJAX facades](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Configuration_of_AJAX_facades.md)
+        - [Spreadsheet \(JExcel\) cell validation performance](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Spreadsheet_validation_performance.md)
+        - [Spreadsheet \(JExcel\) — plan to fix slow keystrokes / editor open\-close at high row counts](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Spreadsheet_editor_virtualization_plan.md)
+        - [Spreadsheet editor \(\`JExcelTrait\`\) — developer guide](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Spreadsheet_editor_architecture.md)
+    - Gantt Exporter
     - [How does the security system work technically?](developer_docs/Security/index.md)
     - [Installing apps with AppInstallers](developer_docs/App_installers/index.md)
       - [HTTP facade installer](developer_docs/App_installers/HTTP_facade_installer.md)
@@ -55,6 +67,7 @@
         - [Setting up an SQL installer step\-by\-step](developer_docs/App_installers/SQL/Setting_up_an_SQL_installer.md)
       - [SQL Database Installer](developer_docs/App_installers/SQL_Database_Installer.md)
     - [Logging](developer_docs/Logging/index.md)
+    - [Model files, versioning, importing and exporting models](developer_docs/Model_files_and_versioning.md)
     - [Moving objects between apps](developer_docs/Moving_objects_to_another_app.md)
     - [The app as a dependency container](developer_docs/app_as_container.md)
     - [The workbench](developer_docs/workbench.md)
@@ -138,6 +151,12 @@
     - [Aliases and selectors in the metamodel](understanding_the_metamodel/Aliases_and_selectors.md)
     - [Behaviors of meta objects](understanding_the_metamodel/Behaviors_of_meta_objects.md)
     - [Data sources and connections](understanding_the_metamodel/data_sources_and_connections.md)
+    - [Global UI principles](understanding_the_metamodel/Global_UI_principles/index.md)
+      - Common principles
+        - [Captions and hints in widgets](understanding_the_metamodel/Global_UI_principles/Common_principles/Captions_and_hints.md)
+      - [Data widgets](understanding_the_metamodel/Global_UI_principles/Data_widgets/index.md)
+        - [Data configurators and widget setups](understanding_the_metamodel/Global_UI_principles/Data_widgets/Data_configurators_and_setups.md)
+        - [Table\_widgets](understanding_the_metamodel/Global_UI_principles/Data_widgets/Table_widgets.md)
     - [Meta attributes](understanding_the_metamodel/Attributes_of_meta_objects.md)
     - [Meta objects](understanding_the_metamodel/Meta_objects.md)
     - [Prototypes of model components](understanding_the_metamodel/prototypes.md)
