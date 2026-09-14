@@ -185,19 +185,31 @@ class UneditableBehavior extends AbstractBehavior
                 try {
                     $check->check($dataSheet, $logbook);
                 } catch (DataCheckExceptionInterface $e) {
-                    if (null !== ($badData = $e->getBadData()) && $badData->countRows() === 1) {
-                        $rows = $badData->getRows();
-                        $idx = array_key_first($rows);
-                        $row = $rows[$idx];
-                        // check if the regarding row has an alias for throwing in the exeption
-                        if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
-                            $message = $this->translate('BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
-                                '%row%' => '"' . $row[$labelAttributeAlias] . '"',
-                                '%object%' => $dataSheet->getMetaObject()->getName()
-                            ]);
+                    if (null !== ($badData = $e->getBadData())) {
+                        if ($badData->countRows() === 1) {
+                            $rows = $badData->getRows();
+                            $idx = array_key_first($rows);
+                            $row = $rows[$idx];
+                            // check if the regarding row has an alias for throwing in the exeption
+                            if ($labelAttributeAlias !== null && $row[$labelAttributeAlias] !== null){
+                                $message = $this->translate('BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ERROR',[
+                                    '%row%' => '"' . $row[$labelAttributeAlias] . '"',
+                                    '%object%' => $dataSheet->getMetaObject()->getName()
+                                ]);
+                            } else {
+                                $message = $this->translate('BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
+                                    '%row%' => $idx + 1,
+                                    '%object%' => $dataSheet->getMetaObject()->getName()
+                                ]);
+                            }
                         } else {
+                            $rows = $badData->getRows();
+                            $keys = implode(', ', array_map(
+                                fn($key) => $key + 1,
+                                array_keys($rows)
+                            ));
                             $message = $this->translate('BEHAVIOR.UNEDITABLEBEHAVIOR.DELETE_FORBIDDEN_ROWS_ERROR',[
-                                '%row%' => $idx + 1,
+                                '%row%' => $keys,
                                 '%object%' => $dataSheet->getMetaObject()->getName()
                             ]);
                         }
