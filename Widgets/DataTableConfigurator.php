@@ -14,6 +14,7 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Widgets\iSupportWidgetSetups;
 
 /**
  * DataTable-configurators contain tabs for filters, sorters and column controls.
@@ -29,7 +30,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
  * @method \exface\Core\Widgets\DataTable getWidgetConfigured()
  *
  */
-class DataTableConfigurator extends DataConfigurator
+class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSetups
 {
     const CLEANUP_AREA_SETUPS = 'widget_setups';
     
@@ -447,6 +448,9 @@ class DataTableConfigurator extends DataConfigurator
     }
 
     /**
+        * {@inheritDoc}
+        * @see iSupportWidgetSetups::getSetupsTab()
+        *
      * @return Tab|null
      */
     public function getSetupsTab() : ?Tab
@@ -598,7 +602,7 @@ class DataTableConfigurator extends DataConfigurator
         $this->buttonSaveSetup = $this->createButtonToSaveSetup($table);
         $mainToolbar = $table->getToolbarMain();
         $mainToolbar
-            ->setIncludeNoExtraActions(true)
+            ->setIncludeGlobalActions(false)
             ->addButton($this->createButtonToApplySetup($table))
             ->addButton($this->buttonSaveSetup)
             ->addButton($this->createButtonToUpdateSetup($table))
@@ -745,15 +749,18 @@ class DataTableConfigurator extends DataConfigurator
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see iSupportWidgetSetups::hasSetups()
+     */
     public function hasSetups() : bool
     {
         return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
     }
 
     /**
-     * Returns the ID of the setups table, or null if setups are disabled
-     *
-     * @return string|null
+        * {@inheritDoc}
+        * @see iSupportWidgetSetups::getSetupsTableId()
      */
     public function getSetupsTableId() : ?string
     {

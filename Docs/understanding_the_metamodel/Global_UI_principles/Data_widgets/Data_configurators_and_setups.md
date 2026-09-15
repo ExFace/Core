@@ -10,6 +10,10 @@ Despite facade being in control of customizations, there are common personalizat
 
 Depending on the data widget configurators will include different tabs for different types of configurations. 
 
+Configurator prototypes that provide persisted setups implement `iSupportWidgetSetups`. The
+interface exposes whether setups are enabled and the setup-management tab, while each data widget
+type remains responsible for its own setup prototype and payload.
+
 ### Global configurator tabs
 
 A generic DataConfigurator will have these basic tabs:
