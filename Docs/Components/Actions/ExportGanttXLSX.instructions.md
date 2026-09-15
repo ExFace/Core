@@ -58,9 +58,10 @@ applyTo: "Actions/ExportGanttXLSX.php,CommonLogic/Utils/GanttXlsxBuilder.php,Doc
   calculation as other colored value cells.
 - If no header groups are configured, use one unnamed horizontal group containing all exported
   business columns with a column width of `13`.
-- Resolve the dedicated column before the Gantt timeline from `id_attribute_alias`. The configured
-  attribute must be among the exported widget columns. Without this property, use the first exported
-  column. Use that column's exported caption as the dedicated header and its values as the row IDs.
+- Resolve the dedicated column immediately after the grouped columns and before the Gantt timeline
+  from `id_attribute_alias`. The configured attribute must be among the exported widget columns.
+  Without this property, use the first exported column. Use that column's exported caption as the
+  dedicated header and its values as the row IDs.
 - Do not silently invent values for missing source columns. Missing mapped values remain empty.
 - Complete a task with only one valid date using the Gantt task configuration's default duration:
   missing end equals start plus the duration, and missing start equals end minus the duration.
