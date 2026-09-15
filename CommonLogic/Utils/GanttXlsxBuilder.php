@@ -348,10 +348,9 @@ class GanttXlsxBuilder
         return [
             'columnsStart' => 1,
             'columnsEnd' => $columnCount,
-            'spacer' => $columnCount + 1,
-            'idColumn' => $columnCount + 2,
-            'ganttLabel' => $columnCount + 3,
-            'timelineStart' => $columnCount + 4,
+            'idColumn' => $columnCount + 1,
+            'ganttLabel' => $columnCount + 2,
+            'timelineStart' => $columnCount + 3,
         ];
     }
 
@@ -906,7 +905,6 @@ class GanttXlsxBuilder
                 $sheet->getColumnDimensionByColumn($column)->setWidth($group['column_width']);
             }
         }
-        $sheet->getColumnDimensionByColumn($layout['spacer'])->setWidth(6.13);
         $sheet->getColumnDimensionByColumn($layout['idColumn'])->setWidth(16.2);
         $sheet->getColumnDimensionByColumn($layout['ganttLabel'])->setWidth(6.13);
         if ($timelineCount > 0) {
