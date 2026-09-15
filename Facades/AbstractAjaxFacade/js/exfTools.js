@@ -1211,6 +1211,63 @@
 			},
 
 			/**
+			 * Aggregates the values of a column across multiple rows into a single value
+			 * 
+			 * Without an aggregator, all values of the column are simply concatenated using the given
+			 * delimiter (a comma by default) - this is what a human would expect when turning a column
+			 * with values from multiple rows into a single value.
+			 * 
+			 * Supported aggregators (case-insensitive): `SUM`, `AVG`, `MIN`, `MAX`, `COUNT`, `COUNT_DISTINCT`,
+			 * `LIST`, `LIST_DISTINCT`. Non-numeric values are ignored by `SUM`, `AVG`, `MIN` and `MAX`.
+			 * 
+			 * @param {Array.<Object>} aRows
+			 * @param {string} sColumnName
+			 * @param {string} [sAggregator]
+			 * @param {string} [sMultiValDelim]
+			 * @returns {*}
+			 */
+			aggregateColumnValues: function(aRows, sColumnName, sAggregator, sMultiValDelim) {
+				sMultiValDelim = sMultiValDelim ? sMultiValDelim : ',';
+				var aValues = (aRows || []).map(function(oRow) {
+					return oRow[sColumnName];
+				});
+
+				if (! sAggregator) {
+					return aValues.join(sMultiValDelim);
+				}
+
+				var fnNumbers = function() {
+					return aValues.map(function(v) { return parseFloat(v); }).filter(function(f) { return ! isNaN(f); });
+				};
+				var fnDistinct = function() {
+					return aValues.filter(function(v, i) { return aValues.indexOf(v) === i; });
+				};
+
+				switch (sAggregator.toUpperCase()) {
+					case 'SUM':
+						return fnNumbers().reduce(function(sum, f) { return sum + f; }, 0);
+					case 'AVG':
+						var aNums = fnNumbers();
+						return aNums.length === 0 ? null : (aNums.reduce(function(sum, f) { return sum + f; }, 0) / aNums.length);
+					case 'MIN':
+						return fnNumbers().length === 0 ? null : Math.min.apply(null, fnNumbers());
+					case 'MAX':
+						return fnNumbers().length === 0 ? null : Math.max.apply(null, fnNumbers());
+					case 'COUNT':
+						return aValues.length;
+					case 'COUNT_DISTINCT':
+						return fnDistinct().length;
+					case 'LIST':
+					case 'LIST_ALL':
+						return aValues.join(sMultiValDelim);
+					case 'LIST_DISTINCT':
+						return fnDistinct().join(sMultiValDelim);
+					default:
+						throw 'Unknown aggregator "' + sAggregator + '" used in exfTools.data.aggregateColumnValues()!';
+				}
+			},
+
+			/**
 			 * Collection of tools to work with condition comparators
 			 */
 			filterComparator: {

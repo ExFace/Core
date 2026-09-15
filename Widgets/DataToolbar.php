@@ -91,7 +91,7 @@ class DataToolbar extends Toolbar
     }
     
     /**
-     * Set to TRUE to disable automatically included buttong groups for this toolbar completely.
+     * Set to TRUE to disable automatically included button groups for this toolbar completely.
      * 
      * Defaults to FALSE. Each type of autoinclude can be disabled separately
      * using the include_xxx_actions properties.
