@@ -9,9 +9,9 @@ use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
  */
 abstract class AbstractMarkdownPrinter implements MarkdownPrinterInterface
 {
-    protected function escapeMarkdownText(string $value): string
+    protected function escapeMarkdownText(?string $value): string
     {
-        return MarkdownDataType::escapeString($value);
+        return MarkdownDataType::escapeString($value ?? '');
     }
 
     /**

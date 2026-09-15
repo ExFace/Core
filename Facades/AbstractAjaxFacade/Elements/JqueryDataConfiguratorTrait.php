@@ -150,20 +150,19 @@ trait JqueryDataConfiguratorTrait
             $columns = $widget->getDataWidget()->getColumns();
             $columnsJs = ', columns: [';
             foreach ($columns as $column) {
-                $columnJs = '{';
-
-                if ($column->getDataColumnName() !== null){
-                    if ($column->getAttributeAlias() !== null) {
-                        $columnJs .= ' attribute_alias: "' . $column->getAttributeAlias() . '" ';
-                        if ($column->getDataColumnName() !== $column->getAttributeAlias()){
-                            $columnJs .= ', name: "' . $column->getDataColumnName() . '" ';
-                        }
+                if ($column->getDataColumnName() === null) {
+                    continue;
+                }
+                if ($column->getAttributeAlias() !== null) {
+                    $columnJs = '{ attribute_alias: "' . $column->getAttributeAlias() . '" ';
+                    if ($column->getDataColumnName() !== $column->getAttributeAlias()){
+                        $columnJs .= ', name: "' . $column->getDataColumnName() . '" ';
                     }
-                    else if ($column->isCalculated()) {
-                        $columnJs .= ' name: "' . $column->getDataColumnName() . '" ';
-                        $columnJs .= ' , expression: "' . $column->getCalculationExpression() . '" ';
-                    }
-                    
+                } elseif ($column->isCalculated() && ! $column->getCalculationExpression()->isEmpty()) {
+                    $columnJs = '{ name: "' . $column->getDataColumnName() . '" ';
+                    $columnJs .= ' , expression: "' . $column->getCalculationExpression() . '" ';
+                } else {
+                    continue;
                 }
 
                 $columnJs .= '}';

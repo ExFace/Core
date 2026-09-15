@@ -584,10 +584,11 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
 
     public function getMaxSuggestions()
     {
-        if (parent::getMaxSuggestions() === null && $this->getTable() && $this->getTable()->getPaginator()->getPageSize() !== null) {
-            $this->setMaxSuggestions($this->getTable()->getPaginator()->getPageSize());
+        $paginator = $this->getTable()->getPaginator();
+        if ($paginator->isDisabled()) {
+            return null;
         }
-        return parent::getMaxSuggestions();
+        return $paginator->getPageSize(parent::getMaxSuggestions());
     }
 
     /**
