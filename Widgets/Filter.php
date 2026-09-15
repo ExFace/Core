@@ -327,11 +327,13 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
         // Look for the best configuration for the input_widget
         switch (true) {
             // If not UXON defined by user and the filter is explicitly hidden - use a simple `InputHidden`.
-            case $this->useHiddenInput && $uxon->isEmpty() && $this->isBoundToAttribute():
+            case $this->useHiddenInput && $uxon->isEmpty():
                 $defaultEditorUxon = new UxonObject([
-                    'widget_type' => 'InputHidden',
-                    'attribute_alias' => $this->getAttributeAlias()
+                    'widget_type' => 'InputHidden'
                 ]);
+                if ($this->isBoundToAttribute()) {
+                    $defaultEditorUxon->setProperty('attribute_alias', $this->getAttributeAlias());
+                }
                 break;
             // If the filter is bound to an attribute, use its default editor UXON
             case $this->isBoundToAttribute() === true:
