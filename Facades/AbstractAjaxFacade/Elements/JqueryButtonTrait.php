@@ -1192,10 +1192,12 @@ JS;
         $targetEl = $this->getFacade()->getElement($action->getWidget($this->getWidget()->getPage()));
         $beforeJs = '';
         $afterJs = '';
+        // The root action closes its dialog; nested chain steps must leave their shared input intact.
+        $closeDialogJs = $action === $this->getWidget()->getAction() ? $this->buildJsCloseDialog() : '';
         $thisButtonScriptJs = <<<JS
 
                 {$this->buildJsTriggerActionEffects($action)}
-                {$this->buildJsCloseDialog()}
+                {$closeDialogJs}
 JS;
         
         // If the widget function is pressing another button, make sure the success/error 
