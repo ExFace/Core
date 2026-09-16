@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\OfflineStrategyDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Factories\DataSheetFactory;
@@ -45,6 +46,8 @@ class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSe
     private $setupsUxon = null;
     
     private ?Button $buttonSaveSetup = null;
+    private ?Button $buttonUpdateSetup = null;
+    private ?Button $buttonEditSetup = null;
 
     /**
      * Columns that dump_setup() injects into the input data client-side - declared here so the
@@ -488,6 +491,12 @@ class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSe
             'paginate' => false,
             'configurator_setups_enabled' => false,
             'hide_caption' => true,
+            'sorters' => [
+                [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
+                    'direction' => SortingDirectionsDataType::DESC
+                ]
+            ],
             'lazy_loading_action' => [
                 'alias' => 'exface.Core.ReadData',
                 'offline_strategy' => OfflineStrategyDataType::IGNORE
@@ -600,16 +609,18 @@ class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSe
         ]));
         $table->setHideHelpButton(true);
         $this->buttonSaveSetup = $this->createButtonToSaveSetup($table);
+        $this->buttonUpdateSetup = $this->createButtonToUpdateSetup($table);
+        $this->buttonEditSetup = $this->createButtonToEditSetup($table);
         $mainToolbar = $table->getToolbarMain();
         $mainToolbar
             ->setIncludeGlobalActions(false)
             ->addButton($this->createButtonToApplySetup($table))
             ->addButton($this->buttonSaveSetup)
-            ->addButton($this->createButtonToUpdateSetup($table))
+            ->addButton($this->buttonUpdateSetup)
             ->addButton($this->createButtonToFavoriteSetup($table))
             ->addButton($this->createButtonToShareSetup($table))
             ->addButton($this->createButtonToPublishSetup($table))
-            ->addButton($this->createButtonToEditSetup($table))
+            ->addButton($this->buttonEditSetup)
             ->addButton($this->createButtonToDeleteSetup($table));
         $tab->addWidget($table);
         return $tab;
@@ -991,5 +1002,33 @@ class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSe
             $this->initSetupsTable($this->tabSetups);
         }
         return $this->buttonSaveSetup;
+    }
+
+    /**
+     * @return Button|null
+     */
+    public function getButtonToUpdateSetup() : ?Button
+    {
+        if (! $this->hasSetups()) {
+            return null;
+        }
+        if ($this->buttonUpdateSetup === null) {
+            $this->initSetupsTable($this->tabSetups);
+        }
+        return $this->buttonUpdateSetup;
+    }
+
+    /**
+     * @return Button|null
+     */
+    public function getButtonToEditSetup() : ?Button
+    {
+        if (! $this->hasSetups()) {
+            return null;
+        }
+        if ($this->buttonEditSetup === null) {
+            $this->initSetupsTable($this->tabSetups);
+        }
+        return $this->buttonEditSetup;
     }
 }
