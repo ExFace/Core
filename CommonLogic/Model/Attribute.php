@@ -1172,7 +1172,7 @@ class Attribute implements MetaAttributeInterface, iCanBeConvertedToUxon
     public function explodeValueList(string $delimitedString) : array
     {
         $array = explode($this->getValueListDelimiter(), $delimitedString);
-        array_walk($array, 'trim');
+        $array = array_map('trim', $array);
         return $array;
     }
     

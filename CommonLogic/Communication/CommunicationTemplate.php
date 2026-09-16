@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Communication;
 
+use exface\Core\Exceptions\UxonParserError;
 use exface\Core\Interfaces\Selectors\CommunicationTemplateSelectorInterface;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
@@ -47,12 +48,15 @@ class CommunicationTemplate implements CommunicationTemplateInterface
         }
         if ($uxon !== null) {
             $this->uxon = $uxon;
-            $this->importUxonObject($uxon);
+            try {
+                $this->importUxonObject($uxon);
+            } catch (\Throwable $e) {
+                throw new UxonParserError($uxon, 'Cannot crate communication template from UXON! ' . $e->getMessage(), null, $e);
+            }
         }
     }
     
     /**
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Communication\CommunicationTemplateInterface::getSelector()
      */

@@ -52,6 +52,14 @@ trait JqueryFilterTrait {
         return <<<JS
 (function(mValue, sComparator) {
     var oParsed = {$filterParser};
+
+    // Filter parsing might prematurely resolve null adjacent values to more specific types, like NaN.
+    // We normalize them to null to facilitate consistent server-side handling.
+    // If you ever have server-side issues with unexpected filter values, check this normalization logic.
+    if(oParsed.value === undefined || oParsed.value === null || Number.isNaN(oParsed.value)) {
+        oParsed.value = null;
+    }
+
     return {
         "expression" : "{$widget->getAttributeAlias()}",
         "comparator" : oParsed.comparator,

@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\DataTypes\ByteSizeDataType;
+use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Widgets\WidgetFunctionUnknownError;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
@@ -1062,6 +1063,22 @@ JS;
     public function escapeBool(bool $trueOrFalse) : string
     {
         return $trueOrFalse === true ? 'true' : 'false';
+    }
+
+    /**
+     * @param $number
+     * @return string
+     */
+    public function escapeNumber($number) : string
+    {
+        if ($number === null || $number === '') {
+            return 'null';
+        }
+        if (is_numeric($number)) {
+            return (string)$number;
+        }
+        $number = NumberDataType::cast($number);
+        return (string)$number;
     }
     
     /**

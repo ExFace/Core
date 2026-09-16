@@ -75,6 +75,12 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     const ACCESS_DENIED_TO_ACTION_FOR_INPUT = 'to_action_for_button_input_data';
     const ACCESS_DENIED_NEVER = 'never';
 
+    // Numeric on purpose, so they can be compared to each other (e.g. `>`, `<`).
+    const PRIORITY_ALWAYS_OVERFLOW = 0;
+    const PRIORITY_LOW = 20;
+    const PRIORITY_NORMAL = 50;
+    const PRIORITY_NEVER_OVERFLOW = 100;
+
     /**
      * Press the button (default button function)
      *
@@ -125,10 +131,9 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     private $showIcon = null;
 
     private $addedWidgets = [];
-
-    /**
-     * @var string[]
-     */
+    
+    private $priority = null;
+    
     private $trustedInputColumns = [];
 
     /**
@@ -793,9 +798,44 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
     {
         $constName = 'self::APPEARANCE_' . strtoupper($value);
         if (! defined($constName)) {
-            throw new WidgetConfigurationError('Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
+            throw new WidgetConfigurationError($this, 'Invalid value "' . $value . '" for property `appearance` of widget "' . $this->getWidgetType() . '": expecting `default`, `link`, `filled` or `stroked`.');
         }
         $this->appearance = constant($constName);
+        return $this;
+    }
+    
+    /**
+     *
+     * @return int|NULL
+     */
+    public function getOverflowPriority() : ?int
+    {
+        return $this->priority;
+    }
+    
+    /**
+     * Explicitly control if/when this button may be moved into an overflow menu ("...") if its toolbar runs out of space.
+     * 
+     * If not set explicitly, the facade will derive a reasonable priority from the button's `visibility`.
+     * 
+     * - `low` - moved into the overflow menu first
+     * - `normal` - moved into the overflow menu only after all `low` priority items
+     * - `never_overflow` - never moved into the overflow menu - always directly accessible
+     * - `always_overflow` - always placed in the overflow menu, regardless of available space
+     * 
+     * @uxon-property overflow_priority
+     * @uxon-type [low,normal,always_overflow,never_overflow]
+     * 
+     * @param string $value
+     * @return Button
+     */
+    public function setOverflowPriority(string $value) : Button
+    {
+        $constName = 'self::PRIORITY_' . strtoupper($value);
+        if (! defined($constName)) {
+            throw new WidgetConfigurationError($this, 'Invalid value "' . $value . '" for property `overflow_priority` of widget "' . $this->getWidgetType() . '": expecting `low`, `normal`, `always_overflow` or `never_overflow`.');
+        }
+        $this->priority = constant($constName);
         return $this;
     }
 

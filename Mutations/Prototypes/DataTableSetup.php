@@ -9,17 +9,17 @@ use exface\Core\Mutations\AppliedMutation;
 use exface\Core\Widgets\DataTable;
 
 /**
- * Allows to modify the UXON configuration of an objects action
+ * User-side mutation (widget setup) for DataTable widgets - to allow users to personalize tables and save their setups.
+ * 
+ * 
  *
  * @author Andrej Kabachnik
  */
-class DataTableSetup extends AbstractMutation
+class DataTableSetup extends AbstractMutation implements WidgetSetupInterface
 {
-    private array $columnRules = [];
     private ?UxonObject $columnUxon = null;
-    private array $searchRules = [];
     private ?UxonObject $searchUxon = null;
-    private array $sorterRules = [];
+    private ?UxonObject $advancedConditionsUxon = null;
     private ?UxonObject $sorterUxon = null;
 
     /**
@@ -30,6 +30,9 @@ class DataTableSetup extends AbstractMutation
         if (! $this->supports($subject)) {
             throw new InvalidArgumentException('Cannot apply page mutation to ' . get_class($subject) . ' - only DataTable widgets supported!');
         }
+        
+        // TODO implement the logic to apply the setup in PHP. Currently it is only applied in JS, but the idea is
+        // to make it applicable in most worlds to allow setups in mutations too (for example, when extending a widget).
 
         return new AppliedMutation($this, $subject, '', '');
     }
@@ -71,6 +74,22 @@ class DataTableSetup extends AbstractMutation
     protected function setAdvancedSearch(UxonObject $uxonArray) : DataTableSetup
     {
         $this->searchUxon = $uxonArray;
+        return $this;
+    }
+
+    /**
+     * Complete condition group configured in Advanced Search.
+     *
+     * @uxon-property advanced_conditions
+     * @uxon-type \exface\Core\Mutations\MutationRules\AdvancedConditionGroupSetupRule
+     * @uxon-template {"operator": "AND", "ignore_empty_values": true, "conditions": [], "nested_groups": []}
+     *
+     * @param UxonObject $conditionGroupUxon
+     * @return $this
+     */
+    protected function setAdvancedConditions(UxonObject $conditionGroupUxon) : DataTableSetup
+    {
+        $this->advancedConditionsUxon = $conditionGroupUxon;
         return $this;
     }
 

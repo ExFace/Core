@@ -92,10 +92,14 @@ class TaskFactory extends AbstractStaticFactory
         // be reused safely - ScheduledTask::getTaskToRun() may run createFromUxon()
         // on the same innerTaskUxon more than once (enqueue + onRunPerformTask).
         $uxon = $uxon->copy();
-        $class = $uxon->getProperty('class');
-        $uxon->unsetProperty('class');
-        if (! class_exists($class)) {
-            throw new InvalidArgumentException('Class "' . $class . '" defined in task UXON does not exist');
+        if ($uxon->hasProperty('class')) {
+            $class = $uxon->getProperty('class');
+            $uxon->unsetProperty('class');
+            if (!class_exists($class)) {
+                throw new InvalidArgumentException('Class "' . $class . '" defined in task UXON does not exist');
+            }
+        } else {
+            $class = GenericTask::class;
         }
         $task = new $class($workbench);
         $task->importUxonObject($uxon);
