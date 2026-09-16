@@ -44,6 +44,9 @@ adapters in its `AbstractAjaxFacade`.  It includes a collection of
 ### Common AJAX facade principles
 
 <!-- BEGIN SubPageList:depth=2 -->
+  - [Common configuration keys of AJAX facades](Configuration_of_AJAX_facades.md)
+
+
 <!-- END SubPageList -->
 
 ## API principles

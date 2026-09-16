@@ -19,6 +19,7 @@ class DataTableSetup extends AbstractMutation implements WidgetSetupInterface
 {
     private ?UxonObject $columnUxon = null;
     private ?UxonObject $searchUxon = null;
+    private ?UxonObject $advancedConditionsUxon = null;
     private ?UxonObject $sorterUxon = null;
 
     /**
@@ -73,6 +74,22 @@ class DataTableSetup extends AbstractMutation implements WidgetSetupInterface
     protected function setAdvancedSearch(UxonObject $uxonArray) : DataTableSetup
     {
         $this->searchUxon = $uxonArray;
+        return $this;
+    }
+
+    /**
+     * Complete condition group configured in Advanced Search.
+     *
+     * @uxon-property advanced_conditions
+     * @uxon-type \exface\Core\Mutations\MutationRules\AdvancedConditionGroupSetupRule
+     * @uxon-template {"operator": "AND", "ignore_empty_values": true, "conditions": [], "nested_groups": []}
+     *
+     * @param UxonObject $conditionGroupUxon
+     * @return $this
+     */
+    protected function setAdvancedConditions(UxonObject $conditionGroupUxon) : DataTableSetup
+    {
+        $this->advancedConditionsUxon = $conditionGroupUxon;
         return $this;
     }
 
