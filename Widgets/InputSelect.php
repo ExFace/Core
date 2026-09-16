@@ -1179,6 +1179,7 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
      * Delimiter for the DISPLAYED text only - value getters must use getMultipleValuesDelimiter().
      * 
      * @return string
+     * @deprecated TODO Branching between the regular list delimiter and the text delimiter is currently not implemented.
      */
     public function getMultiSelectTextDelimiter() : string
     {
@@ -1203,9 +1204,6 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
      * This setting will only affect the displayed text, not the value passed to the server.
      * 
      * STUB - This property is not wired up and will have no effect.
-     *
-     * @uxon-property multi_select_text_delimiter
-     * @uxon-type string
      *
      * @param string $value            
      * @return \exface\Core\Widgets\InputSelect
