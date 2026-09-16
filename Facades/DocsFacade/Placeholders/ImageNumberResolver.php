@@ -22,11 +22,15 @@ class ImageNumberResolver extends AbstractMarkdownPlaceholderResolver implements
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        $rootDirectory = $this->getDocsPath($this->pagePath);
-        $markdownStructure = $this->getFlattenMarkdownFiles($rootDirectory);
-            
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
         $filteredNames = $this->filterPlaceholders($names);
+        if (empty($filteredNames)) {
+            return $vals;
+        }
+
+        $rootDirectory = $this->getDocsPath($this->pagePath);
+        $markdownStructure = $this->getFlattenMarkdownFiles($rootDirectory);
+
         $order = 0;
         foreach ($placeholders as $i => $placeholder) {
             if (in_array($placeholder['name'], $filteredNames)) {
