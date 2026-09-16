@@ -49,14 +49,15 @@
       - [Proposing a change via GitHub](developer_docs/contributing/Contributing_on_GitHub.md)
       - [Setting up Eclipse IDE](developer_docs/contributing/Setting_up_Eclipse_IDE.md)
     - [Extending the context bar](developer_docs/Conexts/index.md)
-    - Facades
-      - Common JS libraries
+    - [Facades](developer_docs/Facades/index.md)
+      - [Common Javascript libraries](developer_docs/Facades/Common_JS_libraries/index.md)
+        - JSpreadsheet
+          - [Spreadsheet \(JExcel\) cell validation performance](developer_docs/Facades/Common_JS_libraries/jSpreadsheet/Spreadsheet_validation_performance.md)
+          - [Spreadsheet \(JExcel\) — plan to fix slow keystrokes / editor open\-close at high row counts](developer_docs/Facades/Common_JS_libraries/jSpreadsheet/Spreadsheet_editor_virtualization_plan.md)
+          - [Spreadsheet editor \(\`JExcelTrait\`\) — developer guide](developer_docs/Facades/Common_JS_libraries/jSpreadsheet/Spreadsheet_editor_architecture.md)
         - [Perspective for PivotTable](developer_docs/Facades/Common_JS_libraries/Perspective_for_PivotTable.md)
-      - HTML facades based on AbstractAjaxFacade
-        - [Common configuration keys of AJAX facades](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Configuration_of_AJAX_facades.md)
-        - [Spreadsheet \(JExcel\) cell validation performance](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Spreadsheet_validation_performance.md)
-        - [Spreadsheet \(JExcel\) — plan to fix slow keystrokes / editor open\-close at high row counts](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Spreadsheet_editor_virtualization_plan.md)
-        - [Spreadsheet editor \(\`JExcelTrait\`\) — developer guide](developer_docs/Facades/HTML_facades_based_on_AbstractAjaxFacade/Spreadsheet_editor_architecture.md)
+      - [UI facades](developer_docs/Facades/UI_facades/index.md)
+        - [Common configuration keys of AJAX facades](developer_docs/Facades/UI_facades/Configuration_of_AJAX_facades.md)
     - Gantt Exporter
     - [How does the security system work technically?](developer_docs/Security/index.md)
     - [Installing apps with AppInstallers](developer_docs/App_installers/index.md)
