@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\Model\UiPage;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\OfflineStrategyDataType;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Factories\DataSheetFactory;
@@ -14,6 +15,7 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Widgets\iSupportWidgetSetups;
 
 /**
  * DataTable-configurators contain tabs for filters, sorters and column controls.
@@ -29,7 +31,7 @@ use exface\Core\Interfaces\Widgets\iHaveButtons;
  * @method \exface\Core\Widgets\DataTable getWidgetConfigured()
  *
  */
-class DataTableConfigurator extends DataConfigurator
+class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSetups
 {
     const CLEANUP_AREA_SETUPS = 'widget_setups';
     
@@ -44,6 +46,8 @@ class DataTableConfigurator extends DataConfigurator
     private $setupsUxon = null;
     
     private ?Button $buttonSaveSetup = null;
+    private ?Button $buttonUpdateSetup = null;
+    private ?Button $buttonEditSetup = null;
 
     /**
      * Columns that dump_setup() injects into the input data client-side - declared here so the
@@ -174,11 +178,11 @@ class DataTableConfigurator extends DataConfigurator
                     // into infinite loops if the widget no longer exists. Bound the search depth.
                     try {
                         $widget = $page->getWidget($widgetId, null, $maxDepth);
-                        $container = $widget->findUiContainer();
+                        $screen = $widget->getUiScreen();
                         // A widget sitting directly on the page is already in the correct format.
-                        if (! ($container instanceof UiPageInterface)) {
-                            $newSlug = $container->getSlug();
-                            $newWidgetId = $widget->getIdWithinUiContainer();
+                        if (! ($screen instanceof UiPageInterface)) {
+                            $newSlug = $screen->getUrlSlug();
+                            $newWidgetId = $widget->getIdInScreen();
                             $category = 'converted';
                         }
                     } catch (\Throwable $e) {
@@ -447,6 +451,9 @@ class DataTableConfigurator extends DataConfigurator
     }
 
     /**
+        * {@inheritDoc}
+        * @see iSupportWidgetSetups::getSetupsTab()
+        *
      * @return Tab|null
      */
     public function getSetupsTab() : ?Tab
@@ -473,8 +480,8 @@ class DataTableConfigurator extends DataConfigurator
     {
         $dataWidget = $this->getDataWidget();
 
-        $screenSlug = $dataWidget->findUiContainer()->getSlug();
-        $widgetId = $dataWidget->getIdWithinUiContainer();
+        $screenSlug = $dataWidget->getUiScreen()->getUrlSlug();
+        $widgetId = $dataWidget->getIdInScreen();
         $objectId = $dataWidget->getMetaObject()->getId();
         
         /* @var $table \exface\Core\Widgets\DataTableResponsive */
@@ -484,6 +491,12 @@ class DataTableConfigurator extends DataConfigurator
             'paginate' => false,
             'configurator_setups_enabled' => false,
             'hide_caption' => true,
+            'sorters' => [
+                [
+                    'attribute_alias' => 'WIDGET_SETUP_USER__FAVORITE_FLAG',
+                    'direction' => SortingDirectionsDataType::DESC
+                ]
+            ],
             'lazy_loading_action' => [
                 'alias' => 'exface.Core.ReadData',
                 'offline_strategy' => OfflineStrategyDataType::IGNORE
@@ -596,16 +609,18 @@ class DataTableConfigurator extends DataConfigurator
         ]));
         $table->setHideHelpButton(true);
         $this->buttonSaveSetup = $this->createButtonToSaveSetup($table);
+        $this->buttonUpdateSetup = $this->createButtonToUpdateSetup($table);
+        $this->buttonEditSetup = $this->createButtonToEditSetup($table);
         $mainToolbar = $table->getToolbarMain();
         $mainToolbar
-            ->setIncludeNoExtraActions(true)
+            ->setIncludeGlobalActions(false)
             ->addButton($this->createButtonToApplySetup($table))
             ->addButton($this->buttonSaveSetup)
-            ->addButton($this->createButtonToUpdateSetup($table))
+            ->addButton($this->buttonUpdateSetup)
             ->addButton($this->createButtonToFavoriteSetup($table))
             ->addButton($this->createButtonToShareSetup($table))
             ->addButton($this->createButtonToPublishSetup($table))
-            ->addButton($this->createButtonToEditSetup($table))
+            ->addButton($this->buttonEditSetup)
             ->addButton($this->createButtonToDeleteSetup($table));
         $tab->addWidget($table);
         return $tab;
@@ -745,15 +760,18 @@ class DataTableConfigurator extends DataConfigurator
         return $this;
     }
 
+    /**
+     * {@inheritDoc}
+     * @see iSupportWidgetSetups::hasSetups()
+     */
     public function hasSetups() : bool
     {
         return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
     }
 
     /**
-     * Returns the ID of the setups table, or null if setups are disabled
-     *
-     * @return string|null
+        * {@inheritDoc}
+        * @see iSupportWidgetSetups::getSetupsTableId()
      */
     public function getSetupsTableId() : ?string
     {
@@ -984,5 +1002,33 @@ class DataTableConfigurator extends DataConfigurator
             $this->initSetupsTable($this->tabSetups);
         }
         return $this->buttonSaveSetup;
+    }
+
+    /**
+     * @return Button|null
+     */
+    public function getButtonToUpdateSetup() : ?Button
+    {
+        if (! $this->hasSetups()) {
+            return null;
+        }
+        if ($this->buttonUpdateSetup === null) {
+            $this->initSetupsTable($this->tabSetups);
+        }
+        return $this->buttonUpdateSetup;
+    }
+
+    /**
+     * @return Button|null
+     */
+    public function getButtonToEditSetup() : ?Button
+    {
+        if (! $this->hasSetups()) {
+            return null;
+        }
+        if ($this->buttonEditSetup === null) {
+            $this->initSetupsTable($this->tabSetups);
+        }
+        return $this->buttonEditSetup;
     }
 }

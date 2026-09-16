@@ -13,7 +13,8 @@
 6. [Configuring component discovery and save templates](Component_registry.md)
 7. [Logging](Logging/index.md)
 8. [Moving model components between apps](Moving_objects_to_another_app.md)
-9. [Working offline](Offline/index.md)
+9. [Facades for UIs and API](Facades/index.md)
+    - [Working offline](Offline/index.md)
 
 ## Technical overview
 

@@ -3,6 +3,7 @@ namespace exface\Core\ModelLoaders;
 
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Events\Model\OnBeforeDataTypeLoadedEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Events\Model\OnBeforeSnippetLoadedEvent;
@@ -1632,9 +1633,12 @@ SQL;
         $uiPage->setReplacesPageSelector($row['replace_page_oid']);
         $uiPage->setContents($row['content'] ?? new UxonObject());
 
-        $uiPage->setCreatedOn($row['created_on']);
+        // Model timestamps use the SQL connection timezone; UI pages use the PHP/workbench timezone.
+        // otherwise with every conversion, the timezone would be incorrectly applied. adding/substracting the difference
+        // A NULL connection timezone means both are already the same and cast() leaves the value unchanged.
+        $uiPage->setCreatedOn(DateTimeDataType::cast($row['created_on'], false, $this->getDataConnection()->getTimeZone()));
         $uiPage->setCreatedByUserSelector($row['created_by_user_oid']);
-        $uiPage->setModifiedOn($row['modified_on']);
+        $uiPage->setModifiedOn(DateTimeDataType::cast($row['modified_on'], false, $this->getDataConnection()->getTimeZone()));
         $uiPage->setModifiedByUserSelector($row['modified_by_user_oid']);
 
         $uiPage->setFacadeSelector($row['facade_filepath']);
@@ -1730,9 +1734,10 @@ SQL;
             $row['app_oid']
         );
 
-        $node->setCreatedOn($row['created_on']);
+        // Keep tree-node timestamps consistent with fully loaded UI pages.
+        $node->setCreatedOn(DateTimeDataType::cast($row['created_on'], false, $this->getDataConnection()->getTimeZone()));
         $node->setCreatedByUserSelector($row['created_by_user_oid']);
-        $node->setModifiedOn($row['modified_on']);
+        $node->setModifiedOn(DateTimeDataType::cast($row['modified_on'], false, $this->getDataConnection()->getTimeZone()));
         $node->setModifiedByUserSelector($row['modified_by_user_oid']);
         $node->setMenuVisible($row['menu_visible']);
 

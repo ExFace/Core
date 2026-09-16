@@ -11,16 +11,16 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-12 17:09:23",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2024-11-19 22:09:41",
+    "modified_on": "2026-09-16 11:37:32",
     "contents": {
         "widget_type": "SplitHorizontal",
         "object_alias": "exface.Core.USER_ROLE",
         "panels": [
             {
-                "caption": "User roles",
                 "width": "60%",
                 "widgets": [
                     {
+                        "caption": "User roles",
                         "widget_type": "DataTable",
                         "object_alias": "exface.Core.USER_ROLE",
                         "nowrap": false,
@@ -90,9 +90,9 @@
                 ]
             },
             {
-                "caption": "Synchorized external user roles/groups",
                 "widgets": [
                     {
+                        "caption": "Synchorized external user roles/groups",
                         "widget_type": "DataTable",
                         "object_alias": "exface.Core.USER_ROLE_EXTERNAL",
                         "multi_select": true,

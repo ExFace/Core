@@ -68,19 +68,24 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
         $indent = $this->getOutputIndentation();
         $rootPath = $source_absolute_path . DIRECTORY_SEPARATOR . $this->getDocsPathRelative();
         yield $indent . "Docs from " . $this->getDocsPathRelative() . ": ";
-        //placeholders are implemented twice because of references
-        $this->implementPlaceholders($rootPath);
-        $fileCnt = $this->implementPlaceholders($rootPath);
+        $markdownFiles = $this->getMarkdownFiles($rootPath);
+        // Placeholders are implemented twice because of references.
+        $this->implementPlaceholders($markdownFiles);
+        $fileCnt = $this->implementPlaceholders($markdownFiles);
         yield ' rendered ' . $fileCnt . ' files.' . PHP_EOL;
     }
     
-    protected function implementPlaceholders(string $rootPath): int
+    /**
+     * @param string[] $markdownFiles
+     * @return int
+     */
+    protected function implementPlaceholders(array $markdownFiles): int
     {
         $baseRenderer = new DocsTemplateRenderer($this->getWorkbench());
 
         $fileCnt = 0;
         $vendorPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder();
-        foreach ($this->getMarkdownFiles($rootPath) as $file) {
+        foreach ($markdownFiles as $file) {
             $fileRenderer = $baseRenderer->copy();
             $fileRenderer->addPlaceholder(new ImageNumberResolver($file));
             $fileRenderer->addPlaceholder(new SubPageListResolver($file, $vendorPath));

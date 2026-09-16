@@ -1516,10 +1516,19 @@ class UiPage implements UiPageInterface
 
     /**
      * {@inheritDoc}
-     * @see UiScreenInterface::getSlug()
+     * @see UiScreenInterface::getUrlSlug()
      */
-    public function getSlug() : string
+    public function getUrlSlug() : string
     {
         return $this->getAliasWithNamespace();
+    }
+
+    /**
+     * Pages are the root id space for all widgets, so their id space is always empty.
+     * @see UiScreenInterface::getIdSpace()
+     */
+    public function getIdSpace() : string
+    {
+        return '';
     }
 }

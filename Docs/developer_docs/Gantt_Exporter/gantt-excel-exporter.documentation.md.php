@@ -179,9 +179,10 @@ without a value-dependent background color.
 
 If a Gantt column has no explicit caption, its attribute name from the metamodel is used
 automatically. Set `id_attribute_alias` to copy an exported attribute into the dedicated column
-before the Gantt timeline. Its exported caption becomes the five-row header. If the property is
-omitted, the first exported column of the first header group is used. A configured ID attribute that
-is not included in the current export raises a configuration error.
+immediately after the grouped columns and before the Gantt timeline. Its exported caption becomes the
+five-row header. If the property is omitted, the first exported column of the first header group is
+used. A configured ID attribute that is not included in the current export raises a configuration
+error.
 
 Semantic companion colors such as `~OK`, `~WARNING`, and `~ERROR` are resolved with the semantic
 CSS color map of the facade that triggered the export. This keeps workbook colors aligned with the
@@ -205,7 +206,7 @@ horizontal groups use white and vertical groups use neutral gray.
 - Worksheet name: `Terminübersicht`
 - Five header rows and data beginning in row 6
 - Configurable column groups with merged group headers, widths, and caption orientations
-- A dedicated ID column selected by `id_attribute_alias`, followed by weekly timeline columns
+- A dedicated ID column directly after the grouped columns, followed by weekly timeline columns
 - Timeline grouping by execution year, quarter, month, and calendar week
 - Quarter-bounded date range derived from all valid nested tasks
 - ISO week 53 in years that contain it, including its days in the following calendar year
