@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-09-30 09:19:33",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2025-01-22 23:12:49",
+    "modified_on": "2026-09-16 11:42:46",
     "icon": "random",
     "contents": {
         "widget_type": "SplitVertical",
@@ -24,10 +24,10 @@
                         "widget_type": "SplitHorizontal",
                         "panels": [
                             {
-                                "caption": "Errors",
                                 "width": "34%",
                                 "widgets": [
                                     {
+                                        "caption": "Errors",
                                         "widget_type": "DataTable",
                                         "nowrap": false,
                                         "id": "errors_table",
@@ -79,9 +79,9 @@
                                 ]
                             },
                             {
-                                "caption": "Top Queues",
                                 "widgets": [
                                     {
+                                        "caption": "Top Queues",
                                         "widget_type": "Chart",
                                         "id": "queues_chart",
                                         "data": {
@@ -117,8 +117,8 @@
                                 "width": "33%",
                                 "widgets": [
                                     {
-                                        "widget_type": "Chart",
                                         "caption": "Top Users",
+                                        "widget_type": "Chart",
                                         "id": "users_chart",
                                         "data": {
                                             "aggregate_by_attribute_alias": [
@@ -154,9 +154,9 @@
                 ]
             },
             {
-                "caption": "Tasks",
                 "widgets": [
                     {
+                        "caption": "Tasks",
                         "widget_type": "DataTable",
                         "id": "TaskQueue_table",
                         "multi_select": true,
