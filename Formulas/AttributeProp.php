@@ -10,17 +10,19 @@ use exface\Core\DataTypes\ComparatorDataType;
 /**
  * Returns any property of an attribute from the metamodel
  * 
+ * `=AttributeProp(<object_alias_with_namespace>, <attribute_alias>, <property_name>)`
+ * 
  * Technically, attribute properties are attributes of the object `exface.Core.ATTRIBUTE`,
  * so you can request any of those here: `NAME`, `SHORT_DESCRIPTION`, `DEFAULT_VALUE`, or
  * even `DATATYPE__NAME`.
  * 
  * Examples:
  * 
- * - `=AttributeProp('my.App.SOMEOBJECT', 'TITLE')` will return the name of the `TITLE` attribute.
- * If there are translations for attribute names, the formula will pick the translation for the
- * current session language.
- * - `=AttributeProp('my.App.SOMEOBJECT', 'DEFAULT_VALUE')` will return the default value for the
- * attribute. If the default value is a formula, it will be evaluated.
+ * - `=AttributeProp('my.App.SOMEOBJECT', 'TITLE')` will return the name property of the attribute `TITLE` as the default property.
+ * <ins> If there are translations for attribute names, the formula will pick the translation for the
+ * current session language. </ins>
+ * - `=AttributeProp('my.App.SOMEOBJECT', 'TITLE', 'DEFAULT_VALUE')` will return the default value for the
+ * attribute. <ins> If the default value is a formula, it will be evaluated. </ins>
  * 
  */
 class AttributeProp extends Formula
