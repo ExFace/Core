@@ -85,7 +85,28 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     }
 
     /**
-     * {@inheritDoc}
+     * Builds a JavaScript expression that returns an object with:
+     *
+     * - `comparator`: normalized ComparatorDataType value
+     * - `value`: normalized scalar or serialized range value
+    *
+     * The filter parser takes care of filter-specific normalization of values (on top of those of the regular parser):
+    *
+     * - Filter values can contain comparators (e.g. `> 5`, `<= 10`, `!= 3`) which are extracted and normalized into
+     * the `comparator` property.
+     * - Filter values can contain ranges (e.g. `5..10`, `25.07.2026..30.07.2026`) which remain strings in the value
+     * property, but get a BETWEEN comparator and both values parsed according to the underlying data type.
+     * - Filter values can contain lists (e.g. `1,2,3`, `2026-07-25,2026-07-30`) which remain strings too, but get an
+     * IN comparator and all values parsed according to the underlying data type.
+     * - Filter values can be the logical `NULL` constant (EXF_LOGICAL_NULL). In contrast to the `null` JS value, this
+     * means the filter is not empty, and we will need to filter for `NULL`s in the DB. So the `NULL` constant is 
+     * actually a valid filter value.
+    *
+     * Centralizing all this value logic is important. This is why `$jsValue` can take either a scalar raw value or
+     * the JS object produced by `exfTools.data.filterComparator.extract()`. When overriding this method, you can
+     * use the extractor once and pass the result back to the parent method - see `JsDateFormatter` and `JsEnumFormatter`
+     * for examples.
+    *
      * @see JsDataTypeFormatterInterface::buildJsFilterParser()
      */
     public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
@@ -104,6 +125,23 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
         // be a list or contain an inline operator/range - parsing it here as a scalar would corrupt it.
         return <<<JS
 (function(mFilterValue, sComparator) {
+    var oExtracted = exfTools.data.filterComparator.extract(mFilterValue);
+    if (oExtracted.comparator !== null) {
+        sComparator = oExtracted.comparator;
+    }
+    if (oExtracted.isEmpty) {
+        return {
+            comparator: sComparator,
+            value: oExtracted.value
+        };
+    }
+    // Logical NULL is an active filter value. Preserve it verbatim instead of datatype-parsing it.
+    if (oExtracted.isNullConstant) {
+        return {
+            comparator: sComparator,
+            value: oExtracted.value
+        };
+    }
     var aRightListComparators = {$rightListComparatorsJs};
     var fnParse = function(mFilterValue) {
         return {$parserJs};
@@ -111,7 +149,7 @@ abstract class AbstractJsDataTypeFormatter implements JsDataTypeFormatterInterfa
     var bPreserve = sComparator === null || sComparator === '' || aRightListComparators.indexOf(sComparator) !== -1;
     return {
         comparator: sComparator,
-        value: bPreserve ? mFilterValue : fnParse(mFilterValue)
+        value: bPreserve ? oExtracted.value : fnParse(oExtracted.value)
     };
 })({$jsValue}, {$jsComparator})
 JS;

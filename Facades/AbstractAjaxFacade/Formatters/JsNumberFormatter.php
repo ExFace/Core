@@ -149,21 +149,25 @@ JS;
 
     /**
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFilterParser()
+     * @see AbstractJsDataTypeFormatter::buildJsFilterParser()
      */
     public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
     {
         $valueParserJs = $this->buildJsFormatParser('mRangeValue');
-        $defaultParserJs = parent::buildJsFilterParser('mFilterValue', 'sComparator');
+        $defaultParserJs = parent::buildJsFilterParser('oExtracted', 'sComparator');
         $between = ComparatorDataType::BETWEEN;
 
         // Numbers can be used with BETWEEN comparator - in this case, we need to parse the two sides separately
         return <<<JS
 (function(mFilterValue, sComparator) {
-    if (sComparator === '{$between}') {
-        var iSeparator = String(mFilterValue).indexOf('{$between}');
-        var mValueFrom = iSeparator === -1 ? mFilterValue : String(mFilterValue).slice(0, iSeparator);
-        var mValueTo = iSeparator === -1 ? '' : String(mFilterValue).slice(iSeparator + 2);
+    var oExtracted = exfTools.data.filterComparator.extract(mFilterValue);
+    if (oExtracted.comparator !== null) {
+        sComparator = oExtracted.comparator;
+    }
+    if (sComparator === '{$between}' && oExtracted.isEmpty === false && oExtracted.isNullConstant === false) {
+        var iSeparator = String(oExtracted.value).indexOf('{$between}');
+        var mValueFrom = iSeparator === -1 ? oExtracted.value : String(oExtracted.value).slice(0, iSeparator);
+        var mValueTo = iSeparator === -1 ? '' : String(oExtracted.value).slice(iSeparator + 2);
         var fnParse = function(mRangeValue) {
             return {$valueParserJs};
         };

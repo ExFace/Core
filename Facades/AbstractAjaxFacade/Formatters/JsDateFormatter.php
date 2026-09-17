@@ -181,14 +181,14 @@ JS;
      * `31.12.2025..01.01.2026`, `31.12.2025..`, and `..01.01.2026` keep the `..`
      * comparator while their non-empty endpoints are converted to the internal format.
      *
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFilterParser()
+    * @see AbstractJsDataTypeFormatter::buildJsFilterParser()
      */
     public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
     {
         $formatQuoted = $this->escapeFormatString($this->getFormat());
         // Generate the fallback against the IIFE's local variables so the original value and
         // comparator expressions are evaluated only once when the generated parser executes.
-        $defaultParserJs = parent::buildJsFilterParser('mFilterValue', 'sComparator');
+        $defaultParserJs = parent::buildJsFilterParser('oExtracted', 'sComparator');
         $valueParserJs = $this->buildJsFormatParser('mRangeValue');
         $betweenDelimiter = ComparatorDataType::BETWEEN;
         if ($this->getDataType() instanceof DateTimeDataType) {
@@ -198,17 +198,17 @@ JS;
             $rangeToJs = $this->buildJsFormatDateObjectToInternal('oRange.to');
             $partialRangeParserJs = <<<JS
 
-    if (sComparator === '=' || sComparator === '==') {
-        var oRange = exfTools.date.findFilterRange(mFilterValue, {$formatQuoted});
-        if (oRange !== null) {
-            var sValueFrom = {$rangeFromJs};
-            var sValueTo = {$rangeToJs};
-            return {
-                comparator: '{$betweenDelimiter}',
-                value: sValueFrom + '{$betweenDelimiter}' + sValueTo
-            };
+        if (sComparator === '=' || sComparator === '==') {
+            var oRange = exfTools.date.findFilterRange(mFilterValue, {$formatQuoted});
+            if (oRange !== null) {
+                var sValueFrom = {$rangeFromJs};
+                var sValueTo = {$rangeToJs};
+                return {
+                    comparator: '{$betweenDelimiter}',
+                    value: sValueFrom + '{$betweenDelimiter}' + sValueTo
+                };
+            }
         }
-    }
 JS;
         } else {
             $partialRangeParserJs = '';
@@ -218,20 +218,27 @@ JS;
         // date expression. Empty endpoints stay empty: `31.12.2025..` and `..01.01.2026` are valid.
         return <<<JS
 (function(mFilterValue, sComparator) {
-    {$partialRangeParserJs}
-    if (sComparator === '{$betweenDelimiter}') {
-        var iSeparator = String(mFilterValue).indexOf('{$betweenDelimiter}');
-        var mValueFrom = iSeparator === -1 ? mFilterValue : String(mFilterValue).slice(0, iSeparator);
-        var mValueTo = iSeparator === -1 ? '' : String(mFilterValue).slice(iSeparator + 2);
-        var fnParse = function(mRangeValue) {
-            return {$valueParserJs};
-        };
-        var mParsedFrom = mValueFrom === '' ? '' : fnParse(mValueFrom);
-        var mParsedTo = mValueTo === '' ? '' : fnParse(mValueTo);
-        return {
-            comparator: sComparator,
-            value: String(mParsedFrom) + '{$betweenDelimiter}' + String(mParsedTo)
-        };
+    var oExtracted = exfTools.data.filterComparator.extract(mFilterValue);
+    if (oExtracted.comparator !== null) {
+        sComparator = oExtracted.comparator;
+    }
+    mFilterValue = oExtracted.value;
+    if (oExtracted.isEmpty === false && oExtracted.isNullConstant === false) {
+        {$partialRangeParserJs}
+        if (sComparator === '{$betweenDelimiter}') {
+            var iSeparator = String(mFilterValue).indexOf('{$betweenDelimiter}');
+            var mValueFrom = iSeparator === -1 ? mFilterValue : String(mFilterValue).slice(0, iSeparator);
+            var mValueTo = iSeparator === -1 ? '' : String(mFilterValue).slice(iSeparator + 2);
+            var fnParse = function(mRangeValue) {
+                return {$valueParserJs};
+            };
+            var mParsedFrom = mValueFrom === '' ? '' : fnParse(mValueFrom);
+            var mParsedTo = mValueTo === '' ? '' : fnParse(mValueTo);
+            return {
+                comparator: sComparator,
+                value: String(mParsedFrom) + '{$betweenDelimiter}' + String(mParsedTo)
+            };
+        }
     }
     return {$defaultParserJs};
 })({$jsValue}, {$jsComparator})
