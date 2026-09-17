@@ -102,6 +102,71 @@ class SemanticVersionDataType extends AbstractDataType
     {
         return Comparator::greaterThan($version, $comparedToVersion);
     }
+
+    /**
+     * Increases the major, minor, and patch parts of a semantic version by the given deltas.
+     *
+     * Pre-release and build metadata suffixes are preserved. Each resulting version part is
+     * padded to at least the width of the corresponding original part, so increasing `1.03.01`
+     * by one patch produces `1.03.02`. A part may grow beyond its original width if necessary.
+     *
+     * @param string $version
+     * @param mixed $major
+     * @param mixed $minor
+     * @param mixed $patch
+     * @return string
+     * @throws DataTypeCastingError
+     */
+    public static function increment(string $version, $major = 0, $minor = 0, $patch = 0) : string
+    {
+        static::cast($version);
+
+        if (preg_match('/^(\d+)\.(\d+)\.(\d+)(.*)$/', $version, $matches) !== 1) {
+            throw new DataTypeCastingError('"' . $version . '" must have semantic version parts in the format MAJOR.MINOR.PATCH!');
+        }
+
+        $deltas = [
+            static::parseIncrementDelta($major, 'major'),
+            static::parseIncrementDelta($minor, 'minor'),
+            static::parseIncrementDelta($patch, 'patch')
+        ];
+        $parts = [];
+        for ($index = 0; $index < 3; $index++) {
+            $originalPart = $matches[$index + 1];
+            $newPart = (int) $originalPart + $deltas[$index];
+            if ($newPart < 0) {
+                throw new DataTypeCastingError('Semantic version parts must not be negative!');
+            }
+            $parts[] = str_pad((string) $newPart, strlen($originalPart), '0', STR_PAD_LEFT);
+        }
+
+        return implode('.', $parts) . ($matches[4] ?? '');
+    }
+
+    /**
+     * Parses a semantic version increment as an integer.
+     *
+     * @param mixed $value
+     * @param string $name
+     * @return int
+     * @throws DataTypeCastingError
+     */
+    protected static function parseIncrementDelta($value, string $name) : int
+    {
+        if ($value === null || $value === '') {
+            return 0;
+        }
+
+        if (is_int($value)) {
+            return $value;
+        }
+
+        if (preg_match('/^-?\d+$/', (string) $value) !== 1) {
+            throw new DataTypeCastingError('"' . $value . '" is not a valid ' . $name . ' version increment!');
+        }
+
+        return (int) $value;
+    }
     
     /**
      * 
