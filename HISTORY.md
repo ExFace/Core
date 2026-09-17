@@ -1,5 +1,121 @@
 # Release history
 
+## 1.43 - in development
+
+Big points
+
+- All new data configurator dialog in jEasyUI
+
+## 1.42 - 10.09.2026
+
+Big points
+
+- Saved widget setups are now accessible accross all screens showing the 
+  same table widget - independently of the navigation path.
+- Much improved data filtering in UI5: advanced search now offers many more
+  comparators and turns incomplete dates into range filters.
+- Table header filters in jEasyUI facade
+- New experimental `PivotTable` renderer based on Perspective in the UI5 and
+  JEasyUI facades, including preconfigured layouts, rollups and localized date
+  formatting - needs to be turned on via `WIDGET.PIVOTTABLE.RENDERER` in 
+  facade config!
+- AI agents now can use skills - preconfigured sets of instructions, tools 
+  and concepts.
+
+New features
+
+- New action to export `Gantt` data to Excel.
+- Export actions can estimate their runtime and stop early if the configured
+  time limit is likely to be exceeded. They also avoid reading non-exportable 
+  columns and optimize pagination if possible.
+- Editable data widgets can pass only changed rows to their buttons via
+  `input_rows:changed`.
+- New `Gantt` options for task padding and popup styling.
+- `OrderingBehavior` can now define default values.
+- Authenticator settings in `System.config.json` now support environment,
+  configuration and formula placeholders.
+- New `selectable_none` option for optional `InputSelect` widgets.
+- `ShowLookupDialog` now supports a custom confirmation button.
+- Action `GenerateModelFromDataSource` can now be called from the command line.
+
+Improvements
+
+- New options to hide data-widget toolbars and control the priority and
+  overflow behavior of page buttons.
+- New data-widget properties `empty_text_if_invalid_filters` and
+  `empty_text_if_autoload_disabled`.
+- SQL model builders can now create relations from database foreign keys in 
+  addition to column name conventions.
+- Greatly improved validation performance in `DataSpreadSheet` widgets and
+  rendering performance for `DisplayTemplate` columns in UI5 tables.
+- Model search and the component registry now cover more component types and
+  display richer technical details.
+- Added more human-readable MySQL constraint error messages.
+- `SpinnerFilter` now supports numeric and combo-table inputs.
+- Improved wizard steps in UI5 with custom hints and permanently visible step
+  buttons.
+
+Important fixes
+
+- Fixed action input validation for nested widgets and first-level subsheets.
+- Fixed web-server configuration issues and blocked direct access to Composer
+  and other sensitive files in nginx installations.
+- Fixed login password encryption.
+- Fixed several race conditions and duplicate-column issues in
+  `InputComboTable` widgets.
+- Fixed JavaScript errors when Markdown widgets contain JavaScript code.
+
+## 1.41 - 18.08.2026
+
+Big points
+
+- Brand new SQL admin based on AdminNeo (successor of Adminer).
+  - Can view/edit functions and stored procedures
+  - Much better auto-completion and syntax highlighting
+  - Better foreign key tree browser - now accessible right from the beginning of every row
+  - Foreign key editor now works accross schemas too
+  - Much improved performance when editing tables
+- Major improvements to the UI5 `Gantt` widget, including row zoom, more
+  reliable scrolling and dragging, and better positioning of task titles.
+- Built-in SwaggerUI browser for HTTP connections with OpenAPI specs (right 
+  next to SQL admin)
+
+New features
+
+- `LookupMapping` can now look up values contained in delimited lists.
+- New `IS_IN` and `NOT_IS_IN` comparators.
+- `DataMatrix` can now format values in transposed columns.
+- Page mutations can control menu visibility and define custom icons.
+- SAP OpenUI5 facade
+  - UI5 data-widget context menus can open records in a new tab; navigation tiles
+    and navigation menus support the same workflow.
+  - UI5 multi-selection indicators can now deselect all rows at once.
+
+Improvements
+
+- Improved handling of optional and conditionally hidden table columns in UI5
+  data configurators and responsive tables.
+- UI5 table row grouping now supports descending order and restores grouping
+  more reliably.
+- Improved captions and hints for enum and aggregated attributes.
+- Improved validation feedback and conditional validation in
+  `DataSpreadSheet` widgets.
+- Improved `OrderingBehavior` for parent keys with mixed data types.
+- Custom relation-key selection in the attribute editor now includes inherited
+  attributes.
+- Text and Markdown inputs can show a character counter for their configured
+  length limit.
+- Export actions can output labels instead of technical values for booleans.
+
+Important fixes
+
+- Fixed escaping of page data loaded from Microsoft SQL Server.
+- Fixed restricted `CalculatingBehavior` rules clearing values in rows outside
+  their conditions.
+- Fixed lookup dialogs overwriting designer-defined columns.
+- Fixed stale content in Markdown widgets and notification messages.
+- Fixed the CommentsFeed dependency in the JEasyUI facade.
+
 ## 1.40 - 11.07.2026
 
 Big points
