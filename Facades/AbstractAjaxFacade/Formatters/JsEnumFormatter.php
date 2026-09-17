@@ -98,7 +98,7 @@ JS;
      * - every other comparator falls back to the default parser.
      * 
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsDataTypeFormatterInterface::buildJsFilterParser()
+    * @see AbstractJsDataTypeFormatter::buildJsFilterParser()
      */
     public function buildJsFilterParser(string $jsValue, string $jsComparator) : string
     {
@@ -117,15 +117,28 @@ JS;
         $between = ComparatorDataType::BETWEEN;
         $is = ComparatorDataType::IS;
         $in = ComparatorDataType::IN;
-        $defaultParserJs = parent::buildJsFilterParser('mFilterValue', 'sComparator');
+        $nullValueJs = json_encode(EXF_LOGICAL_NULL);
+        $defaultParserJs = parent::buildJsFilterParser('oExtracted', 'sComparator');
         return <<<JS
 (function(mFilterValue, sComparator) {
+    var oExtracted = exfTools.data.filterComparator.extract(mFilterValue);
+    if (oExtracted.comparator !== null) {
+        sComparator = oExtracted.comparator;
+    }
+    mFilterValue = oExtracted.value;
+    if (oExtracted.isEmpty || oExtracted.isNullConstant) {
+        return {
+            comparator: sComparator,
+            value: mFilterValue
+        };
+    }
     var oKeysLower = {$keysLowerJs};
     var oLabelsLower = {$labelsLowerJs};
     // Resolves a value to its enum key via an exact, case-insensitive match against keys and
     // labels. Returns the original value unchanged if nothing matches.
     var fnResolveExact = function(mVal) {
-        if (mVal === undefined || mVal === null || mVal === '') {
+        if (mVal === null || mVal === undefined || mVal === '' ||
+            (typeof mVal === 'string' && mVal.toUpperCase() === {$nullValueJs})) {
             return mVal;
         }
         var sLower = String(mVal).toLowerCase();
