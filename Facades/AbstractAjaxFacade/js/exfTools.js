@@ -1215,6 +1215,7 @@
 			 */
 			filterComparator: {
 				_rightListComparators: ['[', '![', '[=', '![=', '][', '!][', '[[', '![['],
+				_nullValue: 'NULL',
 
 				/**
 				 * Raw operator prefixes for filtering
@@ -1294,39 +1295,48 @@
 				/**
 				 * Extracts a comparator prefix from a header filter input value.
 				 *
-				 * Returns an object `{ comparator: string|null, value: string }` where `comparator` is the
-				 * raw comparator prefix (e.g., '==', '!=', '>=') and `value` is the remaining
+				 * Returns an object containing the comparator, remaining value, and value classification.
+				 * `isEmpty` and `isNullConstant` are independent; a logical NULL is not empty.
+				 * `comparator` is the raw comparator prefix (e.g., '==', '!=', '>=') and `value` is the remaining
 				 * filter value after stripping the prefix. A BETWEEN expression additionally contains
 				 * `value_from` and `value_to`. If no comparator matches, `comparator` is null and `value`
-				 * is the original input unchanged.
+				 * is the original input unchanged. An already extracted filter object is returned unchanged.
 				 *
-				 * @param {string} sInput - Raw value including comparator
-				 * @returns {{ comparator: string|null, value: string, value_from?: string, value_to?: string }}
+				 * @param {*} mInput Raw value including comparator.
+				 * @returns {{ comparator: string|null, value: *, isEmpty: boolean, isNullConstant: boolean, value_from?: string, value_to?: string }}
 				 */
-				extract: function(sInput) {
-					if (typeof sInput !== 'string') {
-						return { comparator: null, value: sInput };
+				extract: function(mInput) {
+					if (mInput !== null && typeof mInput === 'object' &&
+						Object.prototype.hasOwnProperty.call(mInput, 'comparator') &&
+						Object.prototype.hasOwnProperty.call(mInput, 'value')) {
+						return mInput;
 					}
-					var iBetween = sInput.indexOf('..');
-					if (iBetween > -1) {
+					var fnResult = function(sComparator, mValue) {
 						return {
-							comparator: '..',
-							value: sInput,
-							value_from: sInput.slice(0, iBetween),
-							value_to: sInput.slice(iBetween + 2)
+							comparator: sComparator,
+							value: mValue,
+							isEmpty: mValue === null || mValue === undefined || mValue === '',
+							isNullConstant: typeof mValue === 'string' && mValue.toUpperCase() === this._nullValue
 						};
+					}.bind(this);
+					if (typeof mInput !== 'string') {
+						return fnResult(null, mInput);
+					}
+					var iBetween = mInput.indexOf('..');
+					if (iBetween > -1) {
+						var oResult = fnResult('..', mInput);
+						oResult.value_from = mInput.slice(0, iBetween);
+						oResult.value_to = mInput.slice(iBetween + 2);
+						return oResult;
 					}
 					var aMap = this._comparatorMap;
 					for (var i = 0; i < aMap.length; i++) {
 						var sPrefix = aMap[i];
-						if (sInput.indexOf(sPrefix) === 0) {
-							return {
-								comparator: sPrefix,
-								value: sInput.slice(sPrefix.length)
-							};
+						if (mInput.indexOf(sPrefix) === 0) {
+							return fnResult(sPrefix, mInput.slice(sPrefix.length));
 						}
 					}
-					return { comparator: null, value: sInput };
+					return fnResult(null, mInput);
 				}
 			}
 		},
