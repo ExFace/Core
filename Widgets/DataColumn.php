@@ -481,9 +481,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                         $rebasedExpr = $dependantExpression->rebase($currentObject);
 
                         // create a new column for the combo table
-                        $depCol = $cellWidget->getTable()->createColumnFromUxon(new UxonObject([
-                            'attribute_alias' => $rebasedExpr 
-                        ]));
+                        $depCol = $cellWidget->getTable()->createColumnFromExpression($rebasedExpr);
 
                         // only add the column if it is not already in the table
                         if ($cellWidget->getTable()->getColumnByDataColumnName($depCol->getDataColumnName()) == null) {
