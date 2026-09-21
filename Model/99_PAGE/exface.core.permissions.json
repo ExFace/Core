@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-03-10 16:22:54",
     "modified_by_user_selector": "0x31000000000000000000000000000000",
-    "modified_on": "2026-09-07 16:39:42",
+    "modified_on": "2026-09-16 11:37:08",
     "contents": {
         "widget_type": "SplitVertical",
         "object_alias": "exface.Core.AUTHORIZATION_POINT",
@@ -23,10 +23,10 @@
                         "widget_type": "SplitHorizontal",
                         "panels": [
                             {
-                                "caption": "Authorization Points",
                                 "width": "70%",
                                 "widgets": [
                                     {
+                                        "caption": "Authorization Points",
                                         "widget_type": "DataTable",
                                         "id": "auth_points_table",
                                         "columns": [
@@ -107,9 +107,9 @@
                                 ]
                             },
                             {
-                                "caption": "Locally modified policies",
                                 "widgets": [
                                     {
+                                        "caption": "Locally modified policies",
                                         "widget_type": "DataTable",
                                         "id": "table_disabled",
                                         "object_alias": "exface.Core.AUTHORIZATION_POLICY",
@@ -173,9 +173,9 @@
                 ]
             },
             {
-                "caption": "Policies",
                 "widgets": [
                     {
+                        "caption": "Policies",
                         "widget_type": "DataTable",
                         "object_alias": "exface.Core.AUTHORIZATION_POLICY",
                         "multi_select": true,

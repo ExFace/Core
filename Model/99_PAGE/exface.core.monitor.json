@@ -10,8 +10,8 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x31000000000000000000000000000000",
     "created_on": "2020-11-17 13:30:20",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2026-02-06 11:46:25",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2026-09-16 11:40:10",
     "icon": "tachometer",
     "contents": {
         "widget_type": "SplitVertical",
@@ -24,10 +24,10 @@
                         "widget_type": "SplitHorizontal",
                         "panels": [
                             {
-                                "caption": "Activity per day",
                                 "width": "34%",
                                 "widgets": [
                                     {
+                                        "caption": "Activity per day",
                                         "object_alias": "exface.Core.DATE_DIMENSION",
                                         "widget_type": "Chart",
                                         "id": "date_chart",
@@ -124,10 +124,10 @@
                                 ]
                             },
                             {
-                                "caption": "Top 20 users",
                                 "width": "33%",
                                 "widgets": [
                                     {
+                                        "caption": "Top 20 users",
                                         "widget_type": "Chart",
                                         "id": "user_chart",
                                         "hide_header": true,
@@ -192,9 +192,9 @@
                             },
                             {
                                 "width": "33%",
-                                "caption": "Top 20 pages",
                                 "widgets": [
                                     {
+                                        "caption": "Top 20 pages",
                                         "widget_type": "Chart",
                                         "id": "page_chart",
                                         "hide_header": true,
@@ -255,10 +255,10 @@
                         "widget_type": "SplitHorizontal",
                         "panels": [
                             {
-                                "caption": "Errors",
                                 "width": "50%",
                                 "widgets": [
                                     {
+                                        "caption": "Errors",
                                         "id": "error_table",
                                         "widget_type": "DataTable",
                                         "object_alias": "exface.Core.MONITOR_ERROR",
@@ -381,9 +381,9 @@
                             },
                             {
                                 "width": "50%",
-                                "caption": "Actions",
                                 "widgets": [
                                     {
+                                        "caption": "Actions",
                                         "id": "action_table",
                                         "object_alias": "exface.Core.MONITOR_ACTION",
                                         "widget_type": "DataTable",

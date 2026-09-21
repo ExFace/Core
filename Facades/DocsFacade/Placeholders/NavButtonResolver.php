@@ -24,9 +24,13 @@ class NavButtonResolver extends AbstractMarkdownPlaceholderResolver implements P
     public function resolve(array $placeholders) : array
     {
         $vals = [];
-        $rootDirectory = $this->getDocsPath($this->pagePath);        
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
         $filteredNames = $this->filterPlaceholders($names);
+        if (empty($filteredNames)) {
+            return $vals;
+        }
+
+        $rootDirectory = $this->getDocsPath($this->pagePath);
         $fileList = $this->getFlattenMarkdownFiles($rootDirectory);
         foreach ($placeholders as $i => $placeholder) {
             if (in_array($placeholder['name'], $filteredNames)) {

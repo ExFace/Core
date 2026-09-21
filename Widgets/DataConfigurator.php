@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\DataSheets\DataAggregation;
+use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
@@ -496,5 +498,175 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     public function getDataWidget() : Data
     {
         return $this->getWidgetConfigured();
+    }
+
+
+
+    /**
+     * Gets the caption for a sorter.
+     *
+     * The caption is determined in the following way:
+     * 1. If a column of given columns has the same attribute alias as the sorter, take the caption from that column
+     * 2. If it is a related attribute, the attribute name and the related object name (if not the same) is taken: "Name (ObjectName)"
+     * 3. Else take the attribute name.
+     *
+     * @param string $attributeAlias
+     * @param DataColumn[] $columns
+     * @return string
+     */
+    protected function getAttributeMenuTitle(string $attributeAlias, array $columns) : string
+    {
+        $alias = $attributeAlias;
+        $attribute = $this->getMetaObject()->getAttribute($attributeAlias);
+
+        // Take the caption from the column if it exists
+        $column = current(array_filter($columns, fn($c) => $c->getAttributeAlias() === $alias));
+        $caption = $column ? $column->getCaption() : null;
+        if ($caption) {
+            return $caption;
+        }
+
+        // If it is a related attribute: e.g.
+        // - TYPE__NAME, tell the user, which object it belongs to - `Name (Type)`
+        // - PRODUCT__PRODUCT_GROUP__NAME - `Name (Product group)`
+        // - PRODUCT__PRODUCT_GROUP__LABEL - here the LABEL is already "Product group", so we skip the parentheses and
+        // just yield `Product group`
+        $attrName = $attribute->getName();
+
+        if ($attribute->isRelated()) {
+            $objName = $attribute->getRelationPath()->getRelationLast()->getName();
+
+            return ($objName !== $attrName)
+                ? $attrName . ' (' . $attribute->getObject()->getName() . ')'
+                : $attrName;
+        }
+
+        return $attrName;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getSortableAttributes() : array
+    {
+        $attrs = [];
+        $table = $this->getDataWidget();
+        $tableObj = $table->getMetaObject();
+        $cols = $table->getColumns();
+        foreach ($table->getSorters() as $sorter) {
+            $attrAlias = $sorter->getProperty('attribute_alias');
+            $attrs[$this->getAttributeMenuTitle($attrAlias, $cols)] = $sorter->getProperty('attribute_alias');
+        }
+        // Also add all optional columns from the configurator - if they are sortable, of course.
+        if ($this instanceof DataTableConfigurator && $this->hasOptionalColumns()) {
+            $cols = array_merge($cols, $this->getOptionalColumns());
+        }
+        foreach ($cols as $col) {
+            switch (true) {
+                case $col->isCalculated():
+                    $expr = $col->getCalculationExpression();
+                    if ($expr->isFormula()) {
+                        foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                            $attr = $tableObj->getAttribute($attrAlias);
+                            if (! $attr->isSortable() || $attr->isHidden() || in_array($attrAlias, $attrs, true)) {
+                                continue;
+                            }
+                            $attrs[$attr->getName()] = $attr->getAliasWithRelationPath();
+                        }
+                    }
+                    break;
+                case !$col->isSortable():
+                    continue 2;
+                case $col->isBoundToAttribute():
+                    $attrs[$col->getCaption()] = $col->getAttribute()->getAliasWithRelationPath();
+                    break;
+            }
+        }
+        ksort($attrs);
+        return $attrs;
+    }
+
+    /**
+     * @param string[] $excludeAttributeAliases
+     * @return string[]
+     */
+    public function getFilterableAttributes(array $excludeAttributeAliases = []) : array
+    {
+        $attrs = [];
+        $table = $this->getDataWidget();
+        $tableObj = $table->getMetaObject();
+
+        // Allow filtering over all columns - directly visible or optional column selectable on-demand
+        $cols = $table->getColumns();
+        if (($this instanceof DataTableConfigurator) && $this->hasOptionalColumns()) {
+            // Add all optional columns from the configurator here
+            $cols = array_merge($cols, $this->getOptionalColumns());
+        }
+        foreach ($cols as $col) {
+            switch (true) {
+                case in_array($col->getAttributeAlias(), $attrs):
+                    continue 2;
+                case ($col->isHidden() && ! ($col->isBoundToAttribute() && $col->getAttribute()->isUidForObject())):
+                    continue 2;
+                case $col->isCalculated():
+                    $expr = $col->getCalculationExpression();
+                    if ($expr->isFormula()) {
+                        foreach ($expr->getRequiredAttributes() as $attrAlias) {
+                            $attr = $tableObj->getAttribute($attrAlias);
+                            if (! $attr->isFilterable() || $attr->isHidden() || in_array($attrAlias, $attrs, true)) {
+                                continue;
+                            }
+                            $attrs[$attr->getName()] = $attr->getAliasWithRelationPath();
+                        }
+                    }
+                    break;
+                case ! $col->isFilterable():
+                case ! $col->isBoundToAttribute():
+                case ($col->isHidden() && !$col->getAttribute()->isUidForObject()):
+                    continue 2;
+                default:
+                    // Use captions as keys avoid duplicates
+                    $attrs[$this->getAttributeMenuTitle($col->getAttributeAlias(), $cols)] = $col->getAttributeAlias();
+            }
+        }
+
+        // Also add all regular filters to the advanced search filters
+        foreach ($this->getFilters() as $filter) {
+            $filterAttr = $filter->getAttribute();
+            // If the filter has no attribute, skip it
+            if ($filterAttr === null) {
+                continue;
+            }
+            $filterAttrAlias = $filter->getAttributeAlias();
+            // Prevent duplicates
+            switch (true) {
+                // Exclude explicitly excluded attributes
+                case in_array($filter->getAttributeAlias(), $excludeAttributeAliases, true):
+                // If this caption is already in the list (same caption simply is useless even if the aliases are different)
+                case array_key_exists($filter->getCaption(), $attrs):
+                // If this alias is already in the list
+                case in_array($filterAttrAlias, $attrs, true):
+                // Skip hidden filters in general
+                case $filter->isHidden() || $filter->getInputWidget() instanceof InputHidden:
+                    continue 2;
+                case $filterAttr->isRelation() && ! DataAggregation::hasAggregation($filterAttrAlias):
+                    $filterRightObj = $filterAttr->getRelation()->getRightObject();
+                    if ($filterRightObj->hasLabelAttribute()) {
+                        $attrs[$filter->getCaption()] = RelationPath::join($filterAttr->getAliasWithRelationPath(), $filterRightObj->getLabelAttributeAlias());
+                    } else {
+                        // If we do not have a LABEL - what should we filter over? The UID?
+                        // Skip this case for now
+                        continue 2;
+                    }
+                    break;
+                // Regular filters can be added as-is
+                default:
+                    $attrs[$this->getAttributeMenuTitle($filter->getAttributeAlias(), $cols)] = $filterAttrAlias;
+                    break;
+            }
+        }
+        // Sort sortables by caption
+        ksort($attrs);
+        return $attrs;
     }
 }

@@ -84,12 +84,29 @@ class InputSelectButtons extends InputSelect
      * - `until_selection_change` - the button is triggered once and locked until a different
      * option is selected.
      * 
+     * ```
+     * 
+     *  {
+     *      "widget_type": "InputSelectButtons",
+     *      "attribute_alias": "STATUS",
+     *      "selectable_options": {
+     *          "J": "Yes",
+     *          "N": "No"
+     *      },
+     *      "on_option_selected": {
+     *          "NULL": {"button": {"action": {"alias": "..."}}},
+     *          "J": {"lock": "until_selection_change", "button": {"action": {"alias": "..."}}}
+     *      }
+     *  }
+     *  
+     * ```
+     * 
      * IMPORTANT: This feature is experimental. Quality of life features, like auto-complete, may not work as expected when using on-option-selected buttons.
      * 
      * @uxon-property on_option_selected
      * @uxon-type object
-     * @uxon-template {"OPTION": {"lock": "never", "button": {"widget_type":"DataButton",""action": {"alias": ""}}}}
-     *
+     * @uxon-template {"// Enter your option key here":{"lock":"never","button":{"widget_type":"DataButton","action": {"alias": ""}}}}
+     * 
      * @param UxonObject $uxon
      * @throws WidgetConfigurationError
      * @return InputSelectButtons
