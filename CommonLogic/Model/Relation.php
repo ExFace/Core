@@ -661,7 +661,9 @@ class Relation implements MetaRelationInterface
     public function getAttributeDefinedIn() : MetaAttributeInterface
     {
         $attr = $this->getLeftKeyAttribute();
-        if ($attr->isRelation() === true && $attr->getRelation() === $this) {
+        // Compare via is() to guarantee that we correctly identify the defining attribute
+        // even if the compared relations are different instances.
+        if ($attr->isRelation() === true && $attr->getRelation()->is($this)) {
             return $attr;
         }
         return $this->getRightKeyAttribute();

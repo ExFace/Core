@@ -61,6 +61,7 @@ use exface\Core\CommonLogic\UxonObject;
  * - validateValue(iCol, iRow, mValue) : mixed
  * - validateCell(cell, iCol, iRow, mValue, bParseValue) : mixed
  * - validateAll() : void
+ * - refreshConditionalColumnVisibility() : void
  * - refreshConditionalProperties();
  * - isDropdownValueValid (iCol, iRow, mValue = null) : bool // checks if the current dropdown value (or a passed parameter) is valid in the filter context
  * - convertArrayToData(aDataArray) : array
@@ -97,6 +98,7 @@ use exface\Core\CommonLogic\UxonObject;
  * - dropdownIdField: string,
  * - dropdownLabelField: string,
  * - system: bool,
+ * - conditionizeVisibility: function(oWidget)
  * - conditionize: function(oWidget)
  * 
  * ## Usage
@@ -848,6 +850,7 @@ JS;
             }, 0);
         },
         oninsertrow: function(el, rowNumber, numOfRows, rowTDs, insertBefore) {
+            el.exfWidget.refreshConditionalColumnVisibility(true);
         },
         onbeforedeleterow: function(el, rowNumber, numOfRows, rowDOMElements, rowData, cellAttributes) {
             // deleting the last row isnt allowed within Jexcel (by default), because otherwise the users have no way
@@ -865,6 +868,7 @@ JS;
                     // if we have all/multiple rows selected, the default behaviour would be to delete all except hte last row
                     // so we try and recreate that by removing all rows except the last one here 
                    el.jexcel.setData([aAllRows[aAllRows.length - 1] || []]); 
+                   el.exfWidget.refreshConditionalColumnVisibility(true);
                 }
 
                 return false;
@@ -1429,13 +1433,24 @@ JS;
                 }
             });
         },
+        refreshConditionalColumnVisibility: function(bForce) {
+            for (var i in this._cols) {
+                if (bForce === true) {
+                    this._cols[i].hiddenByCondition = null;
+                }
+                this._cols[i].conditionizeVisibility(this);
+            }
+        },
         refreshConditionalProperties: function() {
+            var oWidget = this;
+            var oJExcel = oWidget.getJExcel();
+
+            this.refreshConditionalColumnVisibility();
+
             if (this.getDoNotValidate() === true) {
                 return;
             }
 
-            var oWidget = this;
-            var oJExcel = oWidget.getJExcel();
             let numRows = oJExcel.getData().length;
 
             // do not refresh if nothing is there 
@@ -1443,7 +1458,7 @@ JS;
                 return;
             }
 
-            for (i in this._cols) {
+            for (var i in this._cols) {
                 this._cols[i].conditionize(this);
             }
 
@@ -1750,6 +1765,8 @@ JS;
         }
 
     };
+
+    {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalColumnVisibility();
     
     {$this->buildJsInitPlugins()}
     {$this->buildJsFixContextMenuPosition()}
@@ -1833,6 +1850,12 @@ JS;
             $conditionsJs = '';
             if (null !== $condProp = $col->getDisabledIf()) {
                 $conditionsJs .= $this->buildJsColumnDisabledIf($condProp, 'aCells');
+            }
+
+            // Visibility conditions apply to the entire column and do not depend on validation.
+            $visibilityConditionsJs = '';
+            if ($col->isHidden() === false && null !== $condProp = $col->getHiddenIf()) {
+                $visibilityConditionsJs = $this->buildJsColumnHiddenIf($condProp, $colIdx);
             }
 
             // Required conditions
@@ -1922,6 +1945,7 @@ JS;
                         {$requiredCheckerJs}
                     },
                     hidden: {$hiddenFlagJs},
+                    hiddenByCondition: null,
                     lazyLoading: {$lazyLoadingFlagJs},
                     wasLazyLoaded: {$wasLazyLoaded},
                     requestConfig: {$lazyLoadingRequestJs},
@@ -1931,6 +1955,11 @@ JS;
                     dropdownIdField: {$this->escapeString($dropdownId)},
                     dropdownLabelField: {$this->escapeString($dropdownLabel)},
                     system: {$systemFlagJs},
+                    conditionizeVisibility: function(oWidget){
+                        var iColIdx = {$colIdx};
+                        var oJExcel = oWidget.getJExcel();
+                        $visibilityConditionsJs
+                    },
                     conditionize: function(oWidget){
                         $conditionsJs
                     }
@@ -2156,6 +2185,7 @@ JS;
                             }
                             aData[0][$idx] = (sFirstVal + fDif){$toFixedJs};
                             jqSelf.jspreadsheet('setData', aData);
+                            jqSelf[0].exfWidget.refreshConditionalColumnVisibility(true);
                         }
 
 JS;
@@ -2874,6 +2904,7 @@ JS;
         }
     }
     jqCtrl.jspreadsheet('setData', aData);
+    jqCtrl[0].exfWidget.refreshConditionalColumnVisibility(true);
     {$this->buildJsResetSelection('jqCtrl')};
 
     // Wait for setData to finish rendering before setting loaded and refreshing
@@ -2946,7 +2977,7 @@ JS;
      */
     public function buildJsDataResetter() : string
     {
-        return "(function(){ if( {$this->buildJsJqueryElement()}.length > 0) { {$this->buildJsJqueryElement()}.jspreadsheet('setData', [ [] ]); {$this->buildJsResetSelection($this->buildJsJqueryElement())} } })();";
+        return "(function(jqEl){ if (jqEl.length > 0) { jqEl.jspreadsheet('setData', [ [] ]); jqEl[0].exfWidget.refreshConditionalColumnVisibility(true); {$this->buildJsResetSelection('jqEl')} } })({$this->buildJsJqueryElement()});";
     }
     
     /**
@@ -3288,6 +3319,28 @@ JS;
     }
 
     /**
+     * Builds the JavaScript that applies a hidden_if condition to an entire spreadsheet column.
+     *
+     * @param ConditionalProperty $condProp
+     * @param int $colIdx
+     * @return string
+     */
+    protected function buildJsColumnHiddenIf(ConditionalProperty $condProp, int $colIdx) : string
+    {
+        return $this->buildJsConditionalProperty(
+            $condProp,
+            "if (this.hiddenByCondition !== true) {
+                oJExcel.hideColumn(iColIdx);
+                this.hiddenByCondition = true;
+            }",
+            "if (this.hiddenByCondition !== false) {
+                oJExcel.showColumn(iColIdx);
+                this.hiddenByCondition = false;
+            }"
+        );
+    }
+
+    /**
      * @return string
      */
     protected function buildJsCountRows() : string
@@ -3335,7 +3388,14 @@ JS;
     protected function registerConditionalPropertiesOfColumns() 
     {
         foreach ($this->getWidget()->getColumns() as $col) {
-            if ($condProp = $col->getDisabledIf()) {
+            $conditionalProperties = [$col->getDisabledIf()];
+            if ($col->isHidden() === false) {
+                $conditionalProperties[] = $col->getHiddenIf();
+            }
+            foreach ($conditionalProperties as $condProp) {
+                if ($condProp === null) {
+                    continue;
+                }
                 $this->registerConditionalPropertyUpdaterOnLinkedElements(
                     $condProp,
                     "{$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalProperties()",
