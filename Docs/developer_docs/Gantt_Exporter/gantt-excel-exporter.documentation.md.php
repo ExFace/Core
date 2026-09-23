@@ -205,7 +205,8 @@ horizontal groups use white and vertical groups use neutral gray.
 
 - Worksheet name: `Terminübersicht`
 - Five header rows and data beginning in row 6
-- Configurable column groups with merged group headers, widths, and caption orientations
+- Configurable column groups with merged group headers, widths, and caption orientations; each
+  grouped column caption spans header rows 2 through 4 while the Gantt headers remain unmerged
 - A dedicated ID column directly after the grouped columns, followed by weekly timeline columns
 - Timeline grouping by execution year, quarter, month, and calendar week
 - Quarter-bounded date range derived from all valid nested tasks
