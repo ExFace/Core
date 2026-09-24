@@ -2520,7 +2520,7 @@ SQL;
         }
         $mutations = [];
         $cacheKey = '{"' . $target->getTargetKey() . '":"' . $target->getTargetValue() . '"}';
-        foreach ($this->mutations_loaded[$cacheKey] as $row) {
+        foreach ($this->mutations_loaded[$cacheKey] ?? [] as $row) {
             $uxon = UxonObject::fromJson($row['config_uxon']);
             $uxon->setProperty('name', $row['name']);
             $file = $row['mutation_prototype_file'];
