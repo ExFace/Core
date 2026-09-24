@@ -117,6 +117,44 @@ class ServerSoftwareDataType extends StringDataType
     {
         return ! static::isOsWindows();
     }
+
+    /**
+     * Returns the operating system user running the current PHP process.
+     *
+     * @return string|NULL
+     */
+    public static function getOsUser() : ?string
+    {
+        if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
+            $userInfo = posix_getpwuid(posix_geteuid());
+            if (is_array($userInfo) && ($userInfo['name'] ?? '') !== '') {
+                return $userInfo['name'];
+            }
+        }
+
+        if (static::isOsWindows() && function_exists('exec')) {
+            $output = [];
+            $exitCode = null;
+            @exec('whoami', $output, $exitCode);
+            if ($exitCode === 0 && ($output[0] ?? '') !== '') {
+                return trim($output[0]);
+            }
+        }
+
+        $username = getenv(static::isOsWindows() ? 'USERNAME' : 'USER');
+        if ($username === false || $username === '') {
+            return null;
+        }
+
+        if (static::isOsWindows()) {
+            $domain = getenv('USERDOMAIN');
+            if ($domain !== false && $domain !== '') {
+                return $domain . '\\' . $username;
+            }
+        }
+
+        return $username;
+    }
     
     /**
      * Check if php script is run in a CLI environment
