@@ -156,7 +156,10 @@ Notes:
 
 ### MySQL
 
-  - DDL is not rollback-safe; installer wraps script execution in transactions to keep DML behavior consistent.
+  - DDL is not rollback-safe; installer wraps script execution in 
+    transactions to keep DML behavior consistent.
+  - Do not set character set and collation in migrations explicitly unless 
+    absolutely neccessar! Rely on the DB defaults.
 
 ### PostgreSQL
 
@@ -169,7 +172,8 @@ Notes:
 
 ### Microsoft SQL Server
 
-  - Supports DDL rollback in many scenarios; installer still runs migrations in explicit transactions.
+  - Supports DDL rollback in many scenarios; installer still runs migrations 
+    in explicit transactions.
   - Use `GO` as batch delimiter where needed.
   - Use `NVARCHAR()` instead of `VARCHAR()`
   - Use `NVARCHAR(MAX)` instead of `TEXT` for long text fields.
@@ -178,6 +182,8 @@ Notes:
     store boolean-like values as `1` and `0`.
   - Don't forget to handle default constraints when changing/deleting 
     columns with defaults - SQL Server does not do it automatically!
+  - When adding a new column, remember that you can only access it in the 
+    next batch. either use `GO` or `sp_executesql`.
 
 ## Migration logging expectations
 

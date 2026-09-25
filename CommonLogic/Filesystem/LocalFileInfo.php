@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Filesystem;
 
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 use \DateTimeInterface;
 use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Interfaces\Filesystem\FileInfoInterface;
@@ -208,7 +209,8 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
      */
     public function isWritable() : bool
     {
-        return $this->splFileInfo->isWritable();
+        return $this->splFileInfo->isWritable()
+            && (! $this->splFileInfo->isDir() || ServerSoftwareDataType::isOsWindows() || $this->splFileInfo->isExecutable());
     }
     
     /**
@@ -218,7 +220,8 @@ class LocalFileInfo implements FileInfoInterface, FileStreamInterface
      */
     public function isReadable() : bool
     {
-        return $this->splFileInfo->isReadable();
+        return $this->splFileInfo->isReadable()
+            && (! $this->splFileInfo->isDir() || ServerSoftwareDataType::isOsWindows() || $this->splFileInfo->isExecutable());
     }
     
     /**
