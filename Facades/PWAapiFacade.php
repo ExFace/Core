@@ -10,7 +10,7 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
-use exface\Core\Exceptions\Facades\FacadeRoutingError;
+use exface\Core\Exceptions\Facades\HttpFacadeRoutingError;
 use exface\Core\Factories\PWAFactory;
 use exface\Core\DataTypes\OfflineStrategyDataType;
 use exface\Core\DataTypes\JsonDataType;
@@ -105,10 +105,10 @@ class PWAapiFacade extends HttpTaskFacade
                 }
 
                 if (! $pwaUrl) {
-                    throw new FacadeRoutingError('PWA not specified in request for offline data');
+                    throw new HttpFacadeRoutingError($request, 'PWA not specified in request for offline data');
                 }
                 if (! $dataSetUid) {
-                    throw new FacadeRoutingError('PWA data set not specified in request for offline data');
+                    throw new HttpFacadeRoutingError($request, 'PWA data set not specified in request for offline data');
                 }
                 
                 try {

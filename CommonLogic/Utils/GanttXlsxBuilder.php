@@ -393,11 +393,13 @@ class GanttXlsxBuilder
         }
         foreach ($headers as $index => $header) {
             $column = $layout['columnsStart'] + $index;
-            $sheet->setCellValue($this->cell($column, 4), $header);
+            $headerRange = $this->range($column, 2, $column, 4);
+            $sheet->mergeCells($headerRange);
+            $sheet->setCellValue($this->cell($column, 2), $header);
             $group = $this->findHeaderGroup($headerGroups, $column);
             $defaultColor = $group['orientation'] === 'vertical' ? 'A5A5A5' : 'FFFFFF';
             $color = $this->resolveColor($this->headingColors[$index] ?? null, $defaultColor);
-            $this->fill($sheet, $this->cell($column, 4), $color);
+            $this->fill($sheet, $headerRange, $color);
         }
         $this->writeTimelineHeaders($sheet, $layout, $timeline);
         $this->styleHeaders($sheet, $layout, $headerGroups, count($timeline));
@@ -488,7 +490,7 @@ class GanttXlsxBuilder
         foreach ($headerGroups as $group) {
             $sheet->getStyle($this->range($group['start'], 1, $group['end'], 1))->getFont()->setBold(true)->setSize(12);
             if ($group['orientation'] === 'vertical') {
-                $sheet->getStyle($this->range($group['start'], 4, $group['end'], 4))->applyFromArray([
+                $sheet->getStyle($this->range($group['start'], 2, $group['end'], 4))->applyFromArray([
                     'font' => ['bold' => true, 'size' => 11],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_LEFT,
@@ -498,16 +500,16 @@ class GanttXlsxBuilder
                     ],
                 ]);
             } else {
-                $sheet->getStyle($this->range($group['start'], 4, $group['end'], 4))->getFont()->setBold(true)->setSize(12);
+                $sheet->getStyle($this->range($group['start'], 2, $group['end'], 4))->getFont()->setBold(true)->setSize(12);
             }
         }
         foreach (range($layout['columnsStart'], $layout['columnsEnd']) as $column) {
-            $rgb = $sheet->getStyle($this->cell($column, 4))->getFill()->getStartColor()->getRGB();
+            $rgb = $sheet->getStyle($this->cell($column, 2))->getFill()->getStartColor()->getRGB();
             $textColor = $this->resolveColor(
                 ColorTools::pickTextColorForBackgroundColor('#' . $rgb, $this->textColorPreference),
                 '000000'
             );
-            $sheet->getStyle($this->cell($column, 4))->getFont()->getColor()->setARGB('FF' . $textColor);
+            $sheet->getStyle($this->range($column, 2, $column, 4))->getFont()->getColor()->setARGB('FF' . $textColor);
         }
         $sheet->getStyle($this->cell($layout['idColumn'], 1))->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle($this->range($layout['ganttLabel'], 1, $end, 1))->getFont()->setBold(true)->setSize(12);
@@ -530,6 +532,7 @@ class GanttXlsxBuilder
         }
         $sheet->getStyle($this->range(1, 4, $layout['ganttLabel'], 5))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
         foreach ($headerGroups as $group) {
+            $sheet->getStyle($this->range($group['start'], 2, $group['end'], 4))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
             $this->mediumOutline($sheet, $group['start'], 1, $group['end'], 5);
             $this->mediumOutline($sheet, $group['start'], 1, $group['end'], 1);
         }
@@ -897,7 +900,7 @@ class GanttXlsxBuilder
     {
         $end = $this->getTimelineEndColumn($layout, $timelineCount);
         $lastRow = max(self::DATA_START_ROW, $sheet->getHighestDataRow());
-        foreach ([1 => 22.5, 2 => 25.45, 3 => 36.75, 4 => 147.75, 5 => 23.2] as $row => $height) {
+        foreach ([1 => 22.5, 2 => 25.45, 3 => 36.75, 4 => 85.55, 5 => 23.2] as $row => $height) {
             $sheet->getRowDimension($row)->setRowHeight($height);
         }
         foreach ($headerGroups as $group) {

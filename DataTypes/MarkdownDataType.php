@@ -140,7 +140,7 @@ class MarkdownDataType
             }
         }
 
-        return $md;
+        return $md . "\n";
     }
 
     /**

@@ -1,13 +1,13 @@
 <?php
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
 use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Widgets\iHaveConfiguratorSetups;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\Interfaces\Widgets\iHaveMultipleBindings;
 use exface\Core\Interfaces\Widgets\iHaveSidebar;
@@ -82,6 +82,7 @@ class Data
         iHaveContextualHelp, 
         IHaveTourGuideInterface,
         iHaveConfigurator, 
+        iHaveConfiguratorSetups,
         iShowData,
         iCanPreloadData,
         iCanAutoloadData
@@ -1608,7 +1609,11 @@ class Data
         $objs = array_merge($objs, $this->getConfiguratorWidget()->getMetaObjectsEffectingThisWidget());
         return array_unique($objs);
     }
-    
+
+    /**
+     * {@inheritDoc}
+     * @see iHaveConfiguratorSetups::getConfiguratorSetupsEnabled()
+     */
     public function getConfiguratorSetupsEnabled() : bool
     {
         return $this->configuratorSetupsEnabled ?? true;
