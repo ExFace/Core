@@ -15,6 +15,7 @@ use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Interfaces\Widgets\iHaveConfiguratorSetups;
 use exface\Core\Interfaces\Widgets\iSupportWidgetSetups;
 
 /**
@@ -766,12 +767,16 @@ class DataTableConfigurator extends DataConfigurator implements iSupportWidgetSe
      */
     public function hasSetups() : bool
     {
-        return $this->setupsDisabled === false && ! $this->isDisabled() && $this->getDataWidget()->getConfiguratorSetupsEnabled() === true;
+        $dataWidget = $this->getDataWidget();
+        return $this->setupsDisabled === false 
+            && ! $this->isDisabled() 
+            && ($dataWidget instanceof iHaveConfiguratorSetups)
+            && $dataWidget->getConfiguratorSetupsEnabled() === true;
     }
 
     /**
-        * {@inheritDoc}
-        * @see iSupportWidgetSetups::getSetupsTableId()
+     * {@inheritDoc}
+     * @see iSupportWidgetSetups::getSetupsTableId()
      */
     public function getSetupsTableId() : ?string
     {

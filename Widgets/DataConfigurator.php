@@ -6,6 +6,7 @@ use exface\Core\CommonLogic\Model\RelationPath;
 use exface\Core\Events\Widget\OnDataConfiguratorInitEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\iFilterData;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Interfaces\Widgets\iHaveFilters;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -18,13 +19,15 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
+use exface\Core\Interfaces\Widgets\iHaveSorters;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 
 /**
  * The configurator for data widgets contains tabs for filters and sorters.
  * 
  * @see WidgetConfigurator
  * 
- * @method Data getWidgetConfigured()
+ * @method iHaveColumns getWidgetConfigured()
  * 
  * @author Andrej Kabachnik
  *        
@@ -456,7 +459,13 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
     protected function setLazyLoadingForFilter(Filter $filter_widget)
     {
         // Disable filters on Relations if lazy loading is disabled
-        if (! $this->getWidgetConfigured()->getLazyLoading() && $filter_widget->getAttribute() && $filter_widget->getAttribute()->isRelation() && $filter_widget->getInputWidget()->is('InputComboTable')) {
+        $dataWidget = $this->getWidgetConfigured();
+        if (($dataWidget instanceof iSupportLazyLoading) 
+            && ! $dataWidget->getLazyLoading() 
+            && $filter_widget->isBoundToAttribute() 
+            && $filter_widget->getAttribute()->isRelation() 
+            && $filter_widget->getInputWidget()->is('InputComboTable')
+        ) {
             $filter_widget->setDisabled(true);
         }
         return $filter_widget;
@@ -493,14 +502,12 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
      * (e.g. those using data like charts or diagrams), whild getDataWidget() allways returns the
      * data widget itself.
      * 
-     * @return Data
+     * @return iHaveColumns
      */
-    public function getDataWidget() : Data
+    public function getDataWidget() : iHaveColumns
     {
         return $this->getWidgetConfigured();
     }
-
-
 
     /**
      * Gets the caption for a sorter.
@@ -553,7 +560,8 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
         $table = $this->getDataWidget();
         $tableObj = $table->getMetaObject();
         $cols = $table->getColumns();
-        foreach ($table->getSorters() as $sorter) {
+        $sorters = ($table instanceof iHaveSorters) ? $table->getSorters() : [];
+        foreach ($sorters as $sorter) {
             $attrAlias = $sorter->getProperty('attribute_alias');
             $attrs[$this->getAttributeMenuTitle($attrAlias, $cols)] = $sorter->getProperty('attribute_alias');
         }
