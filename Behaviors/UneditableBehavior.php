@@ -22,10 +22,10 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
  * 
  * ### Prevent editing of records in certain status
  * 
- * Lets asume, we have some docuements with a working state of `100` (Done),
- * `101` (Cancelled) and `102` expired. States before `100` are work-in-progress
+ * Let's assume, we have some documents with a working state of `100` (Done),
+ * `101` (Canceled) and `102` expired. States before `100` are work-in-progress
  * while those after `100` are final. Now we need to prevent editing of documents
- * in final states except for those cancelled.
+ * in final states except for those canceled.
  * 
  * ```
  * {
@@ -52,7 +52,7 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
  * 
  * In this case, the behavior should be attached to the `CUSTOMER` object. It will 
  * automatically read the number of the customer's orders and inquiries every time 
- * a customer is about to be edited an compare it to `0`.
+ * a customer is about to be edited and compare it to `0`.
  * 
  * In this example, we use two separate checks with different error messages, but
  * we could also use a single one with an `OR` operator, of course.
@@ -88,6 +88,10 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
  * 
  * ### Only allow editing of entries added today
  * 
+ * This behavior will only allow editing of entries that have been created today. However, it will still allow to
+ * advance the status of the entry - even of older ones (otherwise they would be uneditable forever). So basically, 
+ * any other changes, than to the `STATUS` attribute, will be prevented for older entries.
+ * 
  * ```
  * {
  *  "prevent_edit_if": [{
@@ -99,7 +103,8 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
  *              "value": 0
  *          }
  *      ]
- *  }]
+ *  },
+ *  "ignore_changes_to_attributes": ["STATUS"]
  * }
  * 
  * ```
@@ -110,8 +115,9 @@ use exface\Core\CommonLogic\Model\Behaviors\BehaviorDataCheckList;
 class UneditableBehavior extends AbstractBehavior
 {    
     private $preventEditIfUxon = null;
-    
     private $dataCheckList = null;
+    
+    private ?array $ignoreChangesToAttributeAliases = null;
     
     /**
      *
@@ -162,6 +168,8 @@ class UneditableBehavior extends AbstractBehavior
         $logbook->addDataSheet('Event data', $eventDataSheet);
         $this->getWorkbench()->eventManager()->dispatch(new OnBeforeBehaviorAppliedEvent($this, $event, $logbook));
         
+        // TODO use $event->getDataSheetWithOldData() here. Passe the label alias as an argument to the method. Make
+        // sure the event method also check if the object is readable - take the best of the two implementations!
         $dataSheet = $eventDataSheet->copy();
         
         // attach label attribute to datasheet, if exists
@@ -180,6 +188,7 @@ class UneditableBehavior extends AbstractBehavior
             $dataSheet->dataRead();
         }
 
+        $error = null;
         foreach ($this->getDataChecks() as $check) {
             if ($check->isApplicable($dataSheet)) {
                 try {
@@ -205,9 +214,28 @@ class UneditableBehavior extends AbstractBehavior
                     
                     $message .= ($message !== null ? ' ' : '') . $e->getMessage();
                     
-                    throw (new DataSheetUpdateForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true); 
+                    $error = (new DataSheetUpdateForbiddenError($dataSheet, $message))->setUseExceptionMessageAsTitle(true); 
+                    break;
                 }
             }
+        }
+        
+        if ($error !== null) {
+            // One of the checks found an issue, so we know, we should prevent the update unless this particular
+            // data is excluded.
+            $ignoredAttrs = $this->getIgnoreChangesToAttributeAliases();
+            if (! empty($ignoredAttrs)) {
+                $logbook->addLine('Checking if only ignored attributes (`' . implode('`, `', $ignoredAttrs) . '`) changed');
+                if ($event->willChangeAttributesOnly($ignoredAttrs)) {
+                    $logbook->continueLine(' - yes, **ignoring** the behavior and allowing the update');
+                    return;
+                } else {
+                    $logbook->continueLine(' - no');
+                }
+            }
+            
+            // If not explicitly ignored, throw the error now!
+            throw $error;
         }
         
         $this->getWorkbench()->eventManager()->dispatch(new OnBehaviorAppliedEvent($this, $event));
@@ -271,5 +299,29 @@ class UneditableBehavior extends AbstractBehavior
     protected function translate(string $messageId, array $placeholderValues = null, float $pluralNumber = null) : string
     {
         return $this->getWorkbench()->getCoreApp()->getTranslator()->translate($messageId, $placeholderValues, $pluralNumber);
+    }
+
+    /**
+     * @return array|null
+     */
+    protected function getIgnoreChangesToAttributeAliases() : ?array
+    {
+        return $this->ignoreChangesToAttributeAliases;
+    }
+
+    /**
+     * Do not prevent the edit if the only changes are to these attributes. If any other attribute is changed, the edit will be prevented.
+     * 
+     * @uxon-property ignore_changes_to_attributes
+     * @uxon-type metamodel:attribute[]
+     * @uxon-template [""]
+     * 
+     * @param array|null $aliases
+     * @return $this
+     */
+    protected function setIgnoreChangesToAttributes(?array $aliases) : UneditableBehavior
+    {
+        $this->ignoreChangesToAttributeAliases = $aliases;
+        return $this;
     }
 }
