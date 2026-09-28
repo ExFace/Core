@@ -48,6 +48,8 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
  * 
  * - `getChanges($col)`
  * - `willChange($col)`
+ * - `willChangeAtribute($attribute)`
+ * - `willChangeAttributesOnly($arrayOfAliases)`
  * - etc.
  * 
  * @event exface.Core.DataSheet.OnBeforeUpdateData
@@ -236,6 +238,45 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent implements DataChan
         }
         return false;
     }
+
+    /**
+     * Returns TRUE if at least one listed attribute will change and no other attribute will change.
+     *
+     * Returns FALSE if no listed attribute will change, an unlisted attribute will change, or
+     * the changes of any attribute column cannot be determined reliably.
+     *
+     * @param string[] $arrayOfAliases Attribute aliases relative to the data sheet's meta object
+     * @return bool
+     */
+    public function willChangeAttributesOnly(array $arrayOfAliases) : bool
+    {
+        $allowedAliases = array_fill_keys(array_map('mb_strtoupper', $arrayOfAliases), true);
+        $willChangeAllowedAttribute = false;
+
+        foreach ($this->getDataSheet()->getColumns() as $newCol) {
+            if (! $newCol->isAttribute()) {
+                continue;
+            }
+
+            $willChange = $this->willChange($newCol);
+            // If we cannot determine, if the column will change, we cannot determine, if only the allowed attributes will change.
+            if ($willChange === null) {
+                return false;
+            }
+            // If no change expected, we can ignore the column safely.
+            if ($willChange === false) {
+                continue;
+            }
+
+            $attributeAlias = mb_strtoupper($newCol->getAttribute()->getAliasWithRelationPath());
+            if (! isset($allowedAliases[$attributeAlias])) {
+                return false;
+            }
+            $willChangeAllowedAttribute = true;
+        }
+
+        return $willChangeAllowedAttribute;
+    }
     
     /**
      * Returns an array of changed values in the speicifed column with the corresponding row numbers as keys.
@@ -303,5 +344,6 @@ class OnBeforeUpdateDataEvent extends AbstractDataSheetEvent implements DataChan
                 call_user_func($callback, $event);
             }
         }, $priority);
+        return $this;
     }
 }
