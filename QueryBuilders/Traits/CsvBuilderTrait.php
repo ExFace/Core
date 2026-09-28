@@ -75,7 +75,7 @@ trait CsvBuilderTrait
         });
         
         // pagination
-        if ($readAll === false) {
+        if ($readAll === false && $this->getLimit()> 0) {
             // Increase offset if there is a header row and another time to find out if more rows are there
             $offset = $this->getOffset() + $headerRows;
             $statement = $statement
