@@ -72,6 +72,9 @@ Order of execution:
 - Migration file names should follow:
   - `YYYYMMDD_HHMM_#_INFO.sql`
   - Example: `20190101_1200_1_NEW_column3_and_column4.sql`
+- Get `YYYYMMDD_HHMM` from the current machine clock when creating a migration
+  (for example, `Get-Date -Format 'yyyyMMdd_HHmm'` on Windows). Never guess or
+  fabricate the timestamp. Use the same timestamp for all database variants.
 - Migration file names must be unique across the app.
 - Using version subfolders helps avoid big folders, that are hard to overview.
 
