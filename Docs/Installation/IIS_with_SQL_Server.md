@@ -10,15 +10,14 @@ To run PowerUI on an IIS server with SQL, configure the IIS server and install P
 	1. Install CGI for IIS
 		1. In the Start menu, click the `Server Manager` tile, and then click OK.
 		2. In Server Manager, select Dashboard, and click `Add roles and features`.
-		3. In the Add Roles and Features Wizard, on the 'Before You Begin' page, click Next.
-		4. On the 'Select Installation Type' page, select `Role-based or Feature-based Installation` and click Next
-		5. On the 'Select Destination Server' page, select a server from the server pool, select the server, and click Next.
-		6. On the 'Select Server Roles' page, select `Web Server (IIS)`.
-		7. Click next 3 more times to reach the 'Role Services' page.
+		3. In the Add Roles and Features Wizard, on the `Before You Begin` page, click Next.
+		4. On the `Select Installation Type` page, select `Role-based or Feature-based Installation` and click Next
+		5. On the `Select Destination Server` page, select a server from the server pool, select the server, and click Next.
+		6. On the `Select Server Roles` page, select `Web Server (IIS)`.
+		7. Click next 3 more times to reach the `Role Services` page.
 		8. Expand `Web Server > Application Development` and check the `CGI` box. Click next.
-		9. On the 'Installation Progress' page, confirm that the installation of the Web Server (IIS) role and required role services completed successfully, and then click Close.
+		9. On the `Installation Progress` page, confirm that the installation of the Web Server (IIS) role and required role services completed successfully, and then click Close.
 		10. **Restart** IIS or recycle the application pool
-	2. Follow the instructions for [Windows Server 2012+](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php) to install PHP.
 - [Windows Server 2012+](https://docs.microsoft.com/en-us/iis/application-frameworks/scenario-build-a-php-website-on-iis/configuring-step-1-install-iis-and-php)
 - [Windows Server 2008+ (IIS 7)](https://docs.microsoft.com/en-us/iis/application-frameworks/install-and-configure-php-applications-on-iis/using-fastcgi-to-host-php-applications-on-iis)
 
@@ -31,11 +30,34 @@ Since the Web PI does not offer most recent versions of PHP, it is probably a go
 		- `bin`
 		- `logs`
 		- `tmp`
-		- `wincache` (if required - see below)
-2. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the non-thread-safe (nts) version.
+2. Download one of the latest [PHP binaries](https://windows.php.net/download/) - pick the **non-thread-safe (nts)** version.
 3. Unpack it into `C:\Program Files\PHP\bin`
-4. Follow the guides above to register it as a FastCGI module in IIS
-5. Give the user, that IIS will use to run PHP read/write permissions for the folders `tmp` and `logs`. If not absolutely sure, what you are doing, give permissions to these users:
+4. Register PHP binaries in Windows environment variables
+	1. Open the `System Properties` dialog (e.g. via `Win + Pause` or `Control Panel > System and Security > System`)
+	2. Click on `Advanced system settings`
+	3. Click on `Environment Variables...`
+	4. In the `System variables` section, select the variable `Path` and click on `Edit...`
+	5. Add a new entry with the path to your PHP binaries - e.g. `C:\Program Files\PHP\bin`
+6. Register PHP in IIS handler mappings
+   1. Open IIS manager
+   2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
+   3. Click on `Handler Mappings` in the middle panel
+   4. Click on `Add Module Mapping...` in the right panel
+   5. Fill out the form
+	   - Request path: `*.php`
+	   - Module: `FastCgiModule`
+	   - Executable: `"C:\Program Files\PHP\bin\php-cgi.exe"` - include the 
+		 quotes!
+	   - Name: `PHP via FastCGI`
+   6. Click OK and confirm that you want to create a FastCGI application for this executable.
+7. Register `index.php` as a default document in IIS
+   1. Open IIS manager
+   2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
+   3. Click on `Default Document` in the middle panel
+   4. Click on `Add...` in the right panel and add `index.php
+8. Give the user, that IIS will use to run PHP read/write permissions for the 
+folders `tmp` and `logs`. If not absolutely sure, what you are doing, give 
+permissions to these users:
 	- `IUSR` 
 	- `IIS AppPool\DefaultAppPool`
 
@@ -46,48 +68,33 @@ For the workbench to work properly, the support for rewrite rules needs to be en
 1. [Download UrlRewrite module](https://www.iis.net/downloads/microsoft/url-rewrite) 
 2. Run the installer. No additional configuration is required.
 
-### WinCache extension installation (only PHP < 8!)
-
-The WinCache extension is recommended for PHP < 8 in addition to opcache. It accelerates PHP on IIS greatly. So far there is no WinCache for PHP 8.
-
-1. [Download WinCache](https://sourceforge.net/projects/wincache/). Donwload the `nts` version if you have used the `nts` PHP binary above. Look in the `development` folder if you can't find your desired PHP version.
-2. Unpack the files somewhere (e.g. `C:\Program Files\PHP\wincache`).
-3. Copy `php_wincache.dll` to your PHP extensions-folder (e.g. `C:\Program Files\PHP\bin\ext`)
-4. Add the extension to `php.ini` as shown below
-
-Alternatively, you can install via CMD or PowerShell: 
-
-`msiexec /i {WinCacheMsiPath} PHPPATH={PHPPath} IACCEPTWINDOWSCACHEFORPHPLICENSETERMS="Yes" /q` 
-
-where `{WinCacheMsiPath}` is the path to the .msi file to install WinCache and `{PHPPath}` is the path to the php folder. **Important:** The php path must end with a trailing slash! If an error like `"PHPPATH property must be set to the directory where PHP resides"` occurs, try to install it via PowerShell.
-
 ### SQL Server extension
 
 1. [Download sqlsrv extension](https://github.com/microsoft/msphpsql/releases) for your PHP version
-2. Copy `php_sqlsrv_81_nts.dll` (or similar) to the `ext` folder of PHP.
+2. Copy `php_sqlsrv_82_nts.dll` (or similar) to the `ext` folder of PHP.
 3. Add the extension to `php.ini` as shown below
 
 ## php.ini Settings
 
-There are a few settings that need to be changed or added to the `php.ini` file in your `PHP` directory. 
+There are a few settings that need to be changed or added to the `php.ini` 
+file in your `PHP` directory. If you just installed PHP, you will not have a 
+`php.ini` file yet. In this case, rename `php.ini-production` to `php.ini` 
+to start with.
 
 **IMPORTANT**: Recycle your application pool in the IIS Manager to activate changes in `php.ini`!
 
 1. Rename `php.ini-development` or `php.ini-production` to `php.ini` to start with.
 2. Follow the [PHP configuration guide](Recommended_PHP_settings.md) for server-independent setup.
 3. Add IIS specific options
-	- `extension_dir = ./ext` - this is important! If not set, you might not be able to load extensions!
+	- `extension_dir = ./ext` - **Uncomment** this line! This is important! If 
+	  not set, you might not be able to load extensions!
 	- `cgi.force_redirect = 0`
 	- `cgi.fix_pathinfo = 1`
 	- `fastcgi.impersonate = 1`
-	- `extension = sodium`
+	- `extension = sodium` - **uncomment** this line!
 	- `sys_temp_dir = "C:\Program Files\PHP\tmp"` - If the path to your `tmp` folder is different change the path to the correct one!
 4. Add SQL Server Extension:
-	- `extension = sqlsrv_74_nts`
-5. Configure WinCache (only if WinCache is used!):
-	- `extension = wincache`
-	- `wincache.fcenabled = 1` (optional)
-	- `wincache.ocenabled = 1` (optional)
+	- `extension = sqlsrv_82_nts`
 6. Check OPCache settings:
 	- `zend_extension = "C:\Program Files\PHP\bin\ext\php_opcache.dll"`
 	- `opcache.enable = 1` and other settings as described in the general [PHP recommendations](Recommended_PHP_settings.md)
@@ -97,11 +104,18 @@ There are a few settings that need to be changed or added to the `php.ini` file 
 	- `log_errors = On`
 	- `error_log = "C:\Program Files\PHP\logs\error.log"` - don't forget to crate the directory used here!
 	
-Check you PHP configuration by creating a file in `C:\inetpub\wwwroot` (e.g. `phpinfo.php`) and calling it in your browser via http://localhost/phpinfo.php. Search for `sqlsrv` in the output - if it is there, you are probably good to go. If not, loading extensions did not work yet - check your `extension_dir`, restart IIS, etc.
+Check you PHP configuration by creating a file in `C:\inetpub\wwwroot` (e.g. `phpinfo.php` file below) and calling it in your browser 
+via http://localhost/phpinfo.php. Search for `sqlsrv` in the output - if it is there, you are probably good to go. If not, loading extensions did not 
+work yet - check your `extension_dir`, restart IIS, etc.
+
+```php
+<?php
+phpinfo();
+```
 	
 ## Installing the workbench
 
-### Create a folder
+### Create a folder in the default website 
 
 1. Open IIS Manager
 2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
@@ -109,6 +123,8 @@ Check you PHP configuration by creating a file in `C:\inetpub\wwwroot` (e.g. `ph
 4. Fill out the form 
 	- The `Alias` will be the URL path to the workbench 
 	- The `Physical path` is the actual location on the file system - e.g. `C:\inetpub\wwwroot\workbench`
+	- Configure Pass-Through authentication if you need to connect to
+	  MS SQL Server with a directory user - see SQL server authentication chapter below.
 
 This will automatically create the physical path.
 
@@ -118,11 +134,17 @@ This will automatically create the physical path.
 
 Create a separate database on the SQL server and assign a user to it. The user **must** have permissions to read and write data and to execute DDL statements lie `CREATE TABLE`, `CREATE VIEW`, etc.
 
-You can use different types of authentication for the DB user - see documentation of the `MsSqlConnector` in `Administration > Documentations > Data Connectors`for more details.
+### Set up SQL Server authentication 
 
-**WARNING:** the credentials for the DB connection will be stored in the `System.config.json` unencrypted inside the workbench directory. You can avoid this if you use a Windows authentication. In this case, the credentials will only be stored in the IIS.
+You can use different types of authentication for the DB user - see documentation of the [MsSqlConnector](../UXON/UXON_prototypes.md?selector=%5Cexface%5CCore%5CDataConnectors%5CMsSqlConnector) for more details.
 
-#### Set up SQL Server Windows authentication
+#### System config
+
+The simplest authentication is using a username and password. You can simply store the credentials in the `config/System.config.json` file in the workbench directory.
+
+**WARNING:** the credentials for the DB connection will be stored in the `System.config.json` unencrypted. You can avoid this if you use a Windows authentication or [environment variables](../Security/Secure_data_sources/Secrets_in_env_vars.md). In this case, the credentials will only be stored on the host.
+
+#### Windows authentication
 
 **IMPORTANT:** the PHP process must run as the user you need to authenticate with. Depending on the web
 server used, different approaches are possible.
