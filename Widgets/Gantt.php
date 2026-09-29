@@ -8,10 +8,11 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
- * A Gantt widget will show a TreeTable next to a Gantt chart (horizontal timeline bars)
+ * A Gantt widget shows a TreeTable together with a Gantt chart (horizontal timeline bars).
  * The Gantt Chart will show the tasks of the TreeTable as horizontal bars, 
  * where the length of the bar is determined by the start and end date of the task.
  * 
+ * The `orientation` determines whether the table is shown to the left of the chart or above it.
  * It contains all the classic properties of a TreeTable, as well as the additional Gantt features.
  * 
  * The Gantt also supports nested data and can display multiple bars per rows.
@@ -27,6 +28,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *  {
  *      "widget_type": "Gantt",
  *      "object_alias": "...",
+ *      "orientation": "horizontal",
  *      "freeze_columns": 2,
  *      "hide_header": false,
  *      "paginate": false,
@@ -48,11 +50,18 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 class Gantt extends DataTree
 {
+    const ORIENTATION_HORIZONTAL = 'horizontal';
+    const ORIENTATION_VERTICAL = 'vertical';
+
     private $timelinePart = null;
     
     private $taskPart = null;
     
     private $startDate = null;
+
+    private $orientation = self::ORIENTATION_HORIZONTAL;
+
+    private $hideSplitBar = false;
     
     private $childrenMoveWithParentIf = null;
     
@@ -179,6 +188,67 @@ class Gantt extends DataTree
     public function getStartDate() : ?string
     {
         return $this->startDate;
+    }
+
+    /**
+     * Returns the arrangement of the table and Gantt chart.
+     *
+     * @return string
+     */
+    public function getOrientation() : string
+    {
+        return $this->orientation;
+    }
+
+    /**
+     * Arrange the table and Gantt chart horizontally or vertically.
+     * 
+     * With `horizontal`, the table is shown on the left and the Gantt chart on the right.
+     * With `vertical`, the table is shown at the top and the Gantt chart at the bottom.
+     *
+     * @uxon-property orientation
+     * @uxon-type [horizontal,vertical]
+     * @uxon-default horizontal
+     *
+     * @param string $value
+     * @return Gantt
+     */
+    public function setOrientation(string $value) : Gantt
+    {
+        $value = trim(strtolower($value));
+
+        if ($value !== self::ORIENTATION_HORIZONTAL && $value !== self::ORIENTATION_VERTICAL) {
+            throw new WidgetConfigurationError($this, 'Invalid Gantt orientation "' . $value . '": only "horizontal" or "vertical" are allowed!');
+        }
+
+        $this->orientation = $value;
+        return $this;
+    }
+
+    /**
+     * Returns whether the resize bar between the table and Gantt chart is hidden.
+     *
+     * @return bool
+     */
+    public function getHideSplitBar() : bool
+    {
+        return $this->hideSplitBar;
+    }
+
+    /**
+     * If set to TRUE, the split Resize Bar is hidden
+     *
+     * @uxon-property hide_split_bar
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return Gantt
+     */
+    public function setHideSplitBar(bool $value) : Gantt
+    {
+        $this->hideSplitBar = $value;
+        return $this;
     }
     
     /**
