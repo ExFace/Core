@@ -117,7 +117,7 @@ class ShowLookupDialog extends ShowDialog
                 $targetWidget = $this->getWidgetDefinedIn();
                 if ($targetWidget instanceof iUseInputWidget) {
                     $inputWidget = $targetWidget->getInputWidget();
-                    $data_table = $this->enrichDataWidget($data_table, $inputWidget);                    
+                    $data_table = $this->enrichDataWidget($data_table, $inputWidget, $dialog);                    
                 } // END if ($targetWidget instanceof iUseInputWidget)
             } // END if ($this->isDefinedInWidget())
             
@@ -134,7 +134,7 @@ class ShowLookupDialog extends ShowDialog
             ];
 
             // Apply confirmation button overrides if defined
-            if (null !== $confirmationButtonUxon = $this->getConfirmationButton()) {
+            if (null !== $confirmationButtonUxon = $this->getConfirmationButtonUxon()) {
                 $confArray = $confirmationButtonUxon->toArray();
                 $btnArray = array_merge($btnArray, $confArray);
             }
@@ -166,7 +166,7 @@ class ShowLookupDialog extends ShowDialog
      * @param WidgetInterface $inputWidget
      * @return WidgetInterface
      */
-    protected function enrichDataWidget(WidgetInterface $data_table, WidgetInterface $inputWidget) : WidgetInterface
+    protected function enrichDataWidget(WidgetInterface $data_table, WidgetInterface $inputWidget, DataLookupDialog $lookupDialog) : WidgetInterface
     {
         $tableObj = $data_table->getMetaObject();
         
@@ -226,7 +226,7 @@ class ShowLookupDialog extends ShowDialog
         // InputComboTable::initTable(), so getAggregations() is empty and this block is skipped
         $aggrAttrs = [];
         switch (true) {
-            // If the input widget is an InputCombotTable, we MUST inherit all aggregations as well
+            // If the input widget is an InputComboTable, we MUST inherit all aggregations as well
             case ($inputWidget instanceof InputComboTable && $tableObj->is($inputWidget->getTable()->getMetaObject())):
                 $aggrAttrs = $inputWidget->getTable()->getAggregations();
                 if (! empty($aggrAttrs)) {
@@ -269,8 +269,12 @@ class ShowLookupDialog extends ShowDialog
                 // We could add a `required_columns` property to the action and fill it from
                 // InputComboTable::getLookupActionUxon(). However, we need to make sure, that method
                 // is called AFTER all incoming links were collected.
-                $requiredColumnAliases[] = $inputWidget->getValueAttributeAlias();
-                $requiredColumnAliases[] = $inputWidget->getTextAttributeAlias();
+                $valueAlias = $inputWidget->getValueAttributeAlias();
+                $requiredColumnAliases[] = $valueAlias;
+                $lookupDialog->setUidAttributeAlias($valueAlias);
+                $textAlias = $inputWidget->getTextAttributeAlias();
+                $requiredColumnAliases[] = $textAlias;
+                $lookupDialog->setLabelAttributeAlias($textAlias);
                 foreach ($inputWidget->getValueLinksToThisWidget() as $link) {
                     //only add those columns that actually represent valid attribute_alias of the object,
                     //not others that for example might be calculations and are referenced by data_column_name
@@ -530,7 +534,7 @@ class ShowLookupDialog extends ShowDialog
     /**
      * @return UxonObject|null
      */
-    protected function getConfirmationButton() : ?UxonObject
+    protected function getConfirmationButtonUxon() : ?UxonObject
     {
         return $this->confirmationButtonUxon;
     }
