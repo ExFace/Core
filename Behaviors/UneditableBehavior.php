@@ -316,12 +316,12 @@ class UneditableBehavior extends AbstractBehavior
      * @uxon-type metamodel:attribute[]
      * @uxon-template [""]
      * 
-     * @param array|null $aliases
+     * @param UxonObject $value
      * @return $this
      */
-    protected function setIgnoreChangesToAttributes(?array $aliases) : UneditableBehavior
+    protected function setIgnoreChangesToAttributes(UxonObject $value) : UneditableBehavior
     {
-        $this->ignoreChangesToAttributeAliases = $aliases;
+        $this->ignoreChangesToAttributeAliases = $value->toArray();
         return $this;
     }
 }
