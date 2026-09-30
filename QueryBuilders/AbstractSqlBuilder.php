@@ -2502,15 +2502,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $subject
      * @param string $comparator
      * @param mixed $value
-     * @param bool $rely_on_joins
+     * @param bool $relyOnJoins
      * @param bool $valueIsSQL
-     * @param DataTypeInterface|null $data_type
-     * @throws QueryBuilderException
+     * @param DataTypeInterface|null $dataType
      * @return bool|string
+     *@throws QueryBuilderException
      */
-    protected function buildSqlWhereComparator(QueryPartAttribute $qpart, string $subject, string $comparator, $value, bool $rely_on_joins, bool $valueIsSQL = null, DataTypeInterface $data_type = null) : string
+    protected function buildSqlWhereComparator(QueryPartAttribute $qpart, string $subject, string $comparator, $value, bool $relyOnJoins, bool $valueIsSQL = null, DataTypeInterface $dataType = null) : string
     {
-        $data_type = $data_type ?? $qpart->getDataType();
+        $dataType = $dataType ?? $qpart->getDataType();
         $dataAddressProps = $qpart->getDataAddressProperties();
         $value_list_delimiter = $qpart->getValueListDelimiter();
         $valueIsSQL = $valueIsSQL ?? $qpart->isValueDataAddress();
@@ -2536,8 +2536,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     if (count($values) !== 2) {
                         throw new QueryBuilderException('Invalid value for BETWEEN comparator: "' . $value . '"');
                     }
-                    $values[0] = $this->prepareWhereValue($values[0], $data_type, $dataAddressProps);
-                    $values[1] = $this->prepareWhereValue($values[1], $data_type, $dataAddressProps);
+                    $values[0] = $this->prepareWhereValue($values[0], $dataType, $dataAddressProps);
+                    $values[1] = $this->prepareWhereValue($values[1], $dataType, $dataAddressProps);
                     $value = $values[0] . ' AND ' . $values[1];
                     return $subject . " BETWEEN " . $value;
                 
@@ -2557,15 +2557,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // value for an IN-statement, though, so we need to append an "OR IS NULL" here.
                         if ($val === '' || $val === EXF_LOGICAL_NULL) {
                             unset($values[$nr]);
-                            $valueNullChecks[] = $subject . ($comparator == EXF_COMPARATOR_IN ? ' IS NULL' : ' IS NOT NULL');
-                            if ($data_type instanceof StringDataType) {
-                                $valueNullChecks[] = $subject . ($comparator == EXF_COMPARATOR_IN ? " = ''" : " != ''");
+                            $valueNullChecks[] = $subject . ($comparator == ComparatorDataType::IN ? ' IS NULL' : ' IS NOT NULL');
+                            if ($dataType instanceof StringDataType) {
+                                $valueNullChecks[] = $subject . ($comparator == ComparatorDataType::IN ? " = ''" : " != ''");
                             }
                             continue;
                         }
                         // Normalize non-empty values
                         $val = trim($val);
-                        $values[$nr] = $this->prepareWhereValue($val, $data_type, $dataAddressProps);
+                        $values[$nr] = $this->prepareWhereValue($val, $dataType, $dataAddressProps);
                     }
 
                     switch (true) {
@@ -2582,7 +2582,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
                         case empty($values) === true && ! empty($valueNullChecks):
                             $value = EXF_LOGICAL_NULL;
-                            $comparator = $comparator === EXF_COMPARATOR_IN ? EXF_COMPARATOR_EQUALS : EXF_COMPARATOR_EQUALS_NOT;
+                            $comparator = $comparator === ComparatorDataType::IN ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
                             break;
                         // Otherwise create a (...) list and append the NULL-check with an OR if there is one.
                         default:
@@ -2612,11 +2612,45 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             return '/* ' . $subject . ' cannot pass comparison to "' . $valueRaw . '" via comparator "' . $comparator . '": wrong data type! */' . "\n"
                 . '1 = 0';
         }
+        
+        return $this->buildSqlWhereComparatorPredicate($value, $valueIsSQL, $comparator, $subject, $dataType, $qpart, $relyOnJoins);
+    }
 
-        if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $data_type, $dataAddressProps) === EXF_LOGICAL_NULL)){
+    /**
+     * Returns the SQL predicate for a WHERE or HAVING clause
+     *
+     * In SQL a predicate is an expression that evaluates to TRUE, FALSE, or UNKNOWN. Once we know, what the subject,
+     * comparator and value are, we can build a dialect specific predicate. Override this method in concrete builder
+     * classes to change the syntax of a predicate.
+     * 
+     * In contrast to buildSqlWhereComparator(), this method does not optimize comparators and values - it builds the
+     * SQL from them. Separating the two cases simplifies dialect specific implementations of the predicate building.
+     *
+     * @param mixed $value
+     * @param bool $valueIsSQL
+     * @param string $comparator
+     * @param string $subject
+     * @param DataTypeInterface $dataType
+     * @param QueryPartAttribute $qpart
+     * @param bool $relyOnJoins
+     * @return string
+     */
+    protected function buildSqlWhereComparatorPredicate(
+        mixed $value, 
+        bool $valueIsSQL, 
+        string $comparator, 
+        string $subject, 
+        DataTypeInterface $dataType,
+        QueryPartAttribute $qpart,
+        bool $relyOnJoins
+    ) : string
+    {
+        $dataAddressProps = $qpart->getDataAddressProperties();
+        
+        if (is_null($value) || (! $valueIsSQL && $this->prepareWhereValue($value, $dataType, $dataAddressProps) === EXF_LOGICAL_NULL)){
             switch ($comparator) {
-                case EXF_COMPARATOR_EQUALS:
-                case EXF_COMPARATOR_IS:
+                case ComparatorDataType::EQUALS:
+                case ComparatorDataType::IS:
                     return $subject . ' IS NULL';
                 default:
                     return $subject . ' IS NOT NULL';
@@ -2625,37 +2659,37 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
         // If everything is OK, build the SQL
         switch (true) {
-            
+
             // IN() and NOT IN() can use the $value as-is because it was already split and each part was casted
-            case $comparator === EXF_COMPARATOR_IN:
+            case $comparator === ComparatorDataType::IN:
                 $output = "(" . $subject . " IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
-            case $comparator === EXF_COMPARATOR_NOT_IN:
+            case $comparator === ComparatorDataType::NOT_IN:
                 $output = "(" . $subject . " NOT IN " . $value . ")";
                 break; // The parentheses are needed if there is a OR IS NULL addition (see above)
-            
+
             // Strict comparators need to cast their values
-            case $comparator === EXF_COMPARATOR_EQUALS:
-                $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+            case $comparator === ComparatorDataType::EQUALS:
+                $output = $subject . " = " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $dataType, $dataAddressProps));
                 break;
-            case $comparator === EXF_COMPARATOR_EQUALS_NOT:
-                $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+            case $comparator === ComparatorDataType::EQUALS_NOT:
+                $output = $subject . " != " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $dataType, $dataAddressProps));
                 break;
-            case $comparator === EXF_COMPARATOR_GREATER_THAN:
-            case $comparator === EXF_COMPARATOR_LESS_THAN:
-            case $comparator === EXF_COMPARATOR_GREATER_THAN_OR_EQUALS:
-            case $comparator === EXF_COMPARATOR_LESS_THAN_OR_EQUALS:
-                $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $data_type, $dataAddressProps));
+            case $comparator === ComparatorDataType::GREATER_THAN:
+            case $comparator === ComparatorDataType::LESS_THAN:
+            case $comparator === ComparatorDataType::GREATER_THAN_OR_EQUALS:
+            case $comparator === ComparatorDataType::LESS_THAN_OR_EQUALS:
+                $output = $subject . " " . $comparator . " " . ($valueIsSQL ? $value : $this->prepareWhereValue($value, $dataType, $dataAddressProps));
                 break;
-                
+
             // For non-strict comparators, casting depends on how exactly the value is used.
-            case $comparator === EXF_COMPARATOR_IS_NOT:
-            case $comparator === EXF_COMPARATOR_IS:
+            case $comparator === ComparatorDataType::IS_NOT:
+            case $comparator === ComparatorDataType::IS:
                 if (stripos($value, 'sql:') !== false) {
                     $output = $this->buildSqlWhereComparatorCustomSql($subject, $comparator, $value, $valueIsSQL);
                     break;
                 }
-                $like = $comparator === EXF_COMPARATOR_IS_NOT ? 'NOT LIKE' : 'LIKE';
+                $like = $comparator === ComparatorDataType::IS_NOT ? 'NOT LIKE' : 'LIKE';
                 $output = "UPPER({$subject}) $like ";
                 if ($valueIsSQL) {
                     $output .= "CONCAT('%', {$value}, '%')";
@@ -2663,15 +2697,15 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                     $output .= "'%{$this->escapeString(mb_strtoupper($value))}%'";
                 }
                 break;
-                
+
             // If the query builder cannot deal with the comparator, but the comparator can be transformed into other (atomic)
             // comparators, try building a query with the atomized version of the comparator
             case ! ComparatorDataType::isAtomic($comparator) && $qpart instanceof QueryPartFilter:
                 $atomized = $qpart->atomize();
                 if ($this->checkFilterBelongsInHavingClause($qpart)) {
-                    $output = $atomized instanceof QueryPartFilterGroup ? $this->buildSqlHaving($atomized, $rely_on_joins) : $this->buildSqlHavingCondition($atomized, $rely_on_joins);
+                    $output = $atomized instanceof QueryPartFilterGroup ? $this->buildSqlHaving($atomized, $relyOnJoins) : $this->buildSqlHavingCondition($atomized, $relyOnJoins);
                 } else {
-                    $output = $atomized instanceof QueryPartFilterGroup ? $this->buildSqlWhere($atomized, $rely_on_joins) : $this->buildSqlWhereCondition($atomized, $rely_on_joins);
+                    $output = $atomized instanceof QueryPartFilterGroup ? $this->buildSqlWhere($atomized, $relyOnJoins) : $this->buildSqlWhereCondition($atomized, $relyOnJoins);
                 }
                 break;
             default:
@@ -3432,7 +3466,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param string $comparator
      * @return QueryPartFilter
      */
-    protected function addFilterWithCustomSql($attribute_alias, $sql, $comparator = EXF_COMPARATOR_IS)
+    protected function addFilterWithCustomSql($attribute_alias, $sql, $comparator = ComparatorDataType::IS)
     {
         $qpart = $this->addFilterFromString($attribute_alias, $sql, $comparator);
         $qpart->setValueIsDataAddress(true);
@@ -3593,9 +3627,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
 
             // TODO The current checks do not really ensure, that the object is unique. Need a better idea!
             $isFilterEquals = false;
-            if ($qpart->getComparator() == EXF_COMPARATOR_IS || $qpart->getComparator() == EXF_COMPARATOR_EQUALS) {
+            if ($qpart->getComparator() == ComparatorDataType::IS || $qpart->getComparator() == ComparatorDataType::EQUALS) {
                 $isFilterEquals = true;
-            } elseif ($qpart->getComparator() === EXF_COMPARATOR_IN) {
+            } elseif ($qpart->getComparator() === ComparatorDataType::IN) {
                 $values = is_array($qpart->getCompareValue()) ? $qpart->getCompareValue() : explode($qpart->getValueListDelimiter(), $qpart->getCompareValue());
                 if (count($values) === 1) {
                     $isFilterEquals = true;
