@@ -1,3 +1,8 @@
+---
+description: "Use when writing documentation for classes, methods, and UXON-Properties"
+name: "Documentation"
+---
+
 # Documentation
 
 Anything written by AI needs to be properly documented, so that:
