@@ -449,7 +449,11 @@ SQL;
 
         $comment = "\n" . $this->buildSqlComment("buildSqlOrderBy(" . $qpart->getAlias() . ", " . $select_from . ")") . "\n";
         $select_from ??= $this->getShortAlias($this->getMainObject()->getAlias());
-        if ($qpartSelect = $this->getAttribute($qpart->getAlias())) {
+        // Look up the matching SELECT column by column key (e.g. UID_COUNT), not the raw alias
+        // (e.g. UID:COUNT), because attributes are keyed by their sanitized column key. This way
+        // aggregated sorters reference the column alias instead of rebuilding the aggregate
+        // expression, which would fail in the outer enrichment wrapper (no access to inner tables).
+        if ($qpartSelect = $this->getAttribute($qpart->getColumnKey())) {
             $sort_by = '"' . $qpartSelect->getColumnKey() . '"';
         } else {
             $sort_by = $this->buildSqlSelect($qpart, $select_from, null, false);

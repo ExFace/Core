@@ -41,6 +41,7 @@ class ObjectMarkdownPrinter extends AbstractMarkdownPrinter implements MarkdownI
      */
     private int $relationDepth = 0;
     private ?string $relationType = RelationTypeDataType::REGULAR;
+    private bool $includeActionDetails = true;
     
     private static array $printedObjects = [];
 
@@ -190,6 +191,7 @@ MD;
                 }
                 static::$printedObjects[] = $relObj;
                 $childPrinter = new ObjectMarkdownPrinter($this->workbench, $relObj, ($depth - 1), $headingLevel+1);
+                $childPrinter->includeActionDetails($this->includeActionDetails);
                 $markdown .= $childPrinter->getMarkdown();
             }
         }
@@ -239,8 +241,17 @@ MD;
         $markdown = '';
         try{
             foreach ($obj->getActions() as $act) {
-                $actionPrinter = new ActionMarkdownPrinter($act, $headingLevel);
-                $markdown .= $actionPrinter->getMarkdown();
+                if ($this->includeActionDetails) {
+                    $actionPrinter = new ActionMarkdownPrinter($act, $headingLevel);
+                    $markdown .= $actionPrinter->getMarkdown();
+                } else {
+                    $markdown .= <<<MD
+
+- Action **{$act->getName()}**. {$act->getHint()}
+    - Alias: `{$act->getAlias()}` 
+    - UID: `{$act->getId()}`
+MD;
+                }
             } 
         } catch (\Exception $e){
             $markdown .= 'Cannot print action details: ' . $e->getMessage();
@@ -568,6 +579,22 @@ MD;
     public function includeRelationDepth(int $depth) : ObjectMarkdownPrinter
     {
         $this->relationDepth = $depth;
+        return $this;
+    }
+
+    /**
+     * Controls whether full action documentation is rendered for object actions.
+     *
+     * When disabled, actions remain discoverable as a compact list containing
+     * their aliases and IDs. The default is TRUE to preserve the existing
+     * ObjectMarkdownPrinter behavior for all current callers.
+     *
+     * @param bool $include
+     * @return $this
+     */
+    public function includeActionDetails(bool $include) : ObjectMarkdownPrinter
+    {
+        $this->includeActionDetails = $include;
         return $this;
     }
 }
