@@ -2216,16 +2216,16 @@ SQL;
         $sql = <<<SQL
 /* Load communication channel */
 SELECT 
-    {$this->buildSqlUuidSelector('cc.oid')} AS UID,
-    cc.name AS NAME,
-    cc.alias AS ALIAS,
-    a.app_alias AS APP_ALIAS,
-    cc.message_default_uxon AS MESSAGE_DEFAULT_UXON,
-    cc.message_prototype AS MESSAGE_PROTOTYPE,
-    {$this->buildSqlUuidSelector('cc.data_connection_default_oid')} AS DATA_CONNECTION_DEFAULT,
-    cdc.value AS DATA_CONNECTION_CUSTOMIZED,
-    cc.mute_flag_default AS MUTE_FLAG_DEFAULT,
-    cm.value AS MUTE_FLAG_CUSTOMIZED
+    {$this->buildSqlUuidSelector('cc.oid')} AS {$this->escapeAlias('UID')},
+    cc.name AS {$this->escapeAlias('NAME')},
+    cc.alias AS {$this->escapeAlias('ALIAS')},
+    a.app_alias AS {$this->escapeAlias('APP_ALIAS')},
+    cc.message_default_uxon AS {$this->escapeAlias('MESSAGE_DEFAULT_UXON')},
+    cc.message_prototype AS {$this->escapeAlias('MESSAGE_PROTOTYPE')},
+    {$this->buildSqlUuidSelector('cc.data_connection_default_oid')} AS {$this->escapeAlias('DATA_CONNECTION_DEFAULT')},
+    cdc.value AS {$this->escapeAlias('DATA_CONNECTION_CUSTOMIZED')},
+    cc.mute_flag_default AS {$this->escapeAlias('MUTE_FLAG_DEFAULT')},
+    cm.value AS {$this->escapeAlias('MUTE_FLAG_CUSTOMIZED')}
 FROM
     exf_communication_channel cc
     LEFT JOIN exf_app a ON cc.app_oid = a.oid
@@ -2295,12 +2295,12 @@ SQL;
         $sql = <<<SQL
 /* Load communication templates */
 SELECT
-    {$this->buildSqlUuidSelector('ct.oid')} AS UID,
-    ct.name AS NAME,
-    ct.alias AS ALIAS,
-    a.app_alias AS APP_ALIAS,
-    ct.message_uxon AS MESSAGE_UXON,
-    CONCAT(cca.app_alias, '.', cc.alias) AS CHANNEL_ALIAS
+    {$this->buildSqlUuidSelector('ct.oid')} AS {$this->escapeAlias('UID')},
+    ct.name AS {$this->escapeAlias('NAME')},
+    ct.alias AS {$this->escapeAlias('ALIAS')},
+    a.app_alias AS {$this->escapeAlias('APP_ALIAS')},
+    ct.message_uxon AS {$this->escapeAlias('MESSAGE_UXON')},
+    CONCAT(cca.app_alias, '.', cc.alias) AS {$this->escapeAlias('CHANNEL_ALIAS')}
 FROM
     exf_communication_template ct
     INNER JOIN exf_communication_channel cc ON cc.oid = ct.communication_channel_oid 
