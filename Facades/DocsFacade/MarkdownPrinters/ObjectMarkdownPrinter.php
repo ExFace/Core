@@ -245,7 +245,12 @@ MD;
                     $actionPrinter = new ActionMarkdownPrinter($act, $headingLevel);
                     $markdown .= $actionPrinter->getMarkdown();
                 } else {
-                    $markdown .= '- `' . $act->getAliasWithNamespace() . '` - ID: `' . $act->getId() . '`' . PHP_EOL;
+                    $markdown .= <<<MD
+
+- Action **{$act->getName()}**. {$act->getHint()}
+    - Alias: `{$act->getAlias()}` 
+    - UID: `{$act->getId()}`
+MD;
                 }
             } 
         } catch (\Exception $e){
