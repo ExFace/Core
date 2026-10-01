@@ -40,7 +40,7 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
             }
     
             if (is_dir($filePath)) {
-                if (in_array($file, ['Bilder', 'Archive', 'Intro'])) {
+                if (in_array($file, ['Bilder', 'Archive', 'Intro', 'Pictures'])) {
                     continue;
                 }
     
