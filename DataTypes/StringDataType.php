@@ -32,6 +32,7 @@ class StringDataType extends AbstractDataType
     private $regexValidatorBadValue = null;
     
     private $emptyAsNULL = false;
+    private $caseSensitive = null;
 
     /**
      * @return string|null
@@ -1037,5 +1038,33 @@ class StringDataType extends AbstractDataType
             return $matches[1] . $flags;
         }
         return $regex; // Return unchanged if no match
+    }
+
+    /**
+     * Set the case sensitivity explicitly if it is required for some logic.
+     * 
+     * If not set, the data source will use its default case sensitivity for string comparisons.
+     * 
+     * ATTENTION: Case-insensitive comparisons may prevent the database from using regular indexes and can therefore
+     * reduce query performance. Frequently filtered attributes may require a suitable case-insensitive index.
+     * 
+     * @uxon-property case_sensitive
+     * @uxon-type boolean
+     * 
+     * @param bool $trueOrFalse
+     * @return $this
+     */
+    public function setCaseSensitive(bool $trueOrFalse) : StringDataType
+    {
+        $this->caseSensitive = $trueOrFalse;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCaseSensitive() : ?bool
+    {
+        return $this->caseSensitive;
     }
 }
