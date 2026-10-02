@@ -9,6 +9,28 @@ use exface\Core\DataTypes\StringDataType;
 
 abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderResolver 
 {
+    private array $excludedFolders = [];
+
+    /**
+     * Folders that should be skipped when scanning the Docs directory.
+     *
+     * @param string[] $folderNames
+     * @return AbstractMarkdownPlaceholderResolver
+     */
+    public function setExcludedFolders(array $folderNames) : AbstractMarkdownPlaceholderResolver
+    {
+        $this->excludedFolders = $folderNames;
+        return $this;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getExcludedFolders() : array
+    {
+        return $this->excludedFolders;
+    }
+
     protected function getDocsPath(string $currentPagePath) : string
     {
         $rootDir = FilePathDataType::findFolderPath($currentPagePath);
@@ -40,7 +62,7 @@ abstract class AbstractMarkdownPlaceholderResolver extends AbstractPlaceholderRe
             }
     
             if (is_dir($filePath)) {
-                if (in_array($file, ['Bilder', 'Archive', 'Intro', 'Pictures'])) {
+                if (in_array($file, $this->getExcludedFolders())) {
                     continue;
                 }
     

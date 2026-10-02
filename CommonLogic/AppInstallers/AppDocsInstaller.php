@@ -37,6 +37,7 @@ use exface\Core\Interfaces\AppExporterInterface;
 class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterface
 {
     private $docsPath = 'Docs';
+    private $excludedFolders =["Pictures", "pictures", "Bilder", "bilder", "Images", "images"];
     
     /**
      * 
@@ -87,11 +88,11 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
         $vendorPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder();
         foreach ($markdownFiles as $file) {
             $fileRenderer = $baseRenderer->copy();
-            $fileRenderer->addPlaceholder(new ImageNumberResolver($file));
-            $fileRenderer->addPlaceholder(new SubPageListResolver($file, $vendorPath));
-            $fileRenderer->addPlaceholder(new NavButtonResolver($file));
-            $fileRenderer->addPlaceholder(new ImageReferenceResolver($file));
-            $fileRenderer->addPlaceholder(new ImageListResolver($file));
+            $fileRenderer->addPlaceholder((new ImageNumberResolver($file))->setExcludedFolders($this->excludedFolders));
+            $fileRenderer->addPlaceholder((new SubPageListResolver($file, $vendorPath))->setExcludedFolders($this->excludedFolders));
+            $fileRenderer->addPlaceholder((new NavButtonResolver($file))->setExcludedFolders($this->excludedFolders));
+            $fileRenderer->addPlaceholder((new ImageReferenceResolver($file))->setExcludedFolders($this->excludedFolders));
+            $fileRenderer->addPlaceholder((new ImageListResolver($file))->setExcludedFolders($this->excludedFolders));
             $fileRenderer->addPlaceholder(new WidgetListResolver($this->getWorkbench()));
             // TODO add other placeholder classes here
             $rendered = $fileRenderer->render($file);
@@ -150,5 +151,19 @@ class AppDocsInstaller extends AbstractAppInstaller implements AppExporterInterf
         }
     
         return $mdFiles;
+    }
+
+    public function setExcludedFolders(array $excludedFolders): self
+    {
+        $this->excludedFolders = $excludedFolders;
+        return $this;
+    }
+
+    public function addExcludedFolder(string $folderName): self
+    {
+        if (!in_array($folderName, $this->excludedFolders)) {
+            $this->excludedFolders[] = $folderName;
+        }
+        return $this;
     }
 }
