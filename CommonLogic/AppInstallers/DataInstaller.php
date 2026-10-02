@@ -159,6 +159,17 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     private $className = null;
     
     private $uninstallCascading = true;
+
+    private $uninstallTransaction = null;
+
+    /**
+     * Shares an existing transaction with the uninstall instead of committing independently.
+     */
+    public function setUninstallTransaction(DataTransactionInterface $transaction) : DataInstaller
+    {
+        $this->uninstallTransaction = $transaction;
+        return $this;
+    }
     
     /**
      * 
@@ -460,7 +471,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     public function uninstall() : \Iterator
     {
         $idt = $this->getOutputIndentation();
-        $transaction = $this->getWorkbench()->data()->startTransaction();
+        $transaction = $this->uninstallTransaction ?? $this->getWorkbench()->data()->startTransaction();
         
         yield $idt . 'Uninstalling ' . $this->getName() . ':' . PHP_EOL;
         
@@ -510,7 +521,9 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         }
         unset($objects);
         
-        $transaction->commit();
+        if ($this->uninstallTransaction === null) {
+            $transaction->commit();
+        }
         
         if ($counter === 0) {
             yield $idt.$idt . 'Nothing to do.' . PHP_EOL;
