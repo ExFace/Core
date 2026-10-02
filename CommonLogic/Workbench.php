@@ -26,13 +26,13 @@ use exface\Core\Interfaces\Tasks\ResultInterface;
 use exface\Core\Exceptions\AppNotFoundError;
 use exface\Core\CommonLogic\Selectors\ModelLoaderSelector;
 use exface\Core\Exceptions\AppComponentNotFoundError;
-use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\Events\Workbench\OnStartEvent;
 use exface\Core\Events\Workbench\OnStopEvent;
 use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\CommonLogic\Communication\Communicator;
@@ -105,10 +105,10 @@ class Workbench implements WorkbenchInterface
         // to the one from composer.
         if ($cfg->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
-            // On case-sensitive file systems (Linux) resolve class folders/files
+            // On case-sensitive file systems resolve class folders/files
             // case-insensitively so apps load the same way as on Windows.
-            $caseInsensitive = DIRECTORY_SEPARATOR === '/';
-            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path], $caseInsensitive);
+            $enableCaseRecovery = ServerSoftwareDataType::isFileSystemCaseSensitive($this->vendor_dir_path);
+            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path], $enableCaseRecovery);
             $classLoader->register();
         }
         

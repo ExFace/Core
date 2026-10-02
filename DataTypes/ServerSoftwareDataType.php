@@ -119,6 +119,109 @@ class ServerSoftwareDataType extends StringDataType
     }
 
     /**
+     * Checks whether the file system at the given path treats file names case-sensitively.
+     *
+     * Why: the previous implementation upper-/lowercased the entire path of this class,
+     * which mixes the behavior of every parent directory and mount point. Here only a single
+     * path segment is varied, so the result reflects the directory the files are actually
+     * loaded from. Pass the directory you are going to load from (e.g. the vendor folder).
+     *
+     * Not cached - callers needing the value repeatedly should keep it themselves.
+     *
+     * This method never throws, because it is used while bootstrapping the autoloader.
+     * If case sensitivity cannot be determined, TRUE is returned: assuming case-sensitivity
+     * only leads to exact matches (plus recovery lookups), so callers fall back to their
+     * regular "not found" handling instead of matching a wrongly cased path.
+     *
+     * @param string|null $path file or directory to test - defaults to this class file
+     */
+    public static function isFileSystemCaseSensitive(?string $path = null) : bool
+    {
+        $realPath = realpath($path ?? __FILE__);
+        if ($realPath === false) {
+            return true;
+        }
+        return self::detectCaseSensitivity($realPath);
+    }
+
+    /**
+     * Determines which path segment to probe and returns the detected case sensitivity.
+     *
+     * Why: for a directory, probing its own name would test the file system of its PARENT
+     * (the name is resolved there). If the directory is a separate mount (e.g. a Docker
+     * volume), that gives a wrong result. So an entry inside the directory is probed first.
+     * If that is not possible, we walk up to the nearest segment containing case-changeable
+     * characters. If nothing is testable, case-sensitivity is assumed.
+     */
+    private static function detectCaseSensitivity(string $realPath) : bool
+    {
+        if (is_dir($realPath)) {
+            $probeEntry = self::findProbeEntry($realPath);
+            if ($probeEntry !== null) {
+                return self::isCaseSensitiveEntry($realPath, $probeEntry);
+            }
+        }
+        
+        $current = $realPath;
+        while (($parent = dirname($current)) !== $current) {
+            $name = basename($current);
+            if (strtoupper($name) !== strtolower($name)) {
+                return self::isCaseSensitiveEntry($parent, $name);
+            }
+            $current = $parent;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the first entry of the given directory, that contains case-changeable characters.
+     *
+     * Why: we need a real entry INSIDE the directory to test the file system the directory
+     * itself lives on. readdir() is used instead of scandir() to stop at the first match
+     * instead of reading large directories completely. Warnings are suppressed because this
+     * runs during bootstrap, where an unreadable directory must not break startup.
+     */
+    private static function findProbeEntry(string $dir) : ?string
+    {
+        $handle = @opendir($dir);
+        if ($handle === false) {
+            return null;
+        }
+        try {
+            while (($entry = readdir($handle)) !== false) {
+                // "." and ".." are skipped automatically as they contain no letters
+                if (strtoupper($entry) !== strtolower($entry)) {
+                    return $entry;
+                }
+            }
+        } finally {
+            closedir($handle);
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a case-variant of the given directory entry resolves to the same file.
+     *
+     * Why: checking only if the variant exists is not enough - on a case-sensitive file system
+     * a directory may contain two siblings differing only in case. Comparing inodes tells these
+     * cases apart: same inode means the same entry was found (case-insensitive), different
+     * inodes mean two separate files (case-sensitive).
+     */
+    private static function isCaseSensitiveEntry(string $dir, string $name) : bool
+    {
+        $upper = strtoupper($name);
+        $variant = $name !== $upper ? $upper : strtolower($name);
+        $originalPath = $dir . DIRECTORY_SEPARATOR . $name;
+        $variantPath = $dir . DIRECTORY_SEPARATOR . $variant;
+        
+        if (! file_exists($variantPath)) {
+            return true;
+        }
+        return @fileinode($originalPath) !== @fileinode($variantPath);
+    }
+
+    /**
      * Returns the operating system user running the current PHP process.
      *
      * @return string|NULL
