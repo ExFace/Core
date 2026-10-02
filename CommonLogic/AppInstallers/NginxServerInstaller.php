@@ -87,4 +87,12 @@ CONF;
     {
         return "# {$comment}";
     }
+
+    /**
+     * @inheritDoc
+     */
+    protected function ServerSoftwareFamilyDefault(): string
+    {
+        return 'nginx';
+    }
 }
