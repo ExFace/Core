@@ -29,6 +29,8 @@ class SplClassLoader
 
     private $_namespaceSeparator = '\\';
 
+    private $_caseInsensitive = false;
+
     /**
      * Creates a new <tt>SplClassLoader</tt> that loads classes of the
      * specified namespace.
@@ -37,11 +39,35 @@ class SplClassLoader
      *            The namespace to use.
      * @param string|null|array $includePath
      *            One or more include paths to use
+     * @param bool $caseInsensitive
+     *            Resolve folders/files case-insensitively so case-sensitive file
+     *            systems (Linux) behave like case-insensitive ones (Windows).
      */
-    public function __construct($ns = null, $includePath = null)
+    public function __construct($ns = null, $includePath = null, $caseInsensitive = false)
     {
         $this->_namespace = $ns;
         $this->_includePaths = (array) $includePath;
+        $this->_caseInsensitive = (bool) $caseInsensitive;
+    }
+
+    /**
+     * Sets whether class files are resolved case-insensitively.
+     *
+     * @param bool $caseInsensitive
+     */
+    public function setCaseInsensitive($caseInsensitive)
+    {
+        $this->_caseInsensitive = (bool) $caseInsensitive;
+    }
+
+    /**
+     * Tells whether class files are resolved case-insensitively.
+     *
+     * @return bool
+     */
+    public function isCaseInsensitive()
+    {
+        return $this->_caseInsensitive;
     }
 
     /**
@@ -100,7 +126,7 @@ class SplClassLoader
     /**
      * Sets the file extension of class files in the namespace of this class loader.
      *
-     * @param string $fileExtension            
+     * @param string $fileExtension
      */
     public function setFileExtension($fileExtension)
     {
@@ -148,13 +174,13 @@ class SplClassLoader
      *
      * @param string $className
      *            The name of the class to load.
-     *            
+     *
      * @return bool Success status
      */
     public function loadClass($className)
     {
         $isFound = false;
-        
+
         if (null === $this->_namespace || $this->_namespace . $this->_namespaceSeparator === substr($className, 0, strlen($this->_namespace . $this->_namespaceSeparator))) {
             $fileName = '';
             $namespace = '';
@@ -163,20 +189,20 @@ class SplClassLoader
                 $className = substr($className, $lastNsPos + 1);
                 $fileName = str_replace($this->_namespaceSeparator, DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
             }
-            $fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . $this->_fileExtension;
-            
+            // PSR-4: underscores in the class name are literal characters, not folder separators (PSR-0 behavior).
+            $fileName .= $className . $this->_fileExtension;
+
             $includePaths = $this->_includePaths ?: array(
                 '.'
             );
             foreach ($includePaths as $includePath) {
-                $unresolvedFilePath = $includePath . DIRECTORY_SEPARATOR . $fileName;
-                $isFound = $this->tryLoadClassByPath($className, $unresolvedFilePath);
+                $isFound = $this->tryLoadClassByPath($className, $includePath, $fileName);
                 if ($isFound) {
                     break;
                 }
             }
         }
-        
+
         return $isFound;
     }
 
@@ -185,14 +211,25 @@ class SplClassLoader
      *
      * @param string $className
      *            Name of the class to load
-     * @param string $unresolvedFilePath
-     *            Absolute or relative path to the file
-     *            
+     * @param string $includePath
+     *            Base include path (assumed to exist with correct case)
+     * @param string $fileName
+     *            Path to the class file relative to the include path
+     *
      * @return bool Success status
      */
-    private function tryLoadClassByPath($className, $unresolvedFilePath)
+    private function tryLoadClassByPath($className, $includePath, $fileName)
     {
+        $unresolvedFilePath = $includePath . DIRECTORY_SEPARATOR . $fileName;
         $filePath = stream_resolve_include_path($unresolvedFilePath);
+        if (false === $filePath && $this->isCaseInsensitive() === true) {
+            try {
+                $relativePath = \exface\Core\DataTypes\FilePathDataType::findPathCaseInsensitive($fileName, $includePath);
+                $filePath = $includePath . DIRECTORY_SEPARATOR . $relativePath;
+            } catch (\Throwable $e) {
+                $filePath = false;
+            }
+        }
         $isFound = false !== $filePath;
         if ($isFound) {
             require $filePath;
