@@ -57,17 +57,13 @@ use exface\Core\Interfaces\Model\BehaviorInterface;
  * 
  * 2. Create a MetaObject for this table that **inherits from its BaseObject**. 
  * 
- * 3. If your data source is derived from LogBase, you need to add a LogBase-Class to the Data Source Settings of the
- * newly created MetaObject, for example:
- * `{"LOGBASE_CLASS":"my.App.LieferscheinPosStatus"}` 
- * 
- * 4. Then, attach a new `ChecklistingBehavior` to the MetaObject that you actually wish to modify (for example the
+ * 3. Then, attach a new `ChecklistingBehavior` to the MetaObject that you actually wish to modify (for example the
  * OrderPosition) and configure the behavior as needed.
  * 
- * 5. Make sure to define a relation from the object that represents the checklist to the object you wish to check (for example from 
+ * 4. Make sure to define a relation from the object that represents the checklist to the object you wish to check (for example from 
  * OrderPositionChecklist to OrderPosition).
  * 
- * 6. If properly configured, the behavior will now write its output to the table you have created whenever its
+ * 5. If properly configured, the behavior will now write its output to the table you have created whenever its
  * conditions are met. You can now read said data from the table to create useful effects, such as rendering
  * notifications.
  * 
