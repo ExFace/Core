@@ -42,7 +42,7 @@ use exface\Core\Interfaces\Debug\LogBookInterface;
  * 
  * ```
  * {
- *     "from_object_alias": "suedlink.KMTS.StageCablePRY",
+ *     "from_object_alias": "my.App.Location",
  *     "column_to_column_mappings": [
  *       {
  *         "from": "Col1",

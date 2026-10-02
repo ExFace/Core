@@ -63,7 +63,7 @@ use exface\Core\Widgets\Parts\WidgetPropertyScale;
  * ```
  * {
  *  "widget_type": "InputColorPalette",
- *  "color_presets_datatype_alias": "BaumanagementFarben"
+ *  "color_presets_datatype_alias": "my.App.FarbPaletteZeit"
  * }
  * 
  * ```
@@ -149,7 +149,7 @@ class InputColorPalette extends Input implements iHaveHintScale
      *
      * Examples:  
      * - `{"attribute_alias": "ZeitlicherStatus__Farbe"}` - get the color stored in an attribute (works also for related objects)
-     * - `{"data_type_alias": "onelink.BMDB.BaumanagementFarben"}` - the color will be read from the data type
+     * - `{"data_type_alias": "my.App.FarbPaletteZeit"}` - the color will be read from the data type
      *
      * @uxon-property color_presets_binding
      * @uxon-type \exface\Core\Widgets\Parts\WidgetPropertyDataTypeBinding
@@ -461,7 +461,7 @@ class InputColorPalette extends Input implements iHaveHintScale
      *  ```
      *
      *  ### Example DataType with colors in its values:  
-     *  `onelink.BMDB.BaumanagementFarben` has colors as it's enum values:
+     *  `my.App.FarbPaletteZeit` has colors as it's enum values:
      *  ```
      *  {
      *   "~OK": "Grün",

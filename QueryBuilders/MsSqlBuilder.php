@@ -637,7 +637,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
                     // "tt.aggregatedCol" -> "ttLIST.aggregatedCol" in the above example.
                     $thisSqlSelect = $this->buildSqlSelect($qpart, $select_from, $select_column, false, false, false);
                     $subSqlSelect = $subq->buildSqlSelect($subqSelectPart, null, null, false, false, false);
-                    $sql = str_replace($thisSqlSelect, $subSqlSelect, $sql) . " $subSql FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, $delimLength, '')";
+                    $sql = str_replace($thisSqlSelect, $subSqlSelect, $sql) . " $subSql FOR XML PATH(''), TYPE) AS NVARCHAR(max)), 1, $delimLength, '')";
                 }
                 break;
         }
@@ -689,7 +689,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             // now removing the trailing `)` and adding:
             // ```sql
             //              FOR XML PATH(''), TYPE
-            //          ) AS VARCHAR(max)
+            //          ) AS NVARCHAR(max)
             //      ), 1, $delimLength, ''
             //  )
             // )
@@ -697,7 +697,7 @@ class MsSqlBuilder extends AbstractSqlBuilder
             $args = $aggregator->getArguments();
             $delim = $args[0] ?? $this->buildSqlGroupByListDelimiter($qpart);
             $delimLength = strlen($delim);
-            $subselect = substr($subselect, 0, -1) . " FOR XML PATH(''), TYPE) AS VARCHAR(max)), 1, $delimLength, ''))";
+            $subselect = substr($subselect, 0, -1) . " FOR XML PATH(''), TYPE) AS NVARCHAR(max)), 1, $delimLength, ''))";
         }
         return $subselect;
     }
