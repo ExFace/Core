@@ -76,6 +76,18 @@ class MetaModelInstaller extends DataInstaller
     const FOLDER_NAME_MODEL = 'Model';
     
     const FOLDER_NAME_PAGES = '99_PAGE';
+
+    /**
+     * Returns the metamodel objects handled by this installer during uninstall.
+     */
+    public function getModelObjectAliases() : array
+    {
+        $aliases = [];
+        foreach ($this->getModelSheets() as $sheet) {
+            $aliases[] = $sheet->getMetaObject()->getAliasWithNamespace();
+        }
+        return $aliases;
+    }
     
     /**
      * 
