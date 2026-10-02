@@ -2528,6 +2528,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             switch (true) {
                 // Do not do any parsing if the value is SQL
                 case $valueIsSQL === true:
+                    if ($comparator === ComparatorDataType::IN || $comparator === ComparatorDataType::NOT_IN) {
+                        $value = $this->prepareWhereSqlListValue($value, $dataType, $dataAddressProps);
+                    }
                     break;
                     
                 // Parse the two sides of BETWEEN separately and use 
@@ -2565,7 +2568,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         }
                         // Normalize non-empty values
                         $val = trim($val);
-                        $values[$nr] = $this->prepareWhereValue($val, $dataType, $dataAddressProps);
+                        $values[$nr] = $this->prepareWhereListValue($val, $dataType, $dataAddressProps);
                     }
 
                     switch (true) {
@@ -2573,12 +2576,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         // and often is significantly faster. Keep in mind thogh, that the null-check will not
                         // be part of the $values array, so need to check for it too.
                         case count($values) === 1 && empty($valueNullChecks):
-                            $val = $values[0];
-                            if ($comparator == ComparatorDataType::IN) {
-                                return $subject . ' = ' . $val;
-                            } else {
-                                return $subject . ' != ' . $val;
-                            }
+                            $value = $values[0];
+                            $valueIsSQL = true;
+                            $comparator = $comparator === ComparatorDataType::IN ? ComparatorDataType::EQUALS : ComparatorDataType::EQUALS_NOT;
+                            break 2;
                         // IN(null) will result in empty $values and a NULL-check, so just use the NULL-check in this case.
                         case empty($values) === true && ! empty($valueNullChecks):
                             $value = EXF_LOGICAL_NULL;
@@ -2614,6 +2615,32 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return $this->buildSqlWhereComparatorPredicate($value, $valueIsSQL, $comparator, $subject, $dataType, $qpart, $relyOnJoins);
+    }
+
+    /**
+     * Prepares one non-empty literal value of an IN or NOT IN comparison.
+     *
+     * @param mixed $value
+     * @param DataTypeInterface $dataType
+     * @param array $dataAddressProps
+     * @return mixed
+     */
+    protected function prepareWhereListValue($value, DataTypeInterface $dataType, array $dataAddressProps = [])
+    {
+        return $this->prepareWhereValue($value, $dataType, $dataAddressProps);
+    }
+
+    /**
+     * Prepares an SQL expression that returns the values of an IN or NOT IN comparison.
+     *
+     * @param mixed $value
+     * @param DataTypeInterface $dataType
+     * @param array $dataAddressProps
+     * @return mixed
+     */
+    protected function prepareWhereSqlListValue($value, DataTypeInterface $dataType, array $dataAddressProps = [])
+    {
+        return $value;
     }
 
     /**
