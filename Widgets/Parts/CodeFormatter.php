@@ -98,7 +98,7 @@ class CodeFormatter implements WidgetPartInterface
      * Sets the dialect for formatted language. Example: language: "sql" and dialect: "tsql".
      * 
      * @uxon-property dialect
-     * @uxon-type [sql,tsql mariadb,mysql,plsql,postgresql]
+     * @uxon-type [sql,tsql,mariadb,mysql,plsql,postgresql]
      * 
      * @param string $dialect
      * @return $this
