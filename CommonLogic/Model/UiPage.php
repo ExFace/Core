@@ -1398,7 +1398,13 @@ class UiPage implements UiPageInterface
         }
         return $this->setReplacesPageSelector($aliasWithNamespace);
     }
-    
+
+    /**
+     * Exports this page as a data row to be stored in the model.
+     * 
+     * @param DataSheetInterface $dataSheet
+     * @return DataSheetInterface
+     */
     public function exportDataRow(DataSheetInterface $dataSheet) : DataSheetInterface
     {
         $createdBySelector = $this->getCreatedByUserSelector();
