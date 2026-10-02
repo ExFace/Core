@@ -105,7 +105,10 @@ class Workbench implements WorkbenchInterface
         // to the one from composer.
         if ($cfg->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
-            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path]);
+            // On case-sensitive file systems (Linux) resolve class folders/files
+            // case-insensitively so apps load the same way as on Windows.
+            $caseInsensitive = DIRECTORY_SEPARATOR === '/';
+            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path], $caseInsensitive);
             $classLoader->register();
         }
         
