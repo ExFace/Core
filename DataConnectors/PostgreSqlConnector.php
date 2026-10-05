@@ -40,6 +40,10 @@ class PostgreSqlConnector extends AbstractSqlConnector
      */
     protected function performConnect()
     {
+        if (function_exists('pg_connect') === false) {
+            throw new DataConnectionFailedError($this, 'PostgreSQL drivers for PHP not found! Regisger/uncomment PHP extension "pgsql" in php.inifirst!');
+        }
+
         /*
          * Params described in https://www.php.net/manual/en/function.pg-connect.php
          * The currently recognized parameter keywords are: host, hostaddr, port, dbname (defaults to value of user), 
