@@ -211,6 +211,106 @@ one retention/cleanup cycle before general rollout. Roll back the code and Compo
 the unchanged on-disk contract allows the previous version to continue reading files created by the
 new logger.
 
+## Testing
+
+### Test setup and evidence
+
+Run the same temporary integration harness against the current logger before the upgrade and against
+the new logger afterward. Exercise the logger assembled by `LoggerFactory`, not just the formatter,
+so processors, buffering, detail generation, persistence, and fallback handling are covered together.
+Use an isolated log directory and a separate PHP error-log destination; never inject failures into
+production logs. Preserve representative valid pre-upgrade files for backward-read checks.
+
+Compare decoded values and observable behavior, not raw file bytes. Record the PHP and dependency
+versions, logger configuration, worker count, expected and actual record counts, rejected records,
+and fallback events for each run. Baseline defects are evidence to investigate, not behavior to
+preserve. Do not commit the temporary harness or generated logs. Retain the verification procedure
+and a results summary; reuse existing Behat scenarios where suitable rather than introducing a core
+unit-test suite.
+
+### CSV and detail integrity
+
+Use the adversarial values listed in implementation step 1, including combinations of apostrophes,
+backslashes, commas, and embedded newlines. Include ordinary messages, nested context, exceptions,
+sender-backed debug messages, and messages without a sender.
+
+- Read logical records with the exact `league/csv` delimiter, enclosure, and escape settings used by
+	`CsvBuilder`, then verify access through `exface.Core.LOG_ENTRY` as well.
+- Assert exactly eleven fields in the documented order, expected identifiers and enrichment, valid
+	context/extra JSON, the numeric level and matching uppercase name, and the timestamp format.
+- Compare decoded values with the expected normalized input. Verify that `exception` and `sender`
+	are excluded only from CSV context and remain available for detail generation.
+- Resolve every row's log ID to its date-specific detail file and decode it with
+	`JSON_THROW_ON_ERROR`. Confirm the generated details render in the existing dialog.
+
+### Buffering, passthrough, and shutdown
+
+Choose test thresholds that distinguish collection, trigger, and passthrough behavior. Use unique
+message markers and inspect files both before shutdown and after the worker exits.
+
+| Scenario | Required result |
+|---|---|
+| Record below `LOG.MINIMUM_LEVEL_TO_LOG` | Not collected or persisted. |
+| Collected records without a trigger | Remain buffered; shutdown persists only records eligible under the configured passthrough behavior. |
+| Buffered records followed by `LOG.PERSIST_LOG_LEVEL` | Trigger flushes the eligible buffer, including the triggering record. |
+| Record eligible for `LOG.PASSTHROUGH_LOG_LEVEL` without a trigger | Persisted independently of trigger activation, at the lifecycle point established by the baseline. |
+| Passthrough-eligible record followed by a trigger | Persisted exactly once, not duplicated by later flushing or shutdown. |
+| Records emitted after activation | Persistence matches the configured `FingersCrossedHandler` behavior. |
+
+Test threshold boundaries, normal shutdown, and exception-driven shutdown. Check row/detail
+integrity in every scenario. Document the observed passthrough timing rather than assuming that
+passthrough means an immediate write.
+
+### Concurrent persistence
+
+Launch multiple PHP workers writing distinctive records into the same daily file. Record worker
+completion and compare the expected marker set with the parsed result: no missing, duplicate,
+truncated, or interleaved records, unique generated IDs, and valid matching details for every row.
+Repeat the run to exercise contention rather than relying on one successful attempt.
+
+Separately exercise concurrent detail persistence using the same log ID. Start with no final file,
+then repeat with an existing valid file. Assert that the final JSON is complete and that an existing
+file's bytes never change. This checks detail-file exclusivity, not CSV row deduplication.
+
+### Failure handling and interruption
+
+In isolated workers, simulate unwritable directories, detail-write and CSV-write failures, malformed
+UTF-8/JSON, initialization failure, and termination between temporary-detail creation and publication.
+Use controlled fault injection where permissions or a full filesystem cannot reproduce the failure
+reliably. Capture the PHP error-log destination independently of the workbench logger.
+
+- Recoverable initialization and persistence failures must reach the PHP error-log fallback.
+- A failed or interrupted detail write must never publish a CSV row referencing missing or partial
+	JSON. Forced process termination cannot itself be expected to execute fallback logging.
+- A CSV failure after successful detail publication may leave an orphan detail file, but must not
+	modify an existing detail file or silently report persistence success.
+- Retry after interruption and verify that temporary or invalid files do not count as valid final
+	details. Check fallback detail generation during startup/installation failures too.
+
+### UI, existing files, repair, and retention
+
+Start the workbench and confirm there are no deprecations or unexpected initialization fallback.
+In the log viewer, filter and sort the modeled columns and open details for ordinary messages,
+exceptions, sender-backed messages, and fallback-generated messages. Repeat using valid pre-upgrade
+CSV/detail pairs; successful JSON decoding alone does not prove UI compatibility.
+
+Give repair a mixture of malformed logical records and valid records containing quoted commas and
+embedded newlines. Verify the backup/quarantine copy, rejection reasons and logical record numbers,
+preservation of all valid records, and absence of repair messages written into the file being repaired.
+Run cleanup with expired and current daily files and matching detail directories; only expired data
+must be removed.
+
+### Release gate
+
+Verify Composer resolves Monolog 3.12.x without FemtoPixel or ignored platform requirements and run
+`php -l` on every changed PHP file. All scenarios above and the acceptance criteria in implementation
+step 7 must pass before rollout. Mark unavailable checks as unverified, not passed.
+
+After these checks, run representative concurrent traffic in a test environment for at least one
+complete retention/cleanup cycle. Review fallback events, repair detections, invalid details, dangling
+CSV rows, and orphan details before approving general deployment. Record any remaining limitations
+alongside the results.
+
 ## Expected files affected
 
 - `composer.json` and the installation-level Composer lock file
