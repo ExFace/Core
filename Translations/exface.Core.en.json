@@ -203,6 +203,7 @@
     "DATATYPE.VALIDATION.MINMAX_CONDITION": "be %condition%",
     "DATATYPE.VALIDATION.AND": "and",
     "DATATYPE.VALIDATION.CRON": "be a valid CRON expression (e.g. \"0 0 * ? * * *\")",
+    "DATATYPE.VALIDATION.JSON": "be valid JSON",
     "GLOBAL.AGGREGATOR_FUNCTIONS.SUM": "Sum",
     "GLOBAL.AGGREGATOR_FUNCTIONS.AVG": "Average",
     "GLOBAL.AGGREGATOR_FUNCTIONS.MIN": "Minimum",

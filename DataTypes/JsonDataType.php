@@ -118,6 +118,18 @@ class JsonDataType extends CodeDataType
     }
     
     /**
+     * {@inheritDoc}
+     * @see \exface\Core\DataTypes\StringDataType::getValidationDescription()
+     */
+    protected function getValidationDescription() : string
+    {
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+        $text = $translator->translate('DATATYPE.VALIDATION.MUST') . ' ' . $translator->translate('DATATYPE.VALIDATION.JSON') . '.';
+        $parentDescription = parent::getValidationDescription();
+        return $text . ($parentDescription !== '' ? ' ' . $parentDescription : '');
+    }
+    
+    /**
      * Decodes a JSON string into a PHP array (default!) or \stdClass object.
      * 
      * WARNING: handling a complex JSON as an array may have side-effects:
