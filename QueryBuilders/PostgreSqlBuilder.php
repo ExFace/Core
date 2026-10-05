@@ -5,11 +5,13 @@ use exface\Core\CommonLogic\QueryBuilder\QueryPartAttribute;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSorter;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartValue;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\ListDataType;
 use exface\Core\DataTypes\NumberDataType;
+use exface\Core\DataTypes\StringDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Exceptions\QueryBuilderException;
@@ -122,6 +124,86 @@ class PostgreSqlBuilder extends MySqlBuilder
         }
         
         return $output;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::prepareWhereListValue()
+     */
+    protected function prepareWhereListValue($value, DataTypeInterface $dataType, array $dataAddressProps = [])
+    {
+        if ($dataType instanceof StringDataType && $dataType->isCaseSensitive() === false) {
+            $value = mb_strtoupper($value);
+        }
+        return parent::prepareWhereListValue($value, $dataType, $dataAddressProps);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::prepareWhereSqlListValue()
+     */
+    protected function prepareWhereSqlListValue($value, DataTypeInterface $dataType, array $dataAddressProps = [])
+    {
+        if ($dataType instanceof StringDataType && $dataType->isCaseSensitive() === false) {
+            $sql = trim($value);
+            if (substr($sql, 0, 1) === '(' && substr($sql, -1) === ')') {
+                $sql = substr($sql, 1, -1);
+            }
+            if (preg_match('/^(SELECT|WITH|VALUES)\b/i', ltrim($sql)) === 1) {
+                return "(SELECT UPPER(exf_ci_value) FROM ({$sql}) AS exf_ci_values(exf_ci_value))";
+            }
+            return "(SELECT UPPER(exf_ci_value) FROM unnest(ARRAY[{$sql}]) AS exf_ci_values(exf_ci_value))";
+        }
+        return parent::prepareWhereSqlListValue($value, $dataType, $dataAddressProps);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractSqlBuilder::buildSqlWhereComparatorPredicate()
+     */
+    protected function buildSqlWhereComparatorPredicate(
+        mixed $value,
+        bool $valueIsSQL,
+        string $comparator,
+        string $subject,
+        DataTypeInterface $dataType,
+        QueryPartAttribute $qpart,
+        bool $relyOnJoins
+    ) : string
+    {
+        if (
+            $dataType instanceof StringDataType
+            && $dataType->isCaseSensitive() === false
+        ) {
+            switch ($comparator) {
+                case ComparatorDataType::EQUALS:
+                case ComparatorDataType::EQUALS_NOT:
+                    $dataAddressProps = $qpart->getDataAddressProperties();
+                    if (
+                        is_null($value)
+                        || (! $valueIsSQL && $this->prepareWhereValue($value, $dataType, $dataAddressProps) === EXF_LOGICAL_NULL)
+                    ) {
+                        break;
+                    }
+                    $subject = "UPPER({$subject})";
+                    $value = $valueIsSQL ? "UPPER({$value})" : mb_strtoupper($value);
+                    break;
+                case ComparatorDataType::IN:
+                case ComparatorDataType::NOT_IN:
+                    $subject = "UPPER({$subject})";
+                    break;
+            }
+        }
+
+        return parent::buildSqlWhereComparatorPredicate(
+            $value,
+            $valueIsSQL,
+            $comparator,
+            $subject,
+            $dataType,
+            $qpart,
+            $relyOnJoins
+        );
     }
     
     /**
