@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Widgets;
 
+use exface\Core\CommonLogic\Model\Expression;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Widgets\iCanBeRequired;
@@ -548,7 +550,14 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
         
         // Pass value if set and applicable
         if ($this->value !== null && $input instanceof iHaveValue) {
-            $input->setValue($this->value);
+            // The explicitly set value of a filter can either be a reference, a scalar value or a formula - but never
+            // an attribute alias. So if we have some value, that is auto-detected as an attribute, it must actually be
+            // a string that matches an attribute alias by coincidence.
+            $expr = ExpressionFactory::createForObject($this->getMetaObject(), $this->value);
+            if ($expr->isMetaAttribute()) {
+                $expr = ExpressionFactory::createForObject($this->getMetaObject(), "'{$this->value}'");
+            }
+            $input->setValue($expr);
         }
         
         if ($this->width !== null) {
