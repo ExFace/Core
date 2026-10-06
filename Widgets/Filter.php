@@ -781,8 +781,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      * 
      * ### Comparing a scalar value to a list (IN, NOT IN)
      * 
-     * - `[` - IN-comparator - compares a value with each item in a list via EQUALS. Becomes true if the left
-     * value equals at least on of the values in the list within the right value. The list on the
+     * - `[` - IN-comparator - compares a value with each item in a list via EQUALS, including its configured
+     * string case sensitivity. Becomes true if the left value equals at least on of the values in the list within the right value. The list on the
      * right side must consist of numbers or strings separated by commas or the attribute's value
      * list delimiter if filtering over an attribute. The right side can also be another type of
      * expression (e.g. a formula or widget link), that yields such a list.
