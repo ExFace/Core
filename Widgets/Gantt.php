@@ -334,4 +334,20 @@ class Gantt extends DataTree
         $this->startDate = $value;
         return $this;
     }
+
+
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\DataTable::getChildren()
+     */
+    public function getChildren() : \Iterator
+    {
+        foreach (parent::getChildren() as $child) {
+            yield $child;
+        }
+
+        yield $this->getTasksConfig()->getPopup();
+    }
 }

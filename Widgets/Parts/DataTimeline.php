@@ -56,7 +56,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * ```
  *
- * - ###Weeks:
+ * - ### Weeks:
  * 
  * ```
  * {
@@ -285,6 +285,8 @@ class DataTimeline implements WidgetPartInterface
      * If used in Gantt: Adds zoom buttons "+" and "-" to change the height of the table and the Gantt rows.
      *  - each press also increases / decreases the number of task lines in each Gantt row.
      * 
+     * TODO: move to Gantt because it has rows, not the timeline
+     * 
      * @uxon-property row_zoom
      * @uxon-type boolean
      * @uxon-default false
@@ -360,7 +362,9 @@ class DataTimeline implements WidgetPartInterface
     }
 
     /**
-     * Configure how aggregation popups display their member tasks. @experimental: Every property inside is experemental! Do not use it in Prod yet.
+     * Configure how aggregation popups display their member tasks. 
+     * 
+     * @experimental: Every property inside is experemental! Do not use it in Prod yet.
      *
      * @uxon-property popup_aggregation
      * @uxon-type \exface\Core\Widgets\Parts\DataTimelinePopupAggregation
