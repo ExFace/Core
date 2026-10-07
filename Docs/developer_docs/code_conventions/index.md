@@ -2,12 +2,12 @@
 
 ## PHP
 
-- [Naming conventions](PHP/Naming_conventions.md)
+- [Naming conventions](PHP/Conventions.md)
 - [Using traits](PHP/Using_traits.md)
 
 ## JavaScript
 
-- [Naming conventions](JavaScript/Naming_conventions.md)
+- [Naming conventions](JavaScript/Conventions.md)
 
 ## SQL
 

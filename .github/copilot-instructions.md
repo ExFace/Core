@@ -215,7 +215,7 @@ dependencies, isolation and validation.
 
 ### Coding guidelines
 
-Use the [PHP coding guidelines](../Docs/developer_docs/code_conventions/index.md) when writing code. 
+Always follow our [PHP](../Docs/developer_docs/code_conventions/PHP/Conventions.md) and [JavaScript](../Docs/developer_docs/code_conventions/JavaScript/Conventions.md) coding guidelines when writing code. 
 
 ## Advanced features
 

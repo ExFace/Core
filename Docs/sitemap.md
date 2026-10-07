@@ -39,9 +39,9 @@
   - [Developer's documentation](developer_docs/index.md)
     - [Code conventions and guidelines](developer_docs/code_conventions/index.md)
       - JavaScript
-        - [Javascript naming conventions](developer_docs/code_conventions/JavaScript/Naming_conventions.md)
+        - [Javascript naming conventions](developer_docs/code_conventions/JavaScript/Conventions.md)
       - PHP
-        - [PHP naming conventions](developer_docs/code_conventions/PHP/Naming_conventions.md)
+        - [PHP naming conventions](developer_docs/code_conventions/PHP/Conventions.md)
         - [Using traits](developer_docs/code_conventions/PHP/Using_traits.md)
     - [Component registry](developer_docs/Component_registry.md)
     - [Component selectors as references between code and model](developer_docs/Using_metamodel_components_in_the_code_via_selectors.md)
