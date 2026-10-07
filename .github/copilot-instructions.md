@@ -206,9 +206,12 @@ removed before committing. See [performance profiling tools](instructions/perf-p
 
 ### Tests
 
-We currently do not use unit tests in the core. We do use Behat for 
-automated tests, but it is a separate package `axenox\bdt`. For now, do not 
-attempt to write automated tests for the core.
+Add or update PHPUnit tests for changed PHP behavior wherever this does not require
+mocking Workbench. Test pure logic directly or use a real Workbench for scenarios
+that do not need database access or a persisted metamodel. Keep application-level
+and UI workflows in Behat tests in `axenox/bdt` or the owning app. Follow the
+[testing instructions](instructions/testing.instructions.md) for test layout,
+dependencies, isolation and validation.
 
 ### Coding guidelines
 
