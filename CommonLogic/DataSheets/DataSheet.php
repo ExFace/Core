@@ -3240,7 +3240,7 @@ class DataSheet implements DataSheetInterface
      * 
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setRowsLimit()
      */
-    public function setRowsLimit($value) : DataSheetInterface
+    public function setRowsLimit(?int $value) : DataSheetInterface
     {
         if ($value !== null && $value < 0) {
             throw new DataSheetRuntimeError($this, 'Invalid limit "' . $value . '" for data sheet. Expecting 0 or positive values!');
@@ -3268,6 +3268,17 @@ class DataSheet implements DataSheetInterface
             throw new DataSheetRuntimeError($this, 'Invalid offset "' . $value . '" for data sheet. Expecting 0 or positive values!');
         }
         $this->row_offset = $value;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::removePagination()
+     */
+    public function removePagination() : DataSheetInterface
+    {
+        $this->setRowsLimit(null);
+        $this->setRowsOffset(0);
         return $this;
     }
 
