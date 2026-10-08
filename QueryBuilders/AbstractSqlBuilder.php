@@ -2777,11 +2777,19 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     protected function prepareWhereValue($value, DataTypeInterface $data_type, array $dataAddressProps = [])
     {
         switch (true) {
+            // If the value is null or represents a logical null, return the logical null constant immediately
+            // this is so we can always handle logical nulls consistently and avoid unexpected behavior in SQL queries.
+            // Use case is for example when filtering for optional fields that may not have a value set or when having a relation that may not exist
+            // and we want to find data that has a certain value in an attribute of the related object or where the relation is not filled
+            // and therefore the value of the attribute IS NULL
+            // This is especially important if there is a data policy for the related object which applies to the object we are querying and the relation is a reveres relation.
+            // We can't check there on if the attribute with the relation has a value because that attribute is not part from the object the permission is based on
+            // Therefore, we check on a attribute in the related object to determine if the relation exists or not.
+            case $value === null || (is_string($value) && strcasecmp($value, EXF_LOGICAL_NULL) === 0):
+                return EXF_LOGICAL_NULL;
             case $data_type instanceof BooleanDataType:
                 $output = BooleanDataType::cast($value) ? 1 : 0;
                 break;
-            case strcasecmp($value, EXF_LOGICAL_NULL) === 0:
-                return EXF_LOGICAL_NULL;
             // No need to check if structured string types have valid structure or not - we can filter over
             // partial structure too
             case $data_type instanceof JsonDataType:
