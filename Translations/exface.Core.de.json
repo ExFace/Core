@@ -454,6 +454,7 @@
     "WIDGET.BUTTON.TOGGLE_PERCENT": "Werte-Labels",
     "WIDGET.CONSOLE.PRESET_BTN_CANCEL": "Abbrechen",
     "WIDGET.CONSOLE.PRESET_BTN_OK": "OK",
+    "WIDGET.PIVOTTABLE.ADD_VIEW": "Pivot-Ansicht hinzuf\u00fcgen",
     "WIDGET.DATA.NO_DATA_FOUND": "Keine Daten gefunden!",
     "WIDGET.DATA.HELP.FILTERS": "Filter",
     "WIDGET.DATA.HELP.COLUMNS": "Spalten",
