@@ -1,7 +1,6 @@
 ---
 description: "Use when reading, generating, exporting, editing, installing, or repairing ExFace metamodel JSON in an app Model folder. Covers model DB synchronization, generated UIDs, aliases, and validation."
 name: "Working with the metamodel"
-applyTo: "Model/**/*.json"
 ---
 
 # Working with the metamodel
