@@ -83,16 +83,11 @@ class CliCommandRunner
 
             $generator = function (Process $process, bool $silent, array $ignoredExitCodes) : \Generator {
                 // Keep copies because iterating over $process consumes incremental buffers
-                $stdout = '';
-                $stderr = '';
+                $output = '';
 
                 foreach ($process as $type => $buffer) {
                     if ($buffer !== '') {
-                        if ($type === Process::OUT) {
-                            $stdout .= $buffer;
-                        } else {
-                            $stderr .= $buffer;
-                        }
+                        $output .= $buffer;
                         yield $buffer;
                     }
                 }
@@ -109,14 +104,9 @@ class CliCommandRunner
                     yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . '.';
                     // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
-                        $errorMessage = '';
-                        if (preg_match('/LogID:\s*([A-Z0-9]+)/', $stdout, $matches)) {
-                            $logId = $matches[1];
-                            $errorMessage = "LogID: $logId\n";
-                        } else {
-                            $errorMessage = "no error output.\n";
-                        }
-                        throw new CliRuntimeException($process->getCommandLine(), ($stderr !== '' ? $stderr : $stdout), $exitCode, $errorMessage);
+                        $errorMessage = 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . ".\n";
+                        $errorMessage .= $output !== '' ? $output : "no error output.\n";
+                        throw new CliRuntimeException($process->getCommandLine(), $output, $exitCode, $errorMessage);
                     }
                 }
             };
@@ -139,7 +129,9 @@ class CliCommandRunner
                     yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
                     if (! $silent) {
                         // $resultStr contains both stdout and stderr (merged via 2>&1)
-                        throw new CliRuntimeException($cmd, $resultStr, $code);
+                        $errorMessage = 'Command `' . $cmd . '` failed with exit code ' . $code . ".\n";
+                        $errorMessage .= $resultStr !== '' ? $resultStr : "no error output.\n";
+                        throw new CliRuntimeException($cmd, $resultStr, $code, $errorMessage);
                     }
                 }
             };
