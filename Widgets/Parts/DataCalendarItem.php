@@ -865,10 +865,20 @@ JS;
         $popup = $this->getPopup();
         return $popup->getWidgetFirst();
     }
-    
-    
+    /**
+     * Returns the configured popup instance, initializing and normalizing it once if needed.
+     *
+     * The data widget is populated from calendar items, so automatic loading and
+     * configurator setups are disabled for both custom and default popups.
+     *
+     * @return Popup
+     */
     public function getPopup() : Popup
     {
+        if ($this->popup !== null) {
+            return $this->popup;
+        }
+
         $uxon = $this->popupUxon;
         // Default popup has a DataTable
         if ($uxon === null) {
@@ -894,7 +904,7 @@ JS;
             ]);
         }
         
-        $popup = WidgetFactory::createFromUxonInParent($this->getDataWidget(), $uxon, 'Popup');
-        return $popup;
+        $this->setPopup($uxon);
+        return $this->popup;
     }
 }
