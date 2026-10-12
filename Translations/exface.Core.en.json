@@ -468,6 +468,7 @@
     "WIDGET.BUTTON.TOGGLE_PERCENT": "Value Labels",
     "WIDGET.CONSOLE.PRESET_BTN_CANCEL": "Cancel",
     "WIDGET.CONSOLE.PRESET_BTN_OK": "OK",
+    "WIDGET.PIVOTTABLE.ADD_VIEW": "Add pivot view",
     "WIDGET.DATA.NO_DATA_FOUND": "No data found!",
     "WIDGET.DATA.HELP.FILTERS": "Filters",
     "WIDGET.DATA.HELP.COLUMNS": "Columns",

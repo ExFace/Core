@@ -305,6 +305,12 @@ class DataCollector implements DataCollectorInterface
             }
 
             $additionSheet->getFilters()->addConditionFromColumnValues($dataSheet->getUidColumn());
+            // Since we have copied the original sheet, we have also copied the pagination state. But now we are
+            // filtering missing values explicitly, so we do not need any pagination in the additional sheet at all.
+            $additionSheet->removePagination();
+            // Also remove sorters as they might affect performance and we do not need them for our UID merge
+            $additionSheet->getSorters()->removeAll();
+            // Now read missing data
             $additionSheet->dataRead();
 
             $logbook?->addLine('Read ' . $additionSheet->countRows() . ' rows filtered by ' . $dataSheet->getUidColumn()->getName(), 1);

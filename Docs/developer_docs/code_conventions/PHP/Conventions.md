@@ -1,4 +1,4 @@
-# PHP naming conventions
+# PHP conventions
 
 When developing in PHP, the [PSR-12](https://www.php-fig.org/psr/psr-12/) standard and the underlying PSR-1 and PSR-2 standards must be followed. Additionally, the conventions described below are a must too. In case of a conflict between the two rulesets, the conventions below are to be preferred.
 
@@ -67,15 +67,23 @@ These interfaces also simplify developing new subclasses: much of the API can al
 All class properties must be private. If external access is required, use `get`/`set` methods. 
 
 This allows to change the internal logic of a class at any time without refactoring. 
+
 ## Methods 
+
+### Global rules
+
+- Use typed arguments
+- use return types. If returning an array, always add a type hint in the `@returns` doc block: e.g. `string[]` or `MyClass[]`.
+
+### Method names
 
 Use well readable method names, that clearly show the purpose of the method. 
 
-### `get`, `set`, `is`, `has`, `will`, methods
+#### `get`, `set`, `is`, `has`, `will`, methods
 
 Use getters and setters to access class properties. Make sure getters are well readable: use `hasNoun()`, `isAdverb()` or `willVerb()` instead of `getXxx()` to improve readability: e.g. `hasHeader()`, `isDisabled()`, `willSaveData()`, etc. 
 
-### `is()` and `isExactly()` methods 
+#### `is()` and `isExactly()` methods 
 
 To compare UXON configured prototypes or objects with inheritance, `is()` and `isExactly()` methods should be used (e.g., for meta-objects, widgets, actions).
 
@@ -84,7 +92,7 @@ For UXON prototypes:
 - `is()` = same prototype
 - `isExactly()` = same UID
 
-### `buildXxx()` methods 
+#### `buildXxx()` methods 
 
 Methods that generate code (e.g., JavaScript, HTML, XML, SQL) should be prefixed with "build": e.g., `buildSql()`.
 
@@ -123,30 +131,55 @@ Errors intended to be seen by end users must be translatable:
 
 ## Events 
 
-
+TODO
 
 ## Comments and Annotations 
 
-Comments are primarily to aid readers who think differently than the original author (including the author themself after progressing in their understanding). Even with very good code, writing comments is important as they double the chance the code will be understood: either the code or the comment will be understood.
+Comments are primarily to aid readers who think differently than the original author (including the author himself after progressing in their understanding). Even with very good code, writing comments is important as they double the chance the code will be understood: either the code or the comment will be understood.
 
-Especially with Alexa UI, it’s expected that the code or its annotations will be read and interpreted by various people: core developers, app developers, and app designers. The more comprehensive and accessible a description, the easier it is for less experienced programmers or even non-programmers to understand the intent. The latter, in particular, will have no opportunity to view the actual code.
+Especially with Power UI, it’s expected that the code or its annotations will be read and interpreted by various people: core developers, app developers, and app designers. The more comprehensive and accessible a description, the easier it is for less experienced programmers or even non-programmers to understand the intent. The latter, in particular, will have no opportunity to view the actual code.
 
 The effort to write comments is accepted to achieve maximum understanding of the code and its meaning in any situation by any developer (regardless of experience, worldview, etc.).
 
 ### PHP-Doc 
 
-PHP-Docs must be written in English. Annotations are required for the following entities:
+PHP-Docs must be written in English. Every class, method and interface MUST have a PHP-Doc block with the appropriate tags!
+
+Each doc block must have the following strucutre with block separated by empty lines (with a space follwing the asterisk!):
+
+```php
+/**
+ * One line title followed by a blank line.
+ * 
+ * Optional description with multiple lines or even paragraphs.
+ * 
+ * @tags
+ */
+```
+
+A description is required for the following entities:
 
 - Interface
 - Class
 - Public method
 
-Annotations are recommended, but not strictly required, for the following entities:
+Descriptions are recommended, but not strictly required, for the following entities:
 
 - Protected method
 - Private method
 
-PHP-Docs at the method level should not consist solely of the method name (even if written differently) and the parameter list. They should instead provide extended information about the method, such as typical parameter examples and meanings, effects, and recommendations for overriding the method in derived classes, etc.
+Description must show the intention behind the method, object or interface. Include responsibilities, rules for extending, and any other information that is not obvious from the code itself.
+
+#### Method annotations
+
+When overriding a parent or interface method, use a doc block like below. Omit `@return` and other tags in this case if their values do not change. This helps the reader to quickly understand, what exactly is overridden.
+
+```php
+/**
+ * {@inheritDoc}
+ * @see \namespace\ParentClass::methodName()
+ */
+```
 
 ### Inline Comments 
 
@@ -178,4 +211,3 @@ Complex data types (e.g., widgets) should be specified as fully qualified PHP cl
 Facades contain PHP logic to generate code in frontend languages like JavaScript, HTML, and XML. They must be meticulously commented, as mixing multiple programming languages in a single document significantly reduces readability.
 
 In addition to the basic rules from section 4.8.1, protected or public helper methods that include non-PHP code must also have a method doc block. This documents the interaction of generators with the generated language and its frameworks and enhances the reusability of generated code snippets. This is especially important, as Clean Code principles are difficult to apply in such cases.
-

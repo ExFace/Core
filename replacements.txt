@@ -1,0 +1,4 @@
+onelink.BMDB.BaumanagementFarben==>my.App.FarbPaletteZeit
+BaumanagementFarben==>my.App.FarbPaletteZeit
+suedlink.KMTS.StageCablePRY==>my.App.Location
+ScaLink.OneLink.==>my.App.

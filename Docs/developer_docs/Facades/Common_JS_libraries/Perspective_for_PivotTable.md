@@ -92,8 +92,9 @@ widget property and a cache key or construction path that also includes that pro
 	single promise prevents duplicate imports.
 5. The trait derives a Perspective schema from the widget columns and normalizes every value.
 6. One shared Perspective worker is stored as `window.exfPerspectiveWorker`.
-7. Each `<perspective-viewer>` owns its table in `viewer.exfPerspectiveTable`. A refresh deletes
-	the old table, creates and fills a new one, then restores the layout derived from `PivotLayout`.
+7. Each `<perspective-viewer>` owns its table in `viewer.exfPerspectiveTable`. A refresh replaces
+	the rows in that table without recreating it, preserving all view configurations and workspace
+	layouts. The initial load applies the layout derived from `PivotLayout`.
 8. Perspective performs subsequent grouping, aggregation, filtering, and sorting in the worker
 	without another DataSheet request.
 
@@ -170,14 +171,15 @@ the page is reloaded.
 ## Implementing a facade element
 
 The class using `PerspectiveTrait` must provide `getFacade()`, `getWidget()`, and `getId()` and
-must render a `<perspective-viewer>` with the element ID. In a conventional
+must render the HTML returned by `buildHtmlPerspective()`. In a conventional
 `AbstractAjaxFacade` element:
 
 1. Use `buildHtmlPerspective()` for the inner HTML.
 2. Merge `buildHtmlHeadTagsForPerspective()` into the element's head tags.
 3. Convert the loaded response to plain objects keyed by widget column caption.
 4. Call `buildJsPerspectiveRender($rowsJs)` after each successful load.
-5. If the facade manually handles resizing, call `viewer.resize()` only after checking that it
+5. If the facade manually handles resizing, resolve the viewer inside the workspace wrapper
+	(or the root viewer for a disabled widget) and call `viewer.resize()` only after checking that it
 	is a function. Before the web component is upgraded, the DOM element has no `resize()` method.
 
 ### jEasyUI
@@ -215,6 +217,34 @@ use UI5DataElementTrait {
 Calling `.rows.forEach()` directly on the model causes `Cannot read properties of undefined
 (reading 'forEach')`. Calling the alias without declaring it causes a server-side `Call to
 undefined method ...buildJsDataLoaderOnLoadedViaTrait()` error.
+
+## Editable workspaces
+
+Enabled Perspective pivots include an icon-only **+** button in the facade's standard toolbar,
+alongside Search and the other widget commands. The button remains available when Perspective's
+own settings panel is closed. Each click creates
+another independently configurable pivot or chart over the same dataset, activates it, and opens
+its settings. Perspective manages the split layout, tab stacking, resizing, and closing views.
+The original view retains its configuration. Disabled pivots omit the button and keep their
+predefined, non-configurable layout.
+
+Perspective 5.3.1 includes the multi-panel workspace APIs in `perspective-viewer` itself:
+`addPanel()`, `setActivePanel()`, and `saveWorkspace()`. This integration uses those APIs rather
+than importing a separate `perspective-workspace` bundle. Both facades call
+`addPerspectiveFeatureButtons()` before building their toolbars, following the ImageGallery
+feature-button pattern: a `DataButton` with a plus-square icon and a `CustomFacadeScript` action
+calling `exfAddPerspectiveView()`. The handler ignores clicks before the table is ready and
+overlapping clicks while a new view is being created. No separate toolbar
+row or modifications to Perspective's shadow DOM are required.
+
+Both facades use `buildHtmlPerspective()` for the workspace wrapper and viewer. The root keeps
+the widget's element ID, which also allows UI5 to preserve the entire workspace during rerendering.
+Enabled widgets give the inner viewer an `_viewer` ID suffix; disabled widgets use a root viewer.
+Rendering and resizing resolve the appropriate viewer from the root. Compatibility events bubble
+to the widget root and retain the widget's element ID in their payload.
+Search/filter refreshes update the shared table with `replace()`, retaining all added views,
+their settings, and their arrangement. Workspace changes are local to the current page;
+reloading the page restores the widget's initial `PivotLayout`, not the user's workspace.
 
 ## Data contract and type conversion
 
@@ -281,7 +311,7 @@ the page.
 | `values` | `columns` plus one entry per value in `aggregates` |
 | `show_row_totals` | `split_rollup_mode`: `rollup` when enabled, otherwise `flat` |
 | `view` | `plugin`, and for heatmap/table-bar views also `columns_config` |
-| Widget enabled | Settings panel is opened. |
+| Widget enabled | Settings panel is opened and the workspace **+** button is available. |
 | Widget disabled | Settings panel is closed and opening it is prevented. |
 
 Multiple `values` are supported in both enabled and disabled widgets. An empty `aggregates`

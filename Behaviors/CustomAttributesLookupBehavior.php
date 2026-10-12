@@ -344,7 +344,6 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
         }
         $relFromLookup = $relPathFromLookup->getRelationFirst();
         $relPathToLookup = $relPathFromLookup->reverse();
-        $thisObj = $this->getObject();
         foreach ($conditions as $cond) {
             $condAttr = $cond->getExpression()->getAttribute();
             $fakeRel = $this->applyCustomSqlCreateFakeRelation($relPathToLookup, $relFromLookup, $condAttr);
@@ -357,10 +356,13 @@ class CustomAttributesLookupBehavior extends AbstractBehavior
                 $filterAttrAlias = DataAggregation::addAggregatorToAlias($filterAttrAlias, $lookup->getMultipleValuesAggregator());
             }*/
             
+            // Anchor the new condition to the object its (possibly relation-prefixed) expression is
+            // relative to - i.e. the original condition's object - NOT the behavior object. Otherwise
+            // a related custom attribute produces a relation path that cannot be resolved on $thisObj.
             $condWithCustomJoin = ConditionFactory::createFromUxon(
                 $this->getWorkbench(),
                 new UxonObject([
-                    'object_alias' => $thisObj->getAliasWithNamespace(),
+                    'object_alias' => $cond->getExpression()->getMetaObject()->getAliasWithNamespace(),
                     'expression' => $filterAttrAlias,
                     'comparator' => $cond->getComparator(),
                     'value' => $cond->getValue(),

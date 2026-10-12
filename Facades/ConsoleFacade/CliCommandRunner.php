@@ -5,10 +5,51 @@ use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\ServerSoftwareDataType;
 use exface\Core\Exceptions\CliRuntimeException;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Console\Input\StringInput;
 
 class CliCommandRunner
 {
+    /**
+     * Resolves CLI PHP without mistaking Apache's PHP_BINARY for a PHP interpreter.
+     *
+    * Returns an unquoted executable path without arguments, suitable for runProcess().
+     * Falls back to php on PATH so command execution retains its missing-executable diagnostics.
+     *
+     * @return string
+     */
+    public static function findPhpExecutable() : string
+    {
+        return (new PhpExecutableFinder())->find(false) ?: 'php';
+    }
+
+    /**
+     * Keeps machine-readable stdout separate from diagnostics and avoids shell interpolation.
+     *
+    * @param string $exec Unquoted executable path or name on PATH.
+    * @param string[] $arguments Arguments passed directly to the executable.
+     * @param string|null $cwd
+     * @param int[] $acceptedExitCodes Scanners can report findings with a non-zero exit code.
+     * @param float $timeout
+    * @param array $envVars Child-process environment overrides; inherited variables remain available.
+     * @return array stdout, stderr and exit_code.
+     */
+    public static function runCliCommandIntoArray(string $exec, array $arguments, ?string $cwd = null, array $acceptedExitCodes = [0], float $timeout = 300, array $envVars = []) : array
+    {
+        if ($exec !== '' && strpos($exec, '/') === false && strpos($exec, '\\') === false
+            && (new ExecutableFinder())->find($exec) === null) {
+            throw new CliRuntimeException($exec, 'Executable not found on PATH: ' . $exec, 127);
+        }
+        $process = new Process(array_merge([$exec], $arguments), $cwd, $envVars, null, $timeout);
+        $process->run();
+        $exitCode = $process->getExitCode();
+        if (! in_array($exitCode, $acceptedExitCodes, true)) {
+            throw new CliRuntimeException($process->getCommandLine(), $process->getErrorOutput() . $process->getOutput(), $exitCode);
+        }
+        return ['stdout' => $process->getOutput(), 'stderr' => $process->getErrorOutput(), 'exit_code' => $exitCode];
+    }
+
     /**
      * Runs a CLI command and streams its output as a generator.
      *
@@ -42,16 +83,11 @@ class CliCommandRunner
 
             $generator = function (Process $process, bool $silent, array $ignoredExitCodes) : \Generator {
                 // Keep copies because iterating over $process consumes incremental buffers
-                $stdout = '';
-                $stderr = '';
+                $output = '';
 
                 foreach ($process as $type => $buffer) {
                     if ($buffer !== '') {
-                        if ($type === Process::OUT) {
-                            $stdout .= $buffer;
-                        } else {
-                            $stderr .= $buffer;
-                        }
+                        $output .= $buffer;
                         yield $buffer;
                     }
                 }
@@ -68,14 +104,9 @@ class CliCommandRunner
                     yield 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . '.';
                     // If caller wants hard failure, throw AFTER emitting the error marker
                     if (! $silent) {
-                        $errorMessage = '';
-                        if (preg_match('/LogID:\s*([A-Z0-9]+)/', $stdout, $matches)) {
-                            $logId = $matches[1];
-                            $errorMessage = "LogID: $logId\n";
-                        } else {
-                            $errorMessage = "no error output.\n";
-                        }
-                        throw new CliRuntimeException($process->getCommandLine(), ($stderr !== '' ? $stderr : $stdout), $exitCode, $errorMessage);
+                        $errorMessage = 'Command `' . $process->getCommandLine() . '` failed with exit code ' . $exitCode . ".\n";
+                        $errorMessage .= $output !== '' ? $output : "no error output.\n";
+                        throw new CliRuntimeException($process->getCommandLine(), $output, $exitCode, $errorMessage);
                     }
                 }
             };
@@ -98,7 +129,9 @@ class CliCommandRunner
                     yield 'Command `' . $cmd . '` failed with exit code ' . $code . '.';
                     if (! $silent) {
                         // $resultStr contains both stdout and stderr (merged via 2>&1)
-                        throw new CliRuntimeException($cmd, $resultStr, $code);
+                        $errorMessage = 'Command `' . $cmd . '` failed with exit code ' . $code . ".\n";
+                        $errorMessage .= $resultStr !== '' ? $resultStr : "no error output.\n";
+                        throw new CliRuntimeException($cmd, $resultStr, $code, $errorMessage);
                     }
                 }
             };
