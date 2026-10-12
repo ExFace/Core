@@ -305,6 +305,7 @@ class LookupMapping extends AbstractDataSheetMapping
         // (attribute_alias points to the specific attribute)
         $isSubsheet = false;
         $isRequired = false;
+        $subsheetTpl = [];
         if (! $toCol = $toSheet->getColumns()->getByExpression($toExpr)) {
             if ($this->needsSubsheet($toExpr)) {
                 $isSubsheet = true;
@@ -324,6 +325,10 @@ class LookupMapping extends AbstractDataSheetMapping
         } else {
             if ($this->needsSubsheet($toExpr)) {
                 $isSubsheet = true;
+                $subsheetTpl = [
+                    'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
+                    'rows' => []
+                ];
             }
         }
 
@@ -480,16 +485,15 @@ class LookupMapping extends AbstractDataSheetMapping
                 }
                 // Now we have the value we were looking for
                 $lookupVal = $lookupRow[$lookupColName];
-                // If it belongs into a subsheet, make sure the value is saved as an array representation
-                // of a data sheet. Otherwise, save it as-is.
+                // If it belongs into a subsheet, collect the scalar values here. The actual nested
+                // sheet is built later, after stitching, so atomized list-rows merge correctly.
                 if ($isSubsheet) {
                     if (! is_array($prevVal)) {
-                        // Copy the template. Remember, that assigning arrays in PHP will do copy-on-wirte
-                        $toColVals[$atlasKey] = $subsheetTpl;
+                        $toColVals[$atlasKey] = [];
                     }
                     if ($lookupVal !== null && $lookupVal !== '') {
                         foreach (explode($toValDelim, $lookupVal) as $val) {
-                            $toColVals[$atlasKey]['rows'][] = [$toExpr->getAttribute()->getAlias() => $val];
+                            $toColVals[$atlasKey][] = $val;
                         }
                     }
                 } else {
@@ -514,9 +518,9 @@ class LookupMapping extends AbstractDataSheetMapping
                 // from-value either.
                 if (! $isRequired && '' === trim($fromRowValsJoined)) {
                     // In case of subsheets, leaving the cell empty will actually not change anything. To really
-                    // set it to an empty value, we need an empty subsheet here.
+                    // set it to an empty value, we need an empty value list here (materialized into an empty subsheet later).
                     if ($isSubsheet) {
-                        $toColVals[$atlasKey] = $subsheetTpl;
+                        $toColVals[$atlasKey] = [];
                     }
                 }
                 // Otherwise this from-row is a miss, and we need to handle it according to `if_not_found`
@@ -535,7 +539,19 @@ class LookupMapping extends AbstractDataSheetMapping
         $this->handleUnmatchedRows($unmatchedRows, $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
         
         // If we used atomized data, we have to stitch it back together, to ensure that the row count remains unchanged.
-        $toColVals = $this->stitchToData($toColVals, $toCol->getValueListDelimiter());
+        $toColVals = $this->stitchToData($toColVals, $toCol->getValueListDelimiter(), $isSubsheet);
+        
+        // Now that the value lists are stitched, build the nested sheet for subsheet targets.
+        if ($isSubsheet) {
+            $toAttrAlias = $toExpr->getAttribute()->getAlias();
+            foreach ($toColVals as $idx => $vals) {
+                $subsheet = $subsheetTpl;
+                foreach ((array)$vals as $val) {
+                    $subsheet['rows'][] = [$toAttrAlias => $val];
+                }
+                $toColVals[$idx] = $subsheet;
+            }
+        }
         
         // Apply the acquired data.
         $toCol->setValues($toColVals);
@@ -699,11 +715,15 @@ class LookupMapping extends AbstractDataSheetMapping
     /**
      * Stitches atomized to-data back together, using `$this->rowNumberAtlas`.
      * 
+     * For subsheet targets the values are flat lists of scalars (one list per atomized row). These are
+     * merged per original row and returned as deduplicated lists - the nested sheet is built by the caller.
+     * 
      * @param array  $toColVals
      * @param string $delimiter
+     * @param bool   $isSubsheet
      * @return array
      */
-    protected function stitchToData(array $toColVals, string $delimiter) : array
+    protected function stitchToData(array $toColVals, string $delimiter, bool $isSubsheet = false) : array
     {
         if(!$this->getFromValuesAreLists()) {
             return $toColVals;
@@ -715,6 +735,12 @@ class LookupMapping extends AbstractDataSheetMapping
         foreach ($toColVals as $key => $val) {
             $idx = $this->getAtlasIndex($key);
             
+            // Subsheet values are flat lists - merge the lists of all atomized rows.
+            if ($isSubsheet) {
+                $result[$idx] = array_merge($result[$idx] ?? [], (array)$val);
+                continue;
+            }
+            
             // Stitch the values, by adding them to an array.
             $prev = $result[$idx];
             if($prev !== null && !is_array($prev)) {
@@ -724,11 +750,11 @@ class LookupMapping extends AbstractDataSheetMapping
             }
         }
         
-        // Implode all arrays to get the final values.
+        // Deduplicate lists. Scalars are imploded, subsheet value lists are kept as arrays.
         foreach ($result as $idx => $val) {
             if(is_array($val)) {
                 $val = array_unique($val);
-                $result[$idx] = implode($delimiter, $val);
+                $result[$idx] = $isSubsheet ? array_values($val) : implode($delimiter, $val);
             }
         }
         
