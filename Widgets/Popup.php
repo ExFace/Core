@@ -10,6 +10,8 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Widgets\Traits\PopupTrait;
 use exface\Core\Interfaces\Widgets\iAmClosable;
+use exface\Core\Interfaces\Widgets\iHaveFooter;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
@@ -30,10 +32,44 @@ use exface\Core\Interfaces\Widgets\iAmClosable;
  * 
  * @author Andrej Kabachnik
  */
-class Popup extends Form implements UiScreenInterface, iAmClosable
+class Popup extends Form implements UiScreenInterface, iAmClosable, iHaveFooter
 {
     use PopupTrait {
         createCloseButton as createCloseButtonViaTrait;
+    }
+
+    /**
+     * @var bool|null
+     */
+    private $hide_footer = false;
+
+    /**
+     * Returns whether the entire popup footer is hidden.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFooter::getHideFooter()
+     */
+    public function getHideFooter() : ?bool
+    {
+        return $this->hide_footer;
+    }
+
+    /**
+     * Set to TRUE to hide the entire footer, including the close button and all other footer actions.
+     * The popup can still be closed by clicking outside it. Buttons inside the popup content are not affected.
+     * @uxon-property hide_footer
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Widgets\iHaveFooter::setHideFooter()
+     * @param bool $value
+     * @return iHaveFooter
+     */
+    public function setHideFooter($value) : iHaveFooter
+    {
+        $this->hide_footer = BooleanDataType::cast($value);
+        return $this;
     }
     
     /**
