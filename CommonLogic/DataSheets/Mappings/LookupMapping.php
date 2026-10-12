@@ -705,6 +705,10 @@ class LookupMapping extends AbstractDataSheetMapping
      */
     protected function stitchToData(array $toColVals, string $delimiter) : array
     {
+        if(!$this->getFromValuesAreLists()) {
+            return $toColVals;
+        }
+
         $result = [];
         
         // Traverse all to-values.
