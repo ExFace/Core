@@ -835,7 +835,7 @@ JS;
      * 
      * @uxon-property popup
      * @uxon-type \exface\Core\Widgets\Popup
-     * @uxon-template {"widget_type": "Popup","height": "auto","widgets": [{"widget_type": "DataTableResponsive","hide_header": true,"hide_caption": true,"object_alias": "","columns": [{"attribute_alias": ""}]}]}    
+     * @uxon-template {"widget_type": "Popup","height": "auto","hide_footer": "true","widgets": [{"widget_type": "DataTableResponsive","hide_header": true,"hide_caption": true,"object_alias": "","columns": [{"attribute_alias": ""}]}]}    
      * 
      * @param UxonObject $uxon
      * @return $this
@@ -885,6 +885,7 @@ JS;
             $uxon = new UxonObject([
                 'widget_type' => 'Popup',
                 'height' => 'auto',
+                "hide_footer" => 'true',
                 'widgets' => [
                     [
                         'widget_type' => 'DataTableResponsive',
