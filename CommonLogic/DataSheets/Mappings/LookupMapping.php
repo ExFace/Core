@@ -96,7 +96,7 @@ use exface\Core\Uxon\DataSheetLookupMappingSchema;
  * 
  * ```
  * 
- * ### Lookups with delimiter-separated lists
+ * ### Lookups with delimiter-separated lists (`E-LIST`)
  * 
  * Lookup mappings can work with delimiter-separated lists (for example comma-separated lists). 
  * The lists are separated before processing, using the delimiter stored in the associated attribute.
@@ -325,6 +325,8 @@ class LookupMapping extends AbstractDataSheetMapping
         } else {
             if ($this->needsSubsheet($toExpr)) {
                 $isSubsheet = true;
+                // Instantiate the subsheet template for a regular column here, so we can more easily
+                // add rows to it later.
                 $subsheetTpl = [
                     'object_alias' => $toExpr->getAttribute()->getRelationPath()->getEndObject()->getAliasWithNamespace(),
                     'rows' => []
@@ -443,12 +445,15 @@ class LookupMapping extends AbstractDataSheetMapping
             $toValDelim = EXF_LIST_SEPARATOR;
         }
 
-        // Atomize the from-data, to enable matching via lists.
+        // E-LIST: Atomize the from-data, to enable matching via lists.
+        // Later on we have to stitch the data back together to ensure we produce as many rows, as we received.
         $atomizedFromSheet = $this->atomizeFromData($fromSheet, $matchesFrom);
         
         // For every row in the from-sheet we will create a row in the to-sheet
         $unmatchedRows = [];
         foreach ($atomizedFromSheet->getRows() as $iFromRow => $fromRow) {
+            // E-LIST: If we are working with list inputs, we have to use an atlas key so we can match our 
+            // atomized from-rows with their original indexes, when stitching them back together later.
             $atlasKey = $fromRow['atlasKey'] ?? $iFromRow;
             // Collect all from-values into a single string to quickly find out
             $fromRowValsJoined = '';
@@ -483,11 +488,14 @@ class LookupMapping extends AbstractDataSheetMapping
                         continue 2;
                     }
                 }
+                
                 // Now we have the value we were looking for
                 $lookupVal = $lookupRow[$lookupColName];
-                // If it belongs into a subsheet, collect the scalar values here. The actual nested
-                // sheet is built later, after stitching, so atomized list-rows merge correctly.
+
+                // Store lookup value.
                 if ($isSubsheet) {
+                    // If it belongs into a subsheet, collect the scalar values here. The actual nested
+                    // sheet is built later, after stitching, so atomized list-rows merge correctly.
                     if (! is_array($prevVal)) {
                         $toColVals[$atlasKey] = [];
                     }
@@ -497,6 +505,7 @@ class LookupMapping extends AbstractDataSheetMapping
                         }
                     }
                 } else {
+                    // For regular columns, we simply store the lookup value directly.
                     if ($prevVal === null) {
                         $toColVals[$atlasKey] = $lookupVal;
                     } else {
@@ -538,7 +547,7 @@ class LookupMapping extends AbstractDataSheetMapping
         // Handle errors.
         $this->handleUnmatchedRows($unmatchedRows, $toColVals, $fromSheet, $lookupSheet, $toSheet, $toCol);
         
-        // If we used atomized data, we have to stitch it back together, to ensure that the row count remains unchanged.
+        // E-LIST: If we used atomized data, we have to stitch it back together, to ensure that the row count remains unchanged.
         $toColVals = $this->stitchToData($toColVals, $toCol->getValueListDelimiter(), $isSubsheet);
         
         // Now that the value lists are stitched, build the nested sheet for subsheet targets.
