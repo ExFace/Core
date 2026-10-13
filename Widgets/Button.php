@@ -214,6 +214,8 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
                 } catch (\Throwable $e) {
                     if ($e instanceof ActionAppNotFoundError) {
                         $this->action_alias = null;
+                        // Otherwise the next call would retry via createFromUxon() without this guard
+                        $this->action_uxon = null;
                         $this->setDisabled(true, 'App of action not installed!');
                         return null;
                     }
