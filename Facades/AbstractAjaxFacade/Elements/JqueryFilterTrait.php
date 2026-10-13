@@ -72,13 +72,13 @@ JS;
         }
 
         $condGrp = $widget->getCustomConditionGroup();
-        $replacements = $this->getCustomConditionGroupReplacements($condGrp);
+        $replacements = $this->getCustomConditionGroupReplacements($condGrp, $valueJs);
 
         $jsonWithValuePlaceholder = $condGrp->exportUxonObject()->toJson(false);
         return str_replace(array_keys($replacements), array_values($replacements), $jsonWithValuePlaceholder);
     }
 
-    protected function getCustomConditionGroupReplacements(ConditionGroupInterface $condGrp) : array
+    protected function getCustomConditionGroupReplacements(ConditionGroupInterface $condGrp, ?string $valueJs = null) : array
     {
         $widget = $this->getWidget();
         $replacements = [];
