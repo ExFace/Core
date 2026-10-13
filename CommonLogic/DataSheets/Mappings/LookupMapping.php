@@ -570,7 +570,7 @@ class LookupMapping extends AbstractDataSheetMapping
     }
 
     /**
-     * Ensures that the given from-data is properly atomized. 
+     * `E-LIST`: Ensures that the given from-data is properly atomized. 
      * 
      * If `$this->getFromValuesAreLists()` is TRUE, all from-columns used as match keys
      * are treated as lists. Their delimiter is derived from their own `$column->getValueListDelimiter()`
@@ -687,7 +687,7 @@ class LookupMapping extends AbstractDataSheetMapping
     }
 
     /**
-     * Separates a cell value according to its delimiter and creates a new row for each 
+     * `E-LIST`:Separates a cell value according to its delimiter and creates a new row for each 
      * resulting component and for each input row. If you provide 3 rows as base and the cells is
      * atomized into 2 values, you would receive 6 rows as result. Each containing only a single
      * value in the atomized cell.
@@ -722,7 +722,7 @@ class LookupMapping extends AbstractDataSheetMapping
     }
 
     /**
-     * Stitches atomized to-data back together, using `$this->rowNumberAtlas`.
+     * `E-LIST`: Stitches atomized to-data back together, using `$this->rowNumberAtlas`.
      * 
      * For subsheet targets the values are flat lists of scalars (one list per atomized row). These are
      * merged per original row and returned as deduplicated lists - the nested sheet is built by the caller.
@@ -771,7 +771,7 @@ class LookupMapping extends AbstractDataSheetMapping
     }
 
     /**
-     * Returns the atlas index for a given key.
+     * `E-LIST`: Returns the atlas index for a given key.
      *
      * @param int|string $key
      * @return int
