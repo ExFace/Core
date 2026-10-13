@@ -571,6 +571,287 @@
       ]
     }
   },
+  "preset": {
+    "name": "Preset",
+    "description": "Named UXON configuration presets for widgets, actions, behaviors and other configurable components",
+    "uxon_properties": [],
+    "save_component_data": {
+      "object_alias": "exface.Core.UXON_PRESET",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "PROTOTYPE" },
+        { "attribute_alias": "UXON" },
+        { "attribute_alias": "UXON_SCHEMA" },
+        { "attribute_alias": "WRAP_PATH" },
+        { "attribute_alias": "THUMBNAIL" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.UXON_PRESET",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "UID", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "NAME" }
+      ]
+    }
+  },
+  "uxon_preset": {
+    "name": "Preset",
+    "description": "Named UXON configuration presets for widgets, actions, behaviors and other configurable components",
+    "uxon_properties": [],
+    "save_component_data": {
+      "object_alias": "exface.Core.UXON_PRESET",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "PROTOTYPE" },
+        { "attribute_alias": "UXON" },
+        { "attribute_alias": "UXON_SCHEMA" },
+        { "attribute_alias": "WRAP_PATH" },
+        { "attribute_alias": "THUMBNAIL" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.UXON_PRESET",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "UID", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "NAME" }
+      ]
+    }
+  },
+  "uxon_snippet": {
+    "name": "UXON snippet",
+    "description": "Reusable UXON configuration templates that can be included by alias and supplied with parameters",
+    "uxon_properties": [
+      "~snippet"
+    ],
+    "selector": {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\UxonSnippetSelector",
+      "factory": "\\exface\\Core\\Factories\\UxonSnippetFactory::createFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.UXON_SNIPPET",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "UXON_SCHEMA" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "PROTOTYPE" },
+        { "attribute_alias": "UXON" },
+        { "attribute_alias": "ALIAS" },
+        { "attribute_alias": "OBJECT" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.UXON_SNIPPET",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "ALIAS_WITH_NS", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "ALIAS_WITH_NS" }
+      ]
+    },
+    "search_prototype_data": {
+      "object_alias": "exface.Core.UXON_SNIPPET_PROTOTYPE",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "PATHNAME_RELATIVE", "name": "Selector" }
+      ]
+    }
+  },
+  "data_connection": {
+    "name": "Data connection",
+    "description": "Connections to external data sources (databases, APIs, etc.). While the data source defines the type of source (e.g. MySQL, JSON API, etc.), the connection defines the concrete IP address or URL, the authentication credentials, etc.",
+    "uxon_properties": [
+      "connection_alias"
+    ],
+    "selector": {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\DataConnectionSelector",
+      "factory": "\\exface\\Core\\Factories\\DataConnectionFactory::createFromSelector"
+    },
+    "documentation": {
+      "app_docs": null,
+      "ai_instructions": null,
+      "markdown_printer_class": "\\exface\\Core\\Facades\\DocsFacade\\MarkdownPrinters\\GenericUxonComponentMarkdownPrinter"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.CONNECTION",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "TIME_ZONE" },
+        { "attribute_alias": "LABEL" },
+        { "attribute_alias": "CONNECTOR" },
+        { "attribute_alias": "CONFIG" },
+        { "attribute_alias": "READONLY" },
+        { "attribute_alias": "ALIAS" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.CONNECTION",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "ALIAS_WITH_NS", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "LABEL", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "ALIAS_WITH_NS" }
+      ]
+    },
+    "search_prototype_data": {
+      "object_alias": "exface.Core.DATA_CONNECTOR",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "PATHNAME_RELATIVE", "name": "Selector" }
+      ]
+    }
+  },
+  "communication_channel": {
+    "name": "Communication channel",
+    "description": "Named channels for sending communication messages with predefined message defaults and data connections",
+    "uxon_properties": [
+      "channel"
+    ],
+    "selector": {
+      "class": "\\exface\\Core\\CommonLogic\\Selectors\\CommunicationChannelSelector",
+      "factory": "\\exface\\Core\\Factories\\CommunicationFactory::createFromSelector"
+    },
+    "save_component_data": {
+      "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "ALIAS" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "MESSAGE_PROTOTYPE" },
+        { "attribute_alias": "MESSAGE_DEFAULT_UXON" },
+        { "attribute_alias": "DATA_CONNECTION_DEFAULT" },
+        { "attribute_alias": "MUTE_FLAG_DEFAULT" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.COMMUNICATION_CHANNEL",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "ALIAS_WITH_NS", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "ALIAS_WITH_NS" }
+      ]
+    }
+  },
+  "scheduler": {
+    "name": "Scheduler",
+    "description": "Scheduled background tasks with a schedule, action configuration and task parameters",
+    "uxon_properties": [],
+    "save_component_data": {
+      "object_alias": "exface.Core.SCHEDULER",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "APP" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "SCHEDULE" },
+        { "attribute_alias": "ACTION_UXON" },
+        { "attribute_alias": "TASK_UXON" },
+        { "attribute_alias": "FIRST_RUN" },
+        { "attribute_alias": "QUEUE_TOPICS" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.SCHEDULER",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "UID", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "NAME" }
+      ]
+    }
+  },
+  "mutation": {
+    "name": "Mutation",
+    "description": "Configured changes to model components, grouped into mutation sets and applied to selected targets",
+    "uxon_properties": [],
+    "save_component_data": {
+      "object_alias": "exface.Core.MUTATION",
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "NAME" },
+        { "attribute_alias": "DESCRIPTION" },
+        { "attribute_alias": "MUTATION_TYPE" },
+        { "attribute_alias": "MUTATION_SET" },
+        { "attribute_alias": "CONFIG_BASE_OBJECT" },
+        { "attribute_alias": "CONFIG_UXON" },
+        { "attribute_alias": "TARGETS_JSON" },
+        { "attribute_alias": "ENABLED_FLAG" }
+      ]
+    },
+    "search_selector_data": {
+      "object_alias": "exface.Core.MUTATION",
+      "filters": {
+        "operator": "OR",
+        "conditions": [
+          { "expression": "UID", "comparator": "=", "value": "[#~query#]" },
+          { "expression": "NAME", "comparator": "=", "value": "[#~query#]" }
+        ]
+      },
+      "columns": [
+        { "attribute_alias": "UID" },
+        { "attribute_alias": "NAME" }
+      ]
+    }
+  },
   "connection": {
     "name": "Data connection",
     "description": "Connections to external data sources (databases, APIs, etc.). While the data source defines the type of source (e.g. MySQL, JSON API, etc.), the connection defines the concrete IP address or URL, the authentication credentials, etc.",
