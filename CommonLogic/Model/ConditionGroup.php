@@ -7,6 +7,7 @@ use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\Debug\LogBookInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\ExpressionInterface;
@@ -52,20 +53,15 @@ use exface\Core\Interfaces\Model\MetaRelationPathInterface;
  */
 class ConditionGroup implements ConditionGroupInterface
 {
-
-    // Properties to be duplicated on copy()
-    private $operator = NULL;
-
-    private $conditions = array();
-
-    private $nested_groups = array();
-
-    // Properties NOT to be dublicated on copy()
     private $exface = NULL;
     
-    private $baseObject = null;
+    private $operator = NULL;
+    private $conditions = [];
+    private $nested_groups = [];
     
+    private $baseObject = null;
     private $baseObjectSelector = null;
+    private string|MetaRelationPathInterface|null $baseRelationPathToOutside = null;
     
     private $ignoreEmptyValues = null;
     
@@ -310,16 +306,29 @@ class ConditionGroup implements ConditionGroupInterface
      */
     public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject, ?callable $conditionFilterCallback = null) : ConditionGroupInterface
     {
-        $relationPathStr = $relationPathToNewBaseObject instanceof MetaRelationPathInterface ? $relationPathToNewBaseObject->toString() : $relationPathToNewBaseObject;
+        $relationPathStr = ($relationPathToNewBaseObject instanceof MetaRelationPathInterface) ? $relationPathToNewBaseObject->toString() : $relationPathToNewBaseObject;
         // Do nothing, if the relation path is empty (nothing to rebase...)
-        if (! $relationPathToNewBaseObject) {
-            return $this;
+        if (! $relationPathStr) {
+            return $this->copy();
         }
         
-        if ($this->hasBaseObject() === true) {
-            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relationPathStr), $this->ignoreEmptyValues);
-        } else {
-            $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), null, $this->ignoreEmptyValues);
+        switch (true) {
+            case $this->hasBaseRelationPath():
+                $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject(), $this->ignoreEmptyValues);
+                $basePathStr = $this->getBaseRelationPathToOutside()->reverse()->toString();
+                if ($relationPathStr === $basePathStr) {
+                    $relationPathToNewBaseObject = '';
+                    $relationPathStr = '';
+                } else {
+                    // TODO #condition-group-with-base how to rebase a group with a base relation path, that is different???
+                    throw new unexpectedValueException('Cannot rebase condition group from base path `' . $basePathStr . '` to `' . $relationPathStr . '`');
+                }
+                break;
+            case $this->hasBaseObject() === true:
+                $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), $this->getBaseObject()->getRelatedObject($relationPathStr), $this->ignoreEmptyValues);
+                break;
+            default:
+                $result = ConditionGroupFactory::createEmpty($this->exface, $this->getOperator(), null, $this->ignoreEmptyValues);
         }
         foreach ($this->getConditions() as $condition) {
             // Remove conditions not matching the filter
@@ -345,6 +354,10 @@ class ConditionGroup implements ConditionGroupInterface
         }
         
         foreach ($this->getNestedGroups() as $group) {
+            if ($group->hasBaseRelationPath()) {
+                // FIXME #condition-group-with-base how to rebase nested groups with base paths? Rebase the base path and leave the group intact?
+                continue;
+            }
             $result->addNestedGroup($group->rebase($relationPathToNewBaseObject, $conditionFilterCallback));
         }
         
@@ -444,6 +457,9 @@ class ConditionGroup implements ConditionGroupInterface
         if ($this->hasBaseObject() === true) {
             $uxon->setProperty('base_object_alias', $this->getBaseObjectSelector());
         }
+        if ($this->baseRelationPathToOutside !== null) {
+            $uxon->setProperty('object_relation_path_to_outside', (string) $this->baseRelationPathToOutside);
+        }
         if ($this->ignoreEmptyValues === true) {
             $uxon->setProperty('ignore_empty_values', true);
         }
@@ -474,31 +490,35 @@ class ConditionGroup implements ConditionGroupInterface
             if ($uxon->hasProperty('object_alias')) {
                 $this->setBaseObjectAlias($uxon->getProperty('object_alias'));
             }
+            if ($uxon->hasProperty('object_relation_path_to_outside')) {
+                $this->setObjectRelationPathToOutside($uxon->getProperty('object_relation_path_to_outside'));
+            }
             if ($uxon->hasProperty('conditions')) {
-                foreach ($uxon->getProperty('conditions') as $prop) {
-                    if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
-                        $prop->setProperty('object_alias', $this->getBaseObjectSelector());
+                foreach ($uxon->getProperty('conditions') as $condUxon) {
+                    if ($condUxon->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
+                        $condUxon->setProperty('object_alias', $this->getBaseObjectSelector());
                     }
-                    if ($prop->hasProperty('ignore_empty_values') === false) {
-                        $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
+                    if ($condUxon->hasProperty('ignore_empty_values') === false) {
+                        $condUxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
                     }
-                    $this->addCondition(ConditionFactory::createFromUxon($this->exface, $prop));
+                    $this->addCondition(ConditionFactory::createFromUxon($this->exface, $condUxon));
                 }
             }
             if ($uxon->hasProperty('nested_groups')) {
-                foreach ($uxon->getProperty('nested_groups') as $prop) {
+                foreach ($uxon->getProperty('nested_groups') as $grpUxon) {
                     // Put the base object selector into the UXON instead of passing the object to the
                     // factory to avoid loading the object if it was not loaded yet.
-                    if ($prop->hasProperty('base_object_alias') === false && $this->hasBaseObject() === true) {
-                        $prop->setProperty('base_object_alias', $this->getBaseObjectSelector());
+                    if (    ! $grpUxon->hasProperty('base_object_alias') 
+                        &&  ! $grpUxon->hasProperty('object_alias') 
+                        &&  ! $grpUxon->hasProperty('object_relation_path_to_outside') 
+                        &&  $this->hasBaseObject() === true
+                    ) {
+                        $grpUxon->setProperty('object_alias', $this->getBaseObjectSelector());
                     }
-                    if ($prop->hasProperty('object_alias') === false && $this->hasBaseObject() === true) {
-                        $prop->setProperty('object_alias', $this->getBaseObjectSelector());
+                    if ($grpUxon->hasProperty('ignore_empty_values') === false) {
+                        $grpUxon->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
                     }
-                    if ($prop->hasProperty('ignore_empty_values') === false) {
-                        $prop->setProperty('ignore_empty_values', $this->ignoreEmptyValues);
-                    }
-                    $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $prop));
+                    $this->addNestedGroup(ConditionGroupFactory::createFromUxon($this->exface, $grpUxon));
                 }
             }            
         } catch (UxonParserError $e) {
@@ -514,7 +534,8 @@ class ConditionGroup implements ConditionGroupInterface
             'object_alias',
             'ignore_empty_values',
             'conditions',
-            'nested_groups'
+            'nested_groups',
+            'object_relation_path_to_outside'
         ];
         $otherProps = array_diff(array_keys($uxon->toArray()), $processedProps);
         if (! empty($otherProps)) {
@@ -675,8 +696,9 @@ class ConditionGroup implements ConditionGroupInterface
     }
     
     /**
-     *
-     * @return string|NULL
+     * 
+     * {@inheritDoc}
+     * @see ConditionGroupInterface::getBaseObject()
      */
     public function getBaseObject() : ?MetaObjectInterface
     {
@@ -694,11 +716,11 @@ class ConditionGroup implements ConditionGroupInterface
     {
         return $this->baseObjectSelector ?? ($this->baseObject !== null ? $this->baseObject->getAliasWithNamespace() : null);
     }
-    
+
     /**
      * All expressions within this condition group will be resolved based on this object.
-     * 
-     * @param string $value
+     *
+     * @param string $aliasWithNamespaceOrUid
      * @return ConditionGroup
      */
     protected function setBaseObjectAlias(string $aliasWithNamespaceOrUid) : ConditionGroup
@@ -742,6 +764,77 @@ class ConditionGroup implements ConditionGroupInterface
     {
         return $this->baseObject !== null || $this->baseObjectSelector !== null;
     }
+
+    /**
+     *
+     * @return MetaRelationPathInterface|null
+     */
+    protected function getBaseRelationPathToOutside() : ?MetaRelationPathInterface
+    {
+        if (is_string($this->baseRelationPathToOutside)) {
+            $this->baseRelationPathToOutside = RelationPathFactory::createFromString($this->getBaseObject(), $this->baseRelationPathToOutside);
+        }
+        return $this->baseRelationPathToOutside;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionGroupInterface::hasBaseRelationPath()
+     */
+    public function hasBaseRelationPath() : bool
+    {
+        return $this->baseRelationPathToOutside !== null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionGroupInterface::getBaseRelationPathTo()
+     */
+    public function getBaseRelationPathTo(MetaObjectInterface $object) : ?MetaRelationPathInterface
+    {
+        $pathToOutside = $this->getBaseRelationPathToOutside();
+        if ($pathToOutside !== null) {
+            $baseObj = $pathToOutside->getEndObject();
+            if ($object->is($baseObj) === true) {
+                return $pathToOutside;
+            }
+        }
+        // TODO #condition-group-with-base use $this->getBaseObject()->findRelationPath($object) to search for a relation path?        
+        return null;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionGroupInterface::getBaseRelationPathFrom()
+     */
+    public function getBaseRelationPathFrom(MetaObjectInterface $object) : ?MetaRelationPathInterface
+    {
+        $pathTo = $this->getBaseRelationPathTo($object);
+        return $pathTo !== null ? $pathTo->reverse() : null;
+    }
+
+    /**
+     * Sets the relation path from the base object of this condition group to the outside group
+     *
+     * @uxon-property object_relation_path_to_outside
+     * @uxon-type metamodel:relation
+     *
+     * @see ConditionGroupInterface::setObjectRelationPathToOutside()
+     */
+    public function setObjectRelationPathToOutside(string|MetaRelationPathInterface $path) : ConditionGroupInterface
+    {
+        $this->baseRelationPathToOutside = $path;
+        if (null !== $baseObj = $this->getBaseObject()) {
+            if ($path instanceof MetaRelationPathInterface) {
+                if ($path->getStartObject() !== $this->baseObject) {
+                    throw new UxonParserError($this->exportUxonObject(), 'Cannot set `object_relation_path_to_outside` to `' . $path->toString() . '` for condition group: relation path must start from the base object of this group: ' . $baseObj->__toString());
+                }
+            } else {
+                // TODO also validate string paths - but we would need to instantiate the path here already...
+            }
+        }
+        return $this;
+    }
     
     /**
      * 
@@ -762,6 +855,7 @@ class ConditionGroup implements ConditionGroupInterface
         $results = [];
         $evals = array_merge($this->getConditions(), $this->getNestedGroups());
         foreach ($evals as $conditionOrGroup) {
+            // FIXME #condition-group-with-base what to do with nested conditions on related objects?
             $result = $conditionOrGroup->evaluate($data_sheet, $row_number, false);
             switch (true) {
                 case $op === EXF_LOGICAL_AND && $result === false: return false;
