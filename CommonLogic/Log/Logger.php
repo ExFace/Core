@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\LogLevelDataType;
+use Symfony\Component\ErrorHandler\Error\FatalError;
 
 /**
  * Default implementation of the LoggerInterface
@@ -22,6 +23,42 @@ class Logger implements LoggerInterface
     private $handlers = array();
 
     private $queue = [];
+
+    // Shared between instances: multiple loggers may be alive, but a fatal error must only be logged once
+    private static bool $fatalErrorLogged = false;
+
+    /**
+     * Reports otherwise unlogged fatal errors after existing shutdown handlers have had a chance to log them.
+     * 
+     * Fatal errors like exceeding the memory limit or declaring a method incompatible with its interface
+     * do not produce a catchable Throwable, so none of the try/catch blocks in the app will ever see them.
+     * The only remaining hook is PHP's shutdown, which is why this is registered in the constructor.
+     */
+    public function __construct()
+    {
+        // Released below to leave headroom for logging in case the fatal error was an exhausted memory limit
+        $reservedMemory = str_repeat(' ', 32768);
+        register_shutdown_function(function () use (&$reservedMemory) {
+            $reservedMemory = null;
+            // Registering from within a shutdown function appends to the end of the queue. The Symfony error
+            // handler (active if DEBUG.PRETTIFY_ERRORS is on) logs fatals itself and must go first, otherwise
+            // we would log the same error before it and end up with two records.
+            register_shutdown_function(function () {
+                $error = error_get_last();
+                if (
+                    ! self::$fatalErrorLogged
+                    // A logger without handlers cannot write anywhere - leave the error to another instance
+                    && ! empty($this->handlers)
+                    && $error !== null
+                    // error_get_last() also returns warnings of successful requests, so only log types that
+                    // actually terminate the request
+                    && ($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR)) !== 0
+                ) {
+                    $this->logException(new FatalError($error['message'], 0, $error));
+                }
+            });
+        });
+    }
 
     /**
      * System is unusable.
@@ -158,6 +195,10 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
+        if (($context['exception'] ?? null) instanceof FatalError) {
+            self::$fatalErrorLogged = true;
+        }
+
         // If the current log message occurred while another was being logged, don't process it immediately
         // as this might cause recursion. We will enqueue errors and skip any other interruption.
         if ($this->isLogging()) {
