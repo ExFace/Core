@@ -45,8 +45,18 @@ class PostgreSqlModelBuilder extends AbstractSqlModelBuilder
         }
         
         $columns_sql = "
-            SELECT column_name, data_type, is_nullable, column_default, character_maximum_length, numeric_scale
-            FROM information_schema.columns
+            SELECT columns.column_name, columns.data_type, columns.is_nullable, columns.column_default,
+                columns.character_maximum_length, columns.numeric_scale,
+                pg_catalog.col_description(table_metadata.oid, column_metadata.attnum) AS column_comment
+            FROM information_schema.columns AS columns
+            JOIN pg_catalog.pg_namespace AS schema_metadata
+                ON schema_metadata.nspname = columns.table_schema
+            JOIN pg_catalog.pg_class AS table_metadata
+                ON table_metadata.relnamespace = schema_metadata.oid
+                AND table_metadata.relname = columns.table_name
+            JOIN pg_catalog.pg_attribute AS column_metadata
+                ON column_metadata.attrelid = table_metadata.oid
+                AND column_metadata.attname = columns.column_name
             WHERE $filter
         ";
 
@@ -55,13 +65,13 @@ class PostgreSqlModelBuilder extends AbstractSqlModelBuilder
         foreach ($columns_array as $col) {
             $dataType = $this->guessDataType($meta_object, $col['data_type'], $col['character_maximum_length'], $col['numeric_scale']);
             $row = [
-                'NAME' => $this->generateLabel($col['column_name'], ''),
+                'NAME' => $this->generateLabel($col['column_name'], $col['column_comment']),
                 'ALIAS' => $col['column_name'],
                 'DATATYPE' => $this->getDataTypeId($dataType),
                 'DATA_ADDRESS' => $col['column_name'],
                 'OBJECT' => $meta_object->getId(),
                 'REQUIREDFLAG' => ($col['is_nullable'] === 'NO' && strpos($col['column_default'], 'nextval') === false ? 1 : 0),
-                'SHORT_DESCRIPTION' => '',
+                'SHORT_DESCRIPTION' => $col['column_comment'] ?? '',
                 'UIDFLAG' => strpos($col['column_default'], 'nextval') !== false ? 1 : 0
             ];
 
