@@ -930,6 +930,9 @@ class Condition implements ConditionInterface
     public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject) : ConditionInterface
     {
         $pathStr = $relationPathToNewBaseObject instanceof MetaRelationPathInterface ? $relationPathToNewBaseObject->toString() : $relationPathToNewBaseObject;
+        if (! $pathStr) {
+            return $this->copy();
+        }
         $new_expression = $this->getExpression()->rebase($pathStr);
         $new_condition = ConditionFactory::createFromExpression($this->exface, $new_expression, $this->getValue(), $this->getComparator(), $this->willIgnoreEmptyValues());
         $new_condition->setApplyToAggregates($this->willApplyToAggregatedValues());

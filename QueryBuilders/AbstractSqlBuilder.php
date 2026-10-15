@@ -19,10 +19,12 @@ use exface\Core\DataConnectors\AbstractSqlConnector;
 use exface\Core\CommonLogic\DataQueries\SqlDataQuery;
 use exface\Core\CommonLogic\QueryBuilder\QueryPartSelect;
 use exface\Core\Exceptions\TemplateRenderer\PlaceholderNotFoundError;
+use exface\Core\Factories\ConditionFactory;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Factories\RelationPathFactory;
 use exface\Core\Interfaces\DataSources\SqlDataConnectorInterface;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\MetaRelationInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\DataTypes\StringDataType;
@@ -2016,64 +2018,72 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     {
         $joins = array();
 
-        if ($qpart instanceof QueryPartFilterGroup) {
+        switch (true) {
             // This extra if for the filter groups is a somewhat strange solutions for reverse relation filters being ignored within groups. It seems, that
             // if you use $qpart->getUsedRelations() on a FilterGroup and just continue with the "else" part of this if, reverse relations are being ignored.
             // The problem is, that the special treatment for attributes of the main object and an explicit left_table_alias should be applied to filter group
             // at some point, but it is not, because it is not possible to determine, what object the filter group belongs to (it might have attributes from
             // many object). I do not understand, however, why that special treatment seems to be important for reverse relations... In any case, this recursion
             // does the job.
-            foreach ($qpart->getFiltersAndNestedGroups() as $f) {
-                $joins = array_merge($joins, $this->buildSqlJoins($f));
-            }
-        } else {
-            $rels = $qpart->getUsedRelations();
-
-            if (count($rels) === 0 && $qpart->getAttribute()->getObjectId() == $this->getMainObject()->getId() && $left_table_alias) {
-                // Special treatment if we are joining attributes of the main object to an explicitly specified table alias.
-                // This is necessary when putting some special attributes of the main object (i.e. those with custom
-                // sql) into the enrichment query. In this case, we need to join the table of the main object to
-                // the core query again, after pagination, so possible back references within the custom select can
-                // still be resolved.
-                $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
-                $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($this->getMainObject())) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->escapeName($this->getMainObject()->getUidAttributeAlias()) . ' = ' . $this->buildSqlJoinSide($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), $right_table_alias);
-            } else {
-                // In most cases we will build joins for attributes of related objects.
-                $left_table_alias = ($left_table_alias ? $left_table_alias : $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getQueryId());
-                foreach ($rels as $alias => $rel) {
-                    /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
-                    if ($rel->isForwardRelation() === true) {
-                        // Forward relations are simple JOINs
-                        $right_table_alias = $this->getShortAlias($alias . $this->getQueryId());
-                        $right_obj = $this->getMainObject()->getRelatedObject($alias);
-                        // generate the join sql
-                        $join_table = str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($right_obj)) . $this->buildSqlAsForTables($right_table_alias);
-                        $leftKeyAttr = $rel->getLeftKeyAttribute();
-                        if ($customOn = $leftKeyAttr->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
-                            // If a custom join condition ist specified in the attribute, that defines the relation, just replace the aliases in it
-                            $join_on = $this->replacePlaceholdersInSqlJoin(
-                                $customOn,
-                                $left_table_alias,
-                                $right_table_alias,
-                                $rel,
-                                null,
-                                null,
-                                $join_table
-                            );
+            case ($qpart instanceof QueryPartFilterGroup):
+                if ($qpart->isAppliedToSubquery() === false) {
+                    foreach ($qpart->getFiltersAndNestedGroups() as $f) {
+                        $joins = array_merge($joins, $this->buildSqlJoins($f));
+                    }
+                } else {
+                    // TODO #condition-group-with-base if we do apply to subquery, we will need joins to the left of the subquery junction relation
+                }
+                break;
+            // For all other query parts, we will just get the used relations and build joins for them.
+            default:
+                $rels = $qpart->getUsedRelations();
+    
+                if (count($rels) === 0 && $qpart->getAttribute()->getObjectId() == $this->getMainObject()->getId() && $left_table_alias) {
+                    // Special treatment if we are joining attributes of the main object to an explicitly specified table alias.
+                    // This is necessary when putting some special attributes of the main object (i.e. those with custom
+                    // sql) into the enrichment query. In this case, we need to join the table of the main object to
+                    // the core query again, after pagination, so possible back references within the custom select can
+                    // still be resolved.
+                    $right_table_alias = $this->getShortAlias($this->getMainObject()->getAlias() . $this->getQueryId());
+                    $joins[$right_table_alias] = "\n JOIN " . str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($this->getMainObject())) . $this->buildSqlAsForTables($right_table_alias) . ' ON ' . $left_table_alias . $this->getAliasDelim() . $this->escapeName($this->getMainObject()->getUidAttributeAlias()) . ' = ' . $this->buildSqlJoinSide($this->buildSqlDataAddress($this->getMainObject()->getUidAttribute()), $right_table_alias);
+                } else {
+                    // In most cases we will build joins for attributes of related objects.
+                    $left_table_alias = ($left_table_alias ? $left_table_alias : $this->getShortAlias($this->getMainObject()->getAlias()) . $this->getQueryId());
+                    foreach ($rels as $alias => $rel) {
+                        /* @var $rel \exface\Core\Interfaces\Model\MetaRelationInterface */
+                        if ($rel->isForwardRelation() === true) {
+                            // Forward relations are simple JOINs
+                            $right_table_alias = $this->getShortAlias($alias . $this->getQueryId());
+                            $right_obj = $this->getMainObject()->getRelatedObject($alias);
+                            // generate the join sql
+                            $join_table = str_replace('[#~alias#]', $right_table_alias, $this->buildSqlDataAddress($right_obj)) . $this->buildSqlAsForTables($right_table_alias);
+                            $leftKeyAttr = $rel->getLeftKeyAttribute();
+                            if ($customOn = $leftKeyAttr->getDataAddressProperty(self::DAP_SQL_JOIN_ON)) {
+                                // If a custom join condition ist specified in the attribute, that defines the relation, just replace the aliases in it
+                                $join_on = $this->replacePlaceholdersInSqlJoin(
+                                    $customOn,
+                                    $left_table_alias,
+                                    $right_table_alias,
+                                    $rel,
+                                    null,
+                                    null,
+                                    $join_table
+                                );
+                            } else {
+                                // Otherwise create the ON clause from the attributes on both sides of the relation.
+                                $join_on = $this->buildSqlJoinOn($leftKeyAttr, $rel->getRightKeyAttribute(), $left_table_alias, $right_table_alias);
+                            }
+                            $join = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . $join_table . ' ON ' . $join_on;
+                            $joins[$right_table_alias] = $join;
+                            // continue with the related object
+                            $left_table_alias = $right_table_alias;
                         } else {
-                            // Otherwise create the ON clause from the attributes on both sides of the relation.
-                            $join_on = $this->buildSqlJoinOn($leftKeyAttr, $rel->getRightKeyAttribute(), $left_table_alias, $right_table_alias);
+                            // stop joining as all the following joins will be add in subselects of the enrichment select
+                            break;
                         }
-                        $join = "\n " . $this->buildSqlJoinType($rel) . ' JOIN ' . $join_table . ' ON ' . $join_on;
-                        $joins[$right_table_alias] = $join;
-                        // continue with the related object
-                        $left_table_alias = $right_table_alias;
-                    } else {
-                        // stop joining as all the following joins will be add in subselects of the enrichment select
-                        break;
                     }
                 }
-            }
+                break;
         }
         return $joins;
     }
@@ -2292,9 +2302,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
-     * Builds a where statement for a group of filters, concatennating the conditions with the goups logical operator
-     * (e.g.
-     * " condition1 AND condition 2 AND (condition3 OR condition4) ")
+     * Builds a where statement for a group of filters, concatenating the conditions with the groups logical operator
+     * 
+     * E.g.: `condition1 AND condition 2 AND (condition3 OR condition4)`
      *
      * @param QueryPartFilterGroup $qpart
      * @return string
@@ -2304,6 +2314,33 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $where = '';
 
         $op = $this->buildSqlLogicalOperator($qpart->getOperator());
+        
+        // If the filter group has a base relation path, it must be applied to an EXISTS subquery. This is totally
+        // different from applying each filter individually, so we check that first.
+        if ($qpart->isAppliedToSubquery()) {
+            // Now we need to build a WHERE EXISTS subquery. To avoid duplicate complex subquery logic, we use a simple
+            // trick: we "fake" a filter query part, that will check, if the key in the subquery IS NOT NULL, which
+            // is semantically identical to WHERE EXISTS. This way, it does not really matter, how exactly a specific
+            // query builder will render the SQL. It should even work if a query builder has a totally different syntax
+            // for WHERE EXISTS. 
+            // Find the relation, that connects this query and the subquery. Add a filter with a condition, that checks
+            // if the right key of that relation is not NULL.
+            $subqueryRelPath = $qpart->getSubqueryRelationPath();
+            $junctionRel = $qpart->getSubqueryJunctionRelation($rely_on_joins);
+            $junctionRelPath = $subqueryRelPath->getSubpath(0, $subqueryRelPath->getIndexOf($junctionRel) + 1);
+            $junctionRightKeyAlias = RelationPath::join($junctionRelPath->toString(), $junctionRel->getRightKeyAttribute()->getAlias());
+            $junctionCondition = ConditionFactory::createFromExpressionString(
+                $this->getMainObject(), 
+                $junctionRightKeyAlias, 
+                EXF_LOGICAL_NULL, 
+                ComparatorDataType::EQUALS_NOT, 
+                true
+            );
+            $junctionQpart = QueryPartFilterGroup::createQueryPartFromCondition($junctionCondition, $this);
+            $subqueryConditionGroup = $qpart->getConditionGroup()->rebase($subqueryRelPath);
+            return "\n" . $this->buildSqlComment("buildSqlWhere(" . StringDataType::truncate($qpart->getConditionGroup()->__toString(), 100, false, true) . ", " . $rely_on_joins . ")")
+                . "\n" . $this->buildSqlWhereSubquery($junctionQpart, $rely_on_joins, $subqueryConditionGroup);
+        }
 
         foreach ($qpart->getFilters() as $qpart_fltr) {
             switch (true) {
@@ -2316,7 +2353,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // Render all other filters regularly and append them if they produce any SQL
                 case $fltr_string = $this->buildSqlWhereCondition($qpart_fltr, $rely_on_joins):
                     $where .= "\n" . $this->buildSqlComment("buildSqlWhereCondition(" . StringDataType::truncate($qpart_fltr->getCondition()->toString(), 100, false, true) . ", " . $rely_on_joins . ")")
-                        . "\n " . ($where ? $op . " " : '') . $fltr_string;
+                            . "\n " . ($where ? $op . " " : '') . $fltr_string;
                     break;
             }
         }
@@ -2815,8 +2852,12 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
      * @param QueryPartFilter $qpart
      * @param boolean $rely_on_joins
      */
-    protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true)
+    protected function buildSqlWhereSubquery(QueryPartFilter $qpart, $rely_on_joins = true, ConditionGroupInterface $subquery_filters = null)
     {
+        // Find the boundary between outer query and subquery first. The boundary is defined by $start_rel - a relation,
+        // whose right-hand object becomes the subquery’s main object, its keys connect the two queries, and the
+        // remaining filter path is rebased relative to it.  
+        
         /* @var $start_rel \exface\Core\CommonLogic\Model\relation */
         // First of all, see if we can rely on all joins being performed in the main query.
         // This is implicitly also the case, if there are no joins needed (= the data in the main query will be sufficient in any case)
@@ -2998,6 +3039,14 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             $relq->addAttribute($start_rel->getRightKeyAttribute()->getAlias());
             $junction_qpart = new QueryPartSelect($start_rel->getLeftKeyAttribute()->getAlias(), $this, null, $start_rel->getLeftKeyAttribute()->getAliasWithRelationPath());
             $junction = $this->buildSqlSelect($junction_qpart, null, null, '');
+        }
+        
+        // Apply explicitly provided filters to the subquery
+        if ($subquery_filters !== null) {
+            if (! $subquery_filters->getBaseObject()->is($relq->getMainObject())) {
+                throw new QueryBuilderException('Cannot build SQL subquery: subquery filters are based on a different object (' . $subquery_filters->getBaseObject()->__toString() . ') than the subquery itself (' . $relq->getMainObject()->__toString() . ')');
+            }
+            $relq->getFilters()->addConditionGroup($subquery_filters);
         }
 
         // Do not use a column with `EXISTS` and `NOT EXISTS`!

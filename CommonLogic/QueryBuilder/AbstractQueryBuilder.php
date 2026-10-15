@@ -314,7 +314,7 @@ abstract class AbstractQueryBuilder implements QueryBuilderInterface
     protected function getFilters()
     {
         if (! $this->filters)
-            $this->filters = new QueryPartFilterGroup('', $this);
+            $this->filters = new QueryPartFilterGroup($this);
         return $this->filters;
     }
 

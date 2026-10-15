@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Behaviors\OrderingBehavior;
 use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
@@ -729,7 +730,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         
         $colsByName = [];
         foreach ($uxon->getProperty('columns')->toArray() as $colArr) {
-            $colsByName[$colArr['name']] = $colArr;
+            $colsByName[$this->getExportColumnName($colArr)] = $colArr;
         }
         
         $orderedCols = [];
@@ -768,6 +769,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     /**
      * Reads the order of column names from an already exported model file without instantiating a data sheet
      * 
+     * Implicit names must be resolved too (e.g. columns with only `attribute_alias`), otherwise those columns are treated as new on every export.
+     * 
      * @param string $filePath
      * @return string[]
      */
@@ -785,7 +788,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
             $names = [];
             foreach ($uxon->getProperty('columns')->toArray() as $colArr) {
-                if ($name = ($colArr['name'] ?? null)) {
+                if ($name = $this->getExportColumnName($colArr)) {
                     $names[] = $name;
                 }
             }
@@ -793,6 +796,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    /**
+     * Resolves column identity without loading the metamodel so implicit names retain their export position.
+     * 
+     * @param array $column
+     * @return string
+     */
+    protected function getExportColumnName(array $column) : string
+    {
+        $expression = ($column['expression'] ?? '') ?: (($column['attribute_alias'] ?? '') ?: ($column['formula'] ?? ''));
+        return DataColumn::sanitizeColumnName($column['name'] ?? $expression);
     }
     
     protected function exportModelRowsPrettified(DataSheetInterface $sheet, array $rows = null) : array

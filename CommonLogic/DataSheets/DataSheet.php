@@ -1064,6 +1064,7 @@ class DataSheet implements DataSheetInterface
         // their values here by reading them separately. 
         $foreignConditions = [];
         foreach ($this->getFilters()->getConditionsRecursive() as $cond) {
+            // FIXME #condition-group-with-base check if all conditions belong to the DataSheets object!
             if ($cond->getExpression()->isMetaAttribute()) {
                 $condAttr = $cond->getExpression()->getAttribute();
                 if (! $condAttr->getRelationPath()->isEmpty() && ! $query->canReadAttribute($condAttr)) {
@@ -1083,6 +1084,7 @@ class DataSheet implements DataSheetInterface
             foreach ($foreignConditions as $foreignCond) {
                 /* @var $cond \exface\Core\CommonLogic\Model\Condition */
                 foreach ($queryFilters->getConditionsRecursive() as $cond) {
+                    // FIXME #condition-group-with-base check if all conditions belong to the DataSheets object!
                     if ($cond->exportUxonObject()->toArray() === $foreignCond->exportUxonObject()->toArray()) {
                         if ($foreignCond->isEmpty()) {
                             $queryFilters->removeCondition($cond);
@@ -1169,6 +1171,9 @@ class DataSheet implements DataSheetInterface
         //      - AND condition has `apply_to_aggregates` set to TRUE
         //  )
         // )
+        // - condition group is based on the nested object (e.g. condition groups with a base relation path from the
+        // nested sheet ot this sheet)
+        // 
         // IDEA should we somehow make this configurable? It is hard for the designer to understand, which filters
         // will apply to nested data and which won't
         // NOTE: right now only level-1 conditions are applied - no nested condition groups. It is unclear, how
@@ -1201,6 +1206,24 @@ class DataSheet implements DataSheetInterface
                 }
                     break;
                 // Ignore any other conditions
+                default:
+                    continue 2;
+            }
+        }
+        foreach ($this->getFilters()->getNestedGroups() as $nestedGrp) {
+            switch (true) {
+                case $nestedGrp->getBaseObject() === $nestedSheet->getMetaObject():
+                    $pathToGrp = $nestedGrp->getBaseRelationPathFrom($this->getMetaObject());
+                    if ($pathToGrp) {
+                        $nestedSheet->getFilters()->addNestedGroup($nestedGrp->rebase($pathToGrp));
+                    }
+                    break;
+                // TODO what about nested groups based on this sheet's object?
+                // We could rebase them, but there is no way to control if they should apply to nested sheets or not.
+                // Maybe we should ONLY allow foreign-object condition groups and not individual conditions? We could
+                // guarantee, that all children of a group share the same base object - that would probably reduce
+                // complexity and also make filtering conditions in QueryPartFilterGroup::createQueryPartFromConditionGroup()
+                // not necessary anymore. 
                 default:
                     continue 2;
             }

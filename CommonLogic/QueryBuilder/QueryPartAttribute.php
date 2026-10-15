@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\DataSheets\DataAggregation;
 use exface\Core\Interfaces\Model\AggregatorInterface;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 class QueryPartAttribute extends QueryPart
 {
@@ -21,8 +22,8 @@ class QueryPartAttribute extends QueryPart
     {
         parent::__construct($alias, $query, $parentQueryPart);
         
-        if (! $attr = $query->getMainObject()->getAttribute($alias)) {
-            throw new QueryBuilderException('Attribute "' . $alias . '" of object "' . $query->getMainObject()->getAlias() . '" not found!');
+        if (! $attr = $this->getMetaObject()->getAttribute($alias)) {
+            throw new QueryBuilderException('Attribute "' . $alias . '" of object "' . $this->getMetaObject()->getAlias() . '" not found!');
         } else {
             $this->setAttribute($attr);
         }
@@ -30,6 +31,16 @@ class QueryPartAttribute extends QueryPart
         if ($aggr = DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $alias)){
             $this->aggregator = $aggr;
         }
+    }
+
+    /**
+     * Returns the metaobject of the underlying attribute
+     * 
+     * @return MetaObjectInterface
+     */
+    public function getMetaObject() : MetaObjectInterface
+    {
+        return $this->getQuery()->getMainObject();
     }
 
     /**

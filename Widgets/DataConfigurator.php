@@ -656,6 +656,10 @@ class DataConfigurator extends WidgetConfigurator implements iHaveFilters
                 case in_array($filterAttrAlias, $attrs, true):
                 // Skip hidden filters in general
                 case $filter->isHidden() || $filter->getInputWidget() instanceof InputHidden:
+                // Also skip filters, that are based on other objects (e.g. for subsheets)
+                // It is hard to say, what the user would expect when setting them as they are not even always visible
+                // as columns.
+                case $filter->getMetaObject() !== $this->getMetaObject():
                     continue 2;
                 case $filterAttr->isRelation() && ! DataAggregation::hasAggregation($filterAttrAlias):
                     $filterRightObj = $filterAttr->getRelation()->getRightObject();
