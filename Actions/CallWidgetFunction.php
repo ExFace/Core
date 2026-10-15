@@ -16,8 +16,46 @@ use exface\Core\Widgets\Button;
 use exface\Core\Factories\WidgetLinkFactory;
 
 /**
- * Activates a function of a select widget (see available functions in widget docs).
- *  
+ * Activates a function of a widget. Specify the target widget via the `widget_id` property. 
+ * 
+ * You can browse available functions in the widget docs under `Administration > Documentation > Widgets > Your Widget` in the tab `Functions`.
+ * 
+ * ### Example: An Action Chain, resetting a table.
+ * 
+ * ```
+ * 
+ *  "actions":
+ *  [
+*      {
+ *          "alias":"exface.core.CallWidgetFunction",
+ *          "widget_id":"suggestedRoutes",
+ *          "function":"reset"
+ *      },
+ *      {
+ *          "alias":"my.App.SearchCarrierRouteEndpoint",
+ *          "input_mapper":
+ *          {
+ *              "from_object_alias":"my.App.CarrierRouteSearchCommand",
+ *              "to_object_alias":"my.App.CarrierRouteSearchCommand",
+ *              "inherit_empty_data":true,
+ *              "inherit_columns":"matching_attributes",
+ *              "column_to_column_mappings":
+ *              [
+ *                  {
+ *                      "from":"=IfNull(participant, 'null')",
+ *                      "to":"participant"
+ *                  }
+ *              ]
+ *          }
+ *      },
+ *      {
+ *          "alias":"exface.core.SendToWidget",
+ *          "target_widget_id":"resultWidget"
+ *      }
+ *  ]
+ * 
+ * ```
+ * 
  * @author andrej.kabachnik
  *
  */
