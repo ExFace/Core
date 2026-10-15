@@ -4,13 +4,14 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\CommonLogic\Utils\ColorTools;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Widgets\ColorPalette;
 
 /**
  * Datatype for color values.
  * 
  * A color value may be an HTML color name (e.g. `DeepSkyBlue`), a hexadecimal value (e.g. `#0a6ed1`
  * or `#abc`) or a CSS color function (e.g. `rgb(10, 110, 209)` or `rgba(10, 110, 209, 0.5)`).
+ * Use `color_presets` to configure the palette and `color_hints` to describe individual colors
+ * in its tooltips. Hint keys may be CSS values or semantic colors such as `~INFO`.
  *  
  * Apart from being a data type model, this class also provides static helpers to work with colors:
  * `parseToRgba()` to turn any of the above notations into numeric channels, `rgbToHsl()` to switch
@@ -173,6 +174,8 @@ class ColorDataType extends AbstractDataType
     
     private $colorPresets = [];
 
+    private array $colorHints = [];
+
     public function getColorPresets(): array
     {
         return $this->colorPresets;
@@ -192,6 +195,44 @@ class ColorDataType extends AbstractDataType
     {
         $this->colorPresets = $colorPresets->toArray();
         return $this;
+    }
+
+    /**
+     * Descriptions replacing the default palette tooltips for individual colors.
+     * Keys are the original color values, including semantic tokens such as `~INFO`.
+     * 
+     * @uxon-property color_hints
+     * @uxon-type object
+     * @uxon-template {"~INFO": "Information"}
+     * 
+     * @param UxonObject $uxon
+     * @return ColorDataType
+     */
+    protected function setColorHints(UxonObject $uxon): ColorDataType
+    {
+        $this->colorHints = $uxon->toArray();
+        return $this;
+    }
+
+    /**
+     * Returns descriptions indexed by their original color values.
+     *
+     * @return string[]
+     */
+    public function getColorHints(): array
+    {
+        return $this->colorHints;
+    }
+
+    /**
+     * Returns the configured description for a color, if present.
+     *
+     * @param string|null $value
+     * @return string|null
+     */
+    public function getHintOfValue(?string $value): ?string
+    {
+        return $this->colorHints[$value] ?? null;
     }
 
     /**
