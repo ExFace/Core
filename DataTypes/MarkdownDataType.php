@@ -1,8 +1,14 @@
 <?php
 namespace exface\Core\DataTypes;
 
-use cebe\markdown\GithubMarkdown;
 use exface\Core\Interfaces\DataTypes\HtmlCompatibleDataTypeInterface;
+use League\CommonMark\Environment\Environment;
+use League\CommonMark\Extension\Autolink\AutolinkExtension;
+use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\Strikethrough\StrikethroughExtension;
+use League\CommonMark\Extension\Table\TableExtension;
+use League\CommonMark\Extension\TaskList\TaskListExtension;
+use League\CommonMark\MarkdownConverter;
 
 /**
  * 
@@ -13,6 +19,13 @@ class MarkdownDataType
     extends TextDataType
     implements HtmlCompatibleDataTypeInterface
 {
+    /**
+     * Configured converters keyed by newline mode (1 = newlines enabled, 0 = disabled)
+     * 
+     * @var MarkdownConverter[]
+     */
+    private static array $converters = [];
+    
     private $enableNewlines = true;
 
     /**
@@ -183,15 +196,66 @@ class MarkdownDataType
 
 
     /**
+     * Converts Markdown to HTML - the single entry point for all Markdown rendering in the workbench.
+     * 
+     * Widgets, the DocsFacade, UXON schema docs, debug output and toHtml() all use this method, so
+     * the parser and its configuration only need to be maintained here. YAML front matter is turned
+     * into a quoted code block first to make sure it is displayed instead of being parsed as Markdown.
+     * 
+     * If `$enableNewlines` is `true`, every single newline produces a `<br />` (like the Markdown editor
+     * does). Otherwise strict CommonMark rules apply and only two trailing spaces or a backslash produce
+     * a hard line break.
+     * 
+     * NOTE: raw HTML in the Markdown is passed through without sanitizing - do not render untrusted
+     * Markdown with this method without additional sanitizing.
      *
      * @param string $markdown
+     * @param bool $enableNewlines
      * @return string
      */
     public static function convertMarkdownToHtml(string $markdown, bool $enableNewlines = true) : string
     {
-        $parser = new GithubMarkdown();
-        $parser->enableNewlines = $enableNewlines;
-        return $parser->parse(self::convertFrontMatterToMarkdown($markdown));
+        return self::getConverter($enableNewlines)
+            ->convert(self::convertFrontMatterToMarkdown($markdown))
+            ->getContent();
+    }
+    
+    /**
+     * Returns a configured Markdown converter for the given newline mode, building it only once.
+     * 
+     * Building a CommonMark environment (registering extensions, parsers and renderers) is far more
+     * expensive than converting a typical short value. Since toHtml() may be called for every row of
+     * a data sheet, the converter is cached in a static property - one per newline mode, because the
+     * soft break rendering is part of the environment configuration.
+     * 
+     * @param bool $enableNewlines
+     * @return MarkdownConverter
+     */
+    protected static function getConverter(bool $enableNewlines) : MarkdownConverter
+    {
+        $key = $enableNewlines ? 1 : 0;
+        if (null === $converter = (self::$converters[$key] ?? null)) {
+            $environment = new Environment([
+                // Docs and other model content contain raw HTML, that must keep working
+                'html_input' => 'allow',
+                // Intentionally allow links like `javascript:` or `data:` in Markdown link syntax to keep the
+                // behavior of the previous Markdown parser. This does not open up anything new: with
+                // `html_input = allow` raw HTML (including scripts and event handlers) is permitted anyway.
+                'allow_unsafe_links' => true,
+                'renderer' => [
+                    'soft_break' => $enableNewlines ? "<br />\n" : "\n"
+                ]
+            ]);
+            $environment->addExtension(new CommonMarkCoreExtension());
+            $environment->addExtension(new TableExtension());
+            $environment->addExtension(new StrikethroughExtension());
+            $environment->addExtension(new TaskListExtension());
+            // Turns bare URLs (http://, https://, ftp://, www.) and bare email addresses into links
+            $environment->addExtension(new AutolinkExtension());
+            $converter = new MarkdownConverter($environment);
+            self::$converters[$key] = $converter;
+        }
+        return $converter;
     }
 
     /**
@@ -306,15 +370,15 @@ MD;
     /**
      * Wraps given text in a Markdown inline code span.
      *
-     * WHY THIS EXISTS: escapeString() neutralizes Markdown SYNTAX, but it does not stop the
-     * autolinker of the GithubMarkdown parser, which turns anything starting with http://, https://
-     * or ftp:// into a link - and it cannot, because the URL scheme contains no escapable characters.
-     * Escaping would only add backslashes INSIDE the resulting link, leaving a link that is both
-     * still rendered and now genuinely broken. An inline code span is consumed by the parser before
-     * any inline marker inside it is looked at, so the text is rendered literally: no autolink, no
-     * formatting side effects, no escape characters - the value stays exactly as written and remains
-     * copy-pasteable. Use this for file paths, log file names, addresses and any other literal value
-     * that must be READ rather than followed.
+     * WHY THIS EXISTS: escapeString() neutralizes Markdown SYNTAX, but it does not stop the autolink
+     * extension of the CommonMark parser, which turns bare URLs (starting with http://, https://, ftp://
+     * or www.) and bare email addresses into links - and it cannot, because a URL scheme, `www.` or an
+     * email address contain no characters, that would prevent autolinking when escaped. Escaping would
+     * only add backslashes INSIDE the resulting link, leaving a link that is both still rendered and now
+     * genuinely broken. An inline code span is consumed by the parser before anything inside it is
+     * looked at, so the text is rendered literally: no autolink, no formatting side effects, no escape
+     * characters - the value stays exactly as written and remains copy-pasteable. Use this for file
+     * paths, log file names, addresses and any other literal value that must be READ rather than followed.
      *
      * WHY THE VARIABLE-LENGTH FENCE: a value may itself contain backticks. Markdown closes a code
      * span at the first backtick run of the SAME length, so a hard-coded single backtick would end

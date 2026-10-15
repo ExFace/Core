@@ -1,7 +1,6 @@
 <?php
 namespace exface\Core\Widgets;
 
-use cebe\markdown\GithubMarkdown;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Traits\iRenderMermaidTrait;
