@@ -3,6 +3,7 @@ namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\ColorDataType;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetPropertyUnknownError;
@@ -93,6 +94,9 @@ class WidgetPropertyScale implements WidgetPropertyScaleInterface
             // value is never shown on its own if a human-readable label is available
             $hints = $this->dataType->getValueHints();
             $this->valueScale = ! empty($hints) ? $hints : $this->dataType->getLabels();
+        }
+        if ($this->valueScale === null && $this->dataType instanceof ColorDataType) {
+            $this->valueScale = $this->dataType->getColorHints();
         }
         return $this->valueScale ?? [];
     }
