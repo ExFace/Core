@@ -209,9 +209,14 @@ removed before committing. See [performance profiling tools](instructions/perf-p
 Add or update PHPUnit tests for changed PHP behavior wherever this does not require
 mocking Workbench. Test pure logic directly or use a real Workbench for scenarios
 that do not need database access or a persisted metamodel. Keep application-level
-and UI workflows in Behat tests in `axenox/bdt` or the owning app. Follow the
-[testing instructions](instructions/testing.instructions.md) for test layout,
-dependencies, isolation and validation.
+and UI workflows in Behat tests in `axenox/bdt` or the owning app.
+
+**Mandatory testing gate:** every turn that adds, fixes, refactors or deletes PHP behavior
+must end with an explicit line `Testing decision: <added/updated tests ... | not added because ...>`.
+Lint or build success never substitutes for it.
+
+Follow the [testing instructions](instructions/testing.instructions.md) for the full rules,
+test layout, dependencies, isolation and validation.
 
 ### Coding guidelines
 
