@@ -6,15 +6,11 @@ applyTo: "**/*.php"
 
 # PHPUnit Testing
 
-We need to improve the quality and coverage of our PHP code. The idea is to provide both human 
-developers and AI-agents with a clear understanding of the expected behavior, and to ensure that 
-future changes do not break existing functionality. This should help focus our development efforts
-on established solution spaces, and avoid wasting time on debugging regressions.
-
-This document explains how to add or update PHPUnit tests when implementing or fixing behavior in Core or ExFace apps, 
-and how to decide between unit tests and application-level tests. Whenever you are tasked with implementing or fixing 
-PHP behavior, you must add or update focused PHPUnit tests to cover the behavior, provided your scenario matches 
-the conditions outlined below.
+Good PHPUnit coverage documents expected behavior for both human developers and AI-agents and
+guards against regressions. This document explains how to add or update tests when implementing or
+fixing behavior in Core or ExFace apps, and how to decide between unit and application-level tests.
+Whenever you implement or fix PHP behavior, add or update focused tests for it, provided the
+scenario matches the conditions below.
 
 ## Scope
 
@@ -51,27 +47,20 @@ When implementing or fixing PHP behavior, add or update focused PHPUnit tests
 where the behavior can be exercised without mocking Workbench. For bug fixes,
 include a regression scenario that fails before the fix and passes afterward.
 
-Why not mock Workbench? A mock encodes your assumptions about a collaborator and
-then verifies the code against those assumptions instead of against reality. Even a
-mock that builds successfully produces a test that is (1) tautological: scripting
-`Workbench`'s call chain means the test passes because the mock returns what you told
-it to, proving internal consistency with your script rather than a correct result;
-(2) brittle: it freezes the internal call structure, so a refactor that reaches the
-same correct result differently breaks the test on a non-bug, inverting our goal of
-avoiding false regressions; and (3) blind at the seam that matters: it bakes in your
-guess about how Workbench actually behaves, so if the guess is wrong the mock is wrong
-in the same direction as the code and the test stays green while production fails.
-Mocking a narrow boundary such as an HTTP transport or a subprocess is acceptable
-because that boundary has a small, stable, deliberately substituted contract.
-Workbench is a wide, evolving god-object; mocking it means scripting a large slice of
-assumed internal behavior, which is the source of all three problems.
+Why not mock Workbench? A mock encodes your assumptions about a collaborator, so the test then
+verifies the code against those assumptions, not against reality. Even a mock that builds cleanly
+yields a test that is (1) **tautological** — it passes because the mock returns what you scripted,
+proving internal consistency rather than correctness; (2) **brittle** — it freezes the internal
+call structure, so a behavior-preserving refactor breaks it on a non-bug; and (3) **blind at the
+seam that matters** — it bakes in your guess about how Workbench behaves, so a wrong guess makes
+mock and code wrong together while the test stays green. Mocking a narrow, stable boundary (an HTTP
+transport, a subprocess) is fine; Workbench is a wide, evolving god-object, and mocking it means
+scripting a large slice of assumed behavior — the source of all three problems.
 
-For a concrete, annotated illustration of exactly this mistake, see the deliberately
-skipped anti-pattern at
-`Tests/PHPUnit/Unit/Actions/SendToWidgetHandleAntiPatternTest.php`. It mocks
-`WorkbenchInterface` to "test" a final `handle()` method and flags inline where each of
-the three failures above (tautological, brittle, blind-at-the-seam) occurs. Do not
-imitate it; it exists only as a teaching example.
+For an annotated illustration, see the deliberately skipped anti-pattern at
+`Tests/PHPUnit/Unit/Actions/SendToWidgetHandleAntiPatternTest.php`, which mocks
+`WorkbenchInterface` to "test" a final `handle()` and flags each failure inline. It is a teaching
+example only — do not imitate it.
 
 - Test pure logic directly: parsing, normalization, calculations, validation,
   aggregation, identity generation and formatting are typical candidates.
@@ -110,14 +99,86 @@ This mechanical relocation does not change a test's intent and therefore does no
 require the approval described in Core Rule 3.
 
 Declare `phpunit/phpunit` in the owning app's `require-dev` using a constraint
-compatible with its supported PHP versions and the existing BDT dependency.
-PHPUnit may already be installed through BDT; do not reinstall or update unrelated
-dependencies. Composer does not install dependency packages' `require-dev` entries
-in a host project, so the host must provide PHPUnit separately.
+compatible with its supported PHP versions and the existing BDT dependency. This
+declaration documents the dependency only; see "Providing the PHPUnit binary" for how
+a runnable binary is actually supplied.
 
 Exclude test support from production classmap generation. Never load tests through
 production bootstrap code or leave custom standalone assertion scripts alongside
 their migrated PHPUnit replacements.
+
+## Ensure The App's Test Infrastructure
+
+Before writing a test for an app, confirm it can actually run PHPUnit. Core (`exface/core`) ships
+the reference setup — a dual-mode `Tests/PHPUnit/bootstrap.php`, a `phpunit.xml.dist` with
+`unit`/`integration` suites and a `Tests/PHPUnit/` tree — and apps inherit its conventions, so the
+per-app footprint is small. Follow these steps in order:
+
+1. **Verify completeness.** Check the owning app against the checklist below. If every
+   item is present, just add your test and run it.
+2. **If something is missing, check whether the checkout is current — do not update
+   blindly.** The infrastructure may already exist upstream and simply be absent locally.
+   But remember you are usually working inside an installation's `vendor/`, where "updating"
+   a package is a Composer/PackageManager operation that can touch other packages, not a safe
+   local `git pull`. Ask the user how updates are performed in this installation, and let them
+   (or their sanctioned process) perform it. Then re-check the checklist.
+3. **If the gap remains, fill it per this guide.** Add only the missing pieces, exactly as
+   described in "Setup guide" below. Do not invent alternative layouts, bootstraps or config.
+4. **Do not go beyond this setup without explicit user approval.** The shared harness
+   described conceptually elsewhere (a base `WorkbenchTestCase`, shared fixtures, a
+   `Support/` or `Testing/` namespace) **does not exist yet and is out of scope.** Do not
+   create base test cases, shared fixtures, CI pipelines, new packages or autoload changes
+   beyond the checklist. If a scenario seems to need them, stop and ask.
+
+### Per-app infrastructure checklist
+
+Verify each item in the owning app before writing tests:
+
+- [ ] `Tests/PHPUnit/` exists with `Unit/` and, if needed, `Integration/` subfolders.
+- [ ] `Tests/PHPUnit/bootstrap.php` is present and resolves autoload in both modes:
+      the app's own `vendor/autoload.php` (standalone) and the installation's
+      `vendor/autoload.php` (installed). For an app at `vendor/<vendor>/<app>` this is
+      Core's bootstrap verbatim; adjust the `dirname` depth only if the app sits elsewhere.
+- [ ] `phpunit.xml.dist` exists at the app root, referencing `Tests/PHPUnit/bootstrap.php`
+      and declaring the `unit` (and optional `integration`) suite under `Tests/PHPUnit/`.
+- [ ] Test classes use the app's own namespace prefix, e.g.
+      `<Vendor>\<App>\Tests\PHPUnit\Unit\...`, so the app's existing whole-namespace PSR-4
+      mapping resolves them. No `autoload-dev` entry is required.
+- [ ] The app's `composer.json` lists `/Tests/` under `autoload.exclude-from-classmap`.
+- [ ] The app's `composer.json` declares `phpunit/phpunit` in `require-dev` with a
+      constraint compatible with its supported PHP versions and the existing BDT dependency.
+- [ ] A runnable PHPUnit binary resolves from the host installation. PHPUnit is provided
+      once by the host (do not install a per-app copy). If no binary resolves, treat it as a
+      provisioning gap and follow "Providing the PHPUnit binary" below rather than looping
+      through the steps above.
+
+### Setup guide (only for genuinely missing items)
+
+Mirror Core's files; do not design new ones. For each missing item: copy Core's
+`Tests/PHPUnit/bootstrap.php` (verbatim for apps at `vendor/<vendor>/<app>`) and its
+`phpunit.xml.dist` to the app root; create `Tests/PHPUnit/Unit/` (and `Integration/` if needed),
+keeping Behat/Bruno in their own sibling folders; name test classes
+`<Vendor>\<App>\Tests\PHPUnit\...`; and in `composer.json` add `/Tests/` to
+`autoload.exclude-from-classmap` and `phpunit/phpunit` to `require-dev`. Do not reinstall or
+update unrelated dependencies.
+
+### Providing the PHPUnit binary
+
+A `require-dev` entry documents the dependency but does **not** install a runnable binary — the
+host installation must provide it, and here it may be absent: although `axenox/BDT` requires
+PHPUnit, this `vendor/` tree is assembled by ExFace's PackageManager rather than a plain Composer
+install, so `vendor/bin/phpunit` and `vendor/phpunit/` can be missing despite the declaration.
+
+A missing binary is therefore a **provisioning gap, not a test-code gap** — the steps above will
+not create it. When none resolves, do not work around it (no per-app copy, vendored PHAR or broad
+installs); stop and ask the user how PHPUnit is provisioned here, then use that mechanism and report
+what you resolved. Note the two modes mirror the dual-mode bootstrap: run **standalone**, the app's
+own `require-dev` PHPUnit is the binary; run **inside an installation**, the host supplies it. So
+"provided by the host" is about the installed mode and does not forbid an app carrying its own copy
+when genuinely run on its own.
+
+Run the narrowest suite from the app root to confirm (`--testsuite unit` first), then report
+the command and result per "Validate And Report".
 
 ## Keep Scenarios Independent
 
@@ -144,8 +205,6 @@ Report the command, test result and any unverified integration requirements. Do 
 claim tests passed unless they were executed. Update documented test commands when
 changing the test layout or runner.
 
-**Important:** Developers may be surprised when you write unit tests. 
-Since the tests show up as added/changed files in the pull request, the developer might reject or question them.
-To avoid confusion notify your user in the chat that you are adding these tests in accordance with your instructions.
-Similarly, if they want you to skip writing tests inform them about these instructions, and that you need explicit approval 
-to skip writing tests.
+**Important:** Developers may be surprised to see added/changed test files in a pull request, so
+notify your user in chat that you are adding tests in accordance with these instructions. Likewise,
+if they ask you to skip tests, tell them these instructions require explicit approval to do so.
