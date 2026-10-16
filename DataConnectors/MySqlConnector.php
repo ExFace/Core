@@ -24,6 +24,9 @@ use exface\Core\QueryBuilders\MySqlBuilder;
 /**
  * Data source connector for MySQL databases
  * 
+ * For server-managed credentials, see [Secrets in environment variables](../Docs/Security/Secure_data_sources/Secrets_in_env_vars.md)
+ * with `~env:` and `~system:` configuration examples for Apache, nginx and IIS.
+ * 
  * ## Configuration
  * 
  * ```
