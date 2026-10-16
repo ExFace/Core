@@ -160,6 +160,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     private $className = null;
     
     private $uninstallCascading = true;
+
+    private $ignoreErrors = false;
     
     /**
      * 
@@ -455,17 +457,21 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     }
 
     /**
+     * Removes app data, stopping on cleanup errors unless setIgnoreErrors(true) was called.
      *
-     * @return string
+     * Each sheet uses its own transaction so a failed deletion cannot roll back earlier cleanup.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
     public function uninstall() : \Iterator
     {
         $idt = $this->getOutputIndentation();
-        $transaction = $this->getWorkbench()->data()->startTransaction();
         
         yield $idt . 'Uninstalling ' . $this->getName() . ':' . PHP_EOL;
         
         $counter = 0;
+        $errors = 0;
         
         // Uninstall the main model now
         // Make sure to load all objects before starting to delete, so that their model
@@ -497,23 +503,44 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         // Delete all model sheets in reverse order
         $dataSheets = array_reverse($dataSheets);
         foreach ($dataSheets as $sheet) {
-            if ($sheet->hasUIdColumn()) {
-                // Read data to fill the UID column. Some data source do not support deletes via
-                // filter (or filter over relations), so it is safer to fetch the UIDs here.
-                $sheet->dataRead();
-                if ($sheet->hasUidColumn(true)) {
+            $transaction = null;
+            try {
+                if ($sheet->hasUidColumn()) {
+                    // Read data to fill the UID column. Some data source do not support deletes via
+                    // filter (or filter over relations), so it is safer to fetch the UIDs here.
+                    $sheet->dataRead();
+                    if (! $sheet->hasUidColumn(true)) {
+                        continue;
+                    }
                     $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
                 }
-            } else {
-                $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
+                $transaction = $this->getWorkbench()->data()->startTransaction();
+                $deleted = $sheet->dataDelete($transaction, $this->willUninstallCascading());
+                $transaction->commit();
+                $counter += $deleted;
+            } catch (Throwable $e) {
+                if ($this->ignoreErrors === false) {
+                    throw $e;
+                }
+                $errors++;
+                $error = new InstallerRuntimeError($this, 'Cannot uninstall data for "' . $sheet->getMetaObject()->getAliasWithNamespace() . '": ' . $e->getMessage(), null, $e);
+                $this->getWorkbench()->getLogger()->logException($error);
+                if ($transaction !== null && $transaction->isOpen()) {
+                    try {
+                        $transaction->rollback();
+                    } catch (Throwable $rollbackError) {
+                        $this->getWorkbench()->getLogger()->logException($rollbackError);
+                        yield $idt . $idt . 'ERROR rolling back failed cleanup: ' . $rollbackError->getMessage() . PHP_EOL;
+                    }
+                }
+                yield $idt . $idt . 'ERROR: ' . $error->getMessage() . PHP_EOL;
             }
         }
         unset($objects);
         
-        $transaction->commit();
-        
-        if ($counter === 0) {
+        if ($errors > 0) {
+            yield $idt.$idt . 'Uninstalling ' . $this->getName() . ' finished with ' . $errors . ' error(s); some data may remain.' . PHP_EOL;
+        } elseif ($counter === 0) {
             yield $idt.$idt . 'Nothing to do.' . PHP_EOL;
         } else {
             yield $idt.$idt . 'Removed ' . $this->getName() . ' successfully!' . PHP_EOL; 
@@ -1451,6 +1478,21 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         return $array;
     }
     
+    /**
+     * Continue uninstalling remaining data sheets after cleanup errors when TRUE.
+     *
+     * Defaults to FALSE, so cleanup errors stop the installer. Ignored errors are still
+     * logged and printed in the uninstall output. This does not affect installation.
+     *
+     * @param bool $trueOrFalse
+     * @return DataInstaller
+     */
+    public function setIgnoreErrors(bool $trueOrFalse) : DataInstaller
+    {
+        $this->ignoreErrors = $trueOrFalse;
+        return $this;
+    }
+
     public function setUninstallCascading(bool $trueOrFalse) : DataInstaller
     {
         $this->uninstallCascading = $trueOrFalse;

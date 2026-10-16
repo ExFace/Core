@@ -2,6 +2,8 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetDimensionFactory;
 use exface\Core\Widgets\Parts\DataTimeline;
 use exface\Core\Widgets\Parts\DataCalendarItem;
 use exface\Core\Widgets\Parts\ConditionalProperty;
@@ -14,6 +16,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * The `orientation` determines whether the table is shown to the left of the chart or above it.
  * It contains all the classic properties of a TreeTable, as well as the additional Gantt features.
+ * The `table_split_size` and `gantt_split_size` set the width (horizontal) or height (vertical)
+ * of each pane using percentages or pixels. Without split sizes, the panes initially share the space equally.
+ * One pane can be set to `max` to expand after rendering when the other pane's content needs less space, but it will act so by default if no split sizes are set.
  * 
  * The Gantt also supports nested data and can display multiple bars per rows.
  * You can read more about how to pass normal or nested data to the Gantt in the DataCalendarItem (task) documentation.
@@ -29,6 +34,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *      "widget_type": "Gantt",
  *      "object_alias": "...",
  *      "orientation": "horizontal",
+ *      "table_split_size": "30%",
+ *      "gantt_split_size": "max",
  *      "freeze_columns": 2,
  *      "hide_header": false,
  *      "paginate": false,
@@ -44,9 +51,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *  }
  * 
  * ```
- *
+ * 
  * @author Andrej Kabachnik & Sergej Riel
- *
+ * 
  */
 class Gantt extends DataTree
 {
@@ -62,7 +69,11 @@ class Gantt extends DataTree
     private $orientation = self::ORIENTATION_HORIZONTAL;
 
     private $hideSplitBar = false;
-    
+
+    private $tableSplitSize = null;
+
+    private $ganttSplitSize = null;
+
     private $childrenMoveWithParentIf = null;
     
     private $childrenMoveWithParent = null;
@@ -134,7 +145,13 @@ class Gantt extends DataTree
     {
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('timeline', $this->getTimelineConfig()->exportUxonObject());
-        $uxon->setProperty('tasks', $this->getTaskConfig()->exportUxonObject());
+        $uxon->setProperty('tasks', $this->getTasksConfig()->exportUxonObject());
+        if (! $this->getTableSplitSize()->isUndefined()) {
+            $uxon->setProperty('table_split_size', $this->getTableSplitSize()->getValue());
+        }
+        if (! $this->getGanttSplitSize()->isUndefined()) {
+            $uxon->setProperty('gantt_split_size', $this->getGanttSplitSize()->getValue());
+        }
         return $uxon;
     }
     
@@ -223,6 +240,109 @@ class Gantt extends DataTree
 
         $this->orientation = $value;
         return $this;
+    }
+
+    /**
+     * Returns the configured table pane dimension, or an undefined dimension if not set.
+     *
+     * @return WidgetDimension
+     */
+    public function getTableSplitSize() : WidgetDimension
+    {
+        if ($this->tableSplitSize === null) {
+            $this->tableSplitSize = WidgetDimensionFactory::createEmpty($this->getWorkbench());
+        }
+        return $this->tableSplitSize;
+    }
+
+    /**
+     * Initial size of the table pane, for example `30%`, `300px`, or `max`.
+     *
+     * This is the width in horizontal layouts and the height in vertical layouts.
+     * Setting only this size leaves the remaining space to the diagram. With neither
+     * split size set, the initial split is 1:1.
+     * Set `gantt_split_size` to `max` to let the diagram expand after rendering when
+     * the table content needs less than this initial size. Setting this pane to `max`
+     * lets the table expand when the diagram needs less than its initial size,
+     * which is the default behavior if no split size is set.
+     * Both sizes may only be specified together if at least one is `max`.
+     * Explicit split sizes take precedence over automatic vertical pane sizing from `height_in_rows`.
+     * The split bar can still be resized manually.
+     *
+     * @uxon-property table_split_size
+     * @uxon-type string
+     *
+     * @param string|WidgetDimension|null $value
+     * @return Gantt
+     */
+    public function setTableSplitSize($value) : Gantt
+    {
+        $dimension = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $value);
+        $this->validateSplitSize($dimension, 'table_split_size');
+        $this->validateSplitSizes($dimension, $this->getGanttSplitSize());
+        $this->tableSplitSize = $dimension;
+        return $this;
+    }
+
+    /**
+     * Returns the configured diagram pane dimension, or an undefined dimension if not set.
+     *
+     * @return WidgetDimension
+     */
+    public function getGanttSplitSize() : WidgetDimension
+    {
+        if ($this->ganttSplitSize === null) {
+            $this->ganttSplitSize = WidgetDimensionFactory::createEmpty($this->getWorkbench());
+        }
+        return $this->ganttSplitSize;
+    }
+
+    /**
+     * Initial size of the Gantt diagram pane, for example `70%`, `600px`, or `max`.
+     *
+     * This is the width in horizontal layouts and the height in vertical layouts.
+     * Setting only this size leaves the remaining space to the table. With neither
+     * split size set, the initial split is 1:1.
+     * Set this pane to `max` to let it expand after rendering when the table needs less
+     * than its initial size, which is the default behavior if no split size is set.
+     * For example, `table_split_size: "30%"` together with `gantt_split_size: "max"`
+     * starts at 30:70, then shrinks the table to its content if possible.
+     * Both sizes may only be specified together if at least one is `max`.
+     * Explicit split sizes take precedence over automatic vertical pane sizing from `height_in_rows`.
+     * The split bar can still be resized manually.
+     *
+     * @uxon-property gantt_split_size
+     * @uxon-type string
+     *
+     * @param string|WidgetDimension|null $value
+     * @return Gantt
+     */
+    public function setGanttSplitSize($value) : Gantt
+    {
+        $dimension = WidgetDimensionFactory::createFromAnything($this->getWorkbench(), $value);
+        $this->validateSplitSize($dimension, 'gantt_split_size');
+        $this->validateSplitSizes($this->getTableSplitSize(), $dimension);
+        $this->ganttSplitSize = $dimension;
+        return $this;
+    }
+
+    private function validateSplitSize(WidgetDimension $dimension, string $property) : void
+    {
+        if ($dimension->isUndefined() || $dimension->isMax()) {
+            return;
+        }
+        if (! preg_match('/^(\d+(?:\.\d+)?)(%|px)$/D', $dimension->getValue(), $parts)
+            || ! is_finite((float) $parts[1])
+            || ($parts[2] === '%' && (float) $parts[1] > 100)) {
+            throw new WidgetConfigurationError($this, 'Invalid Gantt ' . $property . ': expected a non-negative size in % or px, or "max"!');
+        }
+    }
+
+    private function validateSplitSizes(WidgetDimension $table, WidgetDimension $gantt) : void
+    {
+        if (! $table->isUndefined() && ! $gantt->isUndefined() && ! $table->isMax() && ! $gantt->isMax()) {
+            throw new WidgetConfigurationError($this, 'Cannot set both table_split_size and gantt_split_size unless at least one pane is set to "max"!');
+        }
     }
 
     /**
