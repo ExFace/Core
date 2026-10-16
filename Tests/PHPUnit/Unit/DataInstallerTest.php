@@ -3,6 +3,9 @@ namespace exface\Core\Tests\PHPUnit\Unit;
 
 use exface\Core\CommonLogic\AppInstallers\DataInstaller;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Installers\InstallerRuntimeError;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
@@ -12,6 +15,59 @@ use ReflectionMethod;
  */
 class DataInstallerTest extends TestCase
 {
+    /**
+     * Cleanup errors must propagate by default without attempting the remaining sheets.
+     *
+     * @return void
+     */
+    public function testUninstallStopsOnErrorsByDefault(): void
+    {
+        $this->assertUninstallStopsOnReadError();
+    }
+
+    /**
+     * Disabling error ignoring must restore exception propagation after it was enabled.
+     *
+     * @return void
+     */
+    public function testIgnoreErrorsCanBeDisabledAgain(): void
+    {
+        $this->assertUninstallStopsOnReadError(false);
+    }
+
+    /**
+     * Exercises read-error propagation without a Workbench or persisted metamodel.
+     *
+     * @param bool|null $ignoreErrors NULL leaves the default configuration unchanged.
+     * @return void
+     */
+    private function assertUninstallStopsOnReadError(?bool $ignoreErrors = null): void
+    {
+        $object = $this->createMock(MetaObjectInterface::class);
+        $object->method('is')->willReturn(false);
+        $remaining = $this->createMock(DataSheetInterface::class);
+        $remaining->method('getMetaObject')->willReturn($object);
+        $remaining->expects($this->never())->method('hasUidColumn');
+        $failing = $this->createMock(DataSheetInterface::class);
+        $failing->method('getMetaObject')->willReturn($object);
+        $failing->method('hasUidColumn')->willReturn(true);
+
+        $installer = $this->getMockBuilder(DataInstaller::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getModelSheets'])
+            ->getMock();
+        $installer->method('getModelSheets')->willReturn([$remaining, $failing]);
+        if ($ignoreErrors !== null) {
+            $this->assertSame($installer, $installer->setIgnoreErrors(true));
+            $this->assertSame($installer, $installer->setIgnoreErrors($ignoreErrors));
+        }
+        $error = new InstallerRuntimeError($installer, 'Missing SQL table');
+        $failing->expects($this->once())->method('dataRead')->willThrowException($error);
+
+        $this->expectExceptionObject($error);
+        iterator_to_array($installer->uninstall());
+    }
+
     /**
      * Unnamed columns in older files must retain their position alongside explicitly named columns.
      * 
