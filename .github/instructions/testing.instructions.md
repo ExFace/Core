@@ -6,6 +6,19 @@ applyTo: "**/*.php"
 
 # PHPUnit Testing
 
+> **STOP — mandatory testing gate.** Before ending any turn in which you added, fixed, refactored
+> or deleted PHP behavior (a behavior-preserving refactor counts), you **MUST** output one explicit
+> line:
+>
+> `Testing decision: <added/updated tests ... | not added because ...>`
+>
+> A turn that changed a `.php` file but ends without this line is **incomplete** — do not conclude
+> it. "The change is low-risk / obvious / a pure refactor" is **not** a valid reason to skip the
+> decision; it is only ever a reason to justify *not adding* a test on that explicit line. Lint or
+> build success never substitutes for this decision. When in doubt, default to writing the test
+> (Rule 1 allows this without approval).
+
+
 Good PHPUnit coverage documents expected behavior for both human developers and AI-agents and
 guards against regressions. This document explains how to add or update tests when implementing or
 fixing behavior in Core or ExFace apps, and how to decide between unit and application-level tests.
@@ -39,6 +52,12 @@ Widget, an Action or any other production class.
 5. **Analyze, do not advocate.** When reporting failing tests or requesting approval, give the user
    the information they need to make an informed decision. Do not try to convince them to accept
    your changes.
+6. **Every PHP behavior change triggers an explicit testing decision, stated in chat.** Adding,
+   fixing, refactoring or deleting PHP behavior all count — a behavior-preserving refactor is not
+   exempt. Either add focused coverage (Rule 1, no approval needed) or state why not (e.g. the
+   changed path needs a persisted metamodel/DB or the full application lifecycle, so it belongs in
+   application-level/Behat tests per "Cover Changes Without Mocking Workbench"). Never conclude a PHP
+   change with only lint/build validation and no testing statement.
 
 
 ## Cover Changes Without Mocking Workbench
