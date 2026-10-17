@@ -33,6 +33,7 @@ use exface\Core\Interfaces\Security\SecurityManagerInterface;
 use exface\Core\CommonLogic\Security\SecurityManager;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 use exface\Core\CommonLogic\Model\App;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\CommonLogic\Communication\Communicator;
@@ -105,7 +106,8 @@ class Workbench implements WorkbenchInterface
         // to the one from composer.
         if ($cfg->getOption('DEBUG.LIVE_CLASS_AUTOLOADER')){
             require_once 'splClassLoader.php';
-            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path]);
+            $enableCaseRecovery = ServerSoftwareDataType::isFileSystemCaseSensitive($this->vendor_dir_path);
+            $classLoader = new \SplClassLoader(null, [$this->vendor_dir_path], $enableCaseRecovery);
             $classLoader->register();
         }
         
