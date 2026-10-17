@@ -20,6 +20,7 @@ use exface\Core\Actions\Traits\iCallOtherActionsTrait;
 use exface\Core\Interfaces\Tasks\ResultDataInterface;
 use exface\Core\Interfaces\Actions\iShowDialog;
 use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
+use exface\Core\DataTypes\BooleanDataType;
 
 /**
  * This action chains other actions and performs them one after another.
@@ -60,6 +61,37 @@ use exface\Core\CommonLogic\Debugger\LogBooks\DataLogBook;
  * By default, all actions in the chain will be performed in a single transaction. That is, all actions 
  * will get rolled back if at least one failes. Set the property `use_single_transaction` to false 
  * to make every action in the chain run in it's own transaction.
+ * 
+ * ## Catching errors
+ * 
+ * By default, if any action in the chain throws an error, the entire chain is aborted (and rolled back
+ * if running in a single transaction). Set `catch_errors` to `true` on an individual action entry to
+ * catch errors thrown by that action: the action is skipped and the chain continues with the following
+ * actions. This is useful e.g. when calling a web service that may legitimately return an error (like a
+ * `404` when no matching data is found) and you want the chain to carry on regardless.
+ * 
+ * **NOTE on transactions:** catching errors requires `use_single_transaction` to be `false`, so that the
+ * own transaction of a caught action can be rolled back and its partial changes discarded cleanly. The
+ * chain will refuse to run if `catch_errors` is used while `use_single_transaction` is `true` (the default),
+ * because the shared transaction cannot be rolled back for a single action without losing the work of the
+ * others.
+ * 
+ * ```
+ *  {
+ *      "alias": "exface.Core.ActionChain",
+ *      "actions": [
+ *          {
+ *              "alias": "my.App.CallSomeWebService",
+ *              "catch_errors": true
+ *          },
+ *          {
+ *              "alias": "exface.Core.SendToWidget",
+ *              "target_widget_id": "result_widget"
+ *          }
+ *      ]
+ *  }
+ * 
+ * ```
  * 
  * ## Nested chains
  *
@@ -195,6 +227,8 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     
     private $skip_action_if_input_invalid = false;
     
+    private $catchErrorsPerActionIdx = [];
+    
     private $result_message_delimiter = "\n";
 
     /**
@@ -206,6 +240,13 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     {
         if (empty($this->getActions())) {
             throw new ActionConfigurationError($this, 'An action chain must contain at least one action!', '6U5TRGK');
+        }
+        
+        // Catching errors mid-chain cannot roll back a single shared transaction without discarding
+        // the work of the other actions, so partial changes of the caught action would be committed.
+        // Forbid the unsafe combination - use `use_single_transaction: false` to catch errors.
+        if ($this->getUseSingleTransaction() === true && ! empty($this->catchErrorsPerActionIdx)) {
+            throw new ActionConfigurationError($this, 'Cannot use "catch_errors" on actions of a chain running in a single transaction: set "use_single_transaction" to false to catch errors!', '6U5TRGK');
         }
         
         $inputSheet = $this->getInputDataSheet($task);
@@ -306,13 +347,25 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                         throw $e;
                     }
                 } catch (\Throwable $e) {
-                    if ($idx === 0) {
-                        $diagram .= PHP_EOL . "$diagramShapeId --> {$lbId}ERR(Error)";
-                        $diagram .= PHP_EOL . "style {$lbId}ERR {$logbook->getFlowDiagramStyleError()}";
+                    if ($this->isActionCatchingErrors($idx)) {
+                        // Discard the failed action's partial changes by rolling back its own
+                        // transaction. Catching is only allowed with use_single_transaction=false,
+                        // so $tx is always this action's isolated transaction here.
+                        if ($tx->isOpen()) {
+                            $tx->rollback();
+                        }
+                        $skip = true;
+                        $diagram .= PHP_EOL . "style {$diagramShapeId} {$logbook->getFlowDiagramStyleError()}";
+                        $logbook->addLine("Caught error, continuing chain: " . $e->getMessage());
+                    } else {
+                        if ($idx === 0) {
+                            $diagram .= PHP_EOL . "$diagramShapeId --> {$lbId}ERR(Error)";
+                            $diagram .= PHP_EOL . "style {$lbId}ERR {$logbook->getFlowDiagramStyleError()}";
+                        }
+                        $diagram .= PHP_EOL . "style {$diagramShapeId} {$logbook->getFlowDiagramStyleError()}";
+                        $logbook->setFlowDiagram($diagram);
+                        throw $e;
                     }
-                    $diagram .= PHP_EOL . "style {$diagramShapeId} {$logbook->getFlowDiagramStyleError()}";
-                    $logbook->setFlowDiagram($diagram);
-                    throw $e;
                 }
                 if (!$skip) {
                     $results[$idx] = $lastResult;
@@ -393,6 +446,18 @@ class ActionChain extends AbstractAction implements iCallOtherActions
     }
     
     /**
+     * Returns TRUE if errors thrown by the action at the given index should be caught,
+     * allowing the chain to skip that action and continue - see `catch_errors`.
+     * 
+     * @param int $idx
+     * @return bool
+     */
+    protected function isActionCatchingErrors(int $idx) : bool
+    {
+        return $this->catchErrorsPerActionIdx[$idx] ?? false;
+    }
+    
+    /**
      * Attempts to find the action to start the chain from - for a given task.
      * 
      * - If the task references the entire chain, the first action in the chain is returned
@@ -462,7 +527,14 @@ class ActionChain extends AbstractAction implements iCallOtherActions
             $this->actions = $uxon_array_or_action_list;
         } elseif ($uxon_array_or_action_list instanceof UxonObject) {
             foreach ($uxon_array_or_action_list as $nr => $uxon) {
+                $catchErrors = false;
                 if ($uxon instanceof UxonObject) {
+                    // Extract the per-action `catch_errors` flag before instantiating the action -
+                    // it is a property of the chain link, not of the action itself.
+                    if ($uxon->hasProperty('catch_errors')) {
+                        $catchErrors = BooleanDataType::cast($uxon->getProperty('catch_errors'));
+                        $uxon->unsetProperty('catch_errors');
+                    }
                     // Make child-actions inherit the trigger widget
                     $triggerWidget = $this->isDefinedInWidget() ? $this->getWidgetDefinedIn() : null;
                     // If there is not trigger widget, make them inherit the meta object by
@@ -479,6 +551,9 @@ class ActionChain extends AbstractAction implements iCallOtherActions
                     throw new ActionConfigurationError($this, 'Invalid chain link of type "' . gettype($uxon) . '" in action chain on position ' . $nr . ': only actions or corresponding UXON objects can be used as!', '6U5TRGK');
                 }
                 $this->addAction($action);
+                if ($catchErrors === true) {
+                    $this->catchErrorsPerActionIdx[count($this->actions) - 1] = true;
+                }
             }
         } else {
             throw new WidgetPropertyInvalidValueError('Cannot set actions for ' . $this->getAliasWithNamespace() . ': invalid format ' . gettype($uxon_array_or_action_list) . ' given instead of and instantiated condition or its UXON description.');
