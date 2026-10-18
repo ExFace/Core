@@ -26,6 +26,9 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
 /**
  * Microsoft SQL Server connector via the official sqlsrv PHP extension.
  * 
+ * For server-managed credentials, see [Secrets in environment variables](../Docs/Security/Secure_data_sources/Secrets_in_env_vars.md)
+ * with `~env:` and `~system:` configuration examples for Apache, nginx and IIS.
+ * 
  * Apart from the typical SQL connection config syntax you can also explicitly set the `connection_options` 
  * as described here: https://docs.microsoft.com/en-us/sql/connect/php/connection-options.
  * 
@@ -104,6 +107,15 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
  * }
  * 
  * ```
+ * 
+ * The `~env:` prefix reads variables using PHP's `getenv()`. If the values are exposed in
+ * PHP's `$_SERVER` array instead, use `~system:` with the same variable names. How to read
+ * environment variables best largely depends
+ * 
+ * For example, Apache `SetEnv` can populate these server variables, depending on the PHP
+ * server integration. A variable may be available through both sources or only one. Names 
+ * are case-sensitive and missing variables raise an error. Apache `SetEnv` does not configure
+ * CLI processes, so provide their variables separately.
  * 
  * ### Azure AD authentication
  * 
