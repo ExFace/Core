@@ -60,9 +60,9 @@ use exface\Core\DataTypes\NumberDataType;
  *      ```
  * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
- * 4. It is recommended to add eCharts as a composer dependency to make it appear in the list of
- * installed packages and licenses. Add `"npm-asset/echarts" : "^5"` to the `require` section of
- * the facade's `composer.json`.
+ * 4. Core ships custom ECharts builds and records the bundled ECharts 5 version in its includes.json
+ * for package and license tracking. Facades using these builds do not need an ECharts Composer
+ * dependency, which would install an unused copy and constrain its transitive dependencies.
  *
  * To use the EChartsTrait in a facade add in the function where the HTML for the site is created
  * the following function `addChartButtons()` to add the buttons to change the chart type to your
