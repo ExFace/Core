@@ -19,7 +19,10 @@
         "issues": "https://github.com/exface/core/issues"
     },
     "require": {
-        "php": "^8",
+        "php": "^8.2",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-sodium": "*",
         "symfony/filesystem": "^5.4||^6",
         "symfony/event-dispatcher": "^5||^6",
         "symfony/translation": "^5||^6",
