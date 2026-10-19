@@ -4,7 +4,7 @@ Object data addresses can be a table or view name or any custom SQL usable withi
 
 Attribute addresses can be column names or any custom SQL usable in the SELECT clause. 
 
-Custom SQL must be enclosed in parentheses `(``)` to ensure it is correctly
+Custom SQL must be enclosed in parentheses `(` `)` to ensure it is correctly
 distinguished from table/column names. Custom SQLs may include placeholders as described
 below.
 
