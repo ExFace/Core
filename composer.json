@@ -60,7 +60,7 @@
         "gajus/dindent": "^2.0",
         "robthree/twofactorauth": "^1.8",
         "npm-asset/eruda": "^2",
-        "npm-asset/github-markdown-css": "^5.5",
+        "npm-asset/github-markdown-css": "^5.9",
         "justinrainbow/json-schema": "^5.2",
         "composer/semver": "^3",
         "softcreatr/jsonpath": "~0.7",
