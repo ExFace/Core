@@ -15,6 +15,8 @@ use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Interfaces\Widgets\iCanWrapText;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Widgets\iCanEditData;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 
 /**
  * An Excel-like table with editable cells.
@@ -68,6 +70,116 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
     
     private ?bool $allowFilteringLoadedData = null;
     private ?bool $allowSortingLoadedData = null;
+
+    /**
+     * Configures the scalar selector used to edit a child collection in a cell.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::configureColumn()
+     */
+    public function configureColumn(DataColumn $column) : void
+    {
+        parent::configureColumn($column);
+        if (! $column->isSubsheetColumn()) {
+            return;
+        }
+        // A child collection is not a scalar attribute for parent-level filtering or sorting.
+        $column->setFilterable(false);
+        $column->setSortable(false);
+        $defaultName = \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($column->getAttributeAlias());
+        // Use a virtual cell name unless the column already has a custom binding name.
+        if ($column->getDataColumnName() === $defaultName) {
+            $column->setDataColumnName('__subsheet_' . \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName(
+                $column->getSubsheetRelationAlias() . '__' . $column->getAttributeAlias()
+            ));
+        }
+    }
+
+    /**
+     * Applies collection-level defaults to child selector editors.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::createColumnCellWidget()
+     */
+    public function createColumnCellWidget(DataColumn $column, UxonObject $uxon, ?string $fallbackWidgetType = null) : WidgetInterface
+    {
+        if (! $column->isSubsheetColumn()) {
+            return parent::createColumnCellWidget($column, $uxon, $fallbackWidgetType);
+        }
+        $uxon = $uxon->copy();
+        // A required foreign key within a child row does not make the collection required.
+        if (! $uxon->hasProperty('required')) {
+            $uxon->setProperty('required', false);
+        }
+        // The editor binds to the child; its relation attribute supplies the suggestion object.
+        if ($uxon->hasProperty('object_alias')
+            && $uxon->getProperty('object_alias') !== $column->getMetaObject()->getAliasWithNamespace()) {
+            throw new WidgetConfigurationError($column, 'A spreadsheet subsheet cell_widget must inherit the child object. Remove cell_widget.object_alias; the relation attribute determines the dropdown suggestion object.');
+        }
+        $cell = parent::createColumnCellWidget($column, $uxon, $fallbackWidgetType);
+        if ($cell instanceof InputSelect && ! $uxon->hasProperty('multi_select')) {
+            $cell->setMultiSelect(true);
+        }
+        return $cell;
+    }
+
+    /**
+     * Validates the supported scope of spreadsheet child-collection selectors.
+     * 
+     * @return void
+     * @throws WidgetConfigurationError
+     */
+    public function validateSubsheetColumns() : void
+    {
+        $relations = [];
+        foreach ($this->getColumns() as $column) {
+            if (! $column->isSubsheetColumn()) {
+                continue;
+            }
+            $relation = $column->getSubsheetRelationAlias();
+            $path = $column->getObjectRelationPathToParent();
+            // The selector currently replaces children through one direct parent relation.
+            if (count($path->getRelations()) !== 1 || ! $path->getRelationFirst()->isForwardRelation()) {
+                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a direct forward object_relation_path_to_parent from the child object to the spreadsheet object.');
+            }
+            // Stable parent and child identities are needed to retain existing linking records.
+            if (! $this->getMetaObject()->hasUidAttribute()
+                || $path->getRelationFirst()->getRightKeyAttribute()->getAlias() !== $this->getMetaObject()->getUidAttribute()->getAlias()) {
+                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a relation to the parent UID attribute.');
+            }
+            if (! $column->getMetaObject()->hasUidAttribute()) {
+                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a child UID attribute.');
+            }
+            // Multiple selectors could otherwise replace the same collection independently.
+            if (isset($relations[$relation]) || ! ($column->getCellWidget() instanceof InputSelect)
+                || ! $column->isBoundToAttribute() || ! $column->getAttribute()->isRelation()
+                || $column->isCalculated() || $column->hasFooter()) {
+                throw new WidgetConfigurationError($column, 'Subsheet editing supports one relation selector column per child relation, without calculations or footers.');
+            }
+            $relations[$relation] = true;
+        }
+    }
+
+    /**
+     * Keeps parent identity available for retaining child UIDs after sorting or reordering.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Widgets\Data::prepareDataSheetToRead()
+     */
+    public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
+    {
+        $this->validateSubsheetColumns();
+        $data_sheet = parent::prepareDataSheetToRead($data_sheet);
+        if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
+            foreach ($this->getColumns() as $column) {
+                if ($column->isSubsheetColumn()) {
+                    $data_sheet->getColumns()->addFromUidAttribute();
+                    break;
+                }
+            }
+        }
+        return $data_sheet;
+    }
     
     /**
      * 
