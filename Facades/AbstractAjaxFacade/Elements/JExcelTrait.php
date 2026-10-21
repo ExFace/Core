@@ -599,7 +599,31 @@ JS;
             // UPDATE: the originally proposed invisible <i> element showed up as table data in some cases, for example when filtering content
             // new approach: we now listen to onclick events for the dropdown cells in general, and if they are within the 35px area from the right edge we open the editor
             // we use a pseudo :after element to visually highlight the area, but unfortunalety pseudo elements are not truly within the dom, so we cant use onclick directly
+            // Track whether the gesture started in an open dropdown.
+            // Native arrow/Done closes on mouseup and removes its DOM before click;
+            // the browser can then retarget that click to the surviving cell.
+            jqSelf.off('pointerdown.exfDropdownOpener', '.jexcel_dropdown')
+                .on('pointerdown.exfDropdownOpener', '.jexcel_dropdown', function() {
+                    this._exfDropdownGestureStartedOpen = this.classList.contains('editor');
+                });
             jqSelf.off('click', '.jexcel_dropdown').on('click', '.jexcel_dropdown', function(e) {
+                var bStartedOpen = this._exfDropdownGestureStartedOpen === true;
+                delete this._exfDropdownGestureStartedOpen;
+                // Option/input clicks bubble through the cell too. Reopening replaces
+                // the live editor with the saved value and loses pending selections.
+                // Check the target as well: single-select can close before click fires.
+                if ($(e.target).closest('.jdropdown').length) {
+                    return;
+                }
+                if (this.classList.contains('editor')) {
+                    if (e.target === this && e.offsetX >= this.offsetWidth - 35) {
+                        instance.jexcel.closeEditor(this, true);
+                    }
+                    return;
+                }
+                if (bStartedOpen) {
+                    return;
+                }
                 // only open editor if were in the area around the dropdown button (35px from right side)
                 if (e.offsetX >= this.offsetWidth - 35) {
                     var iColIdx = $(this).data("x");
@@ -1253,6 +1277,16 @@ JS;
             });
         },
         getInitValue: function(iCol, iRow) {
+            var oCol = this.getColumnModel(iCol);
+            if (oCol.subsheet) {
+                var oBinding = oCol.subsheet;
+                var mUid = this.getJExcel().getValueFromCoords(this.getColumnIndex(oBinding.parentUid), iRow);
+                var oOriginal = (this.getDataLastLoaded() || []).find(function(oRow) {
+                    return mUid !== undefined && mUid !== null && mUid !== ''
+                        && String(oRow[oBinding.parentUid]) === String(mUid);
+                });
+                return this.getSubsheetCellValue(oOriginal || {}, oBinding);
+            }
             return (this.getDataLastLoaded()[iRow] || {})[this.getColumnName(iCol)];
         },
         restoreInitValue: function(iCol, iRow) {
@@ -1262,7 +1296,7 @@ JS;
 
             // if a dropdown cell with a filter is being restored, check if the intital value is still valid in the current context
             // otherwise set empty
-            if (oJExcel.getColumnOptions(iCol).type == 'autocomplete' 
+            if (!this.getColumnModel(iCol).subsheet && oJExcel.getColumnOptions(iCol).type == 'autocomplete'
                 && typeof(oJExcel.getColumnOptions(iCol).filter) == 'function'
                 && !this.isDropdownValueValid(iCol, iRow, mInitVal))
             {
@@ -1465,7 +1499,7 @@ JS;
             // if a dropdown source has filters, check if the set value is in the filtered source (jexcel by default just consideres the unfiltered source array)
             // if not, set to empty
             for (i = 0; i < oJExcel.getConfig().columns.length; i++) {
-                if (oJExcel.getColumnOptions(i).type == 'autocomplete' && typeof(oJExcel.getColumnOptions(i).filter) == 'function' ) {
+                if (!this.getColumnModel(i).subsheet && oJExcel.getColumnOptions(i).type == 'autocomplete' && typeof(oJExcel.getColumnOptions(i).filter) == 'function' ) {
                     for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
                         
                         // Clear the cell if value is not in filtered source array
@@ -1506,6 +1540,120 @@ JS;
 
             return true;
         },
+        getSubsheet: function(oRow, oBinding) {
+            // Accept both the sanitized data-column name and the relation alias in row payloads.
+            var oSheet = Object.prototype.hasOwnProperty.call(oRow, oBinding.column)
+                ? oRow[oBinding.column] : oRow[oBinding.relation];
+            if (typeof oSheet === 'string' && oSheet !== '') {
+                oSheet = JSON.parse(oSheet);
+            }
+            if (oSheet && !Array.isArray(oSheet.rows)) {
+                throw new Error('Invalid subsheet for ' + oBinding.relation);
+            }
+            return oSheet || null;
+        },
+        getSubsheetSelectedValues: function(mValue, oBinding) {
+            var aValues = mValue === undefined || mValue === null || mValue === '' ? []
+                : (Array.isArray(mValue) ? mValue : String(mValue).split(oBinding.delimiter));
+            // Ignore empty dropdown entries, but retain zero-valued relation keys.
+            return aValues.filter(function(mSelected) {
+                return mSelected !== undefined && mSelected !== null && String(mSelected).trim() !== '';
+            });
+        },
+        initSubsheetEditors: function() {
+            var oWidget = this;
+            var oJExcel = this.getJExcel();
+            if (oJExcel._exfSubsheetEditorsInitialized) return;
+            oJExcel._exfSubsheetEditorsInitialized = true;
+            var fnGetLabel = oJExcel.getDropDownValue;
+            oJExcel.getDropDownValue = function(iCol, mValue) {
+                var oBinding = oWidget.getColumnModel(iCol).subsheet;
+                if (!oBinding) return fnGetLabel.apply(this, arguments);
+                return oWidget.getSubsheetSelectedValues(mValue, oBinding).map(function(mKey) {
+                    return fnGetLabel.call(oJExcel, iCol, [mKey]);
+                }).join(oBinding.delimiter);
+            };
+            var fnOpenEditor = oJExcel.openEditor;
+            oJExcel.openEditor = function(domCell) {
+                var iCol = parseInt(domCell.getAttribute('data-x'));
+                var iRow = parseInt(domCell.getAttribute('data-y'));
+                var oBinding = oWidget.getColumnModel(iCol).subsheet;
+                if (!oBinding) return fnOpenEditor.apply(this, arguments);
+                // Native Jspreadsheet/jsuites use semicolons. Pass keys as an array
+                // when opening, and join its selected-key array when committing.
+                var mOriginal = oJExcel.options.data[iRow][iCol];
+                var mResult;
+                oJExcel.options.data[iRow][iCol] = oWidget.getSubsheetSelectedValues(mOriginal, oBinding);
+                try {
+                    mResult = fnOpenEditor.apply(this, arguments);
+                } finally {
+                    // Only the native editor needs an array; keep the stored cell value scalar.
+                    oJExcel.options.data[iRow][iCol] = mOriginal;
+                }
+                var oDropdown = domCell.children[0] && domCell.children[0].dropdown;
+                if (oDropdown) {
+                    var fnGetText = oDropdown.getText;
+                    oDropdown.getText = function(bAsArray) {
+                        var aLabels = fnGetText.call(this, true);
+                        return bAsArray ? aLabels : aLabels.join(oBinding.delimiter);
+                    };
+                    var fnClose = oDropdown.close;
+                    oDropdown.close = function() {
+                        fnClose.apply(this, arguments);
+                        return oWidget.getSubsheetSelectedValues(this.getValue(true), oBinding).join(oBinding.delimiter);
+                    };
+                }
+                return mResult;
+            };
+        },
+        getSubsheetCellValue: function(oRow, oBinding) {
+            var oSheet = this.getSubsheet(oRow, oBinding);
+            var aValues = (oSheet ? oSheet.rows : []).map(function(oChild) {
+                return oChild[oBinding.attribute];
+            }).filter(function(mValue) {
+                return mValue !== undefined && mValue !== null && mValue !== '';
+            });
+            if (!oBinding.multiple && aValues.length > 1) {
+                throw new Error('Multiple child records require multi_select for ' + oBinding.relation);
+            }
+            if (aValues.some(function(mValue) { return String(mValue).indexOf(oBinding.delimiter) !== -1; })) {
+                throw new Error('Subsheet selector values must not contain their attribute list delimiter.');
+            }
+            return aValues.join(oBinding.delimiter);
+        },
+        buildSubsheet: function(mValue, oBinding, oParent) {
+            var mUid = oParent[oBinding.parentUid];
+            // Visual row indexes change when sorting or inserting rows; parent UIDs do not.
+            var oOriginal = (this.getDataLastLoaded() || []).find(function(oRow) {
+                return mUid !== undefined && mUid !== null && mUid !== ''
+                    && String(oRow[oBinding.parentUid]) === String(mUid);
+            });
+            var oSheet = oOriginal ? this.getSubsheet(oOriginal, oBinding) : null;
+            if (mUid !== undefined && mUid !== null && mUid !== '' && !oSheet) {
+                throw new Error('Cannot replace an unloaded subsheet: ' + oBinding.relation);
+            }
+            var aSelected = this.getSubsheetSelectedValues(mValue, oBinding);
+            if (!oBinding.multiple && aSelected.length > 1) {
+                throw new Error('Multiple child records require multi_select for ' + oBinding.relation);
+            }
+            var aChildren = oSheet ? oSheet.rows : [];
+            var aRows = [];
+            Array.from(new Set(aSelected.map(String))).forEach(function(sValue) {
+                // Keep every matching child, including its UID and system values.
+                var aMatches = aChildren.filter(function(oChild) {
+                    return String(oChild[oBinding.attribute]) === sValue;
+                });
+                if (aMatches.length) {
+                    aMatches.forEach(function(oChild) { aRows.push(Object.assign({}, oChild)); });
+                } else {
+                    var oChild = {};
+                    oChild[oBinding.attribute] = sValue;
+                    aRows.push(oChild);
+                }
+            });
+            // Never carry read filters/pagination into the authoritative replacement.
+            return {object_alias: oBinding.object, rows: aRows};
+        },
         convertArrayToData: function(aDataArray, bChangedOnly) {
             var aData = [];
             var iDataCnt = aDataArray.length;
@@ -1541,6 +1689,13 @@ JS;
                 });
 
                 if (bEmptyRow === false || bAllowEmptyRows === true) {
+                    aRow.forEach(function(val, iColIdx) {
+                        var oCol = oWidget.getColumnModel(iColIdx);
+                        if (oCol.subsheet) {
+                            oRow[oCol.subsheet.relation] = oWidget.buildSubsheet(val, oCol.subsheet, oRow);
+                            delete oRow[oCol.dataColumnName];
+                        }
+                    });
                     if (oWidget._rowNumberColName !== null) {
                         oRow[oWidget._rowNumberColName] = (i+1);
                     }
@@ -1558,6 +1713,13 @@ JS;
             var aColHeaders = domEl.jspreadsheet.getHeaders().split(',');
             var oColIdxCache = {};
             aDataRows.forEach(function(oRow, i){
+                oRow = Object.assign({}, oRow);
+                Object.keys(oWidget._cols).forEach(function(sName) {
+                    var oCol = oWidget._cols[sName];
+                    if (oCol.subsheet) {
+                        oRow[oCol.dataColumnName] = oWidget.getSubsheetCellValue(oRow, oCol.subsheet);
+                    }
+                });
                 var oRowIndexed = {};
                 var aRow = [];
                 var sHeaderName, iColIdx, iLastIdx;
@@ -1766,6 +1928,7 @@ JS;
 
     };
 
+    {$this->buildJsJqueryElement()}[0].exfWidget.initSubsheetEditors();
     {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalColumnVisibility();
     
     {$this->buildJsInitPlugins()}
@@ -1782,9 +1945,24 @@ JS;
     protected function buildJsJExcelColumnModels(?DataColumn $rowNumberCol = null) : string
     {
         $widget = $this->getWidget();
+        $widget->validateSubsheetColumns();
+        $columnsJson = '';
         /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $colIdx => $col) {
             $cellWidget = $col->getCellWidget();
+            $subsheetJs = 'null';
+            if ($col->isSubsheetColumn()) {
+                $relation = $col->getSubsheetRelationAlias();
+                $subsheetJs = json_encode([
+                    'relation' => $relation,
+                    'column' => \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($relation),
+                    'attribute' => \exface\Core\CommonLogic\DataSheets\DataColumn::sanitizeColumnName($col->getAttributeAlias()),
+                    'object' => $col->getMetaObject()->getAliasWithNamespace(),
+                    'parentUid' => $widget->getUidColumn()->getDataColumnName(),
+                    'delimiter' => $col->getAttribute()->getValueListDelimiter(),
+                    'multiple' => $cellWidget->getMultiSelect()
+                ]);
+            }
             // If the values were formatted according to their data types in buildJsConvertDataToArray()
             // parse them back here
             if ($this->needsDataFormatting($col)) {
@@ -1817,6 +1995,10 @@ JS;
             }
             if (! $validatorJs) {
                 $validatorJs = 'function(value){return true}';
+            }
+            if ($col->isSubsheetColumn()) {
+                $delimiterJs = json_encode($col->getAttribute()->getValueListDelimiter());
+                $validatorJs = "(function(fn, delimiter){return function(value){var values = value === null || value === undefined || value === '' ? [] : (Array.isArray(value) ? value : String(value).split(delimiter)); for (var i = 0; i < values.length; i++) {if (values[i] === null || values[i] === undefined || String(values[i]).trim() === '') continue; var result = fn(values[i]); if (result !== true) return result;} return true;};})({$validatorJs}, {$delimiterJs})";
             }
 
             $hiddenFlagJs = $col->isHidden() ? 'true' : 'false';
@@ -1936,6 +2118,7 @@ JS;
             $columnsJson .= <<<JS
                 "{$col->getDataColumnName()}": {
                     dataColumnName: "{$col->getDataColumnName()}",
+                    subsheet: {$subsheetJs},
                     caption: {$this->escapeString($col->getCaption(), true, false)},
                     tooltip: {$this->escapeString($col->getHint() ?? '', true, false)},
                     parser: {$parserJs},
@@ -2361,6 +2544,9 @@ JS;
             case $cellWidget instanceof InputSelect:
                 $type = 'autocomplete';
                 $align = EXF_ALIGN_LEFT;
+                if ($col->isSubsheetColumn()) {
+                    $options .= 'multiple: ' . $this->escapeBool($cellWidget->getMultiSelect()) . ',';
+                }
                 $options .= $this->buildJsJExcelColumnDropdownOptions($cellWidget, $col);
                 break;
             default:
@@ -2716,7 +2902,16 @@ JS;
         $dataObj = $this->getMetaObjectForDataGetter($action);
         
         // Determine the columns we need in the actions data
-        $colNamesList = implode(',', $widget->getActionDataColumnNames());
+        $colNames = $widget->getActionDataColumnNames();
+        foreach ($widget->getColumns() as $col) {
+            if ($col->isSubsheetColumn()) {
+                $colNames = array_diff($colNames, [$col->getDataColumnName()]);
+                if (! $col->isReadonly()) {
+                    $colNames[] = $col->getSubsheetRelationAlias();
+                }
+            }
+        }
+        $colNamesJson = json_encode(array_values(array_unique($colNames)));
         
         if ($action !== null && $action->isDefinedInWidget() && $action->getWidgetDefinedIn() instanceof DataButton) {
             $customMode = $action->getWidgetDefinedIn()->getInputRows();
@@ -2860,7 +3055,13 @@ JS;
             aRows = jqEl[0].exfWidget.{$dataGetterFn}();
             
             // Remove any keys, that are not in the columns of the widget
-            aRows = aRows.map(({ $colNamesList }) => ({ $colNamesList }));
+            aRows = aRows.map(function(oRow) {
+                var oResult = {};
+                {$colNamesJson}.forEach(function(sName) {
+                    if (Object.prototype.hasOwnProperty.call(oRow, sName)) oResult[sName] = oRow[sName];
+                });
+                return oResult;
+            });
 
             {$this->buildJsFixedFootersSpread()}; 
 

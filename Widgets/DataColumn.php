@@ -146,6 +146,53 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     
     private ?UxonObject $nestedDataSheetUxon = null;
 
+    /**
+     * Returns TRUE if this column binds to a different object than its data widget.
+     * 
+     * @return bool
+     */
+    public function isSubsheetColumn() : bool
+    {
+        return ! $this->getMetaObject()->isExactly($this->getDataWidget()->getMetaObject());
+    }
+
+    /**
+     * Returns the relation from the data widget's row object to this column's object.
+     * 
+     * @return string
+     * @throws WidgetConfigurationError
+     */
+    public function getSubsheetRelationAlias() : string
+    {
+        $path = $this->getObjectRelationPathToParent();
+        if ($path === null || count($path->getRelations()) === 0
+            || ! $path->getEndObject()->isExactly($this->getDataWidget()->getMetaObject())) {
+            throw new WidgetConfigurationError($this, 'A subsheet column requires an object_relation_path_to_parent from its object to the data widget object.');
+        }
+        // UXON defines the child-to-parent path; nested data needs the opposite direction.
+        return $path->reverse()->toString();
+    }
+
+    /**
+     * Returns the nested data template required by this child column.
+     * 
+     * @return UxonObject
+     */
+    public function getSubsheetDataTemplate() : UxonObject
+    {
+        $sheet = \exface\Core\Factories\DataSheetFactory::createFromObject($this->getMetaObject());
+        // Retain record identity and system values alongside the displayed child attribute.
+        if ($this->getMetaObject()->hasUidAttribute()) {
+            $sheet->getColumns()->addFromUidAttribute();
+        }
+        foreach ($this->getMetaObject()->getAttributes()->getSystem() as $attribute) {
+            $sheet->getColumns()->addFromAttribute($attribute);
+        }
+        $sheet->getColumns()->addFromExpression($this->getAttributeAlias());
+        $sheet->getColumns()->addFromExpression($this->getObjectRelationPathToParent()->toString());
+        return $sheet->exportUxonObject();
+    }
+
     public function getAttributeAlias()
     {
         return $this->attribute_alias;
@@ -398,7 +445,11 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
                 }
             }
             
-            $cellWidget = WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
+            $dataWidget = $this->getDataWidget();
+            // Let the owner supply editor defaults without coupling columns to a widget type.
+            $cellWidget = $dataWidget instanceof Data
+                ? $dataWidget->createColumnCellWidget($this, UxonObject::fromAnything($uxon), $fallbackWidgetType)
+                : WidgetFactory::createFromUxon($this->getPage(), UxonObject::fromAnything($uxon), $this, $fallbackWidgetType);
             $this->cellWidget = $cellWidget;
 
             if (null !== $this->dataTypeUxon) {
@@ -505,8 +556,9 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     public function getDependentColumns(string $alias) : array
     {
         $cols = [];
+        // Parent and child attributes must not be treated as dependencies of each other.
         foreach ($this->getDataWidget()->getColumns() as $col) {
-            if ($col === $this) {
+            if ($col === $this || ! $col->getMetaObject()->isExactly($this->getMetaObject())) {
                 continue;
             }
             if ($col->isBoundToAttribute() === true) {
