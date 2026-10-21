@@ -14,6 +14,7 @@ use exface\Core\Factories\TaskFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\CommonLogic\Utils\WidgetIdEncoder;
 
 /**
  * Returns TRUE if the current user is authorized to call the action of the given button and FALSE otherwise
@@ -50,6 +51,8 @@ class IsButtonAuthorized extends Formula
         if ($pageAlias === '' || $widgetId === '') {
             throw new FormulaError($this, "Missing page alias or widget id for formula =IsButtonAuthorized()");
         }
+        // Button::getHiddenIf() passes encoded widget ids - plain ids are still supported
+        $widgetId = WidgetIdEncoder::decode($widgetId);
 
         $actionAP = $this->getWorkbench()->getSecurity()->getAuthorizationPoint(ActionAuthorizationPoint::class);
         if ($actionAP->isDisabled() === true) {

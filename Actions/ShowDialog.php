@@ -333,7 +333,10 @@ class ShowDialog extends ShowWidget implements iShowDialog
     /**
      * By default, the content of a dialog get's a separate id_space to avoid conflicting
      * ids on a page with multiple dialogs. If this behavior is not intended, just set
-     * an id_space in the root of the widget-UXON explicitly.
+     * an id_space in the root of the widget-UXON explicitly - preferably a named one
+     * (e.g. `"id_space": "editor"`). An empty id space (`""`) only works for dialogs
+     * opened directly from the page: if the dialog is opened from another dialog, widget
+     * links will not find the ids inside it.
      * 
      * @see \exface\Core\Actions\ShowWidget::getWidgetUxon()
      */
