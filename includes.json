@@ -1,5 +1,15 @@
 [
     {
+        "name": "npm-asset/echarts",
+        "version": "4.9.0",
+        "license": ["Apache-2.0"],
+        "license_link": [
+            "https://github.com/apache/echarts/blob/4.9.0/LICENSE"
+        ],
+        "description": "Custom build of Apache ECharts for interactive charts",
+        "homepage": "https://echarts.apache.org/"
+    },
+    {
         "name": "mk-j/php_xlsxwriter",
         "version": "0.37",
         "license": [
