@@ -78,6 +78,37 @@ class Gantt extends DataTree
     
     private $childrenMoveWithParent = null;
 
+    private bool $row_zoom = false;
+
+    private bool $hidePopup = false;
+
+    /**
+     * Set to TRUE to disable popups for task bars.
+     * It is used to prevent recursion if a Gantt is placed inside another Gantt popup.
+     * 
+     * @uxon-property hide_popup
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return Gantt
+     */
+    public function setHidePopup(bool $value) : Gantt
+    {
+        $this->hidePopup = $value;
+        return $this;
+    }
+
+    /**
+     * Returns whether task popups are disabled.
+     *
+     * @return bool
+     */
+    public function getHidePopup() : bool
+    {
+        return $this->hidePopup;
+    }
+
     /**
      * @inheritDoc
      * @see AbstractWidget::importUxonObject()
@@ -135,6 +166,35 @@ class Gantt extends DataTree
         $this->timelinePart = new DataTimeline($this, $uxon);
         return $this;
     }
+
+    /**
+     * @experimental: Set to TRUE to let users zoom the height of timeline rows. It also expands aggregated task-bars in Gantt (@experimental: Not tested. DO NOT USE  IT IN PROD!).
+     * If used in Gantt: Adds zoom buttons "+" and "-" to change the height of the table and the Gantt rows.
+     *  - each press also increases / decreases the number of task lines in each Gantt row.
+     *
+     * @uxon-property row_zoom
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return Gantt
+     */
+    public function setRowZoom(bool $value) : Gantt
+    {
+        $this->row_zoom = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if users can zoom timeline rows.
+     * @experimental
+     *
+     * @return bool
+     */
+    public function getRowZoom() : bool
+    {
+        return $this->row_zoom;
+    }
     
     /**
      *
@@ -146,6 +206,7 @@ class Gantt extends DataTree
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('timeline', $this->getTimelineConfig()->exportUxonObject());
         $uxon->setProperty('tasks', $this->getTasksConfig()->exportUxonObject());
+        $uxon->setProperty('hide_popup', $this->getHidePopup());
         if (! $this->getTableSplitSize()->isUndefined()) {
             $uxon->setProperty('table_split_size', $this->getTableSplitSize()->getValue());
         }

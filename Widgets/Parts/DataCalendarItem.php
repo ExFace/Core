@@ -479,6 +479,8 @@ JS;
 
     /**
      * The color of each appointment can be set to an attribute alias, a `=Formula()` or a CSS color value.
+     * Automatically added color columns are hidden. Define the color attribute in the widget's
+     * `columns` to display it as a table column; explicitly configured visibility is preserved.
      * 
      * @uxon-property color
      * @uxon-type metamodel:expression|color 
@@ -490,7 +492,9 @@ JS;
         $this->colorColumn = null;
         $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
         if ($this->hasColorColumn()) {
-            $this->addDataColumn($color);
+            if ($this->getColumnByExpression($color) === null) {
+                $this->addDataColumn($color)->setHidden(true);
+            }
         }
         
         return $this;
@@ -831,7 +835,7 @@ JS;
     }
 
     /**
-     * Popup widget to open when a calendar item is clicked
+     * Define the popup to show for a calendar item, using the popup's show_on to choose its opening interaction.
      * 
      * @uxon-property popup
      * @uxon-type \exface\Core\Widgets\Popup
