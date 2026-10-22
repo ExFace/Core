@@ -12,6 +12,7 @@ use exface\Core\Widgets\Traits\PopupTrait;
 use exface\Core\Interfaces\Widgets\iAmClosable;
 use exface\Core\Interfaces\Widgets\iHaveFooter;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Dialogs are pop-up forms (i.e. windows), that can be moved and/or maximized.
@@ -34,6 +35,9 @@ use exface\Core\DataTypes\BooleanDataType;
  */
 class Popup extends Form implements UiScreenInterface, iAmClosable, iHaveFooter
 {
+    public const SHOW_ON_CLICK = 'click';
+    public const SHOW_ON_HOVER = 'hover';
+
     use PopupTrait {
         createCloseButton as createCloseButtonViaTrait;
     }
@@ -42,6 +46,47 @@ class Popup extends Form implements UiScreenInterface, iAmClosable, iHaveFooter
      * @var bool|null
      */
     private $hide_footer = false;
+
+    private string $showOn = self::SHOW_ON_CLICK;
+
+    /**
+     * Returns the interaction that opens the popup, defaulting to click.
+     *
+     * @return string
+     */
+    public function getShowOn() : string
+    {
+        return $this->showOn;
+    }
+
+    /**
+     * Choose whether to show the popup on click or hover.
+     * With `click`, click the triggering element to open the popup and click outside to close it.
+     * With `hover`, move the pointer over the triggering element to open the popup. It remains
+     * usable while the pointer is over that element or the popup and closes after leaving both.
+     * 
+     * INFO: 'click' is the default interaction. The 'hover' however is currently not supported everywhere.
+     * The triggering widget and facade must support the selected interaction.
+     * 
+     * @uxon-property show_on
+     * @uxon-type [click,hover]
+     * @uxon-default click
+     *
+     * @param string $value
+     * @return Popup
+     */
+    public function setShowOn(string $value) : Popup
+    {
+        $value = mb_strtolower($value);
+        switch ($value) {
+            case self::SHOW_ON_CLICK:
+            case self::SHOW_ON_HOVER:
+                $this->showOn = $value;
+                return $this;
+        }
+
+        throw new WidgetConfigurationError($this, 'Invalid popup show_on value "' . $value . '": please use click or hover!');
+    }
 
     /**
      * Returns whether the entire popup footer is hidden.
