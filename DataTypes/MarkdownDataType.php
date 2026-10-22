@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\CommonLogic\Markdown\GithubAlertExtension;
 use exface\Core\Interfaces\DataTypes\HtmlCompatibleDataTypeInterface;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\Autolink\AutolinkExtension;
@@ -202,6 +203,9 @@ class MarkdownDataType
      * the parser and its configuration only need to be maintained here. YAML front matter is turned
      * into a quoted code block first to make sure it is displayed instead of being parsed as Markdown.
      * 
+     * Besides CommonMark, GitHub extensions are supported: tables, strikethrough, task lists, autolinks
+     * and alert boxes (`> [!NOTE]`, `> [!WARNING]`, etc. - see GithubAlertExtension).
+     * 
      * If `$enableNewlines` is `true`, every single newline produces a `<br />` (like the Markdown editor
      * does). Otherwise strict CommonMark rules apply and only two trailing spaces or a backslash produce
      * a hard line break.
@@ -252,6 +256,8 @@ class MarkdownDataType
             $environment->addExtension(new TaskListExtension());
             // Turns bare URLs (http://, https://, ftp://, www.) and bare email addresses into links
             $environment->addExtension(new AutolinkExtension());
+            // Renders GitHub-style alerts like `> [!WARNING]` as alert boxes instead of plain blockquotes
+            $environment->addExtension(new GithubAlertExtension());
             $converter = new MarkdownConverter($environment);
             self::$converters[$key] = $converter;
         }
