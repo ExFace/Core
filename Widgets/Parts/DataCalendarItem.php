@@ -3,14 +3,22 @@ namespace exface\Core\Widgets\Parts;
 
 use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\AutoloadStrategyDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Factories\RelationPathFactory;
+use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Model\MetaRelationPathInterface;
+use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
+use exface\Core\Interfaces\Widgets\iHaveConfiguratorSetups;
+use exface\Core\Interfaces\Widgets\iShowData;
+use exface\Core\Interfaces\Widgets\iSupportLazyLoading;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Widgets\DataColumnGroup;
+use exface\Core\Widgets\Popup;
 use exface\Core\Widgets\Traits\DataWidgetPartTrait;
 use exface\Core\Interfaces\Widgets\iHaveColor;
 use exface\Core\Interfaces\Widgets\iHaveColorScale;
@@ -76,6 +84,9 @@ class DataCalendarItem implements WidgetPartInterface, iHaveColor, iHaveColorSca
     private string $hideIfMissingDate = self::CFG_HIDE_IF_MISSING_BOTH;
     
     private ?UxonObject $nestedDataTemplate = null;
+    
+    private ?UxonObject $popupUxon = null;
+    private ?WidgetInterface $popup = null;
 
     /**
      * @see ImportUxonObjectTrait::importUxonObject()
@@ -468,6 +479,8 @@ JS;
 
     /**
      * The color of each appointment can be set to an attribute alias, a `=Formula()` or a CSS color value.
+     * Automatically added color columns are hidden. Define the color attribute in the widget's
+     * `columns` to display it as a table column; explicitly configured visibility is preserved.
      * 
      * @uxon-property color
      * @uxon-type metamodel:expression|color 
@@ -479,7 +492,9 @@ JS;
         $this->colorColumn = null;
         $this->colorExpr = ExpressionFactory::createFromString($this->getWorkbench(), $color, $this->getMetaObject());
         if ($this->hasColorColumn()) {
-            $this->addDataColumn($color);
+            if ($this->getColumnByExpression($color) === null) {
+                $this->addDataColumn($color)->setHidden(true);
+            }
         }
         
         return $this;
@@ -817,5 +832,84 @@ JS;
     {
         $this->nestedDataTemplate = $nestedDataTemplate;
         return $this;
+    }
+
+    /**
+     * Define the popup to show for a calendar item, using the popup's show_on to choose its opening interaction.
+     * 
+     * @uxon-property popup
+     * @uxon-type \exface\Core\Widgets\Popup
+     * @uxon-template {"widget_type": "Popup","height": "auto","hide_footer": "true","widgets": [{"widget_type": "DataTableResponsive","hide_header": true,"hide_caption": true,"object_alias": "","columns": [{"attribute_alias": ""}]}]}    
+     * 
+     * @param UxonObject $uxon
+     * @return $this
+     */
+    protected function setPopup(UxonObject $uxon) : DataCalendarItem
+    {
+        $this->popupUxon = $uxon;
+        $this->popup = WidgetFactory::createFromUxonInParent($this->getDataWidget(), $uxon, 'Popup');
+        $dataWidget = $this->popup->getWidgetFirst();
+        if ($dataWidget instanceof iHaveColumns) {
+            foreach ($dataWidget->getColumns() as $col) {
+                $this->addDataColumn($col->getExpression()->__toString());
+            }
+        }
+        if ($dataWidget instanceof iSupportLazyLoading) {
+            $dataWidget->setLazyLoading(false);
+        }
+        if ($dataWidget instanceof iHaveConfiguratorSetups) {
+            $dataWidget->setConfiguratorSetupsEnabled(false);
+        }
+        $dataWidget->setAutoloadData(AutoloadStrategyDataType::NEVER);
+        return $this;
+    }
+    
+    public function getPopupDataWidget() : iShowData
+    {
+        $popup = $this->getPopup();
+        return $popup->getWidgetFirst();
+    }
+    /**
+     * Returns the configured popup instance, initializing and normalizing it once if needed.
+     *
+     * The data widget is populated from calendar items, so automatic loading and
+     * configurator setups are disabled for both custom and default popups.
+     *
+     * @return Popup
+     */
+    public function getPopup() : Popup
+    {
+        if ($this->popup !== null) {
+            return $this->popup;
+        }
+
+        $uxon = $this->popupUxon;
+        // Default popup has a DataTable
+        if ($uxon === null) {
+            $uxon = new UxonObject([
+                'widget_type' => 'Popup',
+                'height' => 'auto',
+                "hide_footer" => 'true',
+                'widgets' => [
+                    [
+                        'widget_type' => 'DataTableResponsive',
+                        'lazy_loading' => false,
+                        'autoload_data' => AutoloadStrategyDataType::NEVER,
+                        'hide_header' => true,
+                        'hide_caption' => true,
+                        'configurator_setups_enabled' => false,
+                        'object_alias' => $this->objectAlias ?? $this->getDataWidget()->getMetaObject()->getAliasWithNamespace(),
+                        'columns' => [
+                            ['attribute_alias' => $this->getTitleColumn()->getAttributeAlias()],
+                            ['attribute_alias' => $this->getStartTimeColumn()->getAttributeAlias()],
+                            ['attribute_alias' => $this->getEndTimeColumn()->getAttributeAlias()],
+                        ]
+                    ]
+                ]
+            ]);
+        }
+        
+        $this->setPopup($uxon);
+        return $this->popup;
     }
 }

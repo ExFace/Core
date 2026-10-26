@@ -256,7 +256,7 @@ class UiPageTreeNode implements UiPageTreeNodeInterface, iHaveIcon
      */
     public function addChildNode(UiPageTreeNodeInterface $node, int $position = null) : UiPageTreeNodeInterface
     {
-        if ($node->getParentNode() !== $this){
+        if ($node->getParentNode()->getUid() !== $this->getUid()){
             throw new InvalidArgumentException("The parent node of the given node '{$node->getName()}' is not the node '{$this->getName()}' !");
         }
         

@@ -19,8 +19,11 @@
         "issues": "https://github.com/exface/core/issues"
     },
     "require": {
-        "php": "^8",
-        "symfony/filesystem": "^5||^6",
+        "php": "^8.2",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-sodium": "*",
+        "symfony/filesystem": "^5.4||^6",
         "symfony/event-dispatcher": "^5||^6",
         "symfony/translation": "^5||^6",
         "symfony/config": "^5||^6",
@@ -34,7 +37,6 @@
         "symfony/ldap": "^5||^6",
         "symfony/expression-language": "^5.3||^6",
         "symfony/mailer": "^5||^6||^7",
-        "webmozart/path-util": "^2.3",
         "monolog/monolog": "^1.22.1",
         "femtopixel/monolog-csvhandler": "~0.1",
         "psr/http-message": "^1.0.1",
@@ -46,22 +48,25 @@
         "guzzlehttp/psr7": "^1.4.2||^2",
         "wingu/reflection": "^1.0.6",
         "league/csv": "^9.6",
-        "cebe/markdown": "^1.1.2",
+        "league/commonmark": "^2.10.2",
         "kabachello/fileroute": "~0.2",
         "guzzlehttp/guzzle": "^6.2.2||^7",
         "phpoffice/phpspreadsheet": "^1.17",
         "npm-asset/workbox-sw": "^5.1.3",
-        "npm-asset/dexie": "^2.0.4",
+        "npm-asset/dexie": "^4.4.6",
         "ramsey/uuid": "^3.0||^4.0",
         "dragonmantank/cron-expression": "^3.1",
         "intervention/image": "^3.11.10",
-        "gajus/dindent": "^2.0",
         "robthree/twofactorauth": "^1.8",
         "npm-asset/eruda": "^2",
+        "npm-asset/github-markdown-css": "^5.9",
         "justinrainbow/json-schema": "^5.2",
         "composer/semver": "^3",
         "softcreatr/jsonpath": "~0.7",
         "galbar/jsonpath": "^3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.6||^10||^11||^12||^13"
     },
     "bin": [
         "Facades/ConsoleFacade/bin/action"
@@ -79,7 +84,8 @@
         "exclude-from-classmap": [
             "/Config/",
             "/Translations/",
-            "/Model/"
+            "/Model/",
+            "/Tests/"
         ]
     }
 }

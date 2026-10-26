@@ -2,7 +2,6 @@
 <buildpath>
 	<buildpathentry kind="src" path=""/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/symfony"/>
-	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/webmozart/path-util/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/psr"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/monolog/monolog/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/femtopixel/monolog-csvhandler/src"/>
@@ -11,7 +10,6 @@
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/wingu/reflection/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/league/csv/src"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/mk-j/php_xlsxwriter"/>
-	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/cebe/markdown"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/ramsey/uuid/src/"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/kabachello/fileroute/"/>
 	<buildpathentry external="true" kind="lib" path="C:/wamp/www/exface/exface/vendor/guzzlehttp/guzzle/src"/>

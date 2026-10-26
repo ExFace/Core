@@ -56,7 +56,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * ```
  *
- * - ###Weeks:
+ * - ### Weeks:
  * 
  * ```
  * {
@@ -182,11 +182,9 @@ class DataTimeline implements WidgetPartInterface
     private bool $fillPaddingToBorder = false;
     private $granularity = null;
     private $initial_view_name = null;
-    private bool $row_zoom = false;
     private $workday_start_time = null;
     private $workday_end_time = null;
     private ?string $popup_on = null;
-    private ?DataTimelinePopupAggregation $popupAggregation = null;
     
     public function exportUxonObject()
     {
@@ -281,35 +279,6 @@ class DataTimeline implements WidgetPartInterface
     }
     
     /**
-     * @experimental: Set to TRUE to let users zoom the height of timeline rows. It also expands aggregated task-bars in Gantt (@experimental: Not tested. DO NOT USE  IT IN PROD!).
-     * If used in Gantt: Adds zoom buttons "+" and "-" to change the height of the table and the Gantt rows.
-     *  - each press also increases / decreases the number of task lines in each Gantt row.
-     * 
-     * @uxon-property row_zoom
-     * @uxon-type boolean
-     * @uxon-default false
-     * 
-     * @param bool $value
-     * @return DataTimeline
-     */
-    public function setRowZoom(bool $value) : DataTimeline
-    {
-        $this->row_zoom = $value;
-        return $this;
-    }
-
-    /**
-     * Returns TRUE if users can zoom timeline rows.
-     * @experimental
-     * 
-     * @return bool
-     */
-    public function getRowZoom() : bool
-    {
-        return $this->row_zoom;
-    }
-
-    /**
      * @param string|null $default
      * @return string|null
      */
@@ -343,40 +312,6 @@ class DataTimeline implements WidgetPartInterface
         }
 
         throw new WidgetConfigurationError($this->getWidget(), 'Invalid timeline popup_on value "' . $value . '": please use click or hover!');
-    }
-
-    /**
-     * Returns the aggregation popup configuration.
-     * @experimental
-     * 
-     * @return DataTimelinePopupAggregation
-     */
-    public function getPopupAggregation() : DataTimelinePopupAggregation
-    {
-        if ($this->popupAggregation === null) {
-            $this->popupAggregation = new DataTimelinePopupAggregation($this);
-        }
-        return $this->popupAggregation;
-    }
-
-    /**
-     * Configure how aggregation popups display their member tasks. @experimental: Every property inside is experemental! Do not use it in Prod yet.
-     *
-     * @uxon-property popup_aggregation
-     * @uxon-type \exface\Core\Widgets\Parts\DataTimelinePopupAggregation
-     * @uxon-template {"style": "list", "include_upper_row_tasks": false, "expand_tasks": false, "gantt_width": 550}
-     *
-     * @param UxonObject $uxon
-     * @return $this
-     */
-    protected function setPopupAggregation(UxonObject $uxon) : DataTimeline
-    {
-        if ($this->popupAggregation === null) {
-            $this->popupAggregation = new DataTimelinePopupAggregation($this, $uxon);
-        } else {
-            $this->popupAggregation->importUxonObject($uxon);
-        }
-        return $this;
     }
     
     /**

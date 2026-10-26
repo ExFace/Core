@@ -7,9 +7,9 @@
 	- Microsoft IIS
 	- nginx
 - PHP 8.2+ with
-	- Required extensions: `sodium`, `zip`, `curl`, `intl`
+	- Required extensions: `sodium`, `zip`, `curl`, `intl`, `mbstring`, `fileinfo`
 	- Optional extensions:
-        	- `gdlib` if resizing/editing images is required (e.g. for thumbnails in the `HttpFileServerFacade`)
+      - `gdlib` if resizing/editing images is required (e.g. for thumbnails in the `HttpFileServerFacade`)
 - SQL database for the metamodel, users, permissions, etc. Supported engines are
 	- MySQL 8+ (requires PHP extension `mysqli`)
 	- MariaDB 10+ (requires PHP extension `mysqli`)

@@ -1,16 +1,14 @@
 [
     {
-        "name": "alnorris/SVG-Sanitizer",
-        "version": "dev-master",
-        "license": [
-	        "MIT"
-	    ],
+        "name": "npm-asset/echarts",
+        "version": "4.9.0",
+        "license": ["Apache-2.0"],
         "license_link": [
-        	"https://github.com/alnorris/SVG-Sanitizer/blob/master/LICENSE"
+            "https://github.com/apache/echarts/blob/4.9.0/LICENSE"
         ],
-        "description": "Whitelist-based PHP SVG sanitizer",
-        "homepage": "https://github.com/alnorris/SVG-Sanitizer"
-    }, 
+        "description": "Custom build of Apache ECharts for interactive charts",
+        "homepage": "https://echarts.apache.org/"
+    },
     {
         "name": "mk-j/php_xlsxwriter",
         "version": "0.37",
@@ -26,12 +24,8 @@
     {
         "name": "npm-asset/mermaid",
         "version": "11.17.2",
-        "license": [
-	        "MIT"
-	    ],
-        "license_link": [
-        	"https://github.com/mermaid-js/mermaid/blob/develop/LICENSE"
-        ],
+        "license": ["MIT"],
+        "license_file": "exface/ui5facade/Facades/js/mermaid/LICENSE.txt",
         "description": "Generation of diagrams like flowcharts or sequence diagrams from text in a similar manner as markdown",
         "homepage": "https://mermaid.js.org/"
     }

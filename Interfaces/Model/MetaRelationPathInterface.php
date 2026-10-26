@@ -14,7 +14,7 @@ use exface\Core\Interfaces\iCanBeCopied;
  * @author Andrej Kabachnik
  *
  */
-interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
+interface MetaRelationPathInterface extends \IteratorAggregate, \Stringable, iCanBeCopied
 {
     /**
      * 
@@ -85,7 +85,7 @@ interface MetaRelationPathInterface extends \IteratorAggregate, iCanBeCopied
      *
      * @return MetaRelationInterface
      */
-    public function getRelationFirst();
+    public function getRelationFirst(?callable $filter = null) : ?MetaRelationInterface;
     
     /**
      * Returns the last relation of the path or NULL if the path is empty

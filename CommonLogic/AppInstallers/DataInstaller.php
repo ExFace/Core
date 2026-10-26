@@ -4,6 +4,7 @@ namespace exface\Core\CommonLogic\AppInstallers;
 use exface\Core\Behaviors\OrderingBehavior;
 use exface\Core\Behaviors\ValidatingBehavior;
 use exface\Core\CommonLogic\Model\CustomAttribute;
+use exface\Core\CommonLogic\DataSheets\DataColumn;
 use exface\Core\DataTypes\ArrayDataType;
 use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
@@ -159,6 +160,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     private $className = null;
     
     private $uninstallCascading = true;
+
+    private $ignoreErrors = false;
     
     /**
      * 
@@ -454,17 +457,21 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     }
 
     /**
+     * Removes app data, stopping on cleanup errors unless setIgnoreErrors(true) was called.
      *
-     * @return string
+     * Each sheet uses its own transaction so a failed deletion cannot roll back earlier cleanup.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\InstallerInterface::uninstall()
      */
     public function uninstall() : \Iterator
     {
         $idt = $this->getOutputIndentation();
-        $transaction = $this->getWorkbench()->data()->startTransaction();
         
         yield $idt . 'Uninstalling ' . $this->getName() . ':' . PHP_EOL;
         
         $counter = 0;
+        $errors = 0;
         
         // Uninstall the main model now
         // Make sure to load all objects before starting to delete, so that their model
@@ -496,23 +503,44 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         // Delete all model sheets in reverse order
         $dataSheets = array_reverse($dataSheets);
         foreach ($dataSheets as $sheet) {
-            if ($sheet->hasUIdColumn()) {
-                // Read data to fill the UID column. Some data source do not support deletes via
-                // filter (or filter over relations), so it is safer to fetch the UIDs here.
-                $sheet->dataRead();
-                if ($sheet->hasUidColumn(true)) {
+            $transaction = null;
+            try {
+                if ($sheet->hasUidColumn()) {
+                    // Read data to fill the UID column. Some data source do not support deletes via
+                    // filter (or filter over relations), so it is safer to fetch the UIDs here.
+                    $sheet->dataRead();
+                    if (! $sheet->hasUidColumn(true)) {
+                        continue;
+                    }
                     $sheet->getFilters()->removeAll();
-                    $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
                 }
-            } else {
-                $counter += $sheet->dataDelete($transaction, $this->willUninstallCascading());
+                $transaction = $this->getWorkbench()->data()->startTransaction();
+                $deleted = $sheet->dataDelete($transaction, $this->willUninstallCascading());
+                $transaction->commit();
+                $counter += $deleted;
+            } catch (Throwable $e) {
+                if ($this->ignoreErrors === false) {
+                    throw $e;
+                }
+                $errors++;
+                $error = new InstallerRuntimeError($this, 'Cannot uninstall data for "' . $sheet->getMetaObject()->getAliasWithNamespace() . '": ' . $e->getMessage(), null, $e);
+                $this->getWorkbench()->getLogger()->logException($error);
+                if ($transaction !== null && $transaction->isOpen()) {
+                    try {
+                        $transaction->rollback();
+                    } catch (Throwable $rollbackError) {
+                        $this->getWorkbench()->getLogger()->logException($rollbackError);
+                        yield $idt . $idt . 'ERROR rolling back failed cleanup: ' . $rollbackError->getMessage() . PHP_EOL;
+                    }
+                }
+                yield $idt . $idt . 'ERROR: ' . $error->getMessage() . PHP_EOL;
             }
         }
         unset($objects);
         
-        $transaction->commit();
-        
-        if ($counter === 0) {
+        if ($errors > 0) {
+            yield $idt.$idt . 'Uninstalling ' . $this->getName() . ' finished with ' . $errors . ' error(s); some data may remain.' . PHP_EOL;
+        } elseif ($counter === 0) {
             yield $idt.$idt . 'Nothing to do.' . PHP_EOL;
         } else {
             yield $idt.$idt . 'Removed ' . $this->getName() . ' successfully!' . PHP_EOL; 
@@ -729,7 +757,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         
         $colsByName = [];
         foreach ($uxon->getProperty('columns')->toArray() as $colArr) {
-            $colsByName[$colArr['name']] = $colArr;
+            $colsByName[$this->getExportColumnName($colArr)] = $colArr;
         }
         
         $orderedCols = [];
@@ -768,6 +796,8 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
     /**
      * Reads the order of column names from an already exported model file without instantiating a data sheet
      * 
+     * Implicit names must be resolved too (e.g. columns with only `attribute_alias`), otherwise those columns are treated as new on every export.
+     * 
      * @param string $filePath
      * @return string[]
      */
@@ -785,7 +815,7 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             }
             $names = [];
             foreach ($uxon->getProperty('columns')->toArray() as $colArr) {
-                if ($name = ($colArr['name'] ?? null)) {
+                if ($name = $this->getExportColumnName($colArr)) {
                     $names[] = $name;
                 }
             }
@@ -793,6 +823,18 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    /**
+     * Resolves column identity without loading the metamodel so implicit names retain their export position.
+     * 
+     * @param array $column
+     * @return string
+     */
+    protected function getExportColumnName(array $column) : string
+    {
+        $expression = ($column['expression'] ?? '') ?: (($column['attribute_alias'] ?? '') ?: ($column['formula'] ?? ''));
+        return DataColumn::sanitizeColumnName($column['name'] ?? $expression);
     }
     
     protected function exportModelRowsPrettified(DataSheetInterface $sheet, array $rows = null) : array
@@ -1436,6 +1478,21 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         return $array;
     }
     
+    /**
+     * Continue uninstalling remaining data sheets after cleanup errors when TRUE.
+     *
+     * Defaults to FALSE, so cleanup errors stop the installer. Ignored errors are still
+     * logged and printed in the uninstall output. This does not affect installation.
+     *
+     * @param bool $trueOrFalse
+     * @return DataInstaller
+     */
+    public function setIgnoreErrors(bool $trueOrFalse) : DataInstaller
+    {
+        $this->ignoreErrors = $trueOrFalse;
+        return $this;
+    }
+
     public function setUninstallCascading(bool $trueOrFalse) : DataInstaller
     {
         $this->uninstallCascading = $trueOrFalse;
