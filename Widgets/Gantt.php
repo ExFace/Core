@@ -18,7 +18,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * It contains all the classic properties of a TreeTable, as well as the additional Gantt features.
  * The `table_split_size` and `gantt_split_size` set the width (horizontal) or height (vertical)
  * of each pane using percentages or pixels. Without split sizes, the panes initially share the space equally.
- * One pane can be set to `max` to expand after rendering when the other pane's content needs less space, but it will act so by default if no split sizes are set.
+ * One pane can be set to `max` to expand after rendering when the other pane's content needs less space.
+ * With neither split size set, the diagram expands by default, except when vertical `height_in_rows` sizes both panes.
  * 
  * The Gantt also supports nested data and can display multiple bars per rows.
  * You can read more about how to pass normal or nested data to the Gantt in the DataCalendarItem (task) documentation.
@@ -78,6 +79,37 @@ class Gantt extends DataTree
     
     private $childrenMoveWithParent = null;
 
+    private bool $row_zoom = false;
+
+    private bool $hidePopup = false;
+
+    /**
+     * Set to TRUE to disable popups for task bars.
+     * It is used to prevent recursion if a Gantt is placed inside another Gantt popup.
+     * 
+     * @uxon-property hide_popup
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return Gantt
+     */
+    public function setHidePopup(bool $value) : Gantt
+    {
+        $this->hidePopup = $value;
+        return $this;
+    }
+
+    /**
+     * Returns whether task popups are disabled.
+     *
+     * @return bool
+     */
+    public function getHidePopup() : bool
+    {
+        return $this->hidePopup;
+    }
+
     /**
      * @inheritDoc
      * @see AbstractWidget::importUxonObject()
@@ -135,6 +167,35 @@ class Gantt extends DataTree
         $this->timelinePart = new DataTimeline($this, $uxon);
         return $this;
     }
+
+    /**
+     * @experimental: Set to TRUE to let users zoom the height of timeline rows. It also expands aggregated task-bars in Gantt (@experimental: Not tested. DO NOT USE  IT IN PROD!).
+     * If used in Gantt: Adds zoom buttons "+" and "-" to change the height of the table and the Gantt rows.
+     *  - each press also increases / decreases the number of task lines in each Gantt row.
+     *
+     * @uxon-property row_zoom
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return Gantt
+     */
+    public function setRowZoom(bool $value) : Gantt
+    {
+        $this->row_zoom = $value;
+        return $this;
+    }
+
+    /**
+     * Returns TRUE if users can zoom timeline rows.
+     * @experimental
+     *
+     * @return bool
+     */
+    public function getRowZoom() : bool
+    {
+        return $this->row_zoom;
+    }
     
     /**
      *
@@ -146,6 +207,7 @@ class Gantt extends DataTree
         $uxon = parent::exportUxonObject();
         $uxon->setProperty('timeline', $this->getTimelineConfig()->exportUxonObject());
         $uxon->setProperty('tasks', $this->getTasksConfig()->exportUxonObject());
+        $uxon->setProperty('hide_popup', $this->getHidePopup());
         if (! $this->getTableSplitSize()->isUndefined()) {
             $uxon->setProperty('table_split_size', $this->getTableSplitSize()->getValue());
         }
@@ -260,11 +322,11 @@ class Gantt extends DataTree
      *
      * This is the width in horizontal layouts and the height in vertical layouts.
      * Setting only this size leaves the remaining space to the diagram. With neither
-     * split size set, the initial split is 1:1.
+     * split size set, the initial split is 1:1 and the diagram expands after rendering
+     * if the table needs less space (except with vertical `height_in_rows` sizing).
      * Set `gantt_split_size` to `max` to let the diagram expand after rendering when
      * the table content needs less than this initial size. Setting this pane to `max`
-     * lets the table expand when the diagram needs less than its initial size,
-     * which is the default behavior if no split size is set.
+     * lets the table expand when the diagram needs less than its initial size.
      * Both sizes may only be specified together if at least one is `max`.
      * Explicit split sizes take precedence over automatic vertical pane sizing from `height_in_rows`.
      * The split bar can still be resized manually.
@@ -304,7 +366,8 @@ class Gantt extends DataTree
      * Setting only this size leaves the remaining space to the table. With neither
      * split size set, the initial split is 1:1.
      * Set this pane to `max` to let it expand after rendering when the table needs less
-     * than its initial size, which is the default behavior if no split size is set.
+     * than its initial size, which is the default behavior if no split size is set
+     * (except with vertical `height_in_rows` sizing).
      * For example, `table_split_size: "30%"` together with `gantt_split_size: "max"`
      * starts at 30:70, then shrinks the table to its content if possible.
      * Both sizes may only be specified together if at least one is `max`.
