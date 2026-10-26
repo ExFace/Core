@@ -56,7 +56,7 @@
         "npm-asset/dexie": "^4.4.6",
         "ramsey/uuid": "^3.0||^4.0",
         "dragonmantank/cron-expression": "^3.1",
-        "intervention/image": "^2.7",
+        "intervention/image": "^3.11.10",
         "robthree/twofactorauth": "^1.8",
         "npm-asset/eruda": "^2",
         "npm-asset/github-markdown-css": "^5.9",

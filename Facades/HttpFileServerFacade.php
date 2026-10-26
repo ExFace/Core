@@ -12,6 +12,10 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Facades\FacadeRuntimeError;
 use exface\Core\DataTypes\FilePathDataType;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Decoders\BinaryImageDecoder;
+use Intervention\Image\Encoders\AutoEncoder;
+use Intervention\Image\Typography\Font;
 use exface\Core\DataTypes\BinaryDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
 use GuzzleHttp\Psr7\Response;
@@ -630,17 +634,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
         switch (true) {
             case stripos($fileInfo->getMimetype(), 'image') !== false:
                 try {
-                    $img = (new ImageManager())->make($fileInfo->openFile()->read());
+                    $img = (new ImageManager(new Driver(), autoOrientation: false, decodeAnimation: false))
+                        ->read($fileInfo->openFile()->read(), BinaryImageDecoder::class);
                     
                     if ($width === null && $height === null) {
                         $width = static::DEFAULT_THUMBNAIL_WIDTH;                       
                     }
-                    $img->resize($width, $height, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize();
-                    });
-                    $binary = $img->encode();
-                    $fileInfo = new InMemoryFile($binary, $fileInfo->getPathAbsolute(), $fileInfo->getMimetype());
+                    $img->scaleDown($width, $height);
+                    $binary = $img->encode(new AutoEncoder(quality: 90));
+                    $fileInfo = new InMemoryFile((string) $binary, $fileInfo->getPathAbsolute(), $binary->mediaType());
                     break;
                 } catch (\Throwable $e) {
                     if ($fileInfo->getSize() === NULL || $fileInfo->getSize() == 0) {
@@ -689,15 +691,15 @@ class HttpFileServerFacade extends AbstractHttpFacade
      */
     protected function createThumbnailAsPlaceholder (string $text, int $width, int $height) : string
     {
-        $img = (new ImageManager())->canvas($width, $height);
-        $posY = $height/2;
-        $posX = $width/2;
-        $img->text($text, $posX, $posY, function($font) {
-            //set style of text
-            $font->file(5);
-            $font->align('center');
-        });
-        return $img->encode();
+        $img = (new ImageManager(new Driver()))->create($width, $height)->fill('#ffffff');
+        $posY = (int) ($height/2) + 4;
+        $posX = (int) ($width/2);
+        $font = new Font('5');
+        $font->setAlignment('center');
+        $font->setValignment('bottom');
+        $font->setColor('#000000');
+        $img->text($text, $posX, $posY, $font);
+        return (string) $img->toJpeg(quality: 90);
     }
     
     /**
