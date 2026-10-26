@@ -35,6 +35,8 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\ColorIndicator;
+use exface\Core\Widgets\ProgressBar;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -87,6 +89,7 @@ use exface\Core\CommonLogic\UxonObject;
  * - tooltip: string,
  * - parser: function(mValue),
  * - formatter: function(mValue),
+ * - display: Object|null - lightweight display renderer configuration (not stored cell data)
  * - validator: function(mValue),
  * - hidden: bool,
  * - lazyLoading: bool,
@@ -139,6 +142,7 @@ use exface\Core\CommonLogic\UxonObject;
 trait JExcelTrait 
 {
     use JsConditionalPropertyTrait;
+    use JExcelDisplayTrait;
     
     private $onInitScripts = [];
     
@@ -242,6 +246,7 @@ JS;
     {
         $facade = $this->getFacade();
         $includes = [
+            '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfColorTools.js') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS') . '"></script>',
             '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.JEXCEL.JS_JSUITES') . '"></script>',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
@@ -313,6 +318,7 @@ JS;
     protected function buildJsJExcelInit() : string
     {
         $widget = $this->getWidget();
+        $this->prepareJExcelDisplayColumns();
         $colNamesJson = json_encode($this->makeUniqueColumnNames());
         $allowInsertRow = $this->getAllowAddRows() ? 'true' : 'false';
         $allowDragRow = $this->getAllowToDragRows() ? 'true' : 'false';
@@ -709,6 +715,10 @@ JS;
         },
         updateTable: function(instance, cell, col, row, value, label, cellName) {
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
+            // The initial empty grid is rendered before exfWidget is assigned.
+            if (instance.exfWidget) {
+                instance.exfWidget._displayRenderer.renderDisplayCell.call(instance.exfWidget, cell, col, row, value);
+            }
         },
         onbeforechange: function(instance, cell, x, y, value) {
             var fnParser = instance.exfWidget.getColumnModel(x).parser;
@@ -1109,6 +1119,8 @@ JS;
         _dom: {$this->buildJsJqueryElement()}[0],
         _colNames: {$colNamesJson},
         _cols: {$columnsJson},
+        _displayRenderer: {$this->buildJsJExcelDisplayMethods()},
+        _displaySemanticColors: {$this->buildJsJExcelSemanticColors()},
         _rowNumberColName: $rowNumberColNameJs,
         _initData: [],
         _disabled: $disabledJs,
@@ -1940,6 +1952,7 @@ JS;
                     tooltip: {$this->escapeString($col->getHint() ?? '', true, false)},
                     parser: {$parserJs},
                     formatter: {$formatterJs},
+                    display: {$this->buildJsJExcelDisplayOptions($col)},
                     validator: {$validatorJs},
                     checkRequired: function(iRowIdx){
                         {$requiredCheckerJs}
@@ -2956,6 +2969,10 @@ JS;
     protected function needsDataFormatting(DataColumn $col) : bool
     {
         switch (true) {
+            // These renderers format text themselves; keep source values intact for scales and actions.
+            case $col->getCellWidget() instanceof ColorIndicator:
+            case $col->getCellWidget() instanceof ProgressBar:
+                return false;
             // No formatting if explicitly disabled
             case $col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting():
                 return false;

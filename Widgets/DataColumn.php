@@ -349,28 +349,7 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             // the cells.
             if ($cellWidgetDefinedInUxon === false && $this->isBoundToAttribute() === true) {
                 $attr = $this->getAttribute();
-                switch (true) {
-                    // If the column is hidden, always use InputHidden widgets to avoid instantiating
-                    // complex widgets that would actually never be used. This can still be overridden
-                    // manually if a `cell_widget` is explicitly defined. This code here is just used
-                    // for autogenerating cell widgets!
-                    case $this->isHidden():
-                        $fallbackWidgetType = 'Display';
-                        break;
-                    // If the column is editable, use the default editor widget
-                    case $this->isEditable() === true:
-                        $uxon = $attr->getDefaultEditorUxon();
-                        $fallbackWidgetType = 'Input';
-                        if ($this->isBoundToAttribute() && $this->getAttribute()->isEditable() === false) {
-                            $uxon->setProperty('disabled', false);
-                        }
-                        break;
-                    // Otherwise use the default display widget
-                    default:
-                        $uxon = $attr->getDefaultDisplayUxon();
-                        $fallbackWidgetType = 'Display';
-                        break;
-                }
+                [$uxon, $fallbackWidgetType] = $this->getDefaultCellWidgetConfiguration($attr);
                 
                 $uxon->setProperty('attribute_alias', $this->getAttributeAlias());
                 // When using default display/editor widgets for related attributes, make sure to pass
@@ -492,6 +471,32 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
             }
         }
         return $this->cellWidget;
+    }
+
+    /**
+     * Choose an attribute's editor/display defaults before creating the cell widget.
+     *
+     * Resolved editability (including inherited and action-based editing) takes
+     * precedence over display defaults. The attribute resolves datatype defaults
+     * when it has no display/editor configuration of its own. Explicit cell widgets
+     * bypass this method.
+     *
+     * @param MetaAttributeInterface $attribute
+     * @return array{0: UxonObject, 1: string}
+     */
+    protected function getDefaultCellWidgetConfiguration(MetaAttributeInterface $attribute) : array
+    {
+        if ($this->isHidden()) {
+            return [new UxonObject(), 'Display'];
+        }
+        if ($this->isEditable() === true) {
+            $editor = $attribute->getDefaultEditorUxon();
+            if ($attribute->isEditable() === false) {
+                $editor->setProperty('disabled', false);
+            }
+            return [$editor, 'Input'];
+        }
+        return [$attribute->getDefaultDisplayUxon(), 'Display'];
     }
 
     
