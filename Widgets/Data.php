@@ -207,6 +207,32 @@ class Data
     }
 
     /**
+     * Configures a column when it is registered, including columns in explicit groups.
+     * 
+     * Override this hook to apply widget-specific column settings. Generic data widgets
+     * leave the column configuration unchanged.
+     * 
+     * @param DataColumn $column
+     * @return void
+     */
+    public function configureColumn(DataColumn $column) : void
+    {
+    }
+
+    /**
+     * Creates a cell widget, allowing data widgets to supply their own editor defaults.
+     * 
+     * @param DataColumn $column
+     * @param UxonObject $uxon
+     * @param string|null $fallbackWidgetType
+     * @return WidgetInterface
+     */
+    public function createColumnCellWidget(DataColumn $column, UxonObject $uxon, ?string $fallbackWidgetType = null) : WidgetInterface
+    {
+        return WidgetFactory::createFromUxon($column->getPage(), $uxon, $column, $fallbackWidgetType);
+    }
+
+    /**
      *
      * {@inheritdoc}
      * @see \exface\Core\Widgets\AbstractWidget::prepareDataSheetToRead()
@@ -240,7 +266,29 @@ class Data
             // That is, is we have a `LOCATION` and a `FACTORY`, that extends `LOCATION`,
             // we can prefill a LOCATION-widget with FACTORY-data, but not the other way
             // around.
-            foreach ($this->getColumns() as $widgetCol) {                
+            // Columns of the same child relation share one nested data template.
+            $subsheetTemplates = [];
+            foreach ($this->getColumns() as $widgetCol) {
+                if ($widgetCol->isSubsheetColumn()) {
+                    $relation = $widgetCol->getSubsheetRelationAlias();
+                    if (! $nestedCol = $data_sheet->getColumns()->getByExpression($relation)) {
+                        $nestedCol = $data_sheet->getColumns()->addFromExpression($relation);
+                    }
+                    if (! isset($subsheetTemplates[$relation])) {
+                        $subsheetTemplates[$relation] = DataSheetFactory::createFromUxon(
+                            $this->getWorkbench(),
+                            $nestedCol->getNestedDataTemplateUxon() ?? $widgetCol->getSubsheetDataTemplate()
+                        );
+                    }
+                    $template = $subsheetTemplates[$relation];
+                    // Merge requirements instead of replacing attributes requested by earlier columns.
+                    $columnTemplate = DataSheetFactory::createFromUxon($this->getWorkbench(), $widgetCol->getSubsheetDataTemplate());
+                    foreach ($columnTemplate->getColumns() as $requiredColumn) {
+                        $template->getColumns()->addFromExpression($requiredColumn->getExpressionObj());
+                    }
+                    $nestedCol->setNestedDataTemplate($template->exportUxonObject());
+                    continue;
+                }
                 // If it's a calculated column, check if it was requested or add it if needing all columns
                 // Do it in any case - even if there is also an attribute_alias or a data_column_name. 
                 if ($widgetCol->isCalculated()) {
