@@ -167,7 +167,7 @@ Core constrains Intervention Image to 2.x. Version 3 uses a redesigned API and d
 
 ### Other old packages
 
-Replace the abandoned `webmozart/path-util` with `symfony/filesystem` after mapping path-normalization behavior and platform-specific edge cases. Review `wingu/reflection`, `cebe/markdown`, `justinrainbow/json-schema`, `femtopixel/monolog-csvhandler`, `gajus/dindent`, `robthree/twofactorauth` and `kabachello/fileroute` for maintenance status, advisories and maintained replacements. FileRoute additionally needs the Symfony 6 compatibility commit released as described above. Package age alone is not evidence of incompatibility; classify each using its PHP constraint, release/support status, audit results and exercised Core call sites.
+Replace the abandoned `webmozart/path-util` with `symfony/filesystem` after mapping path-normalization behavior and platform-specific edge cases. Review `wingu/reflection`, `justinrainbow/json-schema`, `femtopixel/monolog-csvhandler`, `gajus/dindent`, `robthree/twofactorauth` and `kabachello/fileroute` for maintenance status, advisories and maintained replacements. FileRoute additionally needs the Symfony 6 compatibility commit released as described above. Package age alone is not evidence of incompatibility; classify each using its PHP constraint, release/support status, audit results and exercised Core call sites.
 
 ## PSR interface migration project
 

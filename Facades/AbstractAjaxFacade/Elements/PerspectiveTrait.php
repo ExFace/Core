@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\CommonLogic\Constants\Icons;
+use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\DataTypes\DateDataType;
@@ -9,6 +11,8 @@ use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\Widgets\Button;
+use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\Parts\Pivot\PivotLayout;
 
 /**
@@ -103,8 +107,9 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  * UI5PerspectivePivotTable for response conversion examples.
  *
  * The loader imports all Perspective ES modules once per page and the renderer reuses one shared
- * worker. Every widget owns its Perspective table; rendering new data deletes and replaces that
- * table. Enabled widgets open Perspective's configuration panel, while disabled widgets keep the
+ * worker. Every widget owns its Perspective table; refreshing replaces its rows and preserves all
+ * workspace views. Enabled widgets provide a + button for additional views and open Perspective's
+ * configuration panel, while disabled widgets keep the
  * predefined layout and prevent the panel from opening. Configuration changes emit the existing
  * `pivotrendered` jQuery event with the element ID, object alias and current Perspective config.
  *
@@ -115,6 +120,39 @@ use exface\Core\Widgets\Parts\Pivot\PivotLayout;
  */
 trait PerspectiveTrait
 {
+    /**
+     * @var Button|null
+     */
+    private $perspectiveAddViewButton = null;
+
+    /**
+     * Adds the editable workspace command to the facade's standard toolbar.
+     *
+     * @param ButtonGroup $buttonGroup
+     * @param int $index
+     * @return void
+     */
+    protected function addPerspectiveFeatureButtons(ButtonGroup $buttonGroup, int $index = 1) : void
+    {
+        if ($this->getWidget()->isDisabled() === true || $this->perspectiveAddViewButton !== null) {
+            return;
+        }
+
+        $elementIdJs = $this->escapeString($this->getId());
+        $this->perspectiveAddViewButton = $buttonGroup->createButton(new UxonObject([
+            'widget_type' => 'DataButton',
+            'icon' => Icons::PLUS_SQUARE_O,
+            'caption' => $this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.PIVOTTABLE.ADD_VIEW'),
+            'hide_caption' => true,
+            'align' => 'right',
+            'action' => [
+                'alias' => 'exface.Core.CustomFacadeScript',
+                'script' => "exfAddPerspectiveView(document.getElementById({$elementIdJs}));"
+            ]
+        ]));
+        $buttonGroup->addButton($this->perspectiveAddViewButton, $index);
+    }
+
     /**
      * Returns the JavaScript and CSS needed by Perspective.
      *
@@ -144,9 +182,19 @@ trait PerspectiveTrait
     protected function buildHtmlPerspective() : string
     {
         $language = htmlspecialchars($this->getPerspectiveLocale(), ENT_QUOTES);
-        return <<<HTML
+        $viewerId = $this->getWidget()->isDisabled() === true ? $this->getId() : $this->getId() . '_viewer';
+        $viewerHtml = <<<HTML
 
-<perspective-viewer id="{$this->getId()}" class="exf-perspective-viewer" lang="{$language}" style="width:100%; height:100%; min-height:100px;"></perspective-viewer>
+    <perspective-viewer id="{$viewerId}" class="exf-perspective-viewer" lang="{$language}" style="width:100%; height:100%; min-height:100px;"></perspective-viewer>
+HTML;
+        if ($this->getWidget()->isDisabled() === true) {
+            return $viewerHtml;
+        }
+
+        return <<<HTML
+<div id="{$this->getId()}" class="exf-perspective-workspace">
+    {$viewerHtml}
+</div>
 HTML;
     }
 
@@ -227,7 +275,11 @@ HTML;
 
         return <<<JS
 
-    (async function(viewer, data, columns, config, urls, disabled, locale) {
+    (async function(element, data, columns, config, urls, disabled, locale) {
+        if (!element) {
+            return;
+        }
+        const viewer = element.matches('perspective-viewer') ? element : element.querySelector('perspective-viewer');
         if (!viewer) {
             return;
         }
@@ -283,17 +335,17 @@ HTML;
                 window.exfPerspectiveWorker = await perspective.worker();
             }
             if (viewer.exfPerspectiveTable) {
-                await viewer.exfPerspectiveTable.delete();
+                await viewer.exfPerspectiveTable.replace(normalizedData);
+            } else {
+                const table = await window.exfPerspectiveWorker.table(schema);
+                if (normalizedData.length > 0) {
+                    await table.update(normalizedData);
+                }
+                viewer.exfPerspectiveTable = table;
+                await viewer.load(table);
+                await viewer.restore(config);
+                await viewer.toggleConfig(!disabled);
             }
-            const table = await window.exfPerspectiveWorker.table(schema);
-            if (normalizedData.length > 0) {
-                await table.update(normalizedData);
-            }
-            viewer.exfPerspectiveTable = table;
-            await viewer.load(table);
-            await viewer.restore(config);
-            await viewer.toggleConfig(!disabled);
-
             if (!viewer.exfPerspectiveEventsBound) {
                 viewer.addEventListener('perspective-config-update', async function() {
                     const currentConfig = await viewer.save();

@@ -293,4 +293,40 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
      * @see ConditionGroupInterface::readMissingData()
      */
     public function evaluate(DataSheetInterface $data_sheet = null, int $row_number = null, bool $readMissingData = false): bool;
+
+    /**
+     * @return MetaObjectInterface|null
+     */
+    public function getBaseObject() : ?MetaObjectInterface;
+
+    /**
+     * Returns TRUE if this condition group has a custom base relation path
+     * 
+     * @return bool
+     */
+    public function hasBaseRelationPath() : bool;
+
+    /**
+     * Returns the relation path to the given object if this group has a base relation path, that is applicable
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaRelationPathInterface|null
+     */
+    public function getBaseRelationPathTo(MetaObjectInterface $object) : ?MetaRelationPathInterface;
+
+    /**
+     * Returns the relation path from the given object if this group has a base relation path, that is applicable
+     * 
+     * @param MetaObjectInterface $object
+     * @return MetaRelationPathInterface|null
+     */
+    public function getBaseRelationPathFrom(MetaObjectInterface $object) : ?MetaRelationPathInterface;
+
+    /**
+     * Sets the relation path from the base object of this condition group to the outside group
+     * 
+     * @param string|MetaRelationPathInterface $path
+     * @return ConditionGroupInterface
+     */
+    public function setObjectRelationPathToOutside(string|MetaRelationPathInterface $path) : ConditionGroupInterface;
 }

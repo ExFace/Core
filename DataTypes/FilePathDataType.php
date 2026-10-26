@@ -2,7 +2,8 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\FileNotFoundError;
-use Webmozart\PathUtil\Path;
+use exface\Core\Exceptions\RuntimeException;
+use Symfony\Component\Filesystem\Path;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
 /**
@@ -18,6 +19,10 @@ class FilePathDataType extends StringDataType
     private $extension = null;
     
     private static $cachedPaths = [];
+    
+    private static $canonicalizeBuffer = [];
+    
+    private static $canonicalizeBufferSize = 0;
     
     /**
      *
@@ -97,7 +102,7 @@ class FilePathDataType extends StringDataType
      */
     public static function normalize($path, $directory_separator = '/') : string
     {
-        $path = Path::canonicalize($path);
+        $path = self::canonicalize($path);
         if ($directory_separator !== '/') {
             $path = str_replace('/', $directory_separator, $path);
         }
@@ -115,7 +120,32 @@ class FilePathDataType extends StringDataType
         if (is_null($path) || $path == '') {
             return false;
         }
-        return Path::isAbsolute($path);
+        
+        // Ported from webmozart/path-util: unlike Symfony's Path::isAbsolute() this is OS-agnostic
+        // Strip scheme
+        if (false !== ($pos = strpos($path, '://'))) {
+            $path = substr($path, $pos + 3);
+        }
+        
+        // UNIX root "/" or "\" (Windows style)
+        if ('/' === $path[0] || '\\' === $path[0]) {
+            return true;
+        }
+        
+        // Windows root
+        if (strlen($path) > 1 && ctype_alpha($path[0]) && ':' === $path[1]) {
+            // Special case: "C:"
+            if (2 === strlen($path)) {
+                return true;
+            }
+            
+            // Normal case: "C:/ or "C:\"
+            if ('/' === $path[2] || '\\' === $path[2]) {
+                return true;
+            }
+        }
+        
+        return false;
     }
     
     /**
@@ -137,7 +167,39 @@ class FilePathDataType extends StringDataType
      */
     public static function join(array $paths) : string
     {
-        return Path::join($paths);
+        // Ported from webmozart/path-util: unlike Symfony's Path::join() this is OS-agnostic
+        $finalPath = null;
+        $wasScheme = false;
+        
+        foreach ($paths as $path) {
+            $path = (string) $path;
+            
+            if ('' === $path) {
+                continue;
+            }
+            
+            if (null === $finalPath) {
+                // For first part we keep slashes, like '/top', 'C:\' or 'phar://'
+                $finalPath = $path;
+                $wasScheme = (strpos($path, '://') !== false);
+                continue;
+            }
+            
+            // Only add slash if previous part didn't end with '/' or '\'
+            if (! in_array(substr($finalPath, -1), ['/', '\\'])) {
+                $finalPath .= '/';
+            }
+            
+            // If first part included a scheme like 'phar://' we allow current part to start with '/', otherwise trim
+            $finalPath .= $wasScheme ? $path : ltrim($path, '/');
+            $wasScheme = false;
+        }
+        
+        if (null === $finalPath) {
+            return '';
+        }
+        
+        return self::canonicalize($finalPath);
     }
     
     /**
@@ -172,11 +234,172 @@ class FilePathDataType extends StringDataType
      */
     public static function findCommonBase(array $paths, $directory_separator = '/') : ?string
     {
-        $base = Path::getLongestCommonBasePath($paths);
+        $base = self::getLongestCommonBasePath($paths);
         if ($base !== null && $directory_separator !== '/') {
             $base = str_replace('/', $directory_separator, $base);
         }
         return $base;
+    }
+    
+    /**
+     * Ported from webmozart/path-util: unlike Symfony's Path::getLongestCommonBasePath() this is OS-agnostic
+     * 
+     * @param string[] $paths
+     * @return string|NULL
+     */
+    private static function getLongestCommonBasePath(array $paths) : ?string
+    {
+        list($bpRoot, $basePath) = self::splitRoot(self::canonicalize(reset($paths)));
+        
+        for (next($paths); null !== key($paths) && '' !== $basePath; next($paths)) {
+            list($root, $path) = self::splitRoot(self::canonicalize(current($paths)));
+            
+            // If we deal with different roots (e.g. C:/ vs. D:/), it's time to quit
+            if ($root !== $bpRoot) {
+                return null;
+            }
+            
+            // Make the base path shorter until it fits into path
+            while (true) {
+                if ('.' === $basePath) {
+                    // No more base paths
+                    $basePath = '';
+                    continue 2;
+                }
+                
+                // Prevent false positives for common prefixes
+                if (0 === strpos($path . '/', $basePath . '/')) {
+                    continue 2;
+                }
+                
+                $basePath = dirname($basePath);
+            }
+        }
+        
+        return $bpRoot . $basePath;
+    }
+    
+    /**
+     * Ported from webmozart/path-util: unlike Symfony's Path::canonicalize() this is OS-agnostic
+     * (always converts backslashes and recognizes Windows drive letters)
+     * 
+     * @param string $path
+     * @return string
+     */
+    private static function canonicalize(string $path) : string
+    {
+        if ('' === $path) {
+            return '';
+        }
+        
+        if (isset(self::$canonicalizeBuffer[$path])) {
+            return self::$canonicalizeBuffer[$path];
+        }
+        
+        // Replace "~" with user's home directory.
+        if ('~' === $path[0]) {
+            $path = self::getHomeDirectory() . substr($path, 1);
+        }
+        
+        $path = str_replace('\\', '/', $path);
+        
+        list($root, $pathWithoutRoot) = self::splitRoot($path);
+        
+        $parts = explode('/', $pathWithoutRoot);
+        $canonicalParts = [];
+        
+        // Collapse "." and "..", if possible
+        foreach ($parts as $part) {
+            if ('.' === $part || '' === $part) {
+                continue;
+            }
+            
+            // Collapse ".." with the previous part, if one exists
+            // Don't collapse ".." if the previous part is also ".."
+            if ('..' === $part && count($canonicalParts) > 0 && '..' !== $canonicalParts[count($canonicalParts) - 1]) {
+                array_pop($canonicalParts);
+                continue;
+            }
+            
+            // Only add ".." prefixes for relative paths
+            if ('..' !== $part || '' === $root) {
+                $canonicalParts[] = $part;
+            }
+        }
+        
+        // Add the root directory again
+        self::$canonicalizeBuffer[$path] = $canonicalPath = $root . implode('/', $canonicalParts);
+        ++self::$canonicalizeBufferSize;
+        
+        // Clean up regularly to prevent memory leaks
+        if (self::$canonicalizeBufferSize > 1250) {
+            self::$canonicalizeBuffer = array_slice(self::$canonicalizeBuffer, -1000, null, true);
+            self::$canonicalizeBufferSize = 1000;
+        }
+        
+        return $canonicalPath;
+    }
+    
+    /**
+     * Splits a canonical path into its root (incl. scheme) and the remainder - ported from webmozart/path-util
+     * 
+     * @param string $path
+     * @return string[]
+     */
+    private static function splitRoot(string $path) : array
+    {
+        if ('' === $path) {
+            return ['', ''];
+        }
+        
+        // Remember scheme as part of the root, if any
+        if (false !== ($pos = strpos($path, '://'))) {
+            $root = substr($path, 0, $pos + 3);
+            $path = substr($path, $pos + 3);
+        } else {
+            $root = '';
+        }
+        
+        $length = strlen($path);
+        
+        // Remove and remember root directory
+        if ($length > 0 && '/' === $path[0]) {
+            $root .= '/';
+            $path = $length > 1 ? substr($path, 1) : '';
+        } elseif ($length > 1 && ctype_alpha($path[0]) && ':' === $path[1]) {
+            if (2 === $length) {
+                // Windows special case: "C:"
+                $root .= $path . '/';
+                $path = '';
+            } elseif ('/' === $path[2]) {
+                // Windows normal case: "C:/"..
+                $root .= substr($path, 0, 3);
+                $path = $length > 3 ? substr($path, 3) : '';
+            }
+        }
+        
+        return [$root, $path];
+    }
+    
+    /**
+     * Ported from webmozart/path-util
+     * 
+     * @throws RuntimeException
+     * @return string
+     */
+    private static function getHomeDirectory() : string
+    {
+        // For UNIX support
+        if (getenv('HOME')) {
+            return self::canonicalize(getenv('HOME'));
+        }
+        
+        // For >= Windows8 support
+        if (getenv('HOMEDRIVE') && getenv('HOMEPATH')) {
+            return self::canonicalize(getenv('HOMEDRIVE') . getenv('HOMEPATH'));
+        }
+        
+        throw new RuntimeException("Your environment or operation system isn't supported");
     }
     
     /**

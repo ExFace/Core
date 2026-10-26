@@ -1305,14 +1305,12 @@
             "APP": "0x31000000000000000000000000000000",
             "NAME": "Color",
             "PROTOTYPE": "exface/core/DataTypes/ColorDataType.php",
-            "CONFIG_UXON": null,
+            "CONFIG_UXON": "{\"default_editor_widget\":{\"widget_type\":\"InputColorPalette\",\"show_more_colors_button\":true,\"show_default_color_button\":true},\"color_presets\":[\"~OK\",\"~INFO\",\"~WARNING\",\"~ERROR\"]}",
             "VALIDATION_ERROR": null,
             "DEFAULT_DISPLAY_UXON": null,
-            "DEFAULT_EDITOR_UXON": {
-                "widget_type": "InputColorPalette"
-            },
+            "DEFAULT_EDITOR_UXON": null,
             "ALIAS": "Color",
-            "SHORT_DESCRIPTION": "TODO"
+            "SHORT_DESCRIPTION": "Define Color value in html (blue, green), hex format (#RRGGBB) or one of the given color presets (~OK, ~INFO, ~WARNING, ~ERROR). Comes with the necessary color picker widget for the editor."
         },
         {
             "_EXPORT_SUMMARY": "Code",

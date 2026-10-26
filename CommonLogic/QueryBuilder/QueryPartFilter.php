@@ -11,6 +11,7 @@ use exface\Core\Interfaces\Model\CompoundAttributeInterface;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
 use exface\Core\Interfaces\Model\ConditionInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
  * The filter query part represents one filter within a query (in SQL it translates to a WHERE-statement).
@@ -69,6 +70,15 @@ class QueryPartFilter extends QueryPartAttribute implements iCanBeCopied
             default:
                 throw new RuntimeException('Cannot use expression `' . $condition->getExpression()->__toString() . '` in a data query filter: only attributes and static expressions allowed!');
         }
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see QueryPartAttribute::getMetaObject()
+     */
+    public function getMetaObject() : MetaObjectInterface
+    {
+        return $this->condition->getExpression()->getMetaObject() ?? $this->getQuery()->getMainObject();
     }
 
     /**

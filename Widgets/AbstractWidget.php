@@ -891,7 +891,7 @@ abstract class AbstractWidget implements WidgetInterface
     {
         if ($this->relation_path_to_parent === null) {
             switch (true) {
-                // If there is was a path provided as a string, instantiate it as a path object
+                // If there was a path provided as a string, instantiate it as a path object
                 case $this->relation_path_to_parent_string !== null:
                     $this->relation_path_to_parent = RelationPathFactory::createFromString($this->getMetaObject(), $this->relation_path_to_parent_string);
                     break;

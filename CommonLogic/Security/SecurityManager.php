@@ -16,6 +16,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\EnvironmentVariablePlaceholders;
+use exface\Core\Templates\Placeholders\SystemVariablePlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 use exface\Core\Templates\Placeholders\SelectivePlaceholders;
 use exface\Core\Widgets\LoginPrompt;
@@ -280,6 +281,7 @@ class SecurityManager implements SecurityManagerInterface
             $renderer->addPlaceholder(
                 new SelectivePlaceholders([
                     new EnvironmentVariablePlaceholders(),
+                    new SystemVariablePlaceholders(),
                     new ConfigPlaceholders($workbench),
                     new FormulaPlaceholders($workbench)
                 ])

@@ -756,11 +756,18 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     public function getRowsLimit() : ?int;
 
-    public function setRowsLimit($value) : DataSheetInterface;
+    public function setRowsLimit(?int $value) : DataSheetInterface;
 
     public function getRowsOffset() : int;
 
     public function setRowsOffset(int $value) : DataSheetInterface;
+
+    /**
+     * Makes the data sheet unpaged, so that all rows matching the filters will be loaded when reading the data.
+     * 
+     * @return DataSheetInterface
+     */
+    public function removePagination() : DataSheetInterface;
 
     /**
      * Merges the current data sheet with another one.

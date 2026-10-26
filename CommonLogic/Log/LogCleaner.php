@@ -9,24 +9,24 @@ use exface\Core\DataTypes\FilePathDataType;
 
 /**
  * Removes expired log entries and takes care of log migrations, repairs, etc.
- * 
+ *
  * @author Ralf Mulansky, Andrej Kabachnik
  *
  */
 class LogCleaner
 {
     const CLEANUP_AREA_LOGS = 'logs';
-    
+
     /**
      * Deleting log files and details folder that are older then the config option `MAX_DAYS_TO_KEEP`.
      * Moves old .json details files to new details subfolders ifthey are not due for deletion,
      * else they are simply deleted.
      * This is done so the old files are compatible with new deletion process.
-     * 
+     *
      * We simply now delete the *.log file if it is due and also the corresponing subfolder
-     * in the details folder. This is done so we dont have to iterate over all 
+     * in the details folder. This is done so we dont have to iterate over all
      * detail files to calculate if they are due for deletion or not.
-     * 
+     *
      * @param OnCleanUpEvent $event
      */
     public static function onCleanUp(OnCleanUpEvent $event) : void
@@ -34,33 +34,33 @@ class LogCleaner
         if (! $event->isAreaToBeCleaned(self::CLEANUP_AREA_LOGS)) {
             return;
         }
-        
-        $workbench = $event->getWorkbench();        
+
+        $workbench = $event->getWorkbench();
         $config = $workbench->getConfig();
         $maxDaysLogs = $config->getOption('LOG.MAX_DAYS_TO_KEEP');
-        
-        $filemanager = $workbench->filemanager();        
+
+        $filemanager = $workbench->filemanager();
         $coreLogDir = $filemanager->getPathToLogFolder();
         $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder();
-        
+
         // Delete log detail files older than max days to keep.
         // If they are not due fordeletion or move them to subfolder.
         // Necessary for migration from old to new log deletion process.
         static::cleanupLogDetailsOldStructure($filemanager, $detailsLogDir, $maxDaysLogs);
-        
+
         // New process of deleting log files.
         // Delete the logfile and the corresponding details sub folder if they are due for deletion.
         $msg = static::cleanupLogsAndDetails($filemanager, $coreLogDir, $detailsLogDir, $maxDaysLogs);
         if ($msg !== null) {
             $event->addResultMessage($msg);
         }
-        
+
         // Repair broken log files
         $msg = static::repairBrokenLogs($filemanager, $coreLogDir);
         if ($msg !== null) {
             $event->addResultMessage($msg);
         }
-        
+
         // Delete old trace files too
         $maxDaysTraces = $config->getOption('DEBUG.MAX_DAYS_TO_KEEP');
         $traceDir = $coreLogDir . DIRECTORY_SEPARATOR . Tracer::FOLDER_NAME_TRACES;
@@ -68,12 +68,12 @@ class LogCleaner
         if ($msg !== null) {
             $event->addResultMessage($msg);
         }
-        
+
         return;
     }
-    
+
     /**
-     * 
+     *
      * @param Filemanager $filemanager
      * @param string $detailsLogDir
      * @param int $maxDaysToKeep
@@ -103,9 +103,9 @@ class LogCleaner
         }
         return null;
     }
-    
+
     /**
-     * 
+     *
      * @param Filemanager $filemanager
      * @param string $coreLogDir
      * @param string $pathToDetails
@@ -138,7 +138,7 @@ class LogCleaner
         }
         return "Cleaned up log files removing {$countFiles} expired log files and {$countDir} details subfolders.";
     }
-    
+
     protected static function cleanupTraces(Filemanager $filemanager, string $pathToTraces, int $maxDaysToKeep) : ?string
     {
         if (0 === $maxDaysToKeep) {
@@ -158,17 +158,17 @@ class LogCleaner
         }
         return "Cleaned up trace files removing {$countFiles} expired traces.";
     }
-    
+
     /**
      * Removes broken lines from log files
-     * 
+     *
      * Sometimes a CSV log file conatins half-filled lines for some reason. And it is not
      * just columns missing: the line contains just some substring of what it should have
-     * been. This leads to errors like `Array sizes inconsistent` when trying to show the 
-     * log. 
-     * 
-     * This method attemts to find these broken lines and removes them. 
-     * 
+     * been. This leads to errors like `Array sizes inconsistent` when trying to show the
+     * log.
+     *
+     * This method attemts to find these broken lines and removes them.
+     *
      * @param Filemanager $filemanager
      * @param string $pathToLogs
      * @return string|NULL
@@ -177,6 +177,7 @@ class LogCleaner
     {
         $logFiles = glob($pathToLogs . '/*.log');
         $repairedFiles = [];
+        $failedFiles = [];
         foreach ($logFiles as $file) {
             // Skip logs that we cannot write anyhow - we cannot help them
             if (! is_writable($file)) {
@@ -198,19 +199,30 @@ class LogCleaner
                 fclose($handle);
             }
             if (! empty($brokenLines)) {
+                try {
+                    $filemanager->dumpFile($file, trim($buffer));
+                } catch (\Throwable $e) {
+                    // On Windows, files still open by a logger (e.g. today's log) cannot be replaced
+                    $failedFiles[] = FilePathDataType::findFileName($file, true);
+                    $filemanager->getWorkbench()->getLogger()->warning('Cannot repair broken log file "' . FilePathDataType::findFileName($file, true) . '": ' . $e->getMessage(), ['logFile' => $file]);
+                    continue;
+                }
                 $repairedFiles[$file] = $brokenLines;
-                $filemanager->dumpFile($file, trim($buffer));
                 $filemanager->getWorkbench()->getLogger()->error('Broken log file "' . FilePathDataType::findFileName($file, true) . '" detected. Broken line(s) ' . implode(', ', array_keys($brokenLines)) . ' removed!', ['logFile' => $file, 'logLinesRemoved' => $brokenLines]);
             }
         }
+        $msgs = [];
         if (! empty($repairedFiles)) {
-            return 'Repaired ' . count($repairedFiles) . ' log files.';
+            $msgs[] = 'Repaired ' . count($repairedFiles) . ' log files.';
         }
-        return null;
+        if (! empty($failedFiles)) {
+            $msgs[] = 'Could not repair ' . count($failedFiles) . ' log files: ' . implode(', ', $failedFiles) . '.';
+        }
+        return empty($msgs) ? null : implode(' ', $msgs);
     }
-    
+
     /**
-     * 
+     *
      * @param string $line
      * @return bool
      */

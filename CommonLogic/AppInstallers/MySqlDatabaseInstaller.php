@@ -748,7 +748,7 @@ SQL;
         // Skip addresses that are not real base tables (e.g. views or custom SQL
         // expressions referenced by the metamodel) to keep the dump robust.
         $existsSql = "SELECT 1 AS x FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}' AND TABLE_TYPE = 'BASE TABLE'";
-        $existsRows = $connection->runSql($existsSql, true)->getResultArray();
+        $existsRows = $connection->runSql($existsSql, false)->getResultArray();
         if (empty($existsRows)) {
             return '';
         }
@@ -832,7 +832,7 @@ SQL;
             . " FROM information_schema.COLUMNS"
             . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}'"
             . " ORDER BY COLUMN_NAME";
-        return $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        return $this->getDataConnection()->runSql($sql, false)->getResultArray();
     }
 
     /**
@@ -848,9 +848,18 @@ SQL;
             . " FROM information_schema.KEY_COLUMN_USAGE"
             . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}' AND CONSTRAINT_NAME = 'PRIMARY'"
             . " ORDER BY ORDINAL_POSITION";
-        $rows = $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        $rows = $this->getDataConnection()->runSql($sql, false)->getResultArray();
         $cols = [];
         foreach ($rows as $row) {
+            if (!is_array($row)) {
+                throw new \UnexpectedValueException(
+                    'Expected SQL result row to be an array, got '
+                    . get_debug_type($row)
+                    . ': '
+                    . var_export($row, true)
+                );
+            }
+
             $cols[] = $row['column_name'];
         }
         return $cols;
@@ -880,7 +889,7 @@ SQL;
             . " ON r.CONSTRAINT_SCHEMA = k.CONSTRAINT_SCHEMA AND r.CONSTRAINT_NAME = k.CONSTRAINT_NAME"
             . " WHERE k.TABLE_SCHEMA = '{$schemaEsc}' AND k.TABLE_NAME = '{$tableEsc}' AND k.REFERENCED_TABLE_NAME IS NOT NULL"
             . " ORDER BY k.CONSTRAINT_NAME, k.ORDINAL_POSITION";
-        $rows = $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        $rows = $this->getDataConnection()->runSql($sql, false)->getResultArray();
         $grouped = [];
         foreach ($rows as $row) {
             $key = $row['cname'];
@@ -925,7 +934,7 @@ SQL;
             . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}'"
             . " AND INDEX_NAME <> 'PRIMARY'"
             . " ORDER BY INDEX_NAME, SEQ_IN_INDEX";
-        $rows = $this->getDataConnection()->runSql($sql, true)->getResultArray();
+        $rows = $this->getDataConnection()->runSql($sql, false)->getResultArray();
         $grouped = [];
         foreach ($rows as $row) {
             $key = $row['idxname'];

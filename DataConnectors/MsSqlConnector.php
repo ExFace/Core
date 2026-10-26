@@ -26,6 +26,9 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
 /**
  * Microsoft SQL Server connector via the official sqlsrv PHP extension.
  * 
+ * For server-managed credentials, see [Secrets in environment variables](../Docs/Security/Secure_data_sources/Secrets_in_env_vars.md)
+ * with `~env:` and `~system:` configuration examples for Apache, nginx and IIS.
+ * 
  * Apart from the typical SQL connection config syntax you can also explicitly set the `connection_options` 
  * as described here: https://docs.microsoft.com/en-us/sql/connect/php/connection-options.
  * 
@@ -71,20 +74,25 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
  * **IMPORTANT:** the PHP process must run as the user you need to authenticate with. Depending on the web
  * server used, different approaches are possible.
  * 
+ * #### On Microsoft IIS
+ * 
  * In the case of Microsoft IIS, the workbench needs to be installed in a "Virtual folder" in one of the
  * IIS application pools. The configuration of the pool seems not important, but in the settings of the
  * virtual folder, you need to specify the user and password:
  * 
  *  1. Open IIS Manager
  *  2. Navigate to `<servername> > Sites > Default Web Site` on the left panel
- *  3. Find the virtual directory, where the workbencnh is installed, beneath the selected web site
+ *  3. Find the virtual directory, where the workbench is installed, beneath the selected web site
  *  4. Select the virtual directory and press `Basic settings` on the right panel
  *  5. Press `Connect as...`
  *  6. Select `Specific user` and press `Set...` right next to it
- *  7. Type the user name with domain like `MYDOMAIN\User name` and that users current password
+ *  7. Type the username with domain like `MYDOMAIN\Username` and that user's current password
  * 
- * The workbench must be installed within the folder above. If you need to change the password, select your
- * created virtual directory on the left panel and press `Basic settings` on the right panel under `Actions`.
+ * **NOTE:** In php.ini `cgi.impersonate=1` must be set (uncommented)! The workbench must be installed within the 
+ * folder above.
+ * 
+ * If you need to change the password, select your created virtual directory on the left panel and press 
+ * `Basic settings` on the right panel under `Actions`.
  *
  * ### Azure authentication via environment variables
  *
@@ -99,6 +107,15 @@ use exface\Core\QueryBuilders\MsSqlBuilder;
  * }
  * 
  * ```
+ * 
+ * The `~env:` prefix reads variables using PHP's `getenv()`. If the values are exposed in
+ * PHP's `$_SERVER` array instead, use `~system:` with the same variable names. How to read
+ * environment variables best largely depends
+ * 
+ * For example, Apache `SetEnv` can populate these server variables, depending on the PHP
+ * server integration. A variable may be available through both sources or only one. Names 
+ * are case-sensitive and missing variables raise an error. Apache `SetEnv` does not configure
+ * CLI processes, so provide their variables separately.
  * 
  * ### Azure AD authentication
  * 

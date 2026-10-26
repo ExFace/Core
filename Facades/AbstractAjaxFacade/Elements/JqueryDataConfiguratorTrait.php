@@ -95,56 +95,78 @@ trait JqueryDataConfiguratorTrait
     public function buildJsDataGetter(ActionInterface $action = null, bool $unrendered = false)
     {
         $widget = $this->getWidget();
-        $filters = [];
-        $nestedGroups = [];
+        $relatedGroupFilters = [];
+        $directFilters = [];
         
-        if (! $unrendered) {
-            foreach ($widget->getFilters() as $filter) {
-                $filterElement = $this->getFacade()->getElement($filter);
-                if ($filter->hasCustomConditionGroup() === true) {
-                    $nestedGroups[] = $filterElement->buildJsCustomConditionGroup();
-                } else {
-                    $filters[] = $filterElement->buildJsConditionGetter(null, $widget->getMetaObject());
-                }
+        // See if any filters belong into a separate condition group because they are based on a related object.
+        foreach ($widget->getFilters() as $filter) {
+            $filterRelPath = $filter->getObjectRelationPathToParent();
+            if ($filterRelPath !== null && ! $filterRelPath->isEmpty()) {
+                $relatedGroupFilters[$filterRelPath->toString()][] = $filter;
+            } else {
+                $directFilters[] = $filter;
             }
-        } else {
-            foreach ($widget->getFilters() as $filter) {
+        }
+
+        // Prepare a reusable function to render condition and nested group JS for an array of filter widgets.
+        // Did not extract this into a separate method because it would produce an ugly array return value, and it is
+        // not really required anywhere except for this method here.
+        $buildConditionsAndGroups = function(array $filters) use ($unrendered) {
+            $conditions = [];
+            $nestedGroups = [];
+            // Turn direct filters into first-level conditions and nested groups (if they have a custom condition group)
+            foreach ($filters as $filter) {
                 $filterElement = $this->getFacade()->getElement($filter);
-                if ($link = $filter->getValueWidgetLink()) {
-                    $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-                    $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
-                } else {
-                    // RangeFilter needs special handling in unrendered mode:
-                    // getValue() concatenates "from..to", resulting in ".." when both are empty,
-                    // so if the from/to values are not set (and theres no widget link), we need to pass an empty string instead
-                    if ($filter instanceof \exface\Core\Widgets\RangeFilter && $filter->hasValue() === false) {
-                        $filter_value = '""';
-                    }
-                    else {
-                        $filter_value = '"' . $filter->getValue() . '"';
+                $filter_value = null;
+                if ($unrendered === true) {
+                    if ($link = $filter->getValueWidgetLink()) {
+                        $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
+                        $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+                    } else {
+                        // RangeFilter needs special handling in unrendered mode:
+                        // getValue() concatenates "from..to", resulting in ".." when both are empty,
+                        // so if the from/to values are not set (and theres no widget link), we need to pass an empty string instead
+                        if ($filter instanceof \exface\Core\Widgets\RangeFilter && $filter->hasValue() === false) {
+                            $filter_value = '""';
+                        } else {
+                            $filter_value = '"' . $filter->getValue() . '"';
+                        }
                     }
                 }
-                
+
                 if ($filter->hasCustomConditionGroup() === true) {
                     $nestedGroups[] = $filterElement->buildJsCustomConditionGroup($filter_value);
                 } else {
-                    $filters[] = $filterElement->buildJsConditionGetter($filter_value, $widget->getMetaObject());
+                    $conditions[] = $filterElement->buildJsConditionGetter($filter_value, $filter->getMetaObject());
                 }
             }
+            // Remove empty values
+            $conditions = array_filter($conditions);
+            return [$conditions, $nestedGroups];
+        };
+        
+        // No use the function to build an array of JS for conditions and nested groups.
+        // First - direct filters (those that are not based on a related object) as first-level conditions and nested groups.
+        list($conditions, $nestedGroups) = $buildConditionsAndGroups($directFilters);
+        // Then add nested groups for filters based on related objects.
+        foreach ($relatedGroupFilters as $relPath => $filters) {
+            list($relConditions, $relNestedGroups) = $buildConditionsAndGroups($filters);
+            // All filters have the same metaobject, so we can use the first one as condition group base.
+            $baseObject = $filters[0]->getMetaObject();
+            $nestedGroups[] = '{operator: "AND", ignore_empty_values: true, object_alias: "' . $baseObject->getAliasWithNamespace() . '", object_relation_path_to_outside: "' . $relPath . '", conditions: [' . implode(",\n", $relConditions) . '], nested_groups: [' . implode(",\n", $relNestedGroups) . ']}';
         }
-        // Remove empty values
-        $filters = array_filter($filters);
-        $conditionsJs = '[' . implode(",\n", $filters) . ']';
+        
+        // Put conditions and nested groups together in a single JS snippet.
+        $conditionsJs = '[' . implode(",\n", $conditions) . ']';
         //$conditionsJs .= ".filter(function(oCond){return oCond.value !== null && oCond.value !== undefined && oCond.value !== '';})";
-        if (empty($filters) === false  || empty($nestedGroups) === false) {
-            $filter_group = '{operator: "AND", ignore_empty_values: true, conditions: ' . $conditionsJs . ', nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
+        if (empty($conditions) === false  || empty($nestedGroups) === false) {
+            $filtersConditionGroupJs = '{operator: "AND", ignore_empty_values: true, conditions: ' . $conditionsJs . ', nested_groups: [' . implode(",\n", $nestedGroups) . ']}';
         } else {
-            $filter_group = '';
+            $filtersConditionGroupJs = '';
         }
 
-
-        // when requesting data for a datatable, pass the columns as well 
-        // this is for example needed in the export actions/ExportJSON
+        // Now handle columns. When requesting data for a datatable, pass the columns to the server - e.g. for
+        // export actions
         $columnsJs = '';
         if ($widget->getDataWidget() instanceof \exface\Core\Widgets\DataTable){
             $columns = $widget->getDataWidget()->getColumns();
@@ -171,7 +193,7 @@ trait JqueryDataConfiguratorTrait
             $columnsJs .= ']';
         }
 
-        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filter_group !== '' ? ", filters: " . $filter_group : "") . $columnsJs ."}";
+        return "{oId: '" . $widget->getMetaObject()->getId() . "'" . ($filtersConditionGroupJs !== '' ? ", filters: " . $filtersConditionGroupJs : "") . $columnsJs ."}";
     }
     
     /**

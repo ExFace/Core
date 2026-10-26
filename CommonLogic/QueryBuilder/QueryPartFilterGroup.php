@@ -5,6 +5,10 @@ use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\iCanBeCopied;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Model\MetaRelationInterface;
+use exface\Core\Interfaces\Model\MetaRelationPathInterface;
 
 /**
  * A filter group query part represents a condition group used for filtering in a query.
@@ -15,13 +19,47 @@ use exface\Core\Interfaces\iCanBeCopied;
 class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
 {
 
-    private $operator = EXF_LOGICAL_AND;
-
-    private $filters = array();
-
-    private $nested_groups = array();
-
+    private string $operator;
+    private array $filters = [];
+    private array $nested_groups = [];
+    private ?MetaRelationPathInterface $subqueryRelPath;
+    
     private $condition_group = null;
+
+    /**
+     * @param string $operator
+     * @param AbstractQueryBuilder $query
+     * @param ConditionGroupInterface|null $conditionGroup
+     * @param QueryPart|null $parentQueryPart
+     */
+    public function __construct(AbstractQueryBuilder $query, ?string $operator = EXF_LOGICAL_AND, ?MetaRelationPathInterface $subqueryRelPath = null, QueryPart $parentQueryPart = null)
+    {
+        parent::__construct('', $query, $parentQueryPart);
+        $this->operator = $operator;
+        
+        // Check if the relation path is applicable to our query.
+        if ($subqueryRelPath !== null) {
+            if ($subqueryRelPath->getEndObject()->is($query->getMainObject())) {
+                $subqueryRelPath = null;
+            } elseif (! $subqueryRelPath->getStartObject()->is($query->getMainObject())) {
+                throw new QueryBuilderException('The relation path for a filter group applied to a subquery must start with the main object of the query!');
+            }
+        }
+        $this->subqueryRelPath = $subqueryRelPath;
+        
+        // Initialize the inner condition group empty and keep updating it every time filters and nested gorups are
+        // added or removed - see add_filter(), add_nested_group(), etc.
+        // IDEA Currently the condition group is updated every time something happens to the filter group. Perhaps it
+        // is a better idea to build the condition group on demand, because it is only needed on very rare occasions
+        // (e.g. for rebasing conditions in subqueries, etc.)
+        // I don't know if maintaining the condition group all the time has an impact on performance or memory consumption.
+        $obj = $subqueryRelPath !== null ? $subqueryRelPath->getEndObject() : $query->getMainObject();
+        $this->condition_group = ConditionGroupFactory::createForObject($obj, $operator);
+        
+        if ($subqueryRelPath !== null) {
+            $this->condition_group->setObjectRelationPathToOutside($subqueryRelPath->reverse());
+        }
+    }
 
     public function getOperator()
     {
@@ -146,16 +184,35 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      */
     public static function createQueryPartFromConditionGroup(ConditionGroup $group, AbstractQueryBuilder $query, QueryPart $parentQueryPart = null)
     {
-        $qpart = new QueryPartFilterGroup('', $query, $parentQueryPart);
-        $qpart->setOperator($group->getOperator());
+        $qpart = new QueryPartFilterGroup($query, $group->getOperator(), $group->getBaseRelationPathFrom($query->getMainObject()), $parentQueryPart);
+        
+        // See if the condition group is applicable to the main object of the query
+        // TODO do we still need this after the constructor already receives the relation path?
         $queryObj = $query->getMainObject();
+        $grpObj = $group->getBaseObject();
+        if ($grpObj !== null && ! $queryObj->is($grpObj)) {
+            $grpRelToQuery = $group->getBaseRelationPathTo($queryObj);
+            if ($grpRelToQuery !== null) {
+                $targetObj = $grpObj;
+            } else {
+                return $qpart;
+            }
+        } else {
+            $targetObj = $queryObj;
+        }
+        
+        // Add all conditions and nested groups to the query part, but only if they are applicable to the main object of the query
         foreach ($group->getConditions() as $c) {
             $conditionObj = $c->getExpression()->getMetaObject();
-            if ($conditionObj !== null && ! $queryObj->is($conditionObj)) {
+            if ($conditionObj !== null && ! $conditionObj->is($targetObj)) {
                 continue;
             }
             $qpart->addCondition($c);
         }
+        
+        // Add all nested groups to the query part
+        // TODO #condition-group-with-base also check if they are applicable?
+        // TODO If a nested group has a relation path, it should actually be joined with the current groups path!
         foreach ($group->getNestedGroups() as $g) {
             $qpart->addConditionGroup($g);
         }
@@ -181,18 +238,11 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
 
     /**
      * Returns the condition group represented by this filter group.
-     *
-     * IDEA Currently the condition group is updated every time something happens to the filter group (add_filter(), add_nested_group(), etc.). Perhaps it
-     * is a better idea to build the condition group on demand, because it is only needed on very rare occasions (e.g. for rebasing conditions in subqueries, etc.)
-     * I don't know, if maintainig the condition group all the time has an impact on performance or memory consumption.
-     *
+     * 
      * @return \exface\Core\CommonLogic\Model\ConditionGroup
      */
     public function getConditionGroup()
     {
-        if ($this->condition_group === null) {
-            $this->condition_group = ConditionGroupFactory::createEmpty($this->getWorkbench(), $this->getOperator());
-        }
         return $this->condition_group;
     }
 
@@ -224,8 +274,7 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
      */
     public function copy() : self
     {
-        $copy = new QueryPartFilterGroup($this->getAlias(), $this->getQuery());
-        $copy->setOperator($this->getOperator());
+        $copy = new QueryPartFilterGroup($this->getQuery(), $this->getOperator(), $this->getParentQueryPart());
         foreach ($this->getFilters() as $qpart) {
             $copy->addFilter($qpart->copy());
         }
@@ -380,5 +429,59 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
         }
         
         return $result_rows;
+    }
+
+    /**
+     * Returns the base metaobject of this query part.
+     * 
+     * @return MetaObjectInterface|null
+     */
+    public function getMetaObject() : ?MetaObjectInterface
+    {
+        return $this->subqueryRelPath !== null ? $this->subqueryRelPath->getEndObject() : $this->getQuery()->getMainObject();
+    }
+
+    /**
+     * Returns TRUE if this filter group is targeting a subquery specifically
+     * 
+     * @return bool
+     */
+    public function isAppliedToSubquery() : bool
+    {
+        return $this->subqueryRelPath !== null;
+    }
+
+    /**
+     * Returns the relation path from the main query object to the subquery object
+     * 
+     * @return RelationPath|null
+     */
+    public function getSubqueryRelationPath() : ?MetaRelationPathInterface
+    {
+        return $this->subqueryRelPath;
+    }
+
+    /**
+     * Returns the relation representing the boundary between the subquery and the main query (or NULL if no subquery).
+     * 
+     * @param bool $rely_on_joins
+     * @return MetaRelationInterface|null
+     */
+    public function getSubqueryJunctionRelation(bool $rely_on_joins) : ?MetaRelationInterface
+    {
+        if ($this->isAppliedToSubquery() === false) {
+            return null;
+        }
+        // First of all, see if we can rely on all joins being performed in the main query.
+        // This is implicitly also the case, if there are no joins needed (= the data in the main query will be sufficient in any case)
+        $relPath = $this->getSubqueryRelationPath();
+        if ($rely_on_joins || $relPath->isEmpty()) {
+            // If so, just need to include those relations in the subquery, which follow a reverse relation
+            $start_rel = $relPath->getRelationFirst(function(MetaRelationInterface $rel) { return $rel->isReverseRelation(); });
+        } else {
+            // Otherwise, all relations (starting from the first one) must be put into the subquery, because there are no joins in the main one
+            $start_rel = $relPath->getRelationFirst();
+        }
+        return $start_rel;
     }
 }

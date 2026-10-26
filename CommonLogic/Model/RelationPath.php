@@ -178,8 +178,16 @@ class RelationPath implements MetaRelationPathInterface
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\MetaRelationPathInterface::getRelationFirst()
      */
-    public function getRelationFirst()
+    public function getRelationFirst(?callable $filter = null) : ?MetaRelationInterface
     {
+        if ($filter) {
+            foreach ($this->getRelations() as $rel) {
+                if ($filter($rel)) {
+                    return $rel;
+                }
+            }
+            return null;
+        }
         return $this->getRelation(0);
     }
 
