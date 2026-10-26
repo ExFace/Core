@@ -2,8 +2,8 @@
 namespace exface\Core\DataTypes;
 
 use DOMDocument;
+use exface\Core\CommonLogic\Utils\HtmlIndenter;
 use exface\Core\Exceptions\DataTypes\HtmlValidationError;
-use Gajus\Dindent\Indenter;
 
 class HtmlDataType extends CodeDataType
 {
@@ -35,12 +35,18 @@ class HtmlDataType extends CodeDataType
      * 
      * NOTE: this method does not modify the HTML in contrast DOMDocument::$formatOutput and other beautificators.
      * 
+     * Only whitespace and indentation are changed: broken markup is not repaired, no tags are added or
+     * removed, attributes and entities remain untouched and the content of script, style, pre and textarea
+     * is preserved exactly. This method never throws - if the HTML cannot be indented, it is returned as-is.
+     * 
+     * @see HtmlIndenter::indent()
+     * 
      * @param string $html
      * @return string
      */
     public static function prettify(string $html) : string
     {
-        return (new Indenter())->indent($html);
+        return (new HtmlIndenter())->indent($html);
     }
 
     /**
