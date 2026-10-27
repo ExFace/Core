@@ -31,6 +31,7 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\Widgets\DataButton;
+use exface\Core\CommonLogic\Utils\WidgetIdEncoder;
 
 /**
  *
@@ -1066,7 +1067,7 @@ JS;
         $widget = $this->getWidget();
         $undo_url = '';
         if ($action->isUndoable()) {
-            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPage()->getAliasWithNamespace() . "&element=" . $widget->getId();
+            $undo_url = $this->getAjaxUrl() . "&action=exface.Core.UndoAction&resource=" . $widget->getPage()->getAliasWithNamespace() . "&element=" . WidgetIdEncoder::encode($widget->getId());
         }
         return $undo_url;
     }
