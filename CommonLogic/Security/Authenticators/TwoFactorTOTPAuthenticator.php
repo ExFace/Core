@@ -12,7 +12,7 @@ use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Factories\WidgetFactory;
 use RobThree\Auth\TwoFactorAuth;
-use exface\Core\CommonLogic\Security\Authenticators\TOTP\NoImageQRCodeProvider;
+use exface\Core\CommonLogic\Security\Authenticators\TOTP\LocalQRCodeProvider;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
 
@@ -388,7 +388,7 @@ HTML
      */
     protected function getTFA() : TwoFactorAuth
     {
-        $tfa = new TwoFactorAuth(new NoImageQRCodeProvider());
+        $tfa = new TwoFactorAuth(new LocalQRCodeProvider());
         return $tfa;
     }
 }
