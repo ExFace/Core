@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
+use exface\Core\DataTypes\ColorDataType;
 
 /**
  *
@@ -16,6 +17,15 @@ trait HtmlColorIndicatorTrait
 {
     use JqueryAlignmentTrait;
     use JsValueScaleTrait;
+
+    public function buildHtmlHeadTags()
+    {
+        $headers = parent::buildHtmlHeadTags();
+        if ($this->getWidget()->getFill() && !$this->getWidget()->getColorOnly()) {
+            $headers[] = '<script src="' . $this->getFacade()->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfColorTools.js') . '"></script>';
+        }
+        return $headers;
+    }
     
     /**
      * Returns the <img> HTML tag with the given source.
@@ -57,6 +67,12 @@ trait HtmlColorIndicatorTrait
         
         if ($widget->getFill()) {
             $style .= " padding: 0 3px; background-color: {$color} !important;";
+            if (!$widget->getColorOnly()) {
+                $textColor = $color === 'exfph-color'
+                    ? 'exfph-foreground'
+                    : (!$color || $color === 'transparent' ? 'inherit' : ColorDataType::pickTextColorForBackgroundColor($color));
+                $style .= " color: {$textColor} !important;";
+            }
         } else {
             $style .= " font-weight: bold; color: {$color} !important;";
         }
@@ -86,8 +102,9 @@ HTML;
     /**
      * {@inheritdoc}
      * @see JsValueDecoratingInterface::buildJsValueDecorator
+     * @param string|null $rowJs Row data for color bindings to a different column.
      */
-    public function buildJsValueDecorator($value_js)
+    public function buildJsValueDecorator($value_js, ?string $rowJs = null)
     {
         $tpl = json_encode(
             $this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-hint', 'exfph-color')
@@ -97,6 +114,9 @@ HTML;
         $dataType = $this->getWidget()->getValueDataType();
         $jsEmptyText = $this->getFacade()->getDataTypeFormatter($dataType)->getJsEmptyText('null');
         $hintsJson = "{}";
+        $textColorJs = $this->getWidget()->getFill() && !$this->getWidget()->getColorOnly()
+            ? "(!sColor || sColor === 'transparent' ? 'inherit' : exfColorTools.pickTextColorForBackgroundColor(sColor))"
+            : "'inherit'";
 
         if ($dataType instanceof EnumDataTypeInterface) {
             $hints = $dataType->getValueHints();
@@ -121,7 +141,7 @@ function() {
         sText = {$jsEmptyText} !== null ? {$jsEmptyText} : '&nbsp;';
     }
     
-    sColor = {$this->buildJsColorResolver('mValue')};
+    var sColor = {$this->buildJsColorResolver('mValue', $rowJs)};
     
     if (oSemanticColors[sColor] !== undefined) {
        sColor = oSemanticColors[sColor];
@@ -130,6 +150,7 @@ function() {
     return sHtml
         .replace(/exfph-mValue/g, mValue)
         .replace("exfph-color", sColor)
+        .replace("exfph-foreground", {$textColorJs})
         .replace(/exfph-text/g, sText)
         .replace(/exfph-hint/g, sHint);
 }()
@@ -139,14 +160,28 @@ JS;
     /**
      * 
      * @param string $valueJs
+     * @param string|null $rowJs
      * @return string
      */
-    protected function buildJsColorResolver(string $valueJs) : string
+    protected function buildJsColorResolver(string $valueJs, ?string $rowJs = null) : string
     {
         $widget = $this->getWidget();
+        $binding = $widget->getColorBinding();
+        $colorValueJs = null;
+        if ($binding->isBoundToDataColumn()) {
+            if ($binding->getDataColumnName() === $widget->getDataColumnName()) {
+                $colorValueJs = $valueJs;
+            } elseif ($rowJs !== null) {
+                $columnJs = json_encode($binding->getDataColumnName());
+                $colorValueJs = "({$rowJs} == null ? null : {$rowJs}[{$columnJs}])";
+            }
+        }
+        if ($colorValueJs === null && !$binding->isBoundToDataColumn() && $binding->hasValue()) {
+            $colorValueJs = json_encode($binding->getValue());
+        }
         if ($widget->hasColorScale()) {
-            return $this->buildJsScaleResolver('mValue', $widget->getColorScale(), $widget->isColorScaleRangeBased());
-        }        
-        return 'transparent';
+            return $this->buildJsScaleResolver($colorValueJs ?? $valueJs, $widget->getColorScale(), $widget->isColorScaleRangeBased());
+        }
+        return $colorValueJs !== null ? "({$colorValueJs} || 'transparent')" : "'transparent'";
     }
 }
