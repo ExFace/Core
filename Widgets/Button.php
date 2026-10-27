@@ -43,7 +43,6 @@ use exface\Core\DataTypes\StringDataType;
 use exface\Core\Interfaces\Widgets\iSupportMultiSelect;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\Widgets\iCanBeBoundToAttribute;
-use exface\Core\CommonLogic\Utils\WidgetIdEncoder;
 
 /**
  * A Button is the primary widget for triggering actions.
@@ -938,18 +937,15 @@ class Button extends AbstractWidget implements iHaveIcon, iHaveColor, iTriggerAc
 
         // Create an additional hidden_if using the =IsButtonAuthorized() formula to check, if this
         // button is authorized for the current user and each line of potential input data
-        // the button is hidden as long as no data is selected at all or the user has no permission for the selected data.
-        // The widget id is encoded because the data column name is derived from the expression and ends
-        // up in data rows and URLs - path-like ids of nested dialogs would make it extremely long.
+        // the button is hidden as long as no data is selected at all or the user has no permission for the selected data
         if ($this->getHiddenIfAccessDenied() === self::ACCESS_DENIED_TO_ACTION_FOR_INPUT) {
             $inputWidget = $this->getInputWidget();
-            $encodedId = WidgetIdEncoder::encode($this->getId());
             $condGrp = ConditionGroupFactory::createFromUxon(
                 $this->getWorkbench(),
                 new UxonObject([
                     'conditions' => [
                         [
-                            'expression' => "=IsButtonAuthorized('{$this->getPage()->getAliasWithNamespace()}', '{$encodedId}')",
+                            'expression' => "=IsButtonAuthorized('{$this->getPage()->getAliasWithNamespace()}', '{$this->getId()}')",
                             'comparator' => ComparatorDataType::EQUALS_NOT,
                             'value' => true
                         ]

@@ -24,7 +24,6 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
-use exface\Core\CommonLogic\Utils\WidgetIdEncoder;
 
 /**
  * A generic task for objects, actions, pages, widgets and input/prefill data
@@ -495,14 +494,12 @@ class GenericTask implements TaskInterface
 
     /**
      * 
-     * Widget ids encoded via `WidgetIdEncoder::encode()` (e.g. in URLs) are decoded automatically.
-     * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Tasks\TaskInterface::setWidgetIdTriggeredBy()
      */
     public function setWidgetIdTriggeredBy($string) : TaskInterface
     {
-        $this->originWigetId = is_string($string) ? WidgetIdEncoder::decode($string) : $string;
+        $this->originWigetId = $string;
         return $this;
     }
 
