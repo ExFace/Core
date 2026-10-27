@@ -35,6 +35,7 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\CommonLogic\Utils\WidgetIdEncoder;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -2089,7 +2090,7 @@ JS;
                 $lazyLoadingRequestOptions = [
                     'action_alias' => $cellWidget->getLazyLoadingActionAlias(),
                     'page_id' => $this->getPageId(),
-                    'element_id' => $cellWidget->getTable()->getId(),
+                    'element_id' => WidgetIdEncoder::encode($cellWidget->getTable()->getId()),
                     'object_id' => $cellWidget->getTable()->getMetaObject()->getId(),
                     'headers' => ! empty($this->getAjaxHeaders()) ? 'headers: ' . json_encode($this->getAjaxHeaders()) . ',' : ''
                 ];
