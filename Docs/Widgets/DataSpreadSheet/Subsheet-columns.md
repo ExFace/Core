@@ -99,12 +99,16 @@ shared nested template; it does not impose the one-selector restriction.
 `Data` provides `configureColumn()` and `createColumnCellWidget()` extension
 points for owning widgets. `DataSpreadSheet` uses these for virtual selector
 names, filtering/sorting restrictions and collection-level editor defaults. It
-also validates the current selector limitations and requests parent identity.
-These defaults and restrictions do not apply to generic child columns in other
+also requests parent identity.
+These widget defaults do not apply to generic child columns in other
 data widgets. Supporting generic nested-data binding does not itself implement
 a child editor in every facade.
 
-`JExcelTrait` handles the scalar/nested conversion, delimiter bridge, dropdown
+`JExcelTrait` validates the current selector limitations when generating column
+models, for both spreadsheets and importers using this renderer. Other facades
+do not inherit these renderer-specific restrictions. This validation does not
+establish full subsheet-import support; ordinary importers remain unaffected.
+The trait also handles the scalar/nested conversion, delimiter bridge, dropdown
 interaction and save payload. Backend nested replacement remains unchanged.
 
 ## Checks
@@ -123,9 +127,7 @@ delimiters, option clicks, reopening, deselection, clearing, cancellation and
 undo/redo. Load those libraries and call `testDataSpreadSheetDropdown(traitSource)`.
 The PHP integration test requires an installed Core model
 and uses the OBJECT/ATTRIBUTE relation without writing any records. It also
-checks generic `Data`/`DataTable` bindings, merged child templates, spreadsheet-only
+checks generic `Data`/`DataTable` bindings, merged child templates, renderer-specific
 restrictions, explicit column groups and editor overrides. Database
 create/update/delete behavior still requires application-specific acceptance
 testing, preferably in a disposable test database.
-
-

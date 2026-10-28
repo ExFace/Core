@@ -1942,10 +1942,48 @@ JS;
 JS;
     }
     
-    protected function buildJsJExcelColumnModels(?DataColumn $rowNumberCol = null) : string
+    /**
+     * Validates the child-collection selectors supported by this renderer.
+     *
+     * @return void
+     * @throws WidgetConfigurationError
+     */
+    protected function validateSubsheetColumns() : void
     {
         $widget = $this->getWidget();
-        $widget->validateSubsheetColumns();
+        $relations = [];
+        foreach ($widget->getColumns() as $column) {
+            if (! $column->isSubsheetColumn()) {
+                continue;
+            }
+            $relation = $column->getSubsheetRelationAlias();
+            $path = $column->getObjectRelationPathToParent();
+            // The selector currently replaces children through one direct parent relation.
+            if (count($path->getRelations()) !== 1 || ! $path->getRelationFirst()->isForwardRelation()) {
+                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a direct forward object_relation_path_to_parent from the child object to the spreadsheet object.');
+            }
+            // Stable parent and child identities are needed to retain existing linking records.
+            if (! $widget->getMetaObject()->hasUidAttribute()
+                || $path->getRelationFirst()->getRightKeyAttribute()->getAlias() !== $widget->getMetaObject()->getUidAttribute()->getAlias()) {
+                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a relation to the parent UID attribute.');
+            }
+            if (! $column->getMetaObject()->hasUidAttribute()) {
+                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a child UID attribute.');
+            }
+            // Multiple selectors could otherwise replace the same collection independently.
+            if (isset($relations[$relation]) || ! ($column->getCellWidget() instanceof InputSelect)
+                || ! $column->isBoundToAttribute() || ! $column->getAttribute()->isRelation()
+                || $column->isCalculated() || $column->hasFooter()) {
+                throw new WidgetConfigurationError($column, 'Subsheet editing supports one relation selector column per child relation, without calculations or footers.');
+            }
+            $relations[$relation] = true;
+        }
+    }
+
+    protected function buildJsJExcelColumnModels(?DataColumn $rowNumberCol = null) : string
+    {
+        $this->validateSubsheetColumns();
+        $widget = $this->getWidget();
         $columnsJson = '';
         /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $colIdx => $col) {
