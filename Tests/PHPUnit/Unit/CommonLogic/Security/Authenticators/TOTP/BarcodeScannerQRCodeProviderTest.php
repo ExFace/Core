@@ -2,7 +2,7 @@
 namespace exface\Core\Tests\PHPUnit\Unit\CommonLogic\Security\Authenticators\TOTP;
 
 use exface\BarcodeScanner\BarcodeScannerApp;
-use exface\Core\CommonLogic\Security\Authenticators\TOTP\LocalQRCodeProvider;
+use exface\Core\CommonLogic\Security\Authenticators\TOTP\BarcodeScannerQRCodeProvider;
 use exface\Core\Exceptions\RuntimeException;
 use PHPUnit\Framework\TestCase;
 use RobThree\Auth\TwoFactorAuth;
@@ -29,7 +29,7 @@ class LocalQRCodeProviderTest extends TestCase
      */
     private function createTFA() : TwoFactorAuth
     {
-        return new TwoFactorAuth(new LocalQRCodeProvider());
+        return new TwoFactorAuth(new BarcodeScannerQRCodeProvider());
     }
 
     /**
@@ -51,7 +51,7 @@ class LocalQRCodeProviderTest extends TestCase
      */
     public function testGetQRCodeImageThrowsExceptionWithoutBarcodeScanner() : void
     {
-        $provider = new class extends LocalQRCodeProvider {
+        $provider = new class extends BarcodeScannerQRCodeProvider {
             /**
              * Simulates an installation without exface.BarcodeScanner.
              *
@@ -75,7 +75,7 @@ class LocalQRCodeProviderTest extends TestCase
     public function testGetQRCodeImageReturnsSvg() : void
     {
         $this->skipIfBarcodeScannerMissing();
-        $svg = (new LocalQRCodeProvider())->getQRCodeImage(self::QR_TEXT, 200);
+        $svg = (new BarcodeScannerQRCodeProvider())->getQRCodeImage(self::QR_TEXT, 200);
         $this->assertNotEmpty($svg);
         $this->assertMatchesRegularExpression('/^(<\?xml|<svg)/', $svg);
         $this->assertStringContainsString('width="200" height="200"', $svg);
