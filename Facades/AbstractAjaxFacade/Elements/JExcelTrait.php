@@ -1945,7 +1945,10 @@ JS;
     protected function buildJsJExcelColumnModels(?DataColumn $rowNumberCol = null) : string
     {
         $widget = $this->getWidget();
-        $widget->validateSubsheetColumns();
+        // Importers share this renderer, but only spreadsheets define selector restrictions.
+        if ($widget instanceof DataSpreadSheet) {
+            $widget->validateSubsheetColumns();
+        }
         $columnsJson = '';
         /* @var $col \exface\Core\Widgets\DataColumn */
         foreach ($widget->getColumns() as $colIdx => $col) {
