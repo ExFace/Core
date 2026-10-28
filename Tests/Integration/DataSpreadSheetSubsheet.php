@@ -9,6 +9,8 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\WidgetFactory;
+use exface\Core\Facades\AbstractAjaxFacade\Elements\JExcelTrait;
+use exface\Core\Widgets\DataSpreadSheet;
 
 $checks = 0;
 $check = function (bool $condition, string $message) use (&$checks) {
@@ -16,6 +18,26 @@ $check = function (bool $condition, string $message) use (&$checks) {
     if (! $condition) {
         throw new RuntimeException($message);
     }
+};
+$validateSelectors = function (DataSpreadSheet $widget) {
+    $element = new class($widget) {
+        use JExcelTrait {
+            validateSubsheetColumns as public;
+        }
+
+        private DataSpreadSheet $widget;
+
+        public function __construct(DataSpreadSheet $widget)
+        {
+            $this->widget = $widget;
+        }
+
+        public function getWidget() : DataSpreadSheet
+        {
+            return $this->widget;
+        }
+    };
+    $element->validateSubsheetColumns();
 };
 
 $workbench = new Workbench();
@@ -43,8 +65,10 @@ $check($cell->getMetaObject()->isExactly($column->getMetaObject()), 'Editor must
 $check($cell->getTable()->getMetaObject()->getAliasWithNamespace() === 'exface.Core.DATATYPE', 'Wrong suggestion object');
 $check($cell->getMultiSelect(), 'Child selectors should default to multi-selection');
 $check(strpos($column->getDataColumnName(), '__subsheet_') === 0, 'Missing virtual cell name');
+$validateSelectors($widget);
 
 $sheet = $widget->prepareDataSheetToRead();
+$check($sheet->hasUidColumn(), 'Spreadsheet must retain parent identity');
 $relation = $column->getSubsheetRelationAlias();
 $nested = $sheet->getColumns()->getByExpression($relation);
 $check($nested && $nested->isNestedData(), 'Child relation is not a nested datasheet');
@@ -118,9 +142,13 @@ $duplicate = WidgetFactory::createFromUxon($page, new UxonObject([
     'object_alias' => 'exface.Core.OBJECT',
     'columns' => [$selector, $selector]
 ]));
+$check(
+    $duplicate->prepareDataSheetToRead()->getColumns()->getByExpression($relation)->isNestedData(),
+    'Read preparation must not impose renderer-specific selector restrictions'
+);
 $duplicateRejected = false;
 try {
-    $duplicate->prepareDataSheetToRead();
+    $validateSelectors($duplicate);
 } catch (\exface\Core\Exceptions\Widgets\WidgetConfigurationError $error) {
     $duplicateRejected = strpos($error->getMessage(), 'one relation selector') !== false;
 }
@@ -158,9 +186,17 @@ $unsupported = WidgetFactory::createFromUxon($page, new UxonObject([
     'object_alias' => 'exface.Core.APP',
     'columns' => [$multiHopSelector]
 ]));
+$unsupportedChildren = array_values(array_filter($unsupported->getColumns(), function ($candidate) {
+    return $candidate->isSubsheetColumn();
+}));
+$unsupportedRelation = $unsupportedChildren[0]->getSubsheetRelationAlias();
+$check(
+    $unsupported->prepareDataSheetToRead()->getColumns()->getByExpression($unsupportedRelation)->isNestedData(),
+    'Read preparation must allow generic multi-hop child bindings'
+);
 $multiHopRejected = false;
 try {
-    $unsupported->prepareDataSheetToRead();
+    $validateSelectors($unsupported);
 } catch (\exface\Core\Exceptions\Widgets\WidgetConfigurationError $error) {
     $multiHopRejected = strpos($error->getMessage(), 'direct forward') !== false;
 }
