@@ -698,6 +698,10 @@ SQL;
      * kept.
      * - FK RESTRICT/NO ACTION (the equivalent MySQL defaults) are normalized to "omitted" so servers reporting either
      * value produce identical dumps.
+     * - Integer display widths are omitted unless ZEROFILL applies; timestamp defaults
+     * use CURRENT_TIMESTAMP with nonzero fractional precision preserved. Implicit
+     * nullable defaults are omitted. Normalization happens when generating the dump,
+     * not during comparison; older exports must be regenerated.
      *
      * {@inheritDoc}
      * @see \exface\Core\CommonLogic\AppInstallers\AbstractSqlDatabaseInstaller::buildSqlSchema()
@@ -716,9 +720,9 @@ SQL;
     /**
      * Compares two schema dumps produced by {@see buildSqlSchema()}.
      *
-     * Since the dumps are deterministic (sorted, no auto-generated names), a plain
-     * line-based comparison is sufficient. The returned array contains one entry per
-     * structural difference. An empty array means the schemas are equivalent.
+     * Both dumps must be generated in the same normalized format. The shared
+     * comparator reports differences without applying MySQL-specific rewriting.
+     * An empty array means the schemas are equivalent; older exports must be regenerated.
      *
      * @param string $currentSchema
      * @param string $previousSchema
@@ -828,7 +832,7 @@ SQL;
      */
     protected function fetchColumns(string $schemaEsc, string $tableEsc) : array
     {
-        $sql = "SELECT COLUMN_NAME AS column_name, COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, EXTRA AS extra"
+        $sql = "SELECT COLUMN_NAME AS column_name, COLUMN_TYPE AS column_type, IS_NULLABLE AS is_nullable, COLUMN_DEFAULT AS column_default, EXTRA AS extra, VERSION() AS server_version"
             . " FROM information_schema.COLUMNS"
             . " WHERE TABLE_SCHEMA = '{$schemaEsc}' AND TABLE_NAME = '{$tableEsc}'"
             . " ORDER BY COLUMN_NAME";
@@ -960,19 +964,48 @@ SQL;
      *
      * The `AUTO_INCREMENT` counter (a table option) is never part of the output, but the
      * column attribute itself is preserved as it is a structural property.
+     * Literal defaults, including empty strings, are quoted for MySQL metadata;
+     * MariaDB already returns SQL-formatted defaults. Expressions remain unquoted.
+     * Integer display widths are omitted except for ZEROFILL, and timestamp defaults
+     * use canonical spelling while retaining nonzero fractional precision.
      *
      * @param array $col
      * @return string
      */
     protected function buildColumnDefinition(array $col) : string
     {
-        $line = '"' . $col['column_name'] . '" ' . strtolower($col['column_type']);
+        // Normalize only the type name, never quoted ENUM/SET values in COLUMN_TYPE.
+        $type = preg_replace_callback('/^\w+/', static function (array $match) : string {
+            return strtolower($match[0]);
+        }, $col['column_type']);
+        if (stripos($type, 'zerofill') === false) {
+            $type = preg_replace('/^(tinyint|smallint|mediumint|int|integer|bigint)\(\d+\)/', '$1', $type);
+        }
+        $line = '"' . $col['column_name'] . '" ' . $type;
         if (strcasecmp($col['is_nullable'], 'NO') === 0) {
             $line .= ' NOT NULL';
         }
         $default = $col['column_default'];
-        if ($default !== null && $default !== '') {
-            $line .= ' DEFAULT ' . $default;
+        if ($default !== null) {
+            if (preg_match('/^(?:datetime|timestamp)\b/i', $type) === 1
+                && preg_match('/^CURRENT_TIMESTAMP(?:\(\s*(\d*)\s*\))?$/i', $default, $timestamp) === 1) {
+                $precision = (int) ($timestamp[1] ?? 0);
+                $line .= ' DEFAULT CURRENT_TIMESTAMP' . ($precision > 0 ? '(' . $precision . ')' : '');
+            } elseif (stripos($col['server_version'] ?? '', 'MariaDB') !== false) {
+                // MariaDB distinguishes the SQL NULL default from the literal 'NULL'.
+                if (strcasecmp($default, 'NULL') !== 0) {
+                    $line .= ' DEFAULT ' . $default;
+                }
+            } else {
+                $isExpression = stripos((string) $col['extra'], 'DEFAULT_GENERATED') !== false
+                    || (preg_match('/^(?:datetime|timestamp)\b/i', $col['column_type']) === 1
+                        && preg_match('/^CURRENT_TIMESTAMP(?:\(\d*\))?$/i', $default) === 1);
+                $isNumeric = preg_match('/^(?:tinyint|smallint|mediumint|int|integer|bigint|decimal|numeric|float|double|real|bit|year)\b/i', $col['column_type']) === 1
+                    && is_numeric($default);
+                $line .= ' DEFAULT ' . ($isExpression || $isNumeric
+                    ? $default
+                    : "'" . str_replace(["\\", "'"], ["\\\\", "''"], $default) . "'");
+            }
         }
         if (stripos((string) $col['extra'], 'auto_increment') !== false) {
             $line .= ' AUTO_INCREMENT';

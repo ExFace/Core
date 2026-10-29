@@ -124,43 +124,6 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
     }
 
     /**
-     * Validates the supported scope of spreadsheet child-collection selectors.
-     * 
-     * @return void
-     * @throws WidgetConfigurationError
-     */
-    public function validateSubsheetColumns() : void
-    {
-        $relations = [];
-        foreach ($this->getColumns() as $column) {
-            if (! $column->isSubsheetColumn()) {
-                continue;
-            }
-            $relation = $column->getSubsheetRelationAlias();
-            $path = $column->getObjectRelationPathToParent();
-            // The selector currently replaces children through one direct parent relation.
-            if (count($path->getRelations()) !== 1 || ! $path->getRelationFirst()->isForwardRelation()) {
-                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a direct forward object_relation_path_to_parent from the child object to the spreadsheet object.');
-            }
-            // Stable parent and child identities are needed to retain existing linking records.
-            if (! $this->getMetaObject()->hasUidAttribute()
-                || $path->getRelationFirst()->getRightKeyAttribute()->getAlias() !== $this->getMetaObject()->getUidAttribute()->getAlias()) {
-                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a relation to the parent UID attribute.');
-            }
-            if (! $column->getMetaObject()->hasUidAttribute()) {
-                throw new WidgetConfigurationError($column, 'Spreadsheet subsheet selectors require a child UID attribute.');
-            }
-            // Multiple selectors could otherwise replace the same collection independently.
-            if (isset($relations[$relation]) || ! ($column->getCellWidget() instanceof InputSelect)
-                || ! $column->isBoundToAttribute() || ! $column->getAttribute()->isRelation()
-                || $column->isCalculated() || $column->hasFooter()) {
-                throw new WidgetConfigurationError($column, 'Subsheet editing supports one relation selector column per child relation, without calculations or footers.');
-            }
-            $relations[$relation] = true;
-        }
-    }
-
-    /**
      * Keeps parent identity available for retaining child UIDs after sorting or reordering.
      * 
      * {@inheritDoc}
@@ -168,7 +131,6 @@ class DataSpreadSheet extends Data implements iFillEntireContainer, iTakeInputAs
      */
     public function prepareDataSheetToRead(DataSheetInterface $data_sheet = null)
     {
-        $this->validateSubsheetColumns();
         $data_sheet = parent::prepareDataSheetToRead($data_sheet);
         if ($data_sheet->getMetaObject()->is($this->getMetaObject())) {
             foreach ($this->getColumns() as $column) {
