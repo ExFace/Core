@@ -25,11 +25,20 @@ class BarcodeScannerQRCodeProvider implements IQRCodeProvider
      */
     public function getQRCodeImage($qrText, $size): string
     {
-        // barcode.php declares a global class, that PSR-4 autoloading cannot find
-        if (! class_exists('\exface\BarcodeScanner\DataTypes\BarcodeDataType')) {
+        if (! $this->isBarcodeScannerAvailable()) {
             throw new RuntimeException('QR code image generation requires the app exface.BarcodeScanner. Please install it to use this feature.');
         }
         return BarcodeDataType::generateBarcodeImage(BarcodeDataType::QR, $qrText, $size);
+    }
+
+    /**
+     * Checks the optional runtime dependency exface.BarcodeScanner - separate method, so tests can override it.
+     * 
+     * @return bool
+     */
+    protected function isBarcodeScannerAvailable() : bool
+    {
+        return class_exists(BarcodeDataType::class);
     }
 
     /**
