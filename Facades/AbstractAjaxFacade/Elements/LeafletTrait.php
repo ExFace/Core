@@ -102,6 +102,9 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  * of layers, we create a layer or layer group for every widget layer model and keep those in `oMap._layers`
  * where `oMap` is the main Leaflet variable available via `$this->buildJsLeafletVar()`.
  *
+ * GeoJSON features with non-finite coordinates, including projection results, are skipped
+ * with a summary warning per layer batch. Auto zoom also rejects non-finite bounds before fitting the view.
+ *
  * @method \exface\Core\Widgets\Map getWidget()
  *
  * @author Andrej Kabachnik
@@ -697,6 +700,15 @@ JS;
                                 return;
                         }
 
+                        // Accept numeric data strings, but reject blanks and non-finite endpoints before creating bounds.
+                        if (![fLatFrom, fLngFrom, fLatTo, fLngTo].every(function(value) {
+                            return Number.isFinite(Number(value)) && String(value).trim() !== '';
+                        })) {
+                            fnReportInvalidCoordinates('Invalid line coordinates');
+                            aRowsSkipped.push(oRow);
+                            return;
+                        }
+
                         oLine = L.polyline([
                             [fLatFrom, fLngFrom],
                             [fLatTo, fLngTo]
@@ -742,6 +754,15 @@ JS;
                                 return;
                         }
 
+                        // Apply the same endpoint validation to server-loaded and widget-linked lines.
+                        if (![fLatFrom, fLngFrom, fLatTo, fLngTo].every(function(value) {
+                            return Number.isFinite(Number(value)) && String(value).trim() !== '';
+                        })) {
+                            fnReportInvalidCoordinates('Invalid line coordinates');
+                            aRowsSkipped.push(oRow);
+                            return;
+                        }
+
                         oLine = L.polyline([
                             [fLatFrom, fLngFrom],
                             [fLatTo, fLngTo]
@@ -779,6 +800,7 @@ JS;
                 var oLeaflet = {$this->buildJsLeafletVar()};
                 {$this->buildJsMapLayerPaneInit($layer, 'oLeaflet')}
                 var oLayer = L.featureGroup();
+                {$this->buildJsCoordinateWarningReporter($layer)}
                 
                 oLayer._exfRefresh = $exfRefreshJs;
                 
@@ -1070,6 +1092,11 @@ JS;
                             // create markers for eacht top coordinate of every geometry within our geoJSON
                                 const markerCoords = topMostCoordinates(feature);
                                 for (const [lng, lat] of markerCoords) {
+                                    // These additional shape markers bypass the pointToLayer callback.
+                                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                                        fnReportInvalidCoordinates('Invalid shape marker coordinates');
+                                        continue;
+                                    }
                                     const oMarker = L.marker([lat, lng], {
                                         pane: '{$this->buildJsMapLayerPaneName($layer)}',
                                         icon: {$this->buildJsMarkerIcon($layer, 'feature.properties.data')},
@@ -1097,10 +1124,17 @@ JS;
         return <<<JS
             (function(oLeaflet){
                 {$projectionInit}
+                {$this->buildJsCoordinateWarningReporter($layer)}
                 {$this->buildJsMapLayerPaneInit($layer, 'oLeaflet')}
                 var oLayer = {$layerConstructor}(null, {
                     pane: '{$this->buildJsMapLayerPaneName($layer)}',
+                    filter: {$this->buildJsGeoJsonCoordinateFilter($layer)},
                     pointToLayer: function(feature, latlng) {
+                        // latlng is already transformed; invalid results must not enter the layer bounds.
+                        if (!Number.isFinite(latlng.lat) || !Number.isFinite(latlng.lng)) {
+                            fnReportInvalidCoordinates('Invalid projected marker coordinates');
+                            return null;
+                        }
                         var bDraggable = feature.properties.draggable || false;
                         var oMarker = L.marker(latlng, { 
                             pane: '{$this->buildJsMapLayerPaneName($layer)}',
@@ -1437,10 +1471,12 @@ JS;
         (function(oMap){
             $projectionInit
             $drawInitJs
+            {$this->buildJsCoordinateWarningReporter($layer)}
             {$this->buildJsMapLayerPaneInit($layer, 'oMap')}
 
             var oLayer = $layerConstructor(null, {
                 pane: '{$this->buildJsMapLayerPaneName($layer)}',
+                filter: {$this->buildJsGeoJsonCoordinateFilter($layer)},
                 onEachFeature: function (feature, layer) {
                     {$showPopupJs}
                     {$tooltipJs}
@@ -1489,6 +1525,11 @@ JS;
                     return oStyle;
                 },
                 pointToLayer: function(feature, latlng) {
+                    // Returning null skips the point before Leaflet constructs a marker.
+                    if (!Number.isFinite(latlng.lat) || !Number.isFinite(latlng.lng)) {
+                        fnReportInvalidCoordinates('Invalid projected marker coordinates');
+                        return null;
+                    }
                     var oProps = feature.properties.data;
                     return L.marker(latlng, {
                         pane: '{$this->buildJsMapLayerPaneName($layer)}',
@@ -1527,6 +1568,107 @@ JS;
     }
 
     /**
+     * Batches synchronous validation failures into one warning per layer data load.
+     */
+    protected function buildJsCoordinateWarningReporter(MapLayerInterface $layer) : string
+    {
+        $layerIndex = $this->getWidget()->getLayerIndex($layer);
+        $layerCaption = $layer->getCaption();
+        $messageJs = json_encode('Map layer ' . $layerIndex
+            . ($layerCaption !== null && $layerCaption !== '' ? ' (' . $layerCaption . ')' : '')
+            . ': skipped invalid map data', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        return <<<JS
+                var fnReportInvalidCoordinates = (function() {
+                    var counts = {};
+                    var pending = false;
+                    return function(reason) {
+                        counts[reason] = (counts[reason] || 0) + 1;
+                        if (pending) {
+                            return;
+                        }
+                        pending = true;
+                        // Data rows are processed synchronously; report totals after the batch, not individual rows.
+                        setTimeout(function() {
+                            var summary = counts;
+                            counts = {};
+                            pending = false;
+                            console.warn({$messageJs}, summary);
+                        }, 0);
+                    };
+                })();
+JS;
+    }
+
+    /**
+     * Validates every position before Leaflet creates a geometry, including projected lines and polygons.
+     * Rejects the entire feature instead of removing vertices, which could change its geometry.
+     * pointToLayer alone cannot protect lines and polygons because Leaflet only calls it for points.
+     */
+    protected function buildJsGeoJsonCoordinateFilter(MapLayerInterface $layer) : string
+    {
+        $projectionJs = 'null';
+        if (($layer instanceof CustomProjectionMapLayerInterface) && $layer->hasProjectionDefinition() && $layer->getProjection() instanceof Proj4Projection) {
+            $projectionJs = 'new L.Proj.Projection(' . json_encode($layer->getProjection()->getName()) . ')';
+        }
+
+        return <<<JS
+                    function(feature) {
+                        var oProjection = {$projectionJs};
+                        function validCoordinates(coordinates) {
+                            if (!Array.isArray(coordinates)) {
+                                return false;
+                            }
+                            if (coordinates.length === 0) {
+                                return true;
+                            }
+                            if (Array.isArray(coordinates[0])) {
+                                return coordinates.every(validCoordinates);
+                            }
+                            if (coordinates.length < 2 || !Number.isFinite(coordinates[0]) || !Number.isFinite(coordinates[1])) {
+                                return false;
+                            }
+                            if (oProjection !== null) {
+                                // Finite source values can still produce Infinity or NaN during transformation.
+                                var latlng = oProjection.unproject(L.point(coordinates[0], coordinates[1]));
+                                return Number.isFinite(latlng.lat) && Number.isFinite(latlng.lng);
+                            }
+                            return true;
+                        }
+                        function validGeometry(geometry) {
+                            // GeoJSON permits features without geometry.
+                            if (geometry === null) {
+                                return true;
+                            }
+                            if (!geometry || typeof geometry !== 'object') {
+                                return false;
+                            }
+                            if (geometry.type === 'Feature') {
+                                return validGeometry(geometry.geometry);
+                            }
+                            if (geometry.type === 'FeatureCollection') {
+                                return Array.isArray(geometry.features) && geometry.features.every(validGeometry);
+                            }
+                            if (geometry.type === 'GeometryCollection') {
+                                return Array.isArray(geometry.geometries) && geometry.geometries.every(validGeometry);
+                            }
+                            return validCoordinates(geometry.coordinates);
+                        }
+                        try {
+                            if (validGeometry(feature)) {
+                                return true;
+                            }
+                        } catch (error) {
+                            // Some projection failures throw rather than returning non-finite coordinates.
+                            fnReportInvalidCoordinates('Coordinate transformation failed');
+                            return false;
+                        }
+                        fnReportInvalidCoordinates('Invalid coordinates before or after projection');
+                        return false;
+                    }
+JS;
+    }
+
+    /**
      *
      * @param DataMapLayerInterface $layer
      * @param string $aRowsJs
@@ -1557,8 +1699,9 @@ JS;
 
                             var fLat = parseFloat(oRow.{$latColName});
                             var fLng = parseFloat(oRow.{$lngColName});
-        
-                            if (isNaN(fLat) || isNaN(fLng)) {
+
+                            // Unlike isNaN(), isFinite() also rejects positive and negative Infinity.
+                            if (!Number.isFinite(fLat) || !Number.isFinite(fLng)) {
                                 $aRowsSkippedJs.push(oRow);
                                 return;
                             }
@@ -1582,7 +1725,7 @@ JS;
                                 oShape = JSON.parse(sShape);
                             } catch (e) {
                                 $aRowsSkippedJs.push(oRow);
-                                console.warn('Cannot parse data as map shape:', e, oRow); 
+                                fnReportInvalidCoordinates('Cannot parse map shape');
                             }
                             if (oShape === {}) {
                                 $aRowsSkippedJs.push(oRow);
@@ -1668,7 +1811,8 @@ JS;
     protected abstract function buildJsLeafletDataLoader(DataMapLayerInterface $layer, string $oRequestParamsJs, string $aResultRowsJs, string $onLoadedJs) : string;
 
     /**
-     * Returns the JS code to pan/zoom the map after the data of a layer is refreshed
+     * Returns the JS code to pan/zoom the map after the data of a layer is refreshed.
+     * Non-finite combined layer bounds are reported and do not change the view.
      *
      * @param string $oLayerJs
      * @return string
@@ -1691,8 +1835,6 @@ JS;
                         var bIncludeOtherLayers = {$this->escapeBool($autoZoom->getIncludeOtherLayers())};
                         var fZBounds, fZMap;
                         if (oBounds !== undefined && oBounds.isValid()) {
-                            fZBounds = oMap.getBoundsZoom(oBounds);
-                            fZMap = oMap.getZoom();
                             if (bIncludeOtherLayers === true) {
                                 oMap._exfLayers.forEach(function(oOtherModel){
                                     if (oOtherModel.autoZoom === null || oOtherModel.autoZoom.disabled === true) {
@@ -1704,6 +1846,13 @@ JS;
                                     oBounds = oBounds.extend(oOtherModel.layer.getBounds());
                                 });
                             }
+                            // isValid() only checks that corners exist; validate values after merging all layer bounds.
+                            if (![oBounds.getSouth(), oBounds.getWest(), oBounds.getNorth(), oBounds.getEast()].every(Number.isFinite)) {
+                                console.warn('Skipping map auto zoom with invalid bounds:', oBounds);
+                                return;
+                            }
+                            fZBounds = oMap.getBoundsZoom(oBounds);
+                            fZMap = oMap.getZoom();
                             var bFitApplied = false;
                             switch (true) {
                                 // Zoom-out if allowed and needed zoom < current zoom or map zoom never changed
