@@ -1,10 +1,10 @@
 [
     {
         "name": "npm-asset/echarts",
-        "version": "4.9.0",
+        "version": "6.1.0",
         "license": ["Apache-2.0"],
         "license_link": [
-            "https://github.com/apache/echarts/blob/4.9.0/LICENSE"
+            "https://github.com/apache/echarts/blob/6.1.0/LICENSE"
         ],
         "description": "Custom build of Apache ECharts for interactive charts",
         "homepage": "https://echarts.apache.org/"

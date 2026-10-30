@@ -60,7 +60,7 @@ use exface\Core\DataTypes\NumberDataType;
  *      ```
  * 3. Use the trait in a facade element - see examples in \exface\JEasyUIFacade\Facades\Elements\euiChart.php
  * or \exface\UI5Facade\Facades\Elements\UI5Chart.php.
- * 4. Core ships custom ECharts builds and records the bundled ECharts 5 version in its includes.json
+ * 4. Core ships a custom ECharts 6 build and records its version in includes.json
  * for package and license tracking. Facades using these builds do not need an ECharts Composer
  * dependency, which would install an unused copy and constrain its transitive dependencies.
  *
@@ -106,12 +106,12 @@ use exface\Core\DataTypes\NumberDataType;
  * .js file. The current custom file includes the following chart types, coordinate systems,
  * components and other parts:
  *
- * - Charts: Bar, Line, Pie, Scatter, Heatmap, Sunburst, Graph, Gauge
+ * - Charts: Bar, Line, Pie, Scatter, Heatmap, Sunburst, Graph, Gauge, Sankey
  * - Coordinate Systems: Grid, Polar, SingleAxis
  * - Components: Title, Legend, Tooltip, MarkPoint, MarkLine, MarkArea, DataZoom, VisualMap
  * - Others: Utilities, CodeCompression
  *
- * @link https://www.echartsjs.com/en/index.html
+ * @link https://echarts.apache.org/en/index.html
  *
  * @method Chart getWidget()
  * @author Ralf Mulansky
@@ -204,11 +204,7 @@ trait EChartsTrait
     {
         $facade = $this->getFacade();
         $includes = [];
-        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_HEATMAP']) {
-            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTSHEATMAP_JS') . '"></script>';
-        } else {
-            $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
-        }
+        $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.ECHARTS.ECHARTS_JS') . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYCOLOR.JS') . '"></script>';
         $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToSource('LIBS.TINYGRADIENT.JS') . '"></script>';
         
@@ -662,6 +658,18 @@ JS;
      */
     protected function buildJsClicksFunctionBody(string $params) : string
     {
+        $syncSelectionJs = '';
+        if ($this->getChartType() === $this->chartTypes['CHART_TYPE_PIE']) {
+            $syncSelectionJs = <<<JS
+                    // ECharts also selects on native clicks, including double-clicks suppressed by PowerUI.
+                    if ({$this->buildJsEChartsVar()}._oldSelection !== undefined) {
+                        {$this->buildJsCallEChartsAction($this->buildJsEChartsVar(), 'select', 'params.seriesIndex', 'params.dataIndex')}
+                    } else {
+                        {$this->buildJsCallEChartsAction($this->buildJsEChartsVar(), 'unselect', 'params.seriesIndex', 'params.dataIndex')}
+                    }
+JS;
+        }
+
         return <<<JS
         
             
@@ -682,7 +690,7 @@ JS;
                 }, 500);
             } else {
                 if ({$this->buildJsEChartsVar()}._doubleClkSelection != undefined && {$this->buildJsEChartsVar()}._doubleClkSelection == selected) {
-                    // do nothing
+                    {$syncSelectionJs}
                 } else {
                     {$this->buildJsEChartsVar()}._doubleClkSelection = selected;
                     {$this->buildJsSingleClick($params)}
@@ -723,9 +731,7 @@ JS;
     }
     
     /**
-     * javascript function to handle hover behavior for graph charts
-     * when a node was selected and mouse moves over other nodes or not hovers anything,
-     * the node still stays selected
+     * Restores a clicked graph node's adjacency focus when the pointer enters or leaves graph elements.
      *
      * @return string
      */
@@ -733,22 +739,21 @@ JS;
     {
         return <<<JS
         
-        {$this->buildJsEChartsVar()}.on('unfocusnodeadjacency', function(params){
-            var echart = {$this->buildJsEChartsVar()};
-            if (echart._oldSelection != undefined) {
-                var selection = echart._oldSelection
-                var options = echart.getOption();
-                var nodes = options.series[0].data
-                var index = function(){
-                    for (var i = 0; i < nodes.length; i++) {
-                        if (nodes[i].id === selection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
-                            return i
-                        }
-                    }
-                }();
-                {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', '0', 'index')}
+        var fnRestoreGraphSelection = function(){
+            var oChart = {$this->buildJsEChartsVar()};
+            if (oChart._oldSelection === undefined) {
+                return;
             }
-        });
+            var aNodes = oChart.getOption().series[0].data;
+            for (var i = 0; i < aNodes.length; i++) {
+                if (aNodes[i].id === oChart._oldSelection.{$this->getWidget()->getSeries()[0]->getLeftObjectDataColumn()->getDataColumnName()}) {
+                    {$this->buildJsCallEChartsAction('oChart', 'highlight', '0', 'i')}
+                    return;
+                }
+            }
+        };
+        {$this->buildJsEChartsVar()}.on('mouseover', fnRestoreGraphSelection);
+        {$this->buildJsEChartsVar()}.on('mouseout', fnRestoreGraphSelection);
         
 JS;
     }
@@ -1005,22 +1010,22 @@ JS;
             // if already slected piepart gets clicked again
             if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                 // deselect the pie part
-                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect()}
             // if different part then already selected part gets clicked
             } else {
                 // deselect old pie part
                 var name = echart._oldSelection.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}
                 name = {$this->buildJsLabelFormatter($this->getWidget()->getSeries()[0]->getTextDataColumn(), "name")}
-                {$this->buildJsCallEChartsAction('echart', 'pieUnSelect', 'params.seriesIndex', null, 'name')}
+                {$this->buildJsCallEChartsAction('echart', 'unselect', 'params.seriesIndex', null, 'name')}
                 // select clicked pie part
-                {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         // if no pie part was selected
         } else {
             // select clicked pie part
-            {$this->buildJsCallEChartsAction('echart', 'pieSelect', 'params.seriesIndex', 'params.dataIndex')}
+            {$this->buildJsCallEChartsAction('echart', 'select', 'params.seriesIndex', 'params.dataIndex')}
             {$this->buildJsSelect('dataRow')}
         }
         
@@ -1037,25 +1042,25 @@ JS;
                 // if already selected graph node gets clicked again
                 if ({$this->buildJsRowCompare('echart._oldSelection', 'dataRow')} == true) {
                     // deselected the node
-                    {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
+                    {$this->buildJsCallEChartsAction('echart', 'downplay', 'params.seriesIndex')}
                     {$this->buildJsSelect()}
                 // if different node then already selected node gets clicked
                 } else {
                     // deselect old node
-                    {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
+                    {$this->buildJsCallEChartsAction('echart', 'downplay', 'params.seriesIndex')}
                     // select clicked node
-                    {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', 'params.seriesIndex', 'params.dataIndex')}
+                    {$this->buildJsCallEChartsAction('echart', 'highlight', 'params.seriesIndex', 'params.dataIndex')}
                     {$this->buildJsSelect('dataRow')}
                 }
             // if no node was selected
             } else {
                 // select clicked node
-                {$this->buildJsCallEChartsAction('echart', 'focusNodeAdjacency', 'params.seriesIndex', 'params.dataIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'highlight', 'params.seriesIndex', 'params.dataIndex')}
                 {$this->buildJsSelect('dataRow')}
             }
         } else {
             if (echart._oldSelection != undefined) {
-                {$this->buildJsCallEChartsAction('echart', 'unfocusNodeAdjacency', 'params.seriesIndex')}
+                {$this->buildJsCallEChartsAction('echart', 'downplay', 'params.seriesIndex')}
                 {$this->buildJsSelect()}
             }
         }
@@ -1625,7 +1630,7 @@ JS;
         
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
-            $label = '{show: false}';
+            $label = 'label: {show: false}';
         }
         if ($position == 'top' || $position == 'bottom' || $position == null) {
             $centerX = '50%';
@@ -1649,6 +1654,7 @@ JS;
         
 {
     type: 'pie',
+    selectedMode: 'single',
     radius: ['$radius', '80%'],
     center: ['$centerX', '50%'],
     data: [],
@@ -1688,7 +1694,7 @@ JS;
 
         $position = $this->getWidget()->getLegendPosition();
         if ($position !== null) {
-            $label = '{show: false}';
+            $label = 'label: {show: false}';
         }
         if ($position == 'top' || $position == 'bottom' || $position == null) {
             $centerX = '50%';
@@ -1718,7 +1724,7 @@ JS;
     data: [],
     {$label},
     {$itemStyleJs}
-    //selectedMode: 'single',
+    selectedMode: 'single',
     animationType: 'scale',
     animationEasing: 'backOut',
     
@@ -1764,7 +1770,6 @@ JS;
 	height: '50%',
 	name: 'Graph',
     type: 'graph',
-	hoverAnimation: true,
 	animationEasing: 'backOut',
 	layout: '{$type}',
     //autoCurveness: 20,
@@ -1780,13 +1785,10 @@ JS;
 		layoutAnimation: false,
 	},
     roam: true,
-    focusNodeAdjacency: true,
     itemStyle: {
-        normal: {
-            color: '{$color}',
-            borderColor: '#fff',
-            borderWidth: 1,
-        }
+        color: '{$color}',
+        borderColor: '#fff',
+        borderWidth: 1,
     },
     label: {
         position: 'right',
@@ -1839,14 +1841,12 @@ JS;
             _index: {$series->getIndex()},
             type: 'heatmap',
             label: {
-                normal: {
-                    {$show}
-                    formatter: function(param){
-                        if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
-                            return 'N/A';
-                        } else {
-                            return param.data['{$series->getValueDataColumn()->getDataColumnName()}'];
-                        }
+                {$show}
+                formatter: function(param){
+                    if (param.data['{$series->getValueDataColumn()->getDataColumnName()}'] ===  0) {
+                        return 'N/A';
+                    } else {
+                        return param.data['{$series->getValueDataColumn()->getDataColumnName()}'];
                     }
                 }
             },
@@ -1882,7 +1882,9 @@ JS;
         
         {
             type: 'sankey',
-            focusNodeAdjacency: 'allEdges',
+            emphasis: {
+                focus: 'trajectory'
+            },
             itemStyle: {
                 borderWidth: 1,
                 borderColor: '#aaa'
@@ -2056,6 +2058,8 @@ JS;
          } else {
          $maxInterval = '';
          }*/
+        // Time scales can generate more ticks than splitNumber, depending on the range and zoom.
+        $hideOverlap = $axisType === ChartAxis::AXIS_TYPE_TIME ? 'hideOverlap: true,' : '';
         $axisTypeLower = mb_strtolower($axisType);
         $position = mb_strtolower($axis->getPosition());
         if ($axis->getDimension() == Chart::AXIS_Y) {
@@ -2096,6 +2100,7 @@ JS;
         axisLabel: {
             fontFamily: '{$this->baseAxisLabelFont()}',
             fontSize: {$this->baseAxisLabelFontSize()},
+            {$hideOverlap}
             formatter: function(a) {
                 var bIsNumber = {$this->escapeBool($this->isAxisNumeric($axis))};
                 if (bIsNumber && Number.isInteger(a)){
@@ -3032,14 +3037,17 @@ JS;
     if ({$selection} != undefined) {
         var index = function(){
             for (var i = 0; i < chartData.length; i++) {
-                if (chartData[i].name === {$selection}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
+                if (chartData[i]._key === {$selection}.{$this->getWidget()->getSeries()[0]->getTextDataColumn()->getDataColumnName()}) {
                     return i
                 }
             }
         }()
-        var params = {seriesIndex: 0, dataIndex: index};
-        params.data = {name: chartData[index].name};
-        {$this->buildJsSingleClick('params')}
+        if (index !== undefined) {
+            var params = {seriesIndex: 0, dataIndex: index, data: chartData[index]};
+            {$this->buildJsSingleClick('params')}
+        } else {
+            {$this->buildJsSelect()}
+        }
     }  else {
         {$this->buildJsSelect()}
     }
@@ -3196,9 +3204,12 @@ JS;
                 }
             }
         }()
-        var params = {seriesIndex: 0, dataIndex: index, dataType: 'node'};
-        params.data = {id: nodes[index].id};
-        {$this->buildJsSingleClick('params')}
+        if (index !== undefined) {
+            var params = {seriesIndex: 0, dataIndex: index, dataType: 'node', data: nodes[index]};
+            {$this->buildJsSingleClick('params')}
+        } else {
+            {$this->buildJsSelect()}
+        }
     } else {
         {$this->buildJsSelect()}
     }
@@ -3551,6 +3562,13 @@ JS;
      */
     protected function buildJsChartPropertyTooltip() : string
     {
+        // Preserve the legacy tooltip appearance across chart types and facades.
+        $tooltipStyleJs = <<<JS
+            backgroundColor: 'rgba(50, 50, 50, 0.7)',
+            textStyle: {
+                color: '#fff',
+            },
+JS;
         // Best-fit tooltip position to avoid overflowing the chart container
         $fnPositionJs = <<<JS
 function(canvasMousePos, params, tooltipDom, rect, sizes) {
@@ -3606,6 +3624,7 @@ JS;
                 return <<<JS
                 
 {
+    {$tooltipStyleJs}
 	trigger: 'item',
 	formatter: "{b} : {c} ({d}%)",
     confine: true,
@@ -3617,6 +3636,7 @@ JS;
                 return <<<JS
                 
 {
+    {$tooltipStyleJs}
 	formatter: function(params) {
 		return params.data.name
 	},
@@ -3636,6 +3656,7 @@ JS;
                 return <<<JS
                 
 {
+    {$tooltipStyleJs}
 	formatter: function(params) {
         var xAxisName = '{$xAxisName}';
         var yAxisName = '{$yAxisName}';
@@ -3674,6 +3695,7 @@ JS;
                 return <<<JS
                 
 {
+    {$tooltipStyleJs}
 	formatter: function(params) {
         if (params.data._caption) {
 		  return params.data._caption;
@@ -3689,10 +3711,11 @@ JS;
                 return <<<JS
                 
 {
+    {$tooltipStyleJs}
 	trigger: 'axis',
     confine: true,
     enterable: true,
-    extraCssText: 'overflow-y: auto; max-height: 50%',
+    extraCssText: 'overflow-y: auto; max-height: 60%',
 	axisPointer: {
 		type: 'cross'
 	},
@@ -3769,7 +3792,8 @@ JS;
         $position = $widget->getLegendPosition();
         if ($this->isLegendHidden() === true) {
             $positionJs = "show: false";
-        } elseif ($position == 'top' ) {
+        } elseif ($position === null || $position === 'top') {
+            // Keep the default consistent with grid margins, regardless of the ECharts theme.
             $positionJs = "top: 'top',";
         } elseif ($position == 'bottom') {
             $positionJs = "top: 'bottom',";
