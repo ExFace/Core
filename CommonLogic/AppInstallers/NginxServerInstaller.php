@@ -84,9 +84,13 @@ location /{$urlPathWithSlash}nginx.conf { return 403; }
 location ~ ^/{$urlPathWithSlash}composer\..*$ { return 403; }
 location ~ ^/{$urlPathWithSlash}data/\..*$ { return 403; }
 
-location ~* ^/{$urlPathWithSlash}vendor/.*\.html$ { return 404; }
+# Block files directly in vendor (including SBOMs), but not files in subfolders.
+location ~* ^/{$urlPathWithSlash}vendor/[^/]+$ { return 403; }
+# Block direct access to .html, .htm and .md files in vendor.
+location ~* ^/{$urlPathWithSlash}vendor/.*\.(html?|md)$ { return 404; }
 location ~* ^/{$urlPathWithSlash}vendor/.*/gh-pages.*$ { return 404; }
 
+# Block dot-prefixed files and folders at any depth, including all folder contents.
 location ~ /\. {
     deny all;
 }
