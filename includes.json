@@ -23,7 +23,7 @@
     }, 
     {
         "name": "npm-asset/mermaid",
-        "version": "11.17.2",
+        "version": "12.2.0",
         "license": ["MIT"],
         "license_file": "exface/ui5facade/Facades/js/mermaid/LICENSE.txt",
         "description": "Generation of diagrams like flowcharts or sequence diagrams from text in a similar manner as markdown",
