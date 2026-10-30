@@ -2534,6 +2534,10 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
+     * Builds a comparison while normalizing date-only values before delegating the final predicate rendering.
+     *
+     * Date-only equality and boundary comparisons need day intervals because the physical column may retain
+     * a time component even when its metamodel data type does not.
      *
      * @param QueryPartAttribute $qpart
      * @param string $subject
@@ -2642,6 +2646,18 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 default:
                     break;
             }
+
+            $dateComparison = $this->buildSqlDateComparisonForDay(
+                $subject,
+                $comparator,
+                $value,
+                $valueIsSQL,
+                $dataType,
+                $dataAddressProps
+            );
+            if ($dateComparison !== null) {
+                return $dateComparison;
+            }
         } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
@@ -2652,6 +2668,72 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         }
         
         return $this->buildSqlWhereComparatorPredicate($value, $valueIsSQL, $comparator, $subject, $dataType, $qpart, $relyOnJoins);
+    }
+
+    /**
+     * Builds sargable day-interval predicates so date-only filters include all times stored on the selected day.
+     *
+     * The next day is calculated in PHP and both boundaries use prepareWhereValue() to preserve the active SQL
+     * dialect's literal formatting without applying functions or casts to the filtered column.
+     *
+     * @param string $subject
+     * @param string $comparator
+     * @param mixed $value
+     * @param bool $valueIsSQL
+     * @param DataTypeInterface $dataType
+     * @param array $dataAddressProps
+     * @return string|null
+     */
+    protected function buildSqlDateComparisonForDay(
+        string $subject,
+        string $comparator,
+        $value,
+        bool $valueIsSQL,
+        DataTypeInterface $dataType,
+        array $dataAddressProps = []
+    ) : ?string {
+        if (
+            $valueIsSQL === true
+            || ! $dataType instanceof DateDataType
+            || $dataType instanceof DateTimeDataType
+            || $dataType::isValueEmpty($value)
+            || $dataType::isValueLogicalNull($value)
+            || (is_string($value) && stripos($value, 'sql:') !== false)
+        ) {
+            return null;
+        }
+
+        switch ($comparator) {
+            case ComparatorDataType::LESS_THAN_OR_EQUALS:
+            case ComparatorDataType::GREATER_THAN:
+            case ComparatorDataType::EQUALS:
+            case ComparatorDataType::EQUALS_NOT:
+                break;
+            default:
+                return null;
+        }
+
+        $date = $dataType::cast($value, true);
+        $nextDate = \DateTimeImmutable::createFromInterface($date)->modify('+1 day');
+        $preparedDate = $this->prepareWhereValue($value, $dataType, $dataAddressProps);
+        $preparedNextDate = $this->prepareWhereValue(
+            $dataType::castFromPhpDate($nextDate),
+            $dataType,
+            $dataAddressProps
+        );
+
+        switch ($comparator) {
+            case ComparatorDataType::LESS_THAN_OR_EQUALS:
+                return $subject . ' < ' . $preparedNextDate;
+            case ComparatorDataType::GREATER_THAN:
+                return $subject . ' >= ' . $preparedNextDate;
+            case ComparatorDataType::EQUALS:
+                return '(' . $subject . ' >= ' . $preparedDate . ' AND ' . $subject . ' < ' . $preparedNextDate . ')';
+            case ComparatorDataType::EQUALS_NOT:
+                return '(' . $subject . ' < ' . $preparedDate . ' OR ' . $subject . ' >= ' . $preparedNextDate . ')';
+        }
+
+        return null;
     }
 
     /**
