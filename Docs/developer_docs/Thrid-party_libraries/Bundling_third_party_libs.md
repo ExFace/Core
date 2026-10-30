@@ -50,6 +50,60 @@ The existing license-file enricher reads `license_file` and attaches its content
 
 The `license_file` field supplies license text to the inventory; it does not replace any additional attribution or notice requirements in the upstream license. Preserve and distribute those notices too.
 
+## Supplement installed package metadata
+
+Use `includes.json` also when a Composer-installed dependency has missing or incomplete license metadata. Do not edit the installed dependency or `composer.lock` to repair its license information: those changes will be lost on installation or update.
+
+### Find the owning app
+
+- Start with the package identity and installed version in `composer.lock`. Check the dependency's distributed license files, source headers and published metadata before declaring its license.
+- Find the app that introduces the dependency through its Composer requirements, bundled assets or a transitive dependency chain. Confirm actual use in the app's asset configuration and implementation; a shared Core trait can load libraries on behalf of several facades.
+- Add the supplement to that app's root `includes.json`. If multiple apps independently introduce the same dependency, maintain the relevant supplement in each app rather than relying on another app being installed.
+- Keep runtime dependencies in each consuming app's `composer.json`. An inclusion registry supplies inventory metadata; it does not install a library or replace a missing Composer requirement.
+- If an app's own license metadata is missing, supplement that app under its own package identity, using its actual distributed terms.
+
+### Choose the identity and version
+
+Use the original Composer identity, including `npm-asset/` or `bower-asset/` for Asset-Packagist dependencies. Do not create a new identity for the same dependency.
+
+For a supplement to an installed package, normally omit `version`. The BOM merger applies the metadata to matching installed versions while retaining their versions from Composer. Only use such a versionless supplement when the supplied terms apply to those versions. A versioned entry is matched separately from other nonempty versions, so do not copy a bundled-library example's version into a general supplement.
+
+For software actually bundled in the app, retain an exact `version` as described above. If several versions are bundled, register each separately and verify its terms.
+
+### Supply declarations and terms
+
+Set `license` to an array of verified license identifiers. Preserve upstream alternative licenses; use `license_used` only when intentionally selecting an applicable license, not to hide missing evidence or change upstream licensing.
+
+Provide the terms through one of these fields:
+
+- `license_file`: a local path relative to the installation's `vendor/` folder. This is preferred when the license file is shipped locally. For a single license, a string is sufficient; a map keyed by license identifier can identify files for different licenses.
+- `license_text`: an object keyed by license identifier, with the complete original text, including copyright and attribution information, as each value. Encode newlines as `\n` in JSON strings.
+- `license_link`: an object keyed by license identifier, with a URL to its terms as each value. Use a raw downloadable text URL supported by BOM generation, not a numeric array of URLs or an HTML repository page.
+
+For example, this fictional supplement deliberately omits the version. Replace the identity, license and URL with verified upstream values:
+ 
+```
+ 
+[
+	{
+		"name": "npm-asset/example-library",
+		"license": ["MIT"],
+		"license_link": {
+			"MIT": "https://raw.githubusercontent.com/example-org/example-library/v1.2.3/LICENSE"
+		}
+	}
+]
+ 
+```
+ 
+The current GitHub license enricher downloads `license_link` values containing `raw.githubusercontent.com`; ordinary GitHub `blob` links and other license websites are not downloaded by that enricher. Verify the raw URL, exact tag spelling and file contents. Prefer a verified release tag or commit over a moving branch. A generic SPDX text can supply standard terms for a verified declaration, but it does not replace package-specific copyright notices or additional terms.
+
+Keep text and links keyed by the exact license identifier, such as `MIT` or `Apache-2.0`. For multiple declared licenses, preserve the relevant terms for each rather than associating one license's text with another. Do not use a generic MIT template to guess a package's license or attribution.
+
+### Generated inclusion registries
+
+If an app generates `includes.json`, change the generator's maintained inputs and regenerate the file instead of hand-editing generated entries. Otherwise the next build will erase the repair. When upstream omits a license file, keep reviewed fallback text tied to the exact package and version; preserve its provenance and original attribution. Keep build tools and dependencies not actually bundled out of the generated bundle registry.
+
 ## Bundles containing dependencies
 
 A single distributed file can contain code from multiple third-party packages. The main library's license alone is not sufficient for such a bundle.
@@ -65,6 +119,8 @@ After adding or updating a bundled library:
 3. Update references in your app if a file or directory has moved.
 4. Run PackageManager's `GenerateLicenseBOM` action and inspect the generated license document and inventory. Confirm that the package appears with the correct version and actual license text.
 5. Test the affected application features using the locally bundled files.
+
+After repairing metadata, regenerate the full BOM before rerunning a license audit. The license scanner reads the generated inventory, not the app's current `includes.json`. A URL alone does not satisfy its missing-license-text check: confirm that BOM generation resolved actual text through a local file, inline text or a supported download. Check that the original installed versions remain unchanged and that every targeted package is present with the expected license and text. An old inventory or archived build BOM is not repaired by editing a registry.
 
 Repeat these checks for every update. Licensing and notice requirements can change between releases. Successful BOM generation is not, by itself, proof that every redistribution obligation has been met.
 

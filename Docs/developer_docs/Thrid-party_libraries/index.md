@@ -6,7 +6,7 @@ As most software today, this platform includes relies on many third-party party 
 
 - Properly including a public PHP or NPM package - see below.
 - [Updating a third-party library used by an app](Update_a_third-party_library.md)
-- [Bundling third-party libraries inside your apps properly](Bundling_third_party_libs.md)
+- [Bundling libraries and supplementing missing license metadata in includes.json](Bundling_third_party_libs.md)
 
 ## Package manager overview
 
