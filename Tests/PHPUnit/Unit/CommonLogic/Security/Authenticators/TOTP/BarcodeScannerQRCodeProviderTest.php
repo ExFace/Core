@@ -1,18 +1,18 @@
 <?php
 namespace exface\Core\Tests\PHPUnit\Unit\CommonLogic\Security\Authenticators\TOTP;
 
-use exface\BarcodeScanner\BarcodeScannerApp;
+use exface\BarcodeScanner\DataTypes\BarcodeDataType;
 use exface\Core\CommonLogic\Security\Authenticators\TOTP\BarcodeScannerQRCodeProvider;
 use exface\Core\Exceptions\RuntimeException;
 use PHPUnit\Framework\TestCase;
 use RobThree\Auth\TwoFactorAuth;
 
 /**
- * Covers LocalQRCodeProvider and the robthree/twofactorauth v3 features used by TwoFactorTOTPAuthenticator.
+ * Covers BarcodeScannerQRCodeProvider and the robthree/twofactorauth v3 features used by TwoFactorTOTPAuthenticator.
  *
  * All codes are generated for fixed timestamps to keep the tests deterministic.
  */
-class LocalQRCodeProviderTest extends TestCase
+class BarcodeScannerQRCodeProviderTest extends TestCase
 {
     private const QR_TEXT = 'otpauth://totp/My%20Server?secret=JBSWY3DPEHPK3PXP&issuer=&period=30&algorithm=SHA1&digits=6';
 
@@ -39,7 +39,7 @@ class LocalQRCodeProviderTest extends TestCase
      */
     private function skipIfBarcodeScannerMissing() : void
     {
-        if (! class_exists(BarcodeScannerApp::class)) {
+        if (! class_exists(BarcodeDataType::class)) {
             $this->markTestSkipped('App exface.BarcodeScanner is not installed');
         }
     }
