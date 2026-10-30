@@ -21,7 +21,8 @@ use exface\Core\DataTypes\MarkdownDataType;
  * {
  *     "LIBS.MARKIAN.EDITOR.JS": "axenox/markian/dist/markian.min.js",
  *     "LIBS.MARKIAN.EDITOR.CSS": "axenox/markian/dist/markian.css",
- *     "LIBS.MARKIAN.MARKDOWN.CSS": "axenox/markian/dist/markdown-github.css",
+ *     "LIBS.MARKIAN.MARKDOWN.CSS": "npm-asset/github-markdown-css/github-markdown-light.css",
+ *     "LIBS.MARKIAN.MARKDOWN.CSS_CLASSES": ["markdown-body"],
  *     "LIBS.MARKIAN.BRIDGE.JS": "exface/core/Facades/AbstractAjaxFacade/js/markian/MarkianAdapter.js"
  * }
  * 
@@ -141,6 +142,7 @@ JS;
         $options = [
             'markdown' => (string) ($widget->getValueWithDefaults() ?? ''),
             'markdownCssUrls' => [$this->getFacade()->buildUrlToSource('LIBS.MARKIAN.MARKDOWN.CSS')],
+            'markdownCssClasses' => $this->getFacade()->getConfig()->getOption('LIBS.MARKIAN.MARKDOWN.CSS_CLASSES')->toArray(),
             'initialMode' => 'visual',
             'disabled' => $widget->isDisabled(),
             'readOnly' => $widget->isReadonly(),
