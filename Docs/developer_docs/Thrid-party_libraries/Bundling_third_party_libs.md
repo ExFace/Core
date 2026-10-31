@@ -70,6 +70,11 @@ For a supplement to an installed package, normally omit `version`. The BOM merge
 
 For software actually bundled in the app, retain an exact `version` as described above. If several versions are bundled, register each separately and verify its terms.
 
+Generation registers versioned bundles from all manifests before applying versionless supplements.
+If no matching installed or bundled package exists, the supplement is excluded from the generated
+BOM with a warning. A supplement does not declare that software is installed. Regenerate older
+inventories to apply this rule; existing archived build BOMs are not changed automatically.
+
 ### Supply declarations and terms
 
 Set `license` to an array of verified license identifiers. Preserve upstream alternative licenses; use `license_used` only when intentionally selecting an applicable license, not to hide missing evidence or change upstream licensing.
