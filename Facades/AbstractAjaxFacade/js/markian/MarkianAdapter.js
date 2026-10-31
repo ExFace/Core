@@ -4,6 +4,54 @@
     var oMermaidFactories = new WeakSet();
 
     oWindow.MarkianAdapter = {
+        /**
+         * Creates source-neutral tag rules backed by cancellable facade requests.
+         *
+         * @param {Object[]} aModels Server-generated mention metadata.
+         * @returns {Object[]} Markian tag configuration.
+         */
+        buildTags: function (aModels) {
+            return aModels.map(function (oModel) {
+                var oTag = {id: oModel.id, prefix: oModel.prefix, textRegex: oModel.textRegex, legacyLinks: true, suggestOnClick: true};
+                if (oModel.color) oTag.color = oModel.color;
+                oTag.onHover = function (oContext) { return {title: (oModel.caption ? oModel.caption + ': ' : '') + oContext.value}; };
+                oTag.onSuggest = function (oContext) {
+                    return new Promise(function (resolve, reject) {
+                        if (oContext.signal.aborted) { reject(new DOMException('Mention lookup cancelled.', 'AbortError')); return; }
+                        var aColumns = Array.from(new Set([oModel.filterAttribute, oModel.tagAttribute, oModel.suggestionAttribute]));
+                        var aFilterAttributes = [
+                            {alias: oModel.filterAttribute, numeric: oModel.filterAttributeIsNumeric},
+                            {alias: oModel.tagAttribute, numeric: oModel.tagAttributeIsNumeric}
+                        ].filter(function (oAttribute) {
+                            return !oAttribute.numeric || /^-?\d+(?:[.,]\d+)?$/.test(oContext.query);
+                        }).map(function (oAttribute) { return oAttribute.alias; });
+                        if (oContext.query !== '' && aFilterAttributes.length === 0) { resolve([]); return; }
+                        var oData = Object.assign({}, oModel.request, {page: 1, rows: oModel.limit, data: {
+                            oId: oModel.request.object,
+                            columns: aColumns,
+                            filters: {operator: 'OR', conditions: oContext.query === '' ? [] : Array.from(new Set(aFilterAttributes)).map(function (sAlias) {
+                                return {expression: sAlias, comparator: '=', value: oContext.query};
+                            })}
+                        }});
+                        var oRequest = oWindow.jQuery.ajax({type: 'POST', url: oModel.url, headers: oModel.headers, data: oData, dataType: 'json'});
+                        var abort = function () { oRequest.abort(); };
+                        oContext.signal.addEventListener('abort', abort, {once: true});
+                        oRequest.done(function (oResponse) {
+                            try {
+                                if (!oResponse || !Array.isArray(oResponse.rows)) throw new Error('Invalid mention autosuggest response.');
+                                resolve(oResponse.rows.map(function (oRow) {
+                                    if (oRow[oModel.suggestionAttribute] == null || oRow[oModel.tagAttribute] == null) throw new Error('Mention autosuggest response is missing configured attributes.');
+                                    return {label: String(oRow[oModel.suggestionAttribute]), value: oModel.prefix + String(oRow[oModel.tagAttribute])};
+                                }));
+                            } catch (oError) { reject(oError); }
+                        }).fail(function (oResponse, sStatus, sError) {
+                            reject(sStatus === 'abort' ? new DOMException('Mention lookup cancelled.', 'AbortError') : new Error(sError || 'Mention lookup failed.'));
+                        }).always(function () { oContext.signal.removeEventListener('abort', abort); });
+                    });
+                };
+                return oTag;
+            });
+        },
         mount: function (domHost, oOptions, bViewer, sMermaidSource, bAllowImages) {
             if (!domHost) throw new Error('Markian mount is missing.');
             if (domHost._exfMarkian) domHost._exfMarkian.destroy();
@@ -84,6 +132,9 @@
             domHost._exfMarkian = oHandle;
             if (!bViewer) {
                 oInstance.on('error', function (oEvent) { report(oEvent.error); });
+                oInstance.on('tag-click', function (oEvent) {
+                    if (!bDestroyed) domHost.dispatchEvent(new CustomEvent('exf-markian-tag-click', {detail: oEvent.tag, bubbles: true}));
+                });
                 oInstance.on('change', function (oEvent) {
                     if (bDestroyed || !bReady || oEvent.origin === 'host-load') return;
                     domHost.dispatchEvent(new Event('change', {bubbles: true}));

@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\DataTypes\ColorDataType;
 use exface\Core\DataTypes\MarkdownDataType;
+use exface\Core\DataTypes\NumberDataType;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 
 /**
  * Shared value and lifecycle contract for independently adopted Markian editors.
@@ -151,11 +154,65 @@ JS;
             'sidebarVisible' => false
         ];
         $optionsJs = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
+        $optionsJs = 'Object.assign(' . $optionsJs . ', {tags: MarkianAdapter.buildTags(' . $this->buildJsMarkdownMentions() . ')})';
         $mermaidJs = $widget->hasRenderMermaidDiagrams()
             ? $this->escapeMarkdownForInlineJavaScript($this->getFacade()->buildUrlToSource('LIBS.MERMAID.JS'))
             : 'null';
         $allowImagesJs = $widget->getAllowImages() ? 'true' : 'false';
         return 'MarkianAdapter.mount(document.getElementById(' . json_encode($this->getId()) . '), ' . $optionsJs . ', false, ' . $mermaidJs . ', ' . $allowImagesJs . ')';
+    }
+
+    /**
+     * Translates abstract mention settings into explicit host-side AJAX metadata.
+     * 
+     * @return string
+     */
+    protected function buildJsMarkdownMentions() : string
+    {
+        $models = [];
+        foreach ($this->getWidget()->getMentions() as $index => $mention) {
+            $autosuggest = $mention->getAutosuggest();
+            $object = $autosuggest->getObject();
+            $filter = $object->getAttribute($autosuggest->getFilterAttribute() ?? ($object->hasLabelAttribute() ? $object->getLabelAttributeAlias() : $object->getUidAttributeAlias()))->getAliasWithRelationPath();
+            $tag = $object->getAttribute($autosuggest->getTagAttribute() ?? $filter)->getAliasWithRelationPath();
+            $suggestion = $object->getAttribute($autosuggest->getSuggestionAttribute() ?? $filter)->getAliasWithRelationPath();
+            $limit = $autosuggest->getMaxNumberOfRows() ?? 10;
+            if ($limit < 1 || $limit > 100) {
+                throw new WidgetConfigurationError($this->getWidget(), 'Mention autosuggest max_number_of_rows must be between 1 and 100.');
+            }
+            $color = $mention->getTagColor();
+            if ($color !== null) {
+                $rgba = ColorDataType::parseToRgba($color);
+                if ($rgba === null || $rgba[3] !== 1.0) {
+                    throw new WidgetConfigurationError($this->getWidget(), 'Mention tag_color must be an opaque CSS color.');
+                }
+                $color = sprintf('#%02x%02x%02x', $rgba[0], $rgba[1], $rgba[2]);
+            }
+            $button = $mention->getAutosuggestButton();
+            $action = $button->getAction();
+            $models[] = [
+                'id' => 'mention-' . $index,
+                'prefix' => $mention->getTagPrefix(),
+                'textRegex' => $mention->getTagTextRegex(),
+                'color' => $color,
+                'caption' => $mention->getCaption(),
+                'filterAttribute' => $filter,
+                'filterAttributeIsNumeric' => $object->getAttribute($filter)->getDataType() instanceof NumberDataType,
+                'tagAttribute' => $tag,
+                'tagAttributeIsNumeric' => $object->getAttribute($tag)->getDataType() instanceof NumberDataType,
+                'suggestionAttribute' => $suggestion,
+                'limit' => $limit,
+                'url' => $this->getAjaxUrl(),
+                'headers' => $this->getAjaxHeaders(),
+                'request' => [
+                    'action' => $action->getAliasWithNamespace(),
+                    'object' => $action->getMetaObject()->getId(),
+                    'resource' => $button->getPage()->getAliasWithNamespace(),
+                    'element' => $button->getId()
+                ]
+            ];
+        }
+        return json_encode($models, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
     }
 
     /**

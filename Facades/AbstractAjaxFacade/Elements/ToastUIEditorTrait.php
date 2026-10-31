@@ -373,17 +373,22 @@ JS;
         $mentionsDataJs = '';
         if ($widget instanceof InputMarkdown) {
             foreach ($widget->getMentions() as $mention) {
-                
+                $autosuggest = $mention->getAutosuggest();
+                $object = $autosuggest->getObject();
+                $filterAttribute = $object->getAttribute($autosuggest->getFilterAttribute() ?? ($object->hasLabelAttribute() ? $object->getLabelAttributeAlias() : $object->getUidAttributeAlias()))->getAliasWithRelationPath();
+                $tagAttribute = $object->getAttribute($autosuggest->getTagAttribute() ?? $filterAttribute)->getAliasWithRelationPath();
+                $suggestionAttribute = $object->getAttribute($autosuggest->getSuggestionAttribute() ?? $filterAttribute)->getAliasWithRelationPath();
                 $btn = $mention->getAutosuggestButton();
                 $tagTextRegex = json_encode($mention->getTagTextRegex());
-                $pageSize = ($mention->getAutosuggestMaxNumberOfRows() ?? $this->getFacade()->getConfig()->getOption('WIDGET.INPUTMARKDOWN.TAG_AUTOSUGGEST_PAGE_SIZE')) ?? 10;
+                $pageSize = ($autosuggest->getMaxNumberOfRows() ?? $this->getFacade()->getConfig()->getOption('WIDGET.INPUTMARKDOWN.TAG_AUTOSUGGEST_PAGE_SIZE')) ?? 10;
                 $mentionsDataJs .= <<<JS
                  {
                    tagPrefix: {$this->escapeString($mention->getTagPrefix())},
-                   filterAttributeAlias: {$this->escapeString($mention->getAutosuggestFilterAttributeAlias())},
+                   filterAttribute: {$this->escapeString($filterAttribute)},
+                   suggestionAttribute: {$this->escapeString($suggestionAttribute)},
                    maxNumberOfRows:  {$pageSize},
                    tagTextRegex: {$tagTextRegex},
-                   tagTextAttribute: {$this->escapeString($mention->getTagTextAttribute())},
+                   tagAttribute: {$this->escapeString($tagAttribute)},
                    
                    ajaxCallActionAlias: {$this->escapeString($btn->getAction()->getAliasWithNamespace())},
                    ajaxCallObjectId: {$this->escapeString($btn->getMetaObject()->getId())},
@@ -634,8 +639,6 @@ JS;
                     const regEx = new RegExp(`^\${oMentionModel.tagPrefix}`);
                     const searchQuery = filter.replace(regEx, "");
                     
-                    const tagTextAttribute = oMentionModel.tagTextAttribute;
-                    
                     $.ajax({
                         type: 'POST',
                         url: '{$this->getAjaxUrl()}',
@@ -649,22 +652,15 @@ JS;
                           rows: oMentionModel.maxNumberOfRows,
                           data: {
                             oId: oMentionModel.ajaxCallActionObjectId,
-                            columns: [oMentionModel.filterAttributeAlias, ...(tagTextAttribute ? [tagTextAttribute] : [])],       
+                            columns: [...new Set([oMentionModel.filterAttribute, oMentionModel.tagAttribute, oMentionModel.suggestionAttribute])],
                             filters: {
                               operator: 'OR',
-                              conditions: [
+                                                            conditions: searchQuery === "" ? [] : [
                                   {
-                                    expression: oMentionModel.filterAttributeAlias,
+                                                                        expression: oMentionModel.filterAttribute,
                                     comparator: '=',
                                     value: searchQuery
-                                  },
-                                  ...(oMentionModel.tagTextAttribute
-                                      ? [{
-                                          expression: oMentionModel.tagTextAttribute,
-                                          comparator: '=',
-                                          value: searchQuery
-                                        }]
-                                      : [])
+                                                                    }
                               ]
                             }
                           }
@@ -679,8 +675,8 @@ JS;
                             }
                           
                             const mentionList = (response.rows || []).map(item => ({
-                                value:  item[oMentionModel.filterAttributeAlias],
-                                tagTextValue: item[oMentionModel.tagTextAttribute],
+                                value: item[oMentionModel.suggestionAttribute],
+                                tagTextValue: item[oMentionModel.tagAttribute],
                                 url: "" //TODO: Add here an clickAction from uxon.
                             }));
             
