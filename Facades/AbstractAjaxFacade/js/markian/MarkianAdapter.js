@@ -2,8 +2,76 @@
     'use strict';
     if (oWindow.MarkianAdapter) return;
     var oMermaidFactories = new WeakSet();
+    var oCodeFactories = new WeakSet();
 
     oWindow.MarkianAdapter = {
+        /**
+         * Translates widget presentation settings without importing Ace into Markian.
+         *
+         * @param {Object} oModel Widget language, colorize and resolved languageBase.
+         * @returns {Object} Markian Code configuration.
+         */
+        buildCodeConfig: function (oModel) {
+            var oConfig = {languageBase: oModel.languageBase};
+            if (!oModel.colorize) {
+                oConfig.languages = [];
+            } else if (oModel.language) {
+                var sLanguage = oModel.language.toLowerCase();
+                oConfig.languages = oWindow.MarkianCode.supportedLanguages.filter(function (oLanguage) {
+                    return oLanguage.id === sLanguage || (oLanguage.aliases || []).indexOf(sLanguage) !== -1;
+                });
+            }
+            return oConfig;
+        },
+        /**
+         * Reuses Markian's token loader for rendering-only widgets without creating editor controls.
+         *
+         * @param {Document} domDocument Viewer document.
+         * @param {Object} oModel Widget highlighting settings.
+         * @returns {Object} Viewer fence-language callbacks.
+         */
+        buildCodeRenderers: function (domDocument, oModel) {
+            var oConfig = oWindow.MarkianAdapter.buildCodeConfig(oModel);
+            var aLanguages = oConfig.languages || oWindow.MarkianCode.supportedLanguages;
+            var oRenderers = {};
+            aLanguages.forEach(function (oLanguage) {
+                var oBase = new URL(oConfig.languageBase, domDocument.baseURI);
+                var oUrl = new URL(oLanguage.id + '.min.js', oBase);
+                oUrl.search = oBase.search;
+                var oResolved = Object.assign({}, oLanguage, {source: oUrl.href});
+                var render = async function (oContext) {
+                    var domPre = domDocument.createElement('pre');
+                    var domCode = domDocument.createElement('code');
+                    domCode.className = 'language-' + oContext.language;
+                    domPre.appendChild(domCode);
+                    if (oContext.source.length > 100000 || oContext.source.split('\n').length > 5000) {
+                        domCode.textContent = oContext.source;
+                        return domPre.outerHTML;
+                    }
+                    var oHighlighter = await oWindow.MarkianCode.loadCodeLanguage(domDocument, oResolved);
+                    if (oContext.signal.aborted) return '';
+                    var aTokens = await oHighlighter.highlight(oContext.source);
+                    if (oContext.signal.aborted) return '';
+                    if (!Array.isArray(aTokens) || aTokens.length > 100000) throw new TypeError('Invalid code highlighting tokens.');
+                    var iOffset = 0;
+                    aTokens.forEach(function (oToken) {
+                        if (!oToken || !Number.isInteger(oToken.from) || !Number.isInteger(oToken.to)
+                            || oToken.from < iOffset || oToken.to <= oToken.from || oToken.to > oContext.source.length
+                            || !/^tok-[a-z-]+(?: tok-[a-z-]+)*$/.test(oToken.className)) throw new TypeError('Invalid code highlighting token.');
+                        domCode.appendChild(domDocument.createTextNode(oContext.source.slice(iOffset, oToken.from)));
+                        var domToken = domDocument.createElement('span');
+                        domToken.className = oToken.className;
+                        domToken.textContent = oContext.source.slice(oToken.from, oToken.to);
+                        domCode.appendChild(domToken);
+                        iOffset = oToken.to;
+                    });
+                    domCode.appendChild(domDocument.createTextNode(oContext.source.slice(iOffset)));
+                    return domPre.outerHTML;
+                };
+                [oLanguage.id].concat(oLanguage.aliases || []).forEach(function (sName) { oRenderers[sName] = render; });
+            });
+            return oRenderers;
+        },
         /**
          * Creates source-neutral tag rules backed by cancellable facade requests.
          *
@@ -71,19 +139,25 @@
                 oWindow.console.error(oError);
             };
             var oSettings = Object.assign({}, oOptions);
+            if (!bViewer && oSettings.extensions && oSettings.extensions.code && oSettings.extensions.code.enabled) {
+                if (!oCodeFactories.has(oWindow.Markian)) {
+                    oWindow.Markian.registerExtension('code', oWindow.MarkianCode.codeExtension);
+                    oCodeFactories.add(oWindow.Markian);
+                }
+            }
             if (!bViewer && bAllowImages === false) {
                 oSettings.onImageInsert = function () { throw new Error('Image insertion is disabled for this widget.'); };
             }
             if (sMermaidSource) {
                 if (bViewer) {
                     oSettings.mermaid = true;
-                    oSettings.renderers = {mermaid: oWindow.MarkianViewerMermaid.createRenderer(domHost.ownerDocument, {source: sMermaidSource})};
+                    oSettings.renderers = Object.assign({}, oSettings.renderers, {mermaid: oWindow.MarkianViewerMermaid.createRenderer(domHost.ownerDocument, {source: sMermaidSource})});
                 } else {
                     if (!oMermaidFactories.has(oWindow.Markian)) {
                         oWindow.Markian.registerExtension('mermaid', oWindow.MarkianMermaid.mermaidExtension);
                         oMermaidFactories.add(oWindow.Markian);
                     }
-                    oSettings.extensions = {mermaid: {enabled: true, config: {source: sMermaidSource}}};
+                    oSettings.extensions = Object.assign({}, oSettings.extensions, {mermaid: {enabled: true, config: {source: sMermaidSource}}});
                 }
             }
             if (bViewer) oSettings.onError = report;

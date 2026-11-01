@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Traits\iHaveCodeFormatterTrait;
 use exface\Core\Widgets\Traits\iRenderMermaidTrait;
 
 /**
@@ -19,6 +20,7 @@ use exface\Core\Widgets\Traits\iRenderMermaidTrait;
  */
 class Markdown extends Html
 {
+    use iHaveCodeFormatterTrait;
     use iRenderMermaidTrait;
     
     private $openLinksIn = null;

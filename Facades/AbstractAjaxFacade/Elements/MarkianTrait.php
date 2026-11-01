@@ -26,6 +26,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  *     "LIBS.MARKIAN.EDITOR.CSS": "axenox/markian/dist/markian.css",
  *     "LIBS.MARKIAN.MARKDOWN.CSS": "npm-asset/github-markdown-css/github-markdown-light.css",
  *     "LIBS.MARKIAN.MARKDOWN.CSS_CLASSES": ["markdown-body"],
+ *     "LIBS.MARKIAN.CODE.JS": "axenox/markian/dist/extensions/code.min.js",
+ *     "LIBS.MARKIAN.CODE.CSS": "axenox/markian/dist/extensions/code.css",
+ *     "LIBS.MARKIAN.CODE.LANGUAGES": "axenox/markian/dist/extensions/languages/",
  *     "LIBS.MARKIAN.BRIDGE.JS": "exface/core/Facades/AbstractAjaxFacade/js/markian/MarkianAdapter.js"
  * }
  * 
@@ -154,12 +157,27 @@ JS;
             'sidebarVisible' => false
         ];
         $optionsJs = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
-        $optionsJs = 'Object.assign(' . $optionsJs . ', {tags: MarkianAdapter.buildTags(' . $this->buildJsMarkdownMentions() . ')})';
+        $optionsJs = 'Object.assign(' . $optionsJs . ', {tags: MarkianAdapter.buildTags(' . $this->buildJsMarkdownMentions() . '), extensions: {code: {enabled: true, config: MarkianAdapter.buildCodeConfig(' . $this->buildJsMarkdownCodeSettings() . ')}}})';
         $mermaidJs = $widget->hasRenderMermaidDiagrams()
             ? $this->escapeMarkdownForInlineJavaScript($this->getFacade()->buildUrlToSource('LIBS.MERMAID.JS'))
             : 'null';
         $allowImagesJs = $widget->getAllowImages() ? 'true' : 'false';
         return 'MarkianAdapter.mount(document.getElementById(' . json_encode($this->getId()) . '), ' . $optionsJs . ', false, ' . $mermaidJs . ', ' . $allowImagesJs . ')';
+    }
+
+    /**
+     * Passes abstract highlighting settings and resolved asset URLs to the library adapter.
+     *
+     * @return string
+     */
+    protected function buildJsMarkdownCodeSettings() : string
+    {
+        $formatter = $this->getWidget()->getCodeFormatter();
+        return json_encode([
+            'language' => $formatter->getLanguage(),
+            'colorize' => $formatter->getColorize(),
+            'languageBase' => $this->getFacade()->buildUrlToSource('LIBS.MARKIAN.CODE.LANGUAGES')
+        ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -230,6 +248,8 @@ JS;
             '<script src="' . $facade->buildUrlToSource($prefix . '.JS') . '"></script>',
             '<script src="' . $facade->buildUrlToSource('LIBS.MARKIAN.BRIDGE.JS') . '"></script>'
         ];
+        $includes[] = '<link rel="stylesheet" href="' . $facade->buildUrlToSource('LIBS.MARKIAN.CODE.CSS') . '" />';
+        $includes[] = '<script src="' . $facade->buildUrlToSource('LIBS.MARKIAN.CODE.JS') . '"></script>';
         if ($this->getWidget()->hasRenderMermaidDiagrams()) {
             $prefix = $viewer ? 'LIBS.MARKIAN.VIEWER_MERMAID' : 'LIBS.MARKIAN.MERMAID';
             $includes[] = '<link rel="stylesheet" href="' . $facade->buildUrlToSource($prefix . '.CSS') . '" />';

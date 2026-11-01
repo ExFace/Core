@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\TextMention;
 use exface\Core\Widgets\Parts\TextStencil;
+use exface\Core\Widgets\Traits\iHaveCodeFormatterTrait;
 use exface\Core\Widgets\Traits\iRenderMermaidTrait;
 
 /**
@@ -17,6 +18,7 @@ use exface\Core\Widgets\Traits\iRenderMermaidTrait;
  */
 class InputMarkdown extends InputText
 {
+    use iHaveCodeFormatterTrait;
     use iRenderMermaidTrait;
     
     const MODE_WYSIWYG = 'wysiwyg';

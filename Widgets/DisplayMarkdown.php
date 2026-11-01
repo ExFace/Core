@@ -2,6 +2,7 @@
 
 namespace exface\Core\Widgets;
 
+use exface\Core\Widgets\Traits\iHaveCodeFormatterTrait;
 use exface\Core\Widgets\Traits\iRenderMermaidTrait;
 
 /**
@@ -9,6 +10,7 @@ use exface\Core\Widgets\Traits\iRenderMermaidTrait;
  */
 class DisplayMarkdown extends Value 
 {
+    use iHaveCodeFormatterTrait;
     use iRenderMermaidTrait;
     
     /**
