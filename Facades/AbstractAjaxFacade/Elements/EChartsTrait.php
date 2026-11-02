@@ -2861,6 +2861,70 @@ JS;
      */
     protected function buildJsSplitSeries(SplittableChartSeriesInterface $series, string $splitJs, string $dataJs) : string
     {
+        // ECharts stacks continuous axes by row index, not coordinate. Align split datasets in source
+        // order and fill missing values with null to prevent floating bars and backward line segments.
+        $alignStacksJs = '';
+        if ($series instanceof XYChartSeriesInterface
+            && $series instanceof StackableChartSeriesInterface
+            && $series->isStacked() === true
+        ) {
+            $axis = $series instanceof BarChartSeries ? $series->getYAxis() : $series->getXAxis();
+            $valueAxis = $series instanceof BarChartSeries ? $series->getXAxis() : $series->getYAxis();
+            if ($axis->getAxisType() !== ChartAxis::AXIS_TYPE_CATEGORY) {
+                $axisKeyJs = json_encode($axis->getDataColumn()->getDataColumnName());
+                $valueKeyJs = json_encode($valueAxis->getDataColumn()->getDataColumnName());
+                $alignStacksJs = <<<JS
+
+                    // Continuous axes stack by row index, so every series needs the same coordinate slots.
+                    var stackSlots = new Map();
+                    var stackCoordinates = [];
+                    var stackOccurrences = new Map();
+                    // Establish the shared order before splitting, preserving the source data's sorting.
+                    {$dataJs}.forEach(function(row) {
+                        var seriesKey = String(row[{$splitJs}]);
+                        if (!stackOccurrences.has(seriesKey)) {
+                            stackOccurrences.set(seriesKey, new Map());
+                        }
+                        var occurrences = stackOccurrences.get(seriesKey);
+                        var coordinate = row[{$axisKeyJs}];
+                        var occurrence = occurrences.get(coordinate) || 0;
+                        occurrences.set(coordinate, occurrence + 1);
+                        if (!stackSlots.has(coordinate)) {
+                            stackSlots.set(coordinate, []);
+                        }
+                        var slots = stackSlots.get(coordinate);
+                        if (slots[occurrence] === undefined) {
+                            slots[occurrence] = stackCoordinates.length;
+                            stackCoordinates.push(coordinate);
+                        }
+                    });
+                    var alignedDatasets = splitDatasetArray.map(function(rows) {
+                        var occurrences = new Map();
+                        var alignedRows = [];
+                        rows.forEach(function(row) {
+                            var coordinate = row[{$axisKeyJs}];
+                            var occurrence = occurrences.get(coordinate) || 0;
+                            occurrences.set(coordinate, occurrence + 1);
+                            var slots = stackSlots.get(coordinate);
+                            alignedRows[slots[occurrence]] = row;
+                        });
+                        return alignedRows;
+                    });
+                    splitDatasetArray = alignedDatasets.map(function(rows, seriesIndex) {
+                        return stackCoordinates.map(function(coordinate, index) {
+                            if (rows[index] !== undefined) {
+                                return rows[index];
+                            }
+                            var placeholder = {};
+                            placeholder[{$axisKeyJs}] = coordinate;
+                            placeholder[{$valueKeyJs}] = null;
+                            placeholder[{$splitJs}] = newNames[seriesIndex];
+                            return placeholder;
+                        });
+                    });
+JS;
+            }
+        }
         $baseColor = 'undefined';
         if ($series instanceof iHaveColor) {
             if ($series->getColor()) {
@@ -2910,6 +2974,7 @@ JS;
     }
     var splitDatasetArray = Object.keys(splitDatasetObject).map(i => splitDatasetObject[i]);
     var newNames = Object.keys(splitDatasetObject);
+    {$alignStacksJs}
     var formatNames = [];
     for (var i = 0; i < newNames.length; i++) {
         var formatted = {$nameFormatterJs}
