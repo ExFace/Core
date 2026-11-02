@@ -557,6 +557,7 @@
     "WIDGET.JEXCEL.NO_CELLS_SELECTED": "Keine Zelle ausgewählt",
     "WIDGET.DIALOG.CLOSE_BUTTON_CAPTION": "Schließen",
     "WIDGET.DIALOG.HEADER": "Kopf-Bereich",
+    "WIDGET.DIALOG.REFRESH_SKIPPED_UNSAVED_CHANGES": "Dialog wurde nicht aktualisiert, um ungespeicherte Änderungen zu erhalten.",
     "WIDGET.SPINNERFILTER.NEXT_STEP_BUTTON_CAPTION": "Vor",
     "WIDGET.SPINNERFILTER.PREV_STEP_BUTTON_CAPTION": "Zurück",
     "WIDGET.TEXT.EMPTY_TEXT": "-",

@@ -262,6 +262,7 @@ JS;
      * **Exclusions:**
      * - By default, the script will not be executed if the container has changes and the action does not
      * handle those changes directly - i.e. there is no direct action effect with `handles_changes` set to `true`. 
+     * In this case, a toast tells the user, that the data was not refreshed (only if the container is visible).
      *- The container is not refreshed if it is explicitly excluded via `refresh_input`
      * being set to `false` on the button.
      * 
@@ -350,9 +351,14 @@ $( document ).on( "{$actionperformed}.{$this->getId()}", function( oEvent, oPara
         if (bCheckChanges && ! (oHit.direct === true && oHit.handles_changes === true)) {
             aChanges = {$this->buildJsChangesGetter(true)};
             if (aChanges.length > 0) {
+                // Let the user know, why the data is outdated - but only if the container is actually on screen
+                if ($('#{$this->getId()}').is(':visible')) {
+                    {$this->buildJsShowMessageSuccess($this->escapeString($this->getWorkbench()->getCoreApp()->getTranslator()->translate('WIDGET.DIALOG.REFRESH_SKIPPED_UNSAVED_CHANGES')))}
+                }
                 return;
             }
         }
+
         fnRefresh(oParams, oHit);
     }
 });
