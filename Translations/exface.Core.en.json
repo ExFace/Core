@@ -515,7 +515,7 @@
     "WIDGET.GANTT_CHARD.VIEW_MODE_YEAR": "Year",
     "WIDGET.GANTT_CHARD.POPUP_CAPTION_DAYS": "days",
     "WIDGET.GANTT_CHARD.POPUP_CAPTION_EXCLUDED": "excluded",
-    "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "The given data interval is entirely in the past or future and does not include today's date.",
+    "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "Today's date is outside the displayed date range. This range is determined by the earliest start and latest end of the loaded or filtered entries.",
     "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TITLE": "Today is not included.",
     "WIDGET.GANTT_CHARD.EXCEL.SHEET_TITLE": "Schedule overview",
     "WIDGET.GANTT_CHARD.EXCEL.GANTT": "Schedule Gantt",
