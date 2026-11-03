@@ -26,6 +26,14 @@ use exface\Core\Interfaces\DataSheets\DataSheetInterface;
  * 
  * An editor widget can be defined for every column. If no editor is explicitly defined, the default
  * editor for the attribute will be used - similarly to a DataTable with editable columns.
+ * Editable columns always use editor defaults, including when editing is inherited.
+ * Non-editable columns use the attribute's default display widget, falling back to
+ * its datatype's display default. An explicit `cell_widget` overrides these defaults.
+ *
+ * In jSpreadsheet-based facades (including UI5 and JEasyUI), `ColorIndicator` and `ProgressBar`
+ * can also be used as `cell_widget` display widgets. These columns are non-editable even inside
+ * an editable spreadsheet. Their existing color scales, color bindings, labels and hints are
+ * rendered without changing the underlying cell values. This does not add coloring to Input widgets.
  * 
  * In contrast to a `DataTable`, it does not offer row grouping, row details, etc. - it's focus
  * is comfortable editing of flat tabular data. Also, the `DataSpreadSheet` has different default
