@@ -30,8 +30,11 @@ Add an entry to the `includes.json` in the root of the app that ships the librar
 	{
 		"name": "npm-asset/example-library",
 		"version": "1.2.3",
-		"license": ["MIT"],
-		"license_file": "acme/myapp/Facades/js/example-library/LICENSE",
+		"licenses": [
+			{
+				"name": "MIT", 
+				"file": "example/myapp/Facades/js/example-library/LICENSE"}
+		],
 		"description": "Description of the upstream library"
 	}
 ]
@@ -43,12 +46,14 @@ If your app already has an `includes.json`, add the entry to its existing packag
 - Use the original package identity. For an NPM package, use its Asset-Packagist name, such as `npm-asset/example-library`.
 - Set `version` to the exact version of the files being distributed.
 - Copy the upstream license declaration, preferably using its SPDX identifier. Do not assume that an open-source library uses MIT or select a license without checking its terms.
-- Set `license_file` to the actual local license file. The path is relative to the installation's `vendor/` directory, not to `includes.json` or the library's subfolder. Use forward slashes.
+- Set each license object's `file` to its actual local license file. The path is relative to the installation's `vendor/` directory, not to `includes.json` or the library's subfolder. Use forward slashes.
 - Keep the complete original license text, including copyright and attribution information.
 
-The existing license-file enricher reads `license_file` and attaches its contents to the package's effective license. For this single-license example, that is MIT. Downloading `package.json` into a custom subfolder does not currently make PackageManager read it automatically: the entry must still provide the package name, version and license declaration.
+The license-file enricher reads each named license's `file` and attaches its contents to that
+license. For this example, that is MIT. Downloading `package.json` into a custom subfolder does
+not make PackageManager read it automatically: still provide the name, version and declaration.
 
-The `license_file` field supplies license text to the inventory; it does not replace any additional attribution or notice requirements in the upstream license. Preserve and distribute those notices too.
+The `file` reference supplies license text to the inventory; it does not replace any additional attribution or notice requirements in the upstream license. Preserve and distribute those notices too.
 
 ## Supplement installed package metadata
 
@@ -77,13 +82,16 @@ inventories to apply this rule; existing archived build BOMs are not changed aut
 
 ### Supply declarations and terms
 
-Set `license` to an array of verified license identifiers. Preserve upstream alternative licenses; use `license_used` only when intentionally selecting an applicable license, not to hide missing evidence or change upstream licensing.
+Set `licenses` to an array of objects with verified license `name` values. Preserve upstream
+alternatives; use `license_used` only for an intentional selection, not to hide missing evidence
+or change upstream licensing. Pure `AND` expressions expand into required component licenses;
+`OR` and `WITH` expressions remain intact.
 
 Provide the terms through one of these fields:
 
-- `license_file`: a local path relative to the installation's `vendor/` folder. This is preferred when the license file is shipped locally. For a single license, a string is sufficient; a map keyed by license identifier can identify files for different licenses.
-- `license_text`: an object keyed by license identifier, with the complete original text, including copyright and attribution information, as each value. Encode newlines as `\n` in JSON strings.
-- `license_link`: an object keyed by license identifier, with a URL to its terms as each value. Use a raw downloadable text URL supported by BOM generation, not a numeric array of URLs or an HTML repository page.
+- `file`: a local path relative to the installation's `vendor/` folder, preferred for shipped terms.
+- `text`: complete original terms including copyright and attribution. Encode newlines as `\n`.
+- `link`: a URL to the terms. Prefer a supported raw downloadable text URL over an HTML page.
 
 For example, this fictional supplement deliberately omits the version. Replace the identity, license and URL with verified upstream values:
  
@@ -92,18 +100,28 @@ For example, this fictional supplement deliberately omits the version. Replace t
 [
 	{
 		"name": "npm-asset/example-library",
-		"license": ["MIT"],
-		"license_link": {
-			"MIT": "https://raw.githubusercontent.com/example-org/example-library/v1.2.3/LICENSE"
-		}
+		"licenses": [{
+			"name": "MIT",
+			"link": "https://raw.githubusercontent.com/example-org/example-library/v1.2.3/LICENSE"
+		}]
 	}
 ]
  
 ```
  
-The current GitHub license enricher downloads `license_link` values containing `raw.githubusercontent.com`; ordinary GitHub `blob` links and other license websites are not downloaded by that enricher. Verify the raw URL, exact tag spelling and file contents. Prefer a verified release tag or commit over a moving branch. A generic SPDX text can supply standard terms for a verified declaration, but it does not replace package-specific copyright notices or additional terms.
+The GitHub license enricher downloads license `link` values containing `raw.githubusercontent.com`;
+ordinary GitHub `blob` links and other websites are not downloaded by that enricher. Verify the
+raw URL, exact tag and contents. Prefer a verified release tag or commit over a moving branch.
+Generic SPDX text can supply standard terms for a verified declaration, but does not replace
+package-specific copyright notices or additional terms. An identifier alone is not resolved text.
 
-Keep text and links keyed by the exact license identifier, such as `MIT` or `Apache-2.0`. For multiple declared licenses, preserve the relevant terms for each rather than associating one license's text with another. Do not use a generic MIT template to guess a package's license or attribution.
+Keep text and links on the object with the correct license `name`, such as `MIT` or `Apache-2.0`.
+Preserve the terms for each license rather than assigning one license's text to another.
+Do not use a generic MIT template to guess a package's license or attribution.
+
+Legacy `license`, `license_file`, `license_text` and `license_link` inputs remain readable;
+new exports use only `licenses` objects. Supplements merge licenses by name and retain omitted
+fields. Compact inventories keep `source` provenance and `text_available`, not full terms.
 
 ### Generated inclusion registries
 
