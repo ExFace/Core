@@ -202,7 +202,13 @@ Monolog 1 baseline are in `out\`.
 - [ ] Confirm no harness files or oracle outputs were committed.
 
 **PackageManager prerequisite (risk #10)**
-- [ ] Design and implement out-of-process `StaticInstaller` entry points in `axenox/packagemanager`.
-- [ ] Release PackageManager and roll it out to all installations before the Monolog 3 core.
-- [ ] Run the pending `exface.Core` installer in `exface-m3` (out of process) and verify it succeeds.
-- [ ] `composer update` **with scripts** in `exface-m3` completes without the psr/log fatal error.
+- [x] `InstallApp` ported to `DebugWidgetRenderer` (`axenox/packagemanager` commit `7e38a60`). It needs the
+  new core; no compatibility code for mixed versions (decision) - PackageManager and core are updated together
+  following the update procedure in `MONOLOG_MIGRATION.md`.
+- [x] Permanent fix for Composer scripts: `StaticInstaller` runs `composerFinishUpdate`/`composerFinishInstall`/
+  `composerBackupEverything` in a child PHP process when called by Composer (`runInChildProcess()`). Verified with
+  `composer run-script post-update-cmd` (with and without the fix) and a failing child; details under risk #10.
+- [ ] Release PackageManager together with the Monolog 3 core (not before: the new `InstallApp` needs the new core).
+- [x] Run the pending `exface.Core` installer in `exface-m3` (out of process) and verify it succeeds.
+- [ ] `composer update` **with scripts** in `exface-m3` completes without the psr/log fatal error
+  (`post-update-cmd` verified via `run-script`; a full `composer update` changes packages - left to the developer).

@@ -318,23 +318,68 @@ psr/log 1 interface and fails to compile. Any Monolog handler (`StreamHandler`,
 Pinning psr/log 2 does not help either. Verified: exface `Logger`, `Monolog\Level` and `LogRecord`
 load fine under psr/log 1; `StreamHandler`/`Monolog\Logger` do not.
 
+**General problem, psr/log is just the first instance:** a PHP process can hold only one definition of a
+class or interface, and Composer loads its bundled libraries before running scripts. Any script that boots
+the workbench in-process therefore runs against Composer's versions of those libraries, not `vendor`'s.
+psr/log is where it broke first. Other libraries bundled in `composer.phar` that the workbench may also
+load (e.g. `symfony/console`, `symfony/process`, `react/promise`) can clash the same way as soon as their
+versions diverge. A Composer bundling psr/log 3 would only remove this one clash; none exists anyway:
+even Composer 2.11.1 builds its phar for PHP 7.2.5 (`config.platform.php`), which resolves psr/log to 1.x.
+
 **Affected `StaticInstaller` entry points** (boot a workbench): `composerFinishUpdate`,
-`composerFinishInstall`, `composerPrepareUninstall`, `composerBackupEverything`. The package events
-(`composerFinishPackageInstall/Update`) only record aliases in `LastInstall.temp.json` and can stay
-in-process.
+`composerFinishInstall`, `composerBackupEverything`. `composerPrepareUninstall` ends in an empty
+`uninstall()` and the package events (`composerFinishPackageInstall/Update`) only record aliases in
+`LastInstall.temp.json`, so they stay in-process.
 
-**Fix (to be designed, not yet approved):** run those entry points in a **child PHP process**
-(`PHP_BINARY` + a small runner script in `axenox/packagemanager`), streaming output and
-propagating the exit code. A fresh process only sees `vendor`'s psr/log 3. Alternative: `@php …`
-commands in each installation's root `composer.json` (requires editing every installation).
+**Fix (done, `axenox/packagemanager` `StaticInstaller::runInChildProcess()`):** when Composer calls one of
+the affected entry points (i.e. passes an event), it starts a **child PHP process** that calls the same
+method without event, so the child runs the installers itself. A fresh process only sees `vendor`'s libraries
+(psr/log 3 here), so this isolates the workbench from all of Composer's bundled dependencies, not just psr/log.
+The child is started like Composer's own `@php` scripts (same `PHP_BINARY` and `memory_limit`, command as
+array, no shell); it inherits the console streams, so output appears live. A non-zero exit code throws, so
+Composer stops with an error as it did when the installers crashed in its process. Root `composer.json` files
+stay unchanged. Rejected alternative: `@php …` scripts in each installation's root `composer.json` -
+`PackageManagerInstaller` re-adds the in-process scripts whenever they are missing, and installations would
+only pick it up after the PackageManager installer ran.
 
-**Rollout:** the fixed PackageManager must be released and installed everywhere **before** the
-Monolog 3 core, because during a Composer run `StaticInstaller` may already be loaded from the old
-version.
+This was **not** a one-time migration issue: every `composer.phar` bundles psr/log 1, so every Composer run
+with scripts failed the same way. Keep the child process even if Composer ever bundles psr/log 3; it is the
+permanent protection against the general problem above.
 
-**Until fixed (dev):** run Composer with `--no-scripts`. Pending installers stay queued in
-`vendor\axenox\packagemanager\LastInstall.temp.json`; after the port, run them out of process:
-`php -r "require 'vendor/autoload.php'; axenox\PackageManager\StaticInstaller::composerFinishUpdate();"`.
+**Verified** in `exface-m3` (Composer 2.8.1) with `composer run-script post-update-cmd` (empty queue, so no
+installer touched the database): exit code 0, the workbench starts in the child process. Without the fix the
+same command fails with the psr/log compile error. A crashing child (exit code 255) makes the entry point throw.
+
+**Rollout:** no compatibility code for mixed versions (decision): the PackageManager `InstallApp` uses
+the new core's `DebugWidgetRenderer`, the old one the removed `DebugWidgetProcessor`, so PackageManager and
+core must be updated **together**, following the [update procedure](#update-procedure-per-installation).
+Composer constraints cannot enforce this, because installations require dev branches aliased
+`as 1.0`. That first update must run without scripts: the package events may load the **old**
+`StaticInstaller` (without child process) before the PackageManager is updated, and Composer would then use
+it for `post-update-cmd`.
+
+### Update procedure (per installation)
+
+Run from the installation root. Only needed for the update to the Monolog 3 core: afterwards the installed
+PackageManager runs its installers in a child process, so later Composer runs work with scripts again.
+
+1. Back up the database and the installation folder (including `logs/`).
+2. Make sure one Composer run updates **both** `exface/core` and `axenox/packagemanager` to versions that
+   contain the migration. Never update only one of them: the old `InstallApp` does not load with the new
+   core, and the new one does not load with the old core.
+3. `composer update --no-scripts` - see Rollout above.
+4. Run all installers out of process (core first, then every app in `vendor`; also clears
+   `LastInstall.temp.json` and regenerates the license BOM):
+   `php -r "require 'vendor/autoload.php'; axenox\PackageManager\StaticInstaller::composerFinishInstall();"`
+   Do **not** use `composerFinishUpdate()` here: `--no-scripts` also skips the package events that fill
+   its queue, so it would install nothing.
+5. Verify: `php vendor/bin/action axenox.PackageManager:InstallApp --help` lists the `apps` argument (with
+   mismatched versions the command fails to load, and calling it with an app alias reports
+   `No arguments expected`); the log
+   viewer shows entries and an error dialog shows its log tab.
+
+**Rollback:** restore code, Composer lock **and** database together. The installer moved `LOG_ENTRY` to the
+`LOG_FILES` data source (`LogCsvBuilder`), which the old core does not have.
 
 ## Latent risk: exFace handlers are appended without deduplication
 
@@ -505,8 +550,8 @@ writer, escape strategy to be proven against `CsvBuilder`.
    `LogCleaner` (parses with `fgetcsv()`, the parser league/csv uses, per file version).
 7. **Verify & roll out.** Compare behaviour against the oracle (decoded values, not raw bytes).
    Deploy to a test environment with representative concurrent traffic for ≥ one retention/cleanup
-   cycle before general rollout. Roll back code + Composer lock together (the unchanged on-disk
-   contract lets the old version read new files).
+   cycle before general rollout. Roll out and roll back with the
+   [update procedure](#update-procedure-per-installation): code, Composer lock and database together.
 
 ## Test matrix
 
