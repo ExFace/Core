@@ -24,9 +24,9 @@ This authorization point is used by the `ConsoleFacade` to control access from t
 ### Restrict CLI access for all users except for certain user roles
 
 1. Deny every user role access to that facade add a policy for the facade authorization point. After doing that no user will have access to that facade, so there has to be an other policy added, that will permit access for the user role that should have access.
-  - Effect: `Deny`
-  - User role: none
-  - Facade: the desired CLI facade - e.g. `ConsoleFacade`
+   - Effect: `Deny`
+   - User role: none
+   - Facade: the desired CLI facade - e.g. `ConsoleFacade`
 2. Add another policy to the autorization point with the effect `Permit`, the same facade as `Facade` and as `User role` the role that should have access to the facade.
 
 With these two policies no user has access to the facade, except the users that have the role as definied in the second policy.

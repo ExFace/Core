@@ -19,7 +19,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  */
 class StateMenuButton extends MenuButton
 {
-
+    private $state_attribute_alias = null;
     private $show_states = [];
 
     /**
@@ -35,9 +35,7 @@ class StateMenuButton extends MenuButton
         // Falls am Objekt ein StateMachineBehavior haengt wird versucht den momentanen Status aus
         // dem Objekt auszulesen und die entsprechenden Buttons aus dem Behavior hinzuzufuegen.
         if ($menu->isEmpty()) {
-            if (is_null($smb = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst())) {
-                throw new WidgetConfigurationError($this, 'StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
-            }
+            $smb = $this->getStateMachineBehavior();
             
             if (($data_sheet = $this->getPrefillData()) && ($state_column = $data_sheet->getColumnValues($smb->getStateAttributeAlias()))) {
                 $current_state = $state_column[0];
@@ -141,5 +139,43 @@ class StateMenuButton extends MenuButton
         $this->show_states = $array;
         return $this;
     }
+
+    /**
+     * Alias of the attribute, that holds the state of the object - only required if object has multiple StateMachineBehaviors. 
+     * 
+     * If not set, the first StateMachineBehavior of the object will be used.
+     * 
+     * @uxon-property state_attribute_alias
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $alias
+     * @return $this
+     */
+    public function setStateAttributeAlias(string $alias) : StateMenuButton
+    {
+        $this->state_attribute_alias = $alias;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    protected function getStateAttributeAlias() : ?string
+    {
+        return $this->state_attribute_alias;
+    }
+
+    /**
+     * @return StateMachineBehavior
+     */
+    protected function getStateMachineBehavior() : StateMachineBehavior
+    {
+        $stateAttrAlias = $this->getStateAttributeAlias();
+        foreach ($this->getMetaObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class) as $smb) {
+            if ($stateAttrAlias === null || $smb->getStateAttributeAlias() === $stateAttrAlias) {
+                return $smb;
+            }
+        }
+        throw new WidgetConfigurationError($this, 'StateMenuButton: The object ' . $this->getMetaObject()->getAliasWithNamespace() . ' has no StateMachineBehavior attached.');
+    }
 }
-?>

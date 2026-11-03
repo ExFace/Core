@@ -2,9 +2,8 @@
 
 namespace exface\Core\Widgets;
 
-use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\CodeDataType;
-use exface\Core\Widgets\Parts\CodeFormatter;
+use exface\Core\Widgets\Traits\iHaveCodeFormatterTrait;
 
 /**
  * A code input that can show and format code inside the Ace editor.
@@ -32,13 +31,13 @@ use exface\Core\Widgets\Parts\CodeFormatter;
  */
 class InputCode extends Input
 {
+    use iHaveCodeFormatterTrait;
+
     const LANGUAGE_SQL = 'sql';
     
     private $wrapLines = true;
     
     private $language = null;
-    private $codeFormatter = null;
-    private ?UxonObject $codeFormatterUxon = null;
     
     
     /**
@@ -81,80 +80,6 @@ class InputCode extends Input
         return $this;
     }
     
-    /**
-     * It gets the code formatter.
-     * 
-     * @return CodeFormatter
-     */
-    public function getCodeFormatter(): CodeFormatter
-    {
-        if (!$this->hasCodeFormatter()) {
-            if ($this->codeFormatterUxon === null) {
-                $this->codeFormatter = $this->createDefaultCodeFormatter($this->getLanguage());
-            } else {
-                $this->codeFormatter = new CodeFormatter($this, $this->codeFormatterUxon);
-            }
-        }
-        return $this->codeFormatter;
-    }
-
-    /**
-     * The code formatter can format different code languages.
-     * 
-     * Use the 'dialect' property if the language has multiple dialects, 
-     * such as 'SQL', which includes for example T-SQL and MySQL.
-     * 
-     * @uxon-property code_formatter
-     * @uxon-type \exface\Core\Widgets\Parts\CodeFormatter
-     * @uxon-template {"language": "sql", "dialect": "tsql"}
-     * 
-     * @param UxonObject $uxon
-     * @return $this
-     */
-    protected function setCodeFormatter(UxonObject $uxon) : InputCode
-    {
-        $this->codeFormatterUxon = $uxon;
-        $this->codeFormatter = null;
-        return $this;
-    }
-
-    /**
-     * @return bool
-     */
-    protected function hasCodeFormatter() : bool
-    {
-        return $this->codeFormatter !== null;
-    }
-
-    /**
-     * Creates default code formatter
-     * 
-     * @param $language
-     * @return CodeFormatter
-     */
-    protected function createDefaultCodeFormatter($language) : CodeFormatter
-    {
-        return match ($language) {
-            self::LANGUAGE_SQL => $this->createSqlCodeFormatter(),
-            default => new CodeFormatter($this, new UxonObject([
-                'language' => $language,
-            ])),
-        };
-    }
-
-    /**
-     * Creates default sql formatter.
-     * 
-     * @return CodeFormatter
-     */
-    protected function createSqlCodeFormatter() : CodeFormatter
-    {
-        return new CodeFormatter($this, new UxonObject([
-            'language' => 'sql',
-            'dialect' => 'sql',
-        ]));
-    }
-
     /**
      * @return bool
      */

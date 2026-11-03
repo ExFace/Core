@@ -62,18 +62,21 @@ RewriteRule ^[^/]*$ vendor/exface/core/index.php [L,QSA]";
      */
     protected function getContentSecurityRules() : string
     {
-        return "# Block direct access to PHP scripts
+        return "# Block files directly in vendor (including SBOMs), but not files in subfolders.
+    RewriteRule ^vendor/[^/]+$ - [F,L,NC]
+
+    # Block direct access to PHP scripts
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteCond %{REQUEST_FILENAME} !vendor/exface/core/index.php [NC]
 RewriteRule ^vendor/.*\.php$ - [F,L,NC]
 
 # Block requests to config, cache, backup, etc.
 RewriteRule ^(config|backup|translations|logs)/.*$ - [F,NC]
-# Block requests to system files (starting with a dot) in the data folder
-RewriteRule ^data/\..*$ - [F,NC]
+# Block dot-prefixed files and folders at any depth, including all folder contents.
+RewriteRule (^|/)\. - [F,L,NC]
 
-# Block .html files.
-RewriteRule ^vendor/.*\.html$ - [F,L,NC]
+# Block direct access to .html, .htm and .md files in vendor.
+RewriteRule ^vendor/.*\.(html?|md)$ - [F,L,NC]
 
 # Block library docs.
 RewriteRule ^vendor/.*/gh-pages.*$ - [F,L,NC]";

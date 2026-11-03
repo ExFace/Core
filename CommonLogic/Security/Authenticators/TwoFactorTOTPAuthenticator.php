@@ -12,6 +12,7 @@ use exface\Core\Exceptions\Security\AuthenticationIncompleteError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Factories\WidgetFactory;
 use RobThree\Auth\TwoFactorAuth;
+use exface\Core\CommonLogic\Security\Authenticators\TOTP\BarcodeScannerQRCodeProvider;
 use exface\Core\Interfaces\UserInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\SessionContextScope;
 
@@ -112,7 +113,7 @@ class TwoFactorTOTPAuthenticator extends AbstractAuthenticator
             // Now validate the tokens password with the loaded secret. If validation
             // successful, make sure, the secret is stored in the user properties.
             // If validation fails, leave everything as-is and wait for the next attempt
-            if (false === $this->getTFA()->verifyCode($userSecret ?? $sessionSecret, $token->getPassword())) {
+            if (false === $this->getTFA()->verifyCode((string) ($userSecret ?? $sessionSecret), (string) $token->getPassword())) {
                 throw new AuthenticationFailedError($this, 'One-time password not valid. Please try again!', null, null, $token);
             } else {
                 // If the secret came from the session, put it into the user properties
@@ -270,7 +271,7 @@ class TwoFactorTOTPAuthenticator extends AbstractAuthenticator
 HTML
                 ],[
                     'widget_type' => 'QrCode',
-                    'value' => $this->getTFA()->getQRText($this->getWorkbench()->getConfig()->getOption('SERVER.TITLE'), $secret),
+                    'value' => $this->getTFA()->getQRText((string) $this->getWorkbench()->getConfig()->getOption('SERVER.TITLE'), (string) $secret),
                     'hide_caption' => true
                 ],[
                     'widget_type' => 'InputHidden',
@@ -381,12 +382,13 @@ HTML
     }
     
     /**
+     * Creates the TOTP library instance with a provider that never sends secrets to external QR services.
      * 
      * @return TwoFactorAuth
      */
     protected function getTFA() : TwoFactorAuth
     {
-        $tfa = new TwoFactorAuth();
+        $tfa = new TwoFactorAuth(new BarcodeScannerQRCodeProvider());
         return $tfa;
     }
 }

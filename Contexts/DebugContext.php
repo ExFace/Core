@@ -820,7 +820,7 @@ JS
 <html>
     <head>
         <base href="{$this->getWorkbench()->getUrl()}">
-        <link href="vendor/npm-asset/github-markdown-css/github-markdown.css?v20260513074931" rel="stylesheet">
+        <link href="vendor/npm-asset/github-markdown-css/github-markdown-light.css?v20261018215600" rel="stylesheet">
     </head>
     <body>
         <div class="markdown-body" style="padding: 20px;">

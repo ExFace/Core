@@ -676,6 +676,10 @@ abstract class AbstractWidget implements WidgetInterface
      * buttons for creating a new object and editing one, you can specify a custom id space for each
      * of the buttons - this way, the live references within the button's action will work although
      * the ids specified in them are not unique on the page anymore.
+     * 
+     * **NOTE:** do not set `"id_space": ""` inside a dialog (or anything else with an id space). Widget
+     * links will not find the ids inside it. You should not need it anyway: widgets in a dialog can link
+     * to each other by their plain ids and the id space is added automatically.
      *
      * @uxon-property id_space
      * @uxon-type string

@@ -7,10 +7,12 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
-use exface\Core\Widgets\InputCode;
 
 /**
- * The CodeFormatter formats the value before it is displayed in an output.
+ * Configure code highlighting and optional formatting for code inputs and Markdown widgets.
+ * 
+ * Markdown widgets use colorize and an optional language selection without rewriting
+ * code blocks. Prettify and dialect are used only by code inputs with a formatter.
  * 
  * ## Examples:
  * ```
@@ -41,7 +43,13 @@ class CodeFormatter implements WidgetPartInterface
     private $prettify = true;
     private $colorize = true;
     
-    public function __construct(InputCode $inputCode, ?UxonObject $uxon = null)
+    /**
+     * Accepts code and Markdown owners without coupling their presentation settings to an editor library.
+     *
+     * @param WidgetInterface $inputCode
+     * @param UxonObject|null $uxon
+     */
+    public function __construct(WidgetInterface $inputCode, ?UxonObject $uxon = null)
     {
         $this->inputCode = $inputCode;
         if ($uxon) {
@@ -49,9 +57,16 @@ class CodeFormatter implements WidgetPartInterface
         }
     }
     
+    /**
+     * Returns the owning widget so both kinds of code-bearing inputs share the same part contract.
+     *
+     * {@inheritDoc}
+     *
+     * @see WidgetPartInterface::getWidget()
+     */
     public function getWidget(): WidgetInterface
     {
-        return $this->inputCode->getWidget();
+        return $this->inputCode;
     }
 
     /**
@@ -75,7 +90,7 @@ class CodeFormatter implements WidgetPartInterface
      * Sets the formatted language.
      * 
      * @uxon-property language
-     * @uxon-type [sql,javascript,json]
+    * @uxon-type [sql,javascript,js,typescript,ts,json,css,html,xml,php,python,py,yaml,yml]
      * 
      * @param string $language
      * @return $this

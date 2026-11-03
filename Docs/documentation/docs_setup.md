@@ -6,6 +6,17 @@ The built-in documentation module expects your docs to use the Markdown syntax w
 
 You are free to organize your documentation any way you like. Don't have a good structure in your mind? Have a look at our [tips for structuring the docs-folder](docs_structure.md).
 
+## Alert boxes
+
+To highlight important information, use [GitHub alerts](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts): a blockquote starting with `[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!WARNING]` or `[!CAUTION]` on its own line. They are rendered as colored boxes both on GitHub and in the built-in documentation.
+
+```
+> [!WARNING]
+> This action cannot be undone.
+```
+
+## Linking docs from `composer.json`
+
 If your app is a Composer package and has a sources repository on GitHub, GitLab or similar (which is highly recommended - see [publishing apps](../publishing_apps/index.md) for details), you should add a link to your documentation to the `support` section of the `composer.json` of your app. Here is an example for GitHub/GitLab:
 
 ```

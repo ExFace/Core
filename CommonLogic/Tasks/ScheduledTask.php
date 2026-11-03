@@ -34,7 +34,7 @@ class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
     private ?\DateInterval $timeOutInterval = null;
     private ?\DateInterval $maxTimeOutInterval = null;
     private ?string $timeToCheckRaw = null;
-    private ?string $timeoutRaw = null;
+    private string|int|null $timeoutRaw = null;
 
     /**
      * 
@@ -47,6 +47,24 @@ class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
         $this->schedulerUid = $schedulerUid;
         if ($uxon !== null) {
             $this->importUxonObject($uxon);
+        }
+    }
+
+    /**
+     * Import the scheduled timeout that generic task import deliberately excludes.
+     * 
+     * Scheduled tasks expose their own timeout configuration, which must survive
+     * construction and reconstruction from queued UXON.
+     * 
+     * {@inheritDoc}
+     * 
+     * @see GenericTask::importUxonObject()
+     */
+    public function importUxonObject(UxonObject $uxon)
+    {
+        parent::importUxonObject($uxon);
+        if ($uxon->hasProperty('timeout')) {
+            $this->setTimeout($uxon->getProperty('timeout'));
         }
     }
     
@@ -73,13 +91,13 @@ class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
     }
 
     /**
-     * Returns the raw `timeout` value as configured, or null if unset.
+    * Returns the raw `timeout` value without losing numeric seconds on export.
      *
      * Needed for serialisation - see getTimeToCheck() for the rationale.
      *
-     * @return string|null
+    * @return string|int|null
      */
-    protected function getTimeout() : ?string
+    protected function getTimeout() : string|int|null
     {
         return $this->timeoutRaw;
     }
@@ -118,14 +136,18 @@ class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
     }
 
     /**
+     * Resolve the check interval without changing the exported task identity.
+     * 
+     * Defaults must not become explicit UXON properties when the queue checks
+     * running tasks, since subsequent runs are matched against that UXON.
+     * 
      * @return \DateInterval
      * @throws \InvalidArgumentException
      */
     public function getTimeToCheckInterval() : \DateInterval
     {
-        // Initialize with the default timeout interval.
         if($this->timeOutInterval === null) {
-            $this->setTimeToCheck(self::DEFAULT_TIMEOUT);
+            $this->timeOutInterval = DateDataType::castInterval(self::DEFAULT_TIMEOUT);
         }
 
         return $this->timeOutInterval;
@@ -153,7 +175,7 @@ class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
     protected function setTimeout(string|int $timeout) : ScheduledTask
     {
         try {
-            $this->timeoutRaw = (string) $timeout;
+            $this->timeoutRaw = $timeout;
             $this->maxTimeOutInterval = DateDataType::castInterval($timeout);
         } catch (\Throwable $e) {
             throw new InvalidArgumentException('Invalid value "' . $timeout . '" for `timeout` configuration', null, $e);
@@ -163,13 +185,19 @@ class ScheduledTask extends GenericTask implements TimeoutingTaskInterface
     }
 
     /**
+     * Resolve the maximum interval without adding defaults to exported UXON.
+     * 
+     * Queue overlap detection requires task identity to remain unchanged by
+     * reading its effective timeout.
+     * 
      * {@inheritDoc}
+     * 
      * @see TimeoutingTaskInterface::getTimeoutInterval()
      */
     public function getTimeoutInterval() : ?\DateInterval
     {
         if($this->maxTimeOutInterval === null) {
-            $this->setTimeout(self::DEFAULT_MAX_TIMEOUT);
+            $this->maxTimeOutInterval = DateDataType::castInterval(self::DEFAULT_MAX_TIMEOUT);
         }
         
         return $this->maxTimeOutInterval;

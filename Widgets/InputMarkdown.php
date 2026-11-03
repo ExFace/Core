@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\Parts\TextMention;
 use exface\Core\Widgets\Parts\TextStencil;
+use exface\Core\Widgets\Traits\iHaveCodeFormatterTrait;
 use exface\Core\Widgets\Traits\iRenderMermaidTrait;
 
 /**
@@ -17,6 +18,7 @@ use exface\Core\Widgets\Traits\iRenderMermaidTrait;
  */
 class InputMarkdown extends InputText
 {
+    use iHaveCodeFormatterTrait;
     use iRenderMermaidTrait;
     
     const MODE_WYSIWYG = 'wysiwyg';
@@ -146,7 +148,7 @@ class InputMarkdown extends InputText
      *
      * @uxon-property mentions
      * @uxon-type \exface\Core\Widgets\Parts\TextMention[]
-     * @uxon-template [{"caption": "", "tag_prefix": "", "tag_text_regex": ".*", "tag_color": "", "autosuggest_object_alias": "", "autosuggest_filter_attribute_alias": ""}]
+    * @uxon-template [{"caption": "", "tag_prefix": "", "tag_text_regex": ".*", "tag_color": "", "autosuggest": {"object_alias": "", "filter_attribute": "", "tag_attribute": "", "suggestion_attribute": ""}}]
      *
      * @param UxonObject $arrayOfUxons
      * @return $this

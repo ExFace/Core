@@ -37,7 +37,6 @@ use exface\Core\Behaviors\StateMachineBehavior;
  */
 class StateInputSelect extends InputSelect
 {
-
     /** @var boolean $show_state_ids */
     private $show_state_ids = true;
 
@@ -61,8 +60,7 @@ class StateInputSelect extends InputSelect
     public function getSelectableOptions() : array
     {
         // Check if the attribute is the state in the StateMachineBehavior of it's object
-        /* @var $smb \exface\Core\Behaviors\StateMachineBehavior */
-        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
+        $smb = $this->getStateMachineBehavior();
         if (! $smb || ! $this->getAttribute() || $this->getAttribute()->getAlias() != $smb->getStateAttributeAlias()) {
             $error_text = 'Cannot use the widget "' . $this->getWidgetType() . '" for attribute "' . $this->getAttributeAlias() . '" of object "' . $this->getMetaObject()->getAliasWithNamespace() . '": ';
             if (! $smb) {
@@ -85,7 +83,7 @@ class StateInputSelect extends InputSelect
 
     protected function addStateNumbers($options)
     {
-        $smb = $this->getAttribute()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst();
+        $smb = $this->getStateMachineBehavior();
         if (! $smb)
             return parent::getSelectableOptions();
         
@@ -112,7 +110,7 @@ class StateInputSelect extends InputSelect
      */
     protected function applyStateNames($options)
     {
-        if (! ($smb = $this->getAttribute()->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class)->getFirst())) {
+        if (! ($smb = $this->getStateMachineBehavior())) {
             return $options;
         }
         
@@ -127,5 +125,23 @@ class StateInputSelect extends InputSelect
         }
         
         return $appliedOptions;
+    }
+
+    /**
+     * @return StateMachineBehavior|null
+     */
+    protected function getStateMachineBehavior() : ?StateMachineBehavior
+    {
+        if (! $attr = $this->getAttribute()) {
+            return null;
+        }
+        /* @var StateMachineBehavior $smb */
+        foreach ($attr->getObject()->getBehaviors()->getByPrototypeClass(StateMachineBehavior::class) as $smb) {
+            if ($smb->getStateAttribute()->is($attr)) {
+                return $smb;
+            }
+        }
+        
+        return null;
     }
 }

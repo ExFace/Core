@@ -8,12 +8,13 @@
    - [The app as dependency container](app_as_container.md)
    - [Installing an app](App_installers/index.md) - initializing app dependencies like SQL schemas, facade routes, etc.
    - [Exporting and importing models as files](Model_files_and_versioning.md)
-4. [The workbench in detail](workbench.md)
-5. [Using metamodel components in the code via selectors](Using_metamodel_components_in_the_code_via_selectors.md)
-6. [Configuring component discovery and save templates](Component_registry.md)
-7. [Logging](Logging/index.md)
-8. [Moving model components between apps](Moving_objects_to_another_app.md)
-9. [Facades for UIs and API](Facades/index.md)
+4. [Working with third-party libraries](Thrid-party_libraries/index.md)
+5. [The workbench in detail](workbench.md)
+6. [Using metamodel components in the code via selectors](Using_metamodel_components_in_the_code_via_selectors.md)
+7. [Configuring component discovery and save templates](Component_registry.md)
+8. [Logging](Logging/index.md)
+9. [Moving model components between apps](Moving_objects_to_another_app.md)
+10. [Facades for UIs and API](Facades/index.md)
     - [Working offline](Offline/index.md)
 
 ## Technical overview

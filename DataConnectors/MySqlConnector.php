@@ -629,7 +629,11 @@ class MySqlConnector extends AbstractSqlConnector
      */
     public function escapeString(string $string) : string
     {
-        return mysqli_real_escape_string($this->getCurrentConnection(), $string);
+		if (null === $conn = $this->getCurrentConnection()) {
+			$this->connect();
+			$conn = $this->getCurrentConnection();
+		}
+        return mysqli_real_escape_string($conn, $string);
     }
 
     protected function getSslCaCertificatePath() : ?string
