@@ -96,6 +96,7 @@ Consequences:
 plus broken-CSV-line **repair**. The *cleanup* is unaffected by Monolog, but the *repair* logic is
 **not** format-safe (it judges lines by comma count, not by parsing CSV — see "Additional correctness
 risks" below). So `LogCleaner` is only partly "safe from the migration".
+**Update:** the repair is now parser-based and version-aware (risk #9, step 6 - done).
 
 ## On-disk storage contract (must be preserved)
 
@@ -217,6 +218,8 @@ the result). `DataTypes/LogLevelDataType.php` also depends on the old `Logger::g
 `getLevels()` / `toMonologLevel()` helpers and must be ported to `Level` conversions — while keeping
 its public behaviour (PSR-3 strings at exface interfaces, numeric values only where the metamodel
 asks for them).
+**Status:** done - `LogLevelDataType` uses `Level->value`, `toPsrLogLevel()` and `Level::cases()`; its
+public signatures are unchanged.
 
 ### 4. Namespaces / constructors
 
@@ -297,6 +300,10 @@ CSV parsing: quoted commas and valid embedded newlines make it unreliable, so a 
 `league/csv` settings as `CsvBuilder` (comma/apostrophe, embedded newlines), validate exactly eleven
 fields + identifiers + level + timestamp + JSON, back up/quarantine before rewriting, and report
 *logical record* numbers rather than physical line numbers.
+**Status:** done (step 6) - `LogCleaner` parses logical records with the per-version settings from
+`CsvLogConfig`, validates as described (empty context/extra allowed for fallback rows), appends removed
+records as raw bytes to `logs/quarantine/<log file>` before rewriting and reports record numbers. Details
+and decisions in `PORTING_TODO.md`.
 
 ### 10. Composer scripts cannot boot a Monolog 3 workbench (release blocker)
 
@@ -489,12 +496,13 @@ writer, escape strategy to be proven against `CsvBuilder`.
    (enrichment into `extra`, no invented properties); `MessageOnlyFormatter` to the v3 signatures;
    `DebugMessageMonologHandler::write()` to the v3 signature. Extract a standalone detail-JSON
    generator from `DebugWidgetProcessor` and have **`MonitorLogHandler` call that explicit method**
-   instead of invoking the processor with a hand-built array. Port `LogLevelDataType`. Verify
+   instead of invoking the processor with a hand-built array. Port `LogLevelDataType` (*done*). Verify
    `MonologErrorLogHandler`, `ErrorLogHandler`, `GroupHandler`-or-replacement (replaced by `CsvWithDetailsHandler`), and the exact v3
    `FingersCrossedHandler` constructor. Keep the exface `LoggerInterface` + sender arg stable — no
    Monolog types leak to callers.
 6. **Parser-based repair** (see risk #9). Validate with `league/csv`, quarantine before rewrite,
-   report logical-record numbers. Keep repair for at least one release post-migration.
+   report logical-record numbers. Keep repair for at least one release post-migration. *Done* in
+   `LogCleaner` (parses with `fgetcsv()`, the parser league/csv uses, per file version).
 7. **Verify & roll out.** Compare behaviour against the oracle (decoded values, not raw bytes).
    Deploy to a test environment with representative concurrent traffic for ≥ one retention/cleanup
    cycle before general rollout. Roll back code + Composer lock together (the unchanged on-disk

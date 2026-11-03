@@ -6,6 +6,8 @@ use exface\Core\DataTypes\DateDataType;
 use exface\Core\CommonLogic\Tracer;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\LogLevelDataType;
+use exface\Core\Exceptions\RuntimeException;
 
 /**
  * Removes expired log entries and takes care of log migrations, repairs, etc.
@@ -16,6 +18,8 @@ use exface\Core\DataTypes\FilePathDataType;
 class LogCleaner
 {
     const CLEANUP_AREA_LOGS = 'logs';
+    
+    const FOLDER_NAME_QUARANTINE = 'quarantine';
 
     /**
      * Deleting log files and details folder that are older then the config option `MAX_DAYS_TO_KEEP`.
@@ -133,6 +137,11 @@ class LogCleaner
                         $filemanager->deleteDir($detailsSubFolder);
                         $countDir++;
                     }
+                    // Records removed by repairBrokenLogs() expire with their log file
+                    $quarantineFile = static::getQuarantinePath($pathToLogs, FilePathDataType::findFileName($logFile, true));
+                    if (is_file($quarantineFile)) {
+                        @unlink($quarantineFile);
+                    }
                     @unlink($logFile);
                     $countFiles++;
                 }
@@ -162,14 +171,18 @@ class LogCleaner
     }
 
     /**
-     * Removes broken lines from log files
+     * Moves broken records from log files to the quarantine folder
      *
-     * Sometimes a CSV log file conatins half-filled lines for some reason. And it is not
-     * just columns missing: the line contains just some substring of what it should have
-     * been. This leads to errors like `Array sizes inconsistent` when trying to show the
-     * log.
+     * Sometimes a CSV log file contains broken records: truncated or interleaved writes, values the legacy
+     * writer could not escape, etc. These would show up as garbage in the log viewer.
      *
-     * This method attemts to find these broken lines and removes them.
+     * Files are parsed as CSV (logical records, so valid multi-line records are kept) with the settings of
+     * their format version in `CsvLogConfig`. Records failing `isValidLogRecord()` are appended unchanged
+     * (raw bytes) to `logs/quarantine/<log file name>` *before* the log file is rewritten without them, so a
+     * repair can always be undone by appending them back. If the log file cannot be rewritten (e.g. because it
+     * is still open on Windows), the quarantine is rolled back and the file is retried on the next cleanup.
+     * 
+     * Valid records are written back byte by byte as they were.
      *
      * @param Filemanager $filemanager
      * @param string $pathToLogs
@@ -180,38 +193,34 @@ class LogCleaner
         $logFiles = glob($pathToLogs . '/*.log');
         $repairedFiles = [];
         $failedFiles = [];
+        $logger = $filemanager->getWorkbench()->getLogger();
         foreach ($logFiles as $file) {
             // Skip logs that we cannot write anyhow - we cannot help them
             if (! is_writable($file)) {
                 continue;
             }
-            $buffer = '';
-            $brokenLines = [];
-            $lineNo = 0;
-            $handle = fopen($file, "r");
-            if ($handle) {
-                while (false !== $line = fgets($handle)) {
-                    $lineNo++;
-                    if (static::isValidLogLine($line)) {
-                        $buffer .= $line;
-                    } else {
-                        $brokenLines[$lineNo] = $line;
-                    }
-                }
-                fclose($handle);
+            $fileName = FilePathDataType::findFileName($file, true);
+            $content = file_get_contents($file);
+            if ($content === false) {
+                $failedFiles[] = $fileName;
+                continue;
             }
-            if (! empty($brokenLines)) {
-                try {
-                    $filemanager->dumpFile($file, trim($buffer));
-                } catch (\Throwable $e) {
-                    // On Windows, files still open by a logger (e.g. today's log) cannot be replaced
-                    $failedFiles[] = FilePathDataType::findFileName($file, true);
-                    $filemanager->getWorkbench()->getLogger()->warning('Cannot repair broken log file "' . FilePathDataType::findFileName($file, true) . '": ' . $e->getMessage(), ['logFile' => $file]);
-                    continue;
-                }
-                $repairedFiles[$file] = $brokenLines;
-                $filemanager->getWorkbench()->getLogger()->error('Broken log file "' . FilePathDataType::findFileName($file, true) . '" detected. Broken line(s) ' . implode(', ', array_keys($brokenLines)) . ' removed!', ['logFile' => $file, 'logLinesRemoved' => $brokenLines]);
+            [$validRecords, $brokenRecords] = static::splitLogRecords($content, CsvLogConfig::getVersionFromFileName($file));
+            if (empty($brokenRecords)) {
+                continue;
             }
+            
+            $quarantineFile = static::getQuarantinePath($pathToLogs, $fileName);
+            try {
+                static::quarantineAndRewrite($filemanager, $file, $validRecords, $quarantineFile, implode('', $brokenRecords));
+            } catch (\Throwable $e) {
+                // On Windows, files still open by a logger (e.g. today's log) cannot be replaced
+                $failedFiles[] = $fileName;
+                $logger->warning('Cannot repair broken log file "' . $fileName . '": ' . $e->getMessage(), ['logFile' => $file]);
+                continue;
+            }
+            $repairedFiles[$file] = array_keys($brokenRecords);
+            $logger->error('Broken log file "' . $fileName . '" detected. Broken record(s) ' . implode(', ', array_keys($brokenRecords)) . ' moved to "' . $quarantineFile . '"!', ['logFile' => $file, 'quarantineFile' => $quarantineFile, 'logRecordsRemoved' => array_keys($brokenRecords)]);
         }
         $msgs = [];
         if (! empty($repairedFiles)) {
@@ -222,14 +231,161 @@ class LogCleaner
         }
         return empty($msgs) ? null : implode(' ', $msgs);
     }
-
+    
+    // Generated by GitHub Copilot - Nov-03-2026
     /**
-     *
-     * @param string $line
+     * Splits the contents of a log file into valid records and broken records (raw bytes each).
+     * 
+     * @param string $content
+     * @param string $version
+     * @return array [string $validRecords, string[] $brokenRecords] - broken records keyed by their record number (1-based)
+     */
+    protected static function splitLogRecords(string $content, string $version) : array
+    {
+        $columns = CsvLogConfig::getColumns($version);
+        $handle = fopen('php://memory', 'w+b');
+        fwrite($handle, $content);
+        rewind($handle);
+        
+        $valid = '';
+        $broken = [];
+        $recordNo = 0;
+        try {
+            while (true) {
+                $start = ftell($handle);
+                $fields = fgetcsv($handle, null, CsvLogConfig::getDelimiter($version), CsvLogConfig::getEnclosure($version), CsvLogConfig::getEscape($version));
+                if ($fields === false) {
+                    break;
+                }
+                $recordNo++;
+                $raw = substr($content, $start, ftell($handle) - $start);
+                if (static::isValidLogRecord($fields, $columns)) {
+                    $valid .= $raw;
+                } else {
+                    $broken[$recordNo] = $raw;
+                }
+            }
+        } finally {
+            fclose($handle);
+        }
+        
+        // Writers append lines, so the file must end with a line break - otherwise the next record would
+        // continue the last line.
+        if ($valid !== '' && substr($valid, -1) !== "\n") {
+            $valid .= "\n";
+        }
+        return [$valid, $broken];
+    }
+    
+    // Generated by GitHub Copilot - Nov-03-2026
+    /**
+     * Returns TRUE if the parsed CSV record is a plausible log entry of the given column layout.
+     * 
+     * Checks the field count, the log ID, the numeric level (and its name), the timestamp and that
+     * context/extra are empty or valid JSON. Empty context/extra are allowed, because fallback rows
+     * (see `CsvHandler`) do not have them.
+     * 
+     * @param array $fields
+     * @param string[] $columns
      * @return bool
      */
-    protected static function isValidLogLine(string $line) : bool
+    protected static function isValidLogRecord(array $fields, array $columns) : bool
     {
-        return substr_count($line, ',') >= 10;
+        if (count($fields) !== count($columns)) {
+            return false;
+        }
+        $record = array_combine($columns, $fields);
+        
+        $id = $record[CsvLogConfig::KEY_ID] ?? null;
+        if ($id === null || preg_match('/^\S+$/', $id) !== 1) {
+            return false;
+        }
+        
+        if (array_key_exists(CsvLogConfig::KEY_LEVEL, $record)) {
+            $levels = LogLevelDataType::getValuesOfMonologLevels();
+            $level = $record[CsvLogConfig::KEY_LEVEL] ?? '';
+            if (! ctype_digit($level) || ! array_key_exists((int) $level, $levels)) {
+                return false;
+            }
+            if (array_key_exists(CsvLogConfig::KEY_LEVEL_NAME, $record) && strtoupper($record[CsvLogConfig::KEY_LEVEL_NAME] ?? '') !== $levels[(int) $level]) {
+                return false;
+            }
+        }
+        
+        if (array_key_exists(CsvLogConfig::KEY_DATETIME, $record)) {
+            $datetime = $record[CsvLogConfig::KEY_DATETIME] ?? '';
+            // Not checked against the exact date format, so files of older writers with another precision stay valid
+            if (preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/', $datetime) !== 1 || strtotime($datetime) === false) {
+                return false;
+            }
+        }
+        
+        foreach ([CsvLogConfig::KEY_CONTEXT, CsvLogConfig::KEY_EXTRA] as $key) {
+            $json = $record[$key] ?? '';
+            if ($json !== '') {
+                json_decode($json);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+    }
+    
+    // Generated by GitHub Copilot - Nov-03-2026
+    /**
+     * Appends the broken records to the quarantine file and then replaces the log file with the valid records.
+     * 
+     * If replacing the log file fails, the quarantine file is truncated to its previous size, so the same
+     * records are not quarantined twice when the repair is retried.
+     * 
+     * @param Filemanager $filemanager
+     * @param string $logFile
+     * @param string $validRecords
+     * @param string $quarantineFile
+     * @param string $brokenRecords
+     * @throws \Throwable if quarantining or rewriting fails - the log file is unchanged then
+     * @return void
+     */
+    protected static function quarantineAndRewrite(Filemanager $filemanager, string $logFile, string $validRecords, string $quarantineFile, string $brokenRecords) : void
+    {
+        $filemanager->mkdir(dirname($quarantineFile));
+        $handle = fopen($quarantineFile, 'c+b');
+        if ($handle === false) {
+            throw new RuntimeException('Cannot open quarantine file "' . $quarantineFile . '"');
+        }
+        try {
+            if (! flock($handle, LOCK_EX)) {
+                throw new RuntimeException('Cannot lock quarantine file "' . $quarantineFile . '"');
+            }
+            $previousSize = fstat($handle)['size'];
+            fseek($handle, 0, SEEK_END);
+            if (fwrite($handle, $brokenRecords) !== strlen($brokenRecords) || ! fflush($handle)) {
+                ftruncate($handle, $previousSize);
+                throw new RuntimeException('Cannot write quarantine file "' . $quarantineFile . '"');
+            }
+            try {
+                $filemanager->dumpFile($logFile, $validRecords);
+            } catch (\Throwable $e) {
+                ftruncate($handle, $previousSize);
+                throw $e;
+            }
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+    
+    /**
+     * Returns the path of the quarantine file for a log file
+     * 
+     * @param string $pathToLogs
+     * @param string $logFileName
+     * @return string
+     */
+    protected static function getQuarantinePath(string $pathToLogs, string $logFileName) : string
+    {
+        return $pathToLogs . DIRECTORY_SEPARATOR . self::FOLDER_NAME_QUARANTINE . DIRECTORY_SEPARATOR . $logFileName;
     }
 }

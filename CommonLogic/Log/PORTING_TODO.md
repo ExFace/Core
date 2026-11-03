@@ -68,8 +68,14 @@ addresses columns by **name**; the query builder translates names to positions p
 - [x] Change `LOG_ENTRY` attribute DATA_ADDRESS from indexes (`0`–`9`) to column names
   (`Model/exface.Core.LOG_ENTRY/04_ATTRIBUTE.json`; `levelname` → `level_name`, `timestamp` → `datetime`)
 - [ ] Verify after the model import (installer, out of process): `LOG_ENTRY` reads through `LogCsvBuilder`,
-  error dialog log tab and `Debugger::getLogData()` work for legacy and versioned files
-- [ ] Check `TRACE_LOG` entries: same reader, or keep them on plain `CsvBuilder`?
+  error dialog log tab and `Debugger::getLogData()` work for legacy and versioned files.
+  **Left to the developer** (decision: no DB changes by Copilot); run the core installer, then check the
+  error dialog's log tab, "Open trace" and the log viewer, each with a legacy and a `.temp` file.
+- [x] Check `TRACE_LOG` entries: same reader, or keep them on plain `CsvBuilder`?
+  **Decision: no change.** `TRACE_LOG` is a file listing (`FileBuilder`) that extracts action/URL/page/user
+  with regexes on `"` - unaffected by enclosure/escape and by the version key (`*.csv` mask, sorting by name
+  still works). The entries of a trace ("Open trace" = `DEFAULT_EDITOR_UXON`, `Debugger::getLogData()`) are
+  read through `LOG_ENTRY` with `logfile` = the trace file, i.e. already through `LogCsvBuilder`.
 - [x] Choose a file naming scheme so the `LOG` / `TRACE_LOG` file masks (`logs/*.log`,
   `logs/traces/*.csv`) match all versions: `<base>[.<key>].<extension>`, documented in `CsvLogConfig`.
 - [x] Writer side: build file names from `CsvLogConfig` in `LoggerFactory` and `Tracer`
@@ -91,17 +97,46 @@ addresses columns by **name**; the query builder translates names to positions p
   a legacy file after a new-version file of the same date exists (only if it logs first that day).
 - [x] Reader escape char: `CsvBuilderTrait::initCsvReader()` never called `setEscape()`, so it read with
   league/csv's default `\`. **Done:** `LogCsvBuilder::getEscape()` returns `CsvLogConfig::getEscape()`.
-- [ ] **Pre-existing `CsvBuilder` bug - pagination with offset:** `readCsv()` lets the statement skip the
-  offset *and* caps the rows at `limit + offset`, so `limit 1, offset 1` returns 2 rows. Affects every
-  `CsvBuilder` object, not only logs. Not fixed (generic code, needs approval).
-- [ ] `LogCleaner`: validate field count and repair per version via `CsvLogConfig`
+- [x] **Pre-existing `CsvBuilder` bug - pagination with offset:** `readCsv()` let the statement skip the
+  offset *and* capped the rows at `limit + offset`, so `limit 1, offset 1` returned 2 rows; with any filter
+  `CsvBuilder` did not paginate at all (page 2 = pages 1 + 2). **Fixed in `CsvBuilderTrait`:** header rows
+  are excluded in the statement's `where` (by record offset, also for counting), the statement paginates
+  after filtering/sorting, output is capped at `limit`. `$readAll` (used by `CsvUrlBuilder`, whose caller
+  paginates) still returns the first `offset + limit` rows. `CsvBuilder::read()` always paginates in the
+  reader now. Side fixes: header rows were not skipped with offset > 0 and could be filtered away before
+  the offset; `countCsvRows()` crashed on missing files.
+- [x] `LogCleaner`: validate field count and repair per version via `CsvLogConfig`. **Done** together with
+  the parser-based repair (`MONOLOG_MIGRATION.md` step 6, risk #9):
+  - Parses logical records with `fgetcsv()` and the version's settings, so valid multi-line records are kept
+    byte by byte.
+  - `isValidLogRecord()`: field count of the version, ID without whitespace, known numeric level with a
+    matching `level_name`, date-time prefix + `strtotime()`, `context`/`extra` empty (fallback rows) or valid JSON.
+  - **Quarantine (decision: removed records only):** broken records are appended as raw bytes to
+    `logs/quarantine/<log file>` *before* the rewrite, so a repair can be undone by appending them back. If
+    the rewrite fails (file open on Windows), the quarantine append is rolled back. Quarantine files expire
+    with their log file. Reports logical record numbers.
+  - **Active files (decision: keep current behaviour):** files are still rewritten via temp file + rename,
+    even if a process still writes to them (on Linux its next rows go to the replaced file).
+  - No `trim()` anymore: the old repair removed the last line break, so the next row was glued to the last one.
+  - Limitation: rows that parse correctly but carry values mangled by the legacy escaping (3 of the 5
+    baseline-broken corpus cases) are structurally valid and kept.
+  - Tested with harness `cleaner.php`: oracle corpus (all 41 valid rows decode identically, 2 broken records
+    quarantined, no bytes lost, idempotent), synthetic versioned file, rollback, retention.
 - [x] `LogCleaner::cleanupLogsAndDetails()` derived the details folder via `pathinfo(PATHINFO_FILENAME)`,
   i.e. `<date>.temp` for versioned files, so their expired detail folders were never deleted. Now uses
   `CsvLogConfig::getBaseName()`.
 - [ ] Test: mixed v1 + current-version files render correctly, incl. filtering and sorting.
   **Query builder level done** (harness `reader.php`: legacy + versioned file, enclosure/escape round
-  trip, filter, sorter, count, fallback with relative and absolute paths, missing file, today's real log);
-  pagination fails due to the bug above. Still open on data sheet / UI level after the model import.
+  trip, filter, sorter, pagination incl. combinations and header rows, count, fallback with relative and
+  absolute paths, missing file, today's real log). Still open on data sheet / UI level after the model import.
+
+## Levels
+
+- [x] **`LogLevelDataType`** (was missing from this list): `compareLogLevels()` subtracted `Level` enums
+  (`TypeError`, disabled `MonitorLogHandler` on the first log), `convertToMonologLevel()` returned a `Level`
+  instead of `int`, `getValuesOfMonologLevels()` used the removed `Logger::getLevels()`. Ported to
+  `Level->value` / `toPsrLogLevel()` / `Level::cases()`; public signatures unchanged, so the callers
+  (`Logger`, `MonitorLogHandler`, `ExceptionTrait`, `axenox/etl` `StepNote`) are untouched. E2E harness B4 passes now.
 
 ## Row integrity
 
@@ -130,7 +165,8 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
   decided: set `PRP_ESCAPE` for the current version in `CsvLogConfig` (resolves the TODO there) and remove
   the `str_replace('\\', '\\\\')` workaround in `MonologCsvFileHandler`, if no longer needed.
 - [ ] **Readers:** `LogCsvBuilder` / `LogCleaner` should take `LOCK_SH` while reading, or ignore a trailing
-  line without line ending.
+  line without line ending. (`LogCleaner` now quarantines an incomplete trailing record unless it happens to
+  be valid; `LogCsvBuilder` shows it padded with NULLs.)
 - [ ] **Batches (optional):** override `CsvHandler::handleBatch()` to write a `FingersCrossedHandler` flush as
   one contiguous block under a single lock.
 - [ ] **Checksum column (optional):** add a `crc32` of the remaining fields as a new column (requires a new
@@ -153,7 +189,8 @@ Monolog 1 baseline are in `out\`.
 - [ ] `stress.php` (8×300 ×3, 16×300 ×2): 0 missing, corrupted or unattributed rows
       (baseline lost ~1.8%).
 - [ ] `stress.php` with kill (1 worker, several delays): no CSV row without a valid detail JSON.
-- [ ] `repair_sim.php` / new repair on `corpus.log`: no valid multi-line record destroyed.
+- [x] `repair_sim.php` / new repair on `corpus.log`: no valid multi-line record destroyed
+      (verified with harness `cleaner.php`, see `LogCleaner` above).
 - [ ] Remaining test matrix rows and acceptance gate in `MONOLOG_MIGRATION.md` checked; unverified items marked as such.
 
 **Remove temporary re-routes**
