@@ -3,7 +3,6 @@
 namespace exface\Core\CommonLogic\Log;
 
 use exface\Core\CommonLogic\Log\Processors\ActionAliasProcessor;
-use exface\Core\CommonLogic\Log\Processors\IdProcessor;
 use exface\Core\CommonLogic\Log\Processors\RequestIdProcessor;
 use exface\Core\CommonLogic\Log\Processors\UserNameProcessor;
 use InvalidArgumentException;
@@ -95,7 +94,7 @@ final class CsvLogConfig
     const VERSIONS = [
         self::LEGACY_VERSION => [ // legacy log files without version key
             self::PRP_COLUMNS => [ // will be written to the CSV file in this order
-                IdProcessor::KEY_ID,
+                self::KEY_ID,
                 RequestIdProcessor::KEY_REQUEST_ID,
                 UserNameProcessor::KEY_USER_NAME,
                 ActionAliasProcessor::KEY_ACTION_ALIAS,
@@ -114,7 +113,7 @@ final class CsvLogConfig
         ],
         'temp' => [
             self::PRP_COLUMNS => [ // will be written to the CSV file in this order
-                IdProcessor::KEY_ID,
+                self::KEY_ID,
                 RequestIdProcessor::KEY_REQUEST_ID,
                 UserNameProcessor::KEY_USER_NAME,
                 ActionAliasProcessor::KEY_ACTION_ALIAS,

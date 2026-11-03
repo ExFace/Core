@@ -1,16 +1,15 @@
 <?php
 namespace exface\Core\CommonLogic\Log\Handlers;
 
+use exface\Core\CommonLogic\Debugger\DebugWidgetRenderer;
+use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
-use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Factories\DataSheetFactory;
-use Monolog\Logger;
 use exface\Core\CommonLogic\Monitor;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\LogLevelDataType;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
-use exface\Core\CommonLogic\Log\Processors\DebugWidgetProcessor;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
@@ -23,7 +22,7 @@ class MonitorLogHandler implements LogHandlerInterface
 {
     private $monitor;
     
-    private $debugWidgetProcessor;
+    private $debugWidgetRenderer;
     
     private $minLogLevel;
     
@@ -44,7 +43,7 @@ class MonitorLogHandler implements LogHandlerInterface
         $this->workbench = $workbench;
         $this->monitor = $monitor;
         $this->minLogLevel = $level;
-        $this->debugWidgetProcessor = new DebugWidgetProcessor($workbench, 'sender', 'message');
+        $this->debugWidgetRenderer = new DebugWidgetRenderer($workbench);
     }
     
     /**
@@ -52,8 +51,9 @@ class MonitorLogHandler implements LogHandlerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
      */
-    public function handle($level, $message, array $context = [], iCanGenerateDebugWidgets $sender = null)
+    public function handle(LogEntryInterface $entry) : void
     {
+        $level = $entry->getLevel();
         if (LogLevelDataType::compareLogLevels($level, $this->minLogLevel) < 0) {
             return;
         }
@@ -70,11 +70,11 @@ class MonitorLogHandler implements LogHandlerInterface
         try {
             $ds = DataSheetFactory::createFromObjectIdOrAlias($this->workbench, 'exface.Core.MONITOR_ERROR');      
             $ds->addRow([
-                'LOG_ID' => $context["id"],
+                'LOG_ID' => $entry->getId(),
                 'REQUEST_ID' => $this->workbench->getContext()->getScopeRequest()->getScopeId(),
                 'ERROR_LEVEL' => $level,
-                'MESSAGE' => $message,
-                'ERROR_WIDGET' => $this->getDebugWidgetJson($sender),
+                'MESSAGE' => $entry->getMessage(),
+                'ERROR_WIDGET' => $this->debugWidgetRenderer->render($entry),
                 'USER' => $this->workbench->getSecurity()->getAuthenticatedUser()->getUid(),
                 'DATE' => DateDataType::now()
             ]);
@@ -86,16 +86,5 @@ class MonitorLogHandler implements LogHandlerInterface
         }
         
         $this->busy = false;
-        return;
-    }
-    
-    /**
-     * 
-     * @param iCanGenerateDebugWidgets $sender
-     * @return string
-     */
-    protected function getDebugWidgetJson(iCanGenerateDebugWidgets $sender = null) : string
-    {
-        return call_user_func($this->debugWidgetProcessor, ['context' => ['sender' => $sender]])['message'];
     }
 }

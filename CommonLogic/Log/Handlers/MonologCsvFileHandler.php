@@ -6,7 +6,7 @@ use exface\Core\CommonLogic\Log\Processors\ActionAliasProcessor;
 use exface\Core\CommonLogic\Log\Processors\IdProcessor;
 use exface\Core\CommonLogic\Log\Processors\RequestIdProcessor;
 use exface\Core\CommonLogic\Log\Processors\UserNameProcessor;
-use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
@@ -35,6 +35,12 @@ use Monolog\Handler\ErrorLogHandler;
  */
 class MonologCsvFileHandler implements LogHandlerInterface
 {
+    // Monolog only accepts array contexts, so the log entry travels through Monolog under this key. Processors
+    // and handlers below receive the key via constructor, the CSV context filter removes it again.
+    private const CONTEXT_KEY_LOG_ENTRY = 'logEntry';
+    
+    // Defined by PSR-3: lets Monolog format the stack trace
+    private const PSR_KEY_EXCEPTION = 'exception';
 
     private string $channelName;
 
@@ -89,26 +95,19 @@ class MonologCsvFileHandler implements LogHandlerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
      */
-    public function handle(
-        $level,
-        $message,
-        array $context = [],
-        iCanGenerateDebugWidgets $sender = null
-    ) : void
+    public function handle(LogEntryInterface $entry) : void
     {
         // Ignore message, when disabled.
         if ($this->disabled === true) {
             return;
         }
         
-        // Overwrite sender, when explicitly defined.
-        if ($sender !== null) {
-            $context['sender'] = $sender;
-        }
+        $context = $entry->getContext();
+        $context[self::CONTEXT_KEY_LOG_ENTRY] = $entry;
         
         // Use PHP escape and log the message.
-        $message = str_replace('\\', '\\\\', $message);
-        $this->getMonolog()->log($level, $message, $context);
+        $message = str_replace('\\', '\\\\', $entry->getMessage());
+        $this->getMonolog()->log($entry->getLevel(), $message, $context);
     }
     
     /**
@@ -134,13 +133,11 @@ class MonologCsvFileHandler implements LogHandlerInterface
                 if ($this->debugMsgDirPath !== null) {
                     $dbgMsgHandler = new DebugMessageMonologHandler(
                         $this->workbench, 
-                        'sender',
                         $this->debugMsgDirPath, 
-                        'id',
+                        self::CONTEXT_KEY_LOG_ENTRY,
                         '.json', 
                         Logger::toMonologLevel($this->minLevel)->value
                     );
-                    $dbgMsgHandler->pushProcessor(new IdProcessor());
                     $handlers[] = $dbgMsgHandler;
                 }
                 
@@ -149,9 +146,10 @@ class MonologCsvFileHandler implements LogHandlerInterface
                 
                 if ($this->persistLevel === LoggerInterface::DEBUG) {
                     // Without buffering, every record is written immediately, so processors on the CsvHandler
-                    // run at log time. Note that processors are applied in reverse order (LIFO stack).
-                    $this->pushContextProcessors($csvHandler);
+                    // run at log time. Processors are applied in reverse order (LIFO stack): the context filter
+                    // is pushed first, so it runs last - after the IdProcessor read the log entry.
                     $csvHandler->pushProcessor($this->createContextFilterProcessor());
+                    $this->pushContextProcessors($csvHandler);
                     
                     // If all messages should be persisted, register the handlers as is.
                     $this->monolog->pushHandler($grpHandler);
@@ -174,9 +172,9 @@ class MonologCsvFileHandler implements LogHandlerInterface
                     // TODO geb 2026-10-26: This means these processors run on ALL logged records above the logging level. If performance becomes an issue, consider caching.
                     $this->pushContextProcessors($fcHandler);
                     // Timing: the context filter must run on the CsvHandler (at flush time), NOT on the
-                    // FingersCrossedHandler. The DebugMessageMonologHandler in the same group still needs `sender`
-                    // and `exception` to render the debug widget. Side effect: buffered records keep references
-                    // to these objects until flushed or discarded at the end of the request.
+                    // FingersCrossedHandler. The DebugMessageMonologHandler in the same group still needs the
+                    // log entry to render the debug widget. Side effect: buffered records keep references
+                    // to the entries (incl. exceptions and senders) until flushed or discarded at the end of the request.
                     $csvHandler->pushProcessor($this->createContextFilterProcessor());
                     
                     // Push the wrapper.
@@ -184,7 +182,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
                 }
             } catch (\Throwable $e) {
                 $this->monolog->pushHandler(new ErrorLogHandler(ErrorLogHandler::OPERATING_SYSTEM, Logger::toMonologLevel($this->minLevel)));
-                $this->monolog->critical('Failed to initialize log handler "MonologCsvFileHandler": ' . $e->getMessage(), ['exception' => $e]);
+                $this->monolog->critical('Failed to initialize log handler "MonologCsvFileHandler": ' . $e->getMessage(), [self::PSR_KEY_EXCEPTION => $e]);
             }
         }
             
@@ -200,22 +198,22 @@ class MonologCsvFileHandler implements LogHandlerInterface
      */
     private function pushContextProcessors(ProcessableHandlerInterface $handler) : void
     {
-        $handler->pushProcessor(new IdProcessor());
+        $handler->pushProcessor(new IdProcessor(self::CONTEXT_KEY_LOG_ENTRY));
         $handler->pushProcessor(new RequestIdProcessor($this->workbench));
         $handler->pushProcessor(new UsernameProcessor($this->workbench));
         $handler->pushProcessor(new ActionAliasProcessor($this->workbench));
     }
 
     /**
-     * Creates the processor that strips non-serializable objects (`exception`, `sender`) from the CSV context.
+     * Creates the processor that strips the log entry object from the CSV context.
      * 
-     * Must only be pushed onto the CsvHandler, because the debug message handler still needs these keys.
+     * Must only be pushed onto the CsvHandler, because the debug message handler still needs the entry.
      * 
      * @return ContextFilterProcessor
      */
     private function createContextFilterProcessor() : ContextFilterProcessor
     {
-        return new ContextFilterProcessor(['exception', 'sender']);
+        return new ContextFilterProcessor([self::CONTEXT_KEY_LOG_ENTRY]);
     }
     
     /**

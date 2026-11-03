@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Log\Monolog;
 
 use exface\Core\CommonLogic\Debugger\DebugWidgetRenderer;
 use exface\Core\CommonLogic\Log\CsvLogConfig;
+use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
@@ -32,24 +33,22 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
 
     private string $fileSuffix;
     
-    private string $filenameRecordKey;
+    private string $logEntryContextKey;
     
     private DebugWidgetRenderer $renderer;
 
     /**
      * 
      * @param WorkbenchInterface $workbench
-     * @param string $debugGeneratorContextKey context key of the object generating the debug widget (sender)
      * @param string $dir folder to save the JSON files to - created if missing
-     * @param string $filenameRecordKey key of the log ID in the record `extra` or `context`
+     * @param string $logEntryContextKey context key of the `LogEntryInterface` in the Monolog record
      * @param string $fileSuffix
      * @param int|string|Level $minLogLevel
      */
     public function __construct(
         WorkbenchInterface $workbench,
-        string $debugGeneratorContextKey,
         string $dir,
-        string $filenameRecordKey,
+        string $logEntryContextKey,
         string $fileSuffix,
         int|string|Level $minLogLevel
     )
@@ -57,8 +56,8 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
         parent::__construct($minLogLevel);
         $this->dir = rtrim($dir, '/\\');
         $this->fileSuffix = $fileSuffix;
-        $this->filenameRecordKey = $filenameRecordKey;
-        $this->renderer = new DebugWidgetRenderer($workbench, $debugGeneratorContextKey);
+        $this->logEntryContextKey = $logEntryContextKey;
+        $this->renderer = new DebugWidgetRenderer($workbench);
     }
     
     /**
@@ -68,7 +67,8 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
      */
     protected function write(LogRecord $record): void
     {
-        $filePath = $this->dir . '/' . $this->getLogId($record) . $this->fileSuffix;
+        $entry = $this->getLogEntry($record);
+        $filePath = $this->dir . '/' . $this->getLogId($entry) . $this->fileSuffix;
         
         // The file name is the log ID, so an existing file already holds the details of this entry - e.g.
         // written by another logger sharing the folder. Checking first also saves the rendering effort.
@@ -76,38 +76,55 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
             return;
         }
         
-        $json = $this->renderer->render($record->context, $this->getFallbackData($record));
+        $json = $this->renderer->render($entry, $this->getFallbackData($record));
         $this->publish($filePath, $json);
     }
     
     /**
-     * Reads the log ID from `extra` (moved there by the `IdProcessor`) or from `context` (if the processor
-     * did not run yet).
+     * Reads the log entry from the record context.
+     * 
+     * @param LogRecord $record
+     * @return LogEntryInterface
+     * @throws \RuntimeException if the record does not contain a log entry
+     */
+    protected function getLogEntry(LogRecord $record): LogEntryInterface
+    {
+        $entry = $record->context[$this->logEntryContextKey] ?? null;
+        if (! $entry instanceof LogEntryInterface) {
+            throw new \RuntimeException(
+                'Cannot save debug widget: no log entry in record context key "' . $this->logEntryContextKey 
+                . '" (got ' . get_debug_type($entry) . ').'
+            );
+        }
+        
+        return $entry;
+    }
+    
+    /**
+     * Returns the ID of the log entry, which is used as file name.
      * 
      * Security: the ID becomes part of a file path, so anything but a plain token is rejected to prevent
      * path traversal.
      * 
-     * @param LogRecord $record
+     * @param LogEntryInterface $entry
      * @return string
-     * @throws \RuntimeException if the ID is missing or not a plain token
+     * @throws \RuntimeException if the ID is not a plain token
      */
-    protected function getLogId(LogRecord $record): string
+    protected function getLogId(LogEntryInterface $entry): string
     {
-        $key = $this->filenameRecordKey;
-        $logId = $record->extra[$key] ?? $record->context[$key] ?? null;
+        $logId = $entry->getId();
         
-        if (! is_string($logId) || preg_match(self::LOG_ID_PATTERN, $logId) !== 1) {
-            throw new \RuntimeException(
-                'Cannot save debug widget: missing or invalid log ID in record key "' . $key . '" (got ' 
-                . get_debug_type($logId) . ').'
-            );
+        if (preg_match(self::LOG_ID_PATTERN, $logId) !== 1) {
+            throw new \RuntimeException('Cannot save debug widget: invalid log ID "' . $logId . '".');
         }
         
         return $logId;
     }
     
     /**
-     * Returns the record data, that the renderer dumps if no proper debug widget can be created.
+     * Returns the Monolog record data, that the renderer dumps if no proper debug widget can be created.
+     * 
+     * Message, level and ID are taken from the log entry by the renderer itself.
      * 
      * @param LogRecord $record
      * @return array
@@ -115,8 +132,6 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
     protected function getFallbackData(LogRecord $record): array
     {
         return [
-            'message' => $record->message,
-            'level' => $record->level->getName(),
             'channel' => $record->channel,
             'datetime' => $record->datetime->format(CsvLogConfig::getDateFormat()),
             'extra' => $record->extra
@@ -126,8 +141,13 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
     /**
      * Validates the JSON and publishes it atomically under `$filePath`.
      * 
-     * The content is not `fsync`ed: atomicity protects against crashed processes, not against power loss.
-     * Syncing every detail file would make flushing a large log buffer very slow.
+     * Atomicity: the file is either complete or absent, even if the PHP process crashes mid-write. The content
+     * only appears under its final name after it was fully written to the temp file.
+     * 
+     * Durability (not guaranteed): after a power loss or OS crash, the published file may be empty or
+     * truncated, because the OS may not have flushed its write cache to disk yet. Only `fsync()` before
+     * publishing would prevent this. It is skipped on purpose: `fsync()` blocks until the disk confirms the
+     * write, and flushing one log buffer can publish hundreds of detail files.
      * 
      * @param string $filePath
      * @param string $json

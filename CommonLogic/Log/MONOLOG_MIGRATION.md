@@ -29,9 +29,13 @@ flowchart TD
   `iCanGenerateDebugWidgets $sender` argument to every method. **Levels are lowercase strings**
   (`'debug'`…`'emergency'`), not Monolog integer constants.
 - `Interfaces/Log/LogHandlerInterface.php` — the exface handler contract:
-  `handle($level, $message, $context, $sender)`.
+  `handle(LogEntryInterface $entry)`.
+- `Interfaces/Log/LogEntryInterface.php` / `CommonLogic/Log/LogEntry.php` — one log entry as passed to the
+  handlers. `LogEntry` parses the PSR-3 arguments once (exception from the PSR-3 `exception` key, sender,
+  level, log ID), so handlers read `getId()`, `getException()`, `getSender()` instead of well-known context
+  keys. `getContext()` only holds the caller-provided data.
 - `CommonLogic/Log/Logger.php` — the exface `LoggerInterface` implementation. Notable: a recursion
-  guard (`isLogging()` / queue) that defers errors occurring *while* logging, dedup logic in
+  guard (current entry / queue) that defers errors occurring *while* logging, dedup logic in
   `enqueueError()`, and `generateLogId()` (8-char md5).
 - `Factories/LoggerFactory.php` — wires everything from `LOG.*` config options; also provides the
   PHP-error_log fallback logger.
@@ -42,7 +46,7 @@ flowchart TD
 |---|---|---|
 | `Handlers/MonologCsvFileHandler.php` | Yes | Main handler. Builds a `Monolog\Logger` → `GroupHandler` (FemtoPixel `CsvHandler` + `DebugMessageMonologHandler`) wrapped in `FingersCrossedHandler` with `ErrorLevelActivationStrategy`. The "accumulate then dump on trigger" behavior. |
 | `Handlers/MonologErrorLogHandler.php` | Yes | Wraps Monolog `ErrorLogHandler` → PHP `error_log`. The fallback path. |
-| `Handlers/MonitorLogHandler.php` | No | Writes to the `exface.Core.MONITOR_ERROR` meta object (DB). Uses `DebugWidgetProcessor` directly. |
+| `Handlers/MonitorLogHandler.php` | No | Writes to the `exface.Core.MONITOR_ERROR` meta object (DB). Renders the error widget with `DebugWidgetRenderer` from the log entry. |
 | `Handlers/BufferingHandler.php` | No | Buffers all entries, flushes on `__destruct`. |
 
 ## Monolog adapters — the migration hotspots
@@ -73,8 +77,10 @@ on the inner handlers only run when the buffer is flushed — possibly long afte
 | Processor | Pushed onto | Runs at | Why |
 |---|---|---|---|
 | `IdProcessor`, `RequestIdProcessor`, `UserNameProcessor`, `ActionAliasProcessor` | `FingersCrossedHandler` (buffered) / `CsvHandler` (unbuffered) | log time | Values describe the moment of logging. In Monolog 1 they ran at flush, so buffered rows got the user/action current at flush (behaviour change, intended). |
-| `ContextFilterProcessor` (`exception`, `sender`) | `CsvHandler` only | flush time | The `DebugMessageMonologHandler` in the same group still needs `sender`/`exception`. Filtering earlier silently drops all debug widgets. |
-| `IdProcessor` (second instance) | `DebugMessageMonologHandler` | flush time | Idempotent; only needed when the handler is used without the shared processors. |
+| `ContextFilterProcessor` (log entry) | `CsvHandler` only | flush time | `MonologCsvFileHandler` passes the `LogEntry` through Monolog under one private context key. The `DebugMessageMonologHandler` in the same group still needs it; filtering earlier silently drops all debug widgets. On the unbuffered path it is pushed *before* the other processors, so it runs last (LIFO). |
+
+The `IdProcessor` and `DebugMessageMonologHandler` receive that context key via constructor and read the log
+ID from the entry. The former second `IdProcessor` on the `DebugMessageMonologHandler` is gone.
 
 Consequences:
 - The log-time processors run for **every** collected record, including those discarded unless a
@@ -269,6 +275,11 @@ multiple workers before *and* after the change.
 validate with `json_decode(..., JSON_THROW_ON_ERROR)`, then atomically rename to `<log-id>.json`
 using exclusive create/lock. Treat an already-valid final file as success; never append/overwrite.
 
+**Status: done for `DebugMessageMonologHandler`.** It writes a temp file in the target folder, validates the
+JSON, and publishes with `link()` (falls back to `rename()` only without hard links). Existing files are
+never overwritten. Durability on power loss is **not** guaranteed: `fsync()` is skipped on purpose (see the
+`publish()` docblock). The ordering against the CSV row is still open (execution plan step 4).
+
 ### 9. "Repair" does not actually parse CSV
 
 `LogCleaner`'s repair judges lines by **comma count** (`substr_count($line, ',') >= 10`), which is not
@@ -365,8 +376,8 @@ they assume exactly one instance exists — yet nothing in the injection mechani
 - `MonologCsvFileHandler` owns a file handle to a **shared `.log` path** plus its **own**
   FingersCrossed buffer, so duplicates buffer and flush independently against the same file.
 
-The exface **processors** share this assumption: they are **not idempotent** (e.g. `IdProcessor`
-unsets then re-keys `context['id']`; `AbstractColumnPositionProcessor` splices by key order), so they
+The exface **processors** share this assumption: they are **not idempotent** (e.g. `AbstractColumnPositionProcessor`
+splices by key order), so they
 too are built for a single pass. And `Logger::log()`'s self-healing (`unset($this->handlers[$i])` on
 a throwing handler) treats handlers as distinct, non-interchangeable units.
 
@@ -461,10 +472,10 @@ writer, escape strategy to be proven against `CsvBuilder`.
    writes a fallback row (`[row encoding failed]`, logger-generated columns only) if the round-trip or
    the column layout does not match; only if even that fails is the entry skipped and reported via
    `error_log`. Enable **exclusive stream locking** per record; treat short/failed writes as exceptions.
-4. **Atomic detail persistence + ordering.** Port `DebugMessageMonologHandler` to v3; write detail
-   JSON to a temp file → validate with `JSON_THROW_ON_ERROR` → atomic rename, exclusive create. Wire a
-   core-owned **composite handler** that persists/confirms the detail file **before** appending the
-   CSV row, wrapped in the existing `FingersCrossedHandler` so buffering/passthrough are unchanged.
+4. **Atomic detail persistence + ordering.** *Partly done:* `DebugMessageMonologHandler` is ported
+   (temp file → validate → `link()`, no overwrite). **Open:** wire a core-owned **composite handler**
+   that persists/confirms the detail file **before** appending the CSV row, wrapped in the existing
+   `FingersCrossedHandler` so buffering/passthrough are unchanged.
 5. **Port all integration points to `LogRecord`/`Level`.** All processors return `LogRecord`
    (enrichment into `extra`, no invented properties); `MessageOnlyFormatter` to the v3 signatures;
    `DebugMessageMonologHandler::write()` to the v3 signature. Extract a standalone detail-JSON

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Log\Handlers;
 
-use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use Monolog\Logger;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
@@ -15,6 +15,11 @@ use Monolog\Handler\ErrorLogHandler;
  */
 class MonologErrorLogHandler implements LogHandlerInterface
 {
+    // PSR-3 context keys of the Monolog record - only labels in the error log line. `exception` is defined
+    // by PSR-3 and lets Monolog format the stack trace.
+    private const PSR_KEY_EXCEPTION = 'exception';
+    private const PSR_KEY_ID = 'id';
+    
     /** @var Logger $monolog */
     private $monolog = null;
     
@@ -38,9 +43,14 @@ class MonologErrorLogHandler implements LogHandlerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
      */
-    public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function handle(LogEntryInterface $entry) : void
     {
-        $this->getMonolog()->log($level, $message, $context);
+        $context = $entry->getContext();
+        $context[self::PSR_KEY_ID] = $entry->getId();
+        if ($entry->getException() !== null) {
+            $context[self::PSR_KEY_EXCEPTION] = $entry->getException();
+        }
+        $this->getMonolog()->log($entry->getLevel(), $entry->getMessage(), $context);
     }
     
     /**

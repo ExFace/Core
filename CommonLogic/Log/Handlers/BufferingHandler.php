@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\CommonLogic\Log\Handlers;
 
+use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
-use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\DataTypes\BooleanDataType;
 
 /**
@@ -22,7 +22,8 @@ class BufferingHandler implements LogHandlerInterface
     
     private $disabled = false;
     
-    private $messages = [];
+    /** @var LogEntryInterface[] */
+    private array $entries = [];
     
     /**
      * 
@@ -40,9 +41,9 @@ class BufferingHandler implements LogHandlerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
      */
-    public function handle($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null)
+    public function handle(LogEntryInterface $entry) : void
     {
-        $this->messages[] = array("level" => $level, "message" => $message, "context" => $context, "sender" => $sender);
+        $this->entries[] = $entry;
     }
     
     /**
@@ -52,10 +53,10 @@ class BufferingHandler implements LogHandlerInterface
      */
     public function flush()
     {
-        foreach ($this->messages as $message){
-            $this->handler->handle($message['level'], $message['message'], $message['context'], $message['sender']);
+        foreach ($this->entries as $entry){
+            $this->handler->handle($entry);
         }
-        $this->messages = [];
+        $this->entries = [];
     }
     
     public function __destruct()

@@ -10,6 +10,9 @@ formatter (`COLUMNS`), not by the processors.
   - [x] Make idempotent: `$record->context['id'] ?? $record->extra['id'] ?? null`
   - [x] Add `ProcessorInterface` and a `KEY` constant
   - [x] Create Abstract to generalize moving a context key to extra, with idempotent behaviour.
+  - [x] Superseded by `LogEntry`: reads the ID from the log entry in the record context (key passed via
+    constructor) and writes it to `extra[CsvLogConfig::KEY_ID]`. The context key and the CSV column are
+    no longer coupled.
 - [x] `RequestIdProcessor` — write request scope ID to `extra`; fix key casing (`requestid` → `requestId`)
 - [x] `UserNameProcessor` — write user name to `extra`
 - [x] `ActionAliasProcessor` — write action alias to `extra`
@@ -82,6 +85,10 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
   formatted row. On mismatch, write a fallback row (id, datetime, level, `[row encoding failed]`).
 - [x] **Locking in `CsvHandler`:** `useLocking` defaults to `true`; each line is written with one `fwrite`
   under `LOCK_EX`; the lock is released even if writing throws.
+- [x] **Atomic detail files in `DebugMessageMonologHandler`:** temp file in the target folder → validate JSON →
+  `link()` (no overwrite); invalid or missing log IDs throw. Durability on power loss is not guaranteed (no
+  `fsync()`, by decision). Tested with 8 concurrent writers.
+- [ ] **Publish ordering (detail before CSV row):** composite handler in `MONOLOG_MIGRATION.md` step 4.
 - [ ] **Decide the escape char** (blocked until `LogCsvBuilder` exists): the escape strategy in
   `MONOLOG_MIGRATION.md` must be proven against the reader that consumes new-version files, so it cannot
   be decided before the version-aware reader is ported. Candidate: `''` (no escape, enclosure doubling).
