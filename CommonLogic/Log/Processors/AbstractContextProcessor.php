@@ -43,22 +43,6 @@ abstract class AbstractContextProcessor
     protected abstract function invokeInternal(array &$context, array &$extra) : void;
 
     /**
-     * Extracts a value from the given array by key and removes it from the source array.
-     * 
-     * @param array  $from
-     * @param string $key
-     * @return mixed
-     * Returns the extracted value, or null if the key does not exist in the array.
-     */
-    protected function extractValue(array &$from, string $key) : mixed
-    {
-        $value = $from[$key] ?? null;
-        unset($from[$key]);
-
-        return $value;
-    }
-
-    /**
      * Sets a value in the given array by key.
      * 
      * The array will only be changed if it does NOT contain `$key` or if `$overwrite` is TRUE.

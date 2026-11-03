@@ -88,7 +88,10 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
 - [x] **Atomic detail files in `DebugMessageMonologHandler`:** temp file in the target folder → validate JSON →
   `link()` (no overwrite); invalid or missing log IDs throw. Durability on power loss is not guaranteed (no
   `fsync()`, by decision). Tested with 8 concurrent writers.
-- [ ] **Publish ordering (detail before CSV row):** composite handler in `MONOLOG_MIGRATION.md` step 4.
+- [x] **Publish ordering (detail before CSV row):** composite handler in `MONOLOG_MIGRATION.md` step 4.
+  **Done:** `CsvWithDetailsHandler` replaces the `GroupHandler`; record by record, also within
+  `FingersCrossedHandler` batches. A failed detail file skips only its row (reported via `error_log()`).
+  Still to verify with `stress.php` with kill (see Testing).
 - [ ] **Decide the escape char** (blocked until `LogCsvBuilder` exists): the escape strategy in
   `MONOLOG_MIGRATION.md` must be proven against the reader that consumes new-version files, so it cannot
   be decided before the version-aware reader is ported. Candidate: `''` (no escape, enclosure doubling).

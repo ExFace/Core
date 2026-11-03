@@ -44,7 +44,7 @@ flowchart TD
 
 | Handler | Monolog-based? | Purpose |
 |---|---|---|
-| `Handlers/MonologCsvFileHandler.php` | Yes | Main handler. Builds a `Monolog\Logger` → `GroupHandler` (FemtoPixel `CsvHandler` + `DebugMessageMonologHandler`) wrapped in `FingersCrossedHandler` with `ErrorLevelActivationStrategy`. The "accumulate then dump on trigger" behavior. |
+| `Handlers/MonologCsvFileHandler.php` | Yes | Main handler. Builds a `Monolog\Logger` → `CsvWithDetailsHandler` (`DebugMessageMonologHandler` first, then the first-party `CsvHandler`; was a `GroupHandler` with FemtoPixel's `CsvHandler` in Monolog 1) wrapped in `FingersCrossedHandler` with `ErrorLevelActivationStrategy`. The "accumulate then dump on trigger" behavior. Without a details folder, the `CsvHandler` is used directly. |
 | `Handlers/MonologErrorLogHandler.php` | Yes | Wraps Monolog `ErrorLogHandler` → PHP `error_log`. The fallback path. |
 | `Handlers/MonitorLogHandler.php` | No | Writes to the `exface.Core.MONITOR_ERROR` meta object (DB). Renders the error widget with `DebugWidgetRenderer` from the log entry. |
 | `Handlers/BufferingHandler.php` | No | Buffers all entries, flushes on `__destruct`. |
@@ -76,8 +76,8 @@ on the inner handlers only run when the buffer is flushed — possibly long afte
 
 | Processor | Pushed onto | Runs at | Why |
 |---|---|---|---|
-| `IdProcessor`, `RequestIdProcessor`, `UserNameProcessor`, `ActionAliasProcessor` | `FingersCrossedHandler` (buffered) / `CsvHandler` (unbuffered) | log time | Values describe the moment of logging. In Monolog 1 they ran at flush, so buffered rows got the user/action current at flush (behaviour change, intended). |
-| `ContextFilterProcessor` (log entry) | `CsvHandler` only | flush time | `MonologCsvFileHandler` passes the `LogEntry` through Monolog under one private context key. The `DebugMessageMonologHandler` in the same group still needs it; filtering earlier silently drops all debug widgets. On the unbuffered path it is pushed *before* the other processors, so it runs last (LIFO). |
+| `IdProcessor`, `RequestIdProcessor`, `UserNameProcessor`, `ActionAliasProcessor` | `FingersCrossedHandler` (buffered) / outermost writer, i.e. `CsvWithDetailsHandler` or `CsvHandler` (unbuffered) | log time | Values describe the moment of logging. In Monolog 1 they ran at flush, so buffered rows got the user/action current at flush (behaviour change, intended). |
+| `ContextFilterProcessor` (log entry) | `CsvHandler` only | flush time | `MonologCsvFileHandler` passes the `LogEntry` through Monolog under one private context key. The `DebugMessageMonologHandler` (called before the `CsvHandler` by `CsvWithDetailsHandler`) still needs it; filtering earlier silently drops all debug widgets. If the `CsvHandler` is used directly (unbuffered, no details folder), it is pushed *before* the other processors, so it runs last (LIFO). |
 
 The `IdProcessor` and `DebugMessageMonologHandler` receive that context key via constructor and read the log
 ID from the entry. The former second `IdProcessor` on the `DebugMessageMonologHandler` is gone.
@@ -146,8 +146,14 @@ the processors (which prepend columns 0–3) followed by `NormalizerFormatter` (
 - **Publish ordering (approved behaviour change):** the detail JSON must be written and confirmed
   **before** the CSV row is appended. A CSV row referencing a missing/partial detail file is never
   acceptable; an orphan detail file with no CSV row *is* acceptable (retention cleans it up). This
-  replaces the current `GroupHandler` approach, where the CSV and detail handlers run effectively in
-  parallel and rely on the `file_exists` guard.
+  replaces the Monolog 1 `GroupHandler` approach, where the CSV and detail handlers ran independently
+  (in a `FingersCrossedHandler` flush even batch-wise: all rows, then all details).
+  **Implemented** by `Handlers/CsvWithDetailsHandler`: per record (also within batches) it publishes the
+  detail file first and appends the CSV row only if that succeeded. A failed detail file skips only that
+  row and reports the entry (level, ID, message, reason) via `error_log()`; the rest of the batch is still
+  written. A failed CSV write propagates as before (affects the whole file); its detail file stays as an
+  orphan. Records are only handled if both handlers accept them; differing handler levels are rejected
+  in the constructor (init fails once → `error_log` fallback) instead of silently dropping records.
 - Existing detail files for a given log ID must never be truncated or appended to.
 - Old `.log`/detail files must remain readable; no data migration for existing files.
 - Buffering semantics are preserved: collect from `LOG.MINIMUM_LEVEL_TO_LOG`, flush the buffer at
@@ -472,16 +478,16 @@ writer, escape strategy to be proven against `CsvBuilder`.
    writes a fallback row (`[row encoding failed]`, logger-generated columns only) if the round-trip or
    the column layout does not match; only if even that fails is the entry skipped and reported via
    `error_log`. Enable **exclusive stream locking** per record; treat short/failed writes as exceptions.
-4. **Atomic detail persistence + ordering.** *Partly done:* `DebugMessageMonologHandler` is ported
-   (temp file → validate → `link()`, no overwrite). **Open:** wire a core-owned **composite handler**
-   that persists/confirms the detail file **before** appending the CSV row, wrapped in the existing
-   `FingersCrossedHandler` so buffering/passthrough are unchanged.
+4. **Atomic detail persistence + ordering.** *Done:* `DebugMessageMonologHandler` is ported
+   (temp file → validate → `link()`, no overwrite). The core-owned composite handler
+   `CsvWithDetailsHandler` persists/confirms the detail file **before** appending the CSV row and is
+   wrapped in the existing `FingersCrossedHandler`, so buffering/passthrough are unchanged.
 5. **Port all integration points to `LogRecord`/`Level`.** All processors return `LogRecord`
    (enrichment into `extra`, no invented properties); `MessageOnlyFormatter` to the v3 signatures;
    `DebugMessageMonologHandler::write()` to the v3 signature. Extract a standalone detail-JSON
    generator from `DebugWidgetProcessor` and have **`MonitorLogHandler` call that explicit method**
    instead of invoking the processor with a hand-built array. Port `LogLevelDataType`. Verify
-   `MonologErrorLogHandler`, `ErrorLogHandler`, `GroupHandler`-or-replacement, and the exact v3
+   `MonologErrorLogHandler`, `ErrorLogHandler`, `GroupHandler`-or-replacement (replaced by `CsvWithDetailsHandler`), and the exact v3
    `FingersCrossedHandler` constructor. Keep the exface `LoggerInterface` + sender arg stable — no
    Monolog types leak to callers.
 6. **Parser-based repair** (see risk #9). Validate with `league/csv`, quarantine before rewrite,

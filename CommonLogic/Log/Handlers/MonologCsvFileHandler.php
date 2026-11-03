@@ -13,7 +13,6 @@ use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
 use Monolog\Handler\FingersCrossedHandler;
 use Monolog\Handler\ProcessableHandlerInterface;
 use Monolog\Logger;
-use Monolog\Handler\GroupHandler;
 use exface\Core\CommonLogic\Log\Monolog\DebugMessageMonologHandler;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
 use exface\Core\CommonLogic\Log\Processors\ContextFilterProcessor;
@@ -127,7 +126,10 @@ class MonologCsvFileHandler implements LogHandlerInterface
                 $csvHandler = new CsvHandler($this->csvFilePath, $this->minLevel);
                 $csvHandler->setFormatter(new CsvFormatter()); // Date format will be derived from CsvLogConfig.
                 
-                $handlers = [$csvHandler];
+                // The context filter strips the log entry from the CSV context only. It runs on the CsvHandler,
+                // i.e. after the processors of all wrapping handlers - and after the detail handler, which still
+                // needs the entry to render the debug widget.
+                $csvHandler->pushProcessor($this->createContextFilterProcessor());
                 
                 // Debug widget JSONs are optional: without a directory, only the CSV log is written.
                 if ($this->debugMsgDirPath !== null) {
@@ -136,28 +138,28 @@ class MonologCsvFileHandler implements LogHandlerInterface
                         $this->debugMsgDirPath, 
                         self::CONTEXT_KEY_LOG_ENTRY,
                         '.json', 
-                        Logger::toMonologLevel($this->minLevel)->value
+                        Logger::toMonologLevel($this->minLevel)
                     );
-                    $handlers[] = $dbgMsgHandler;
+                    // Publishes the detail file before the CSV row, so a row never links to a missing file.
+                    $writer = new CsvWithDetailsHandler($dbgMsgHandler, $csvHandler);
+                } else {
+                    $writer = $csvHandler;
                 }
                 
-                // Bundle handlers. They are called in order.
-                $grpHandler = new GroupHandler($handlers);
-                
                 if ($this->persistLevel === LoggerInterface::DEBUG) {
-                    // Without buffering, every record is written immediately, so processors on the CsvHandler
-                    // run at log time. Processors are applied in reverse order (LIFO stack): the context filter
-                    // is pushed first, so it runs last - after the IdProcessor read the log entry.
-                    $csvHandler->pushProcessor($this->createContextFilterProcessor());
-                    $this->pushContextProcessors($csvHandler);
+                    // Without buffering, every record is written immediately, so processors on the writer run at
+                    // log time. Processors are applied in reverse order (LIFO stack): if the writer is the
+                    // CsvHandler itself, the context filter pushed above still runs last - after the IdProcessor
+                    // read the log entry.
+                    $this->pushContextProcessors($writer);
                     
-                    // If all messages should be persisted, register the handlers as is.
-                    $this->monolog->pushHandler($grpHandler);
+                    // If all messages should be persisted, register the writer as is.
+                    $this->monolog->pushHandler($writer);
                 } else {
                     // If we only want to log certain messages, we wrap everything in a FingersCrossedHandler,
                     // which serves as a dynamic buffer.
                     $fcHandler = new FingersCrossedHandler(
-                        $grpHandler,
+                        $writer,
                         new ErrorLevelActivationStrategy(Logger::toMonologLevel($this->persistLevel)),
                         0,
                         true,
@@ -171,11 +173,10 @@ class MonologCsvFileHandler implements LogHandlerInterface
                     // (request ID, user, action) are therefore captured on the FingersCrossedHandler.
                     // TODO geb 2026-10-26: This means these processors run on ALL logged records above the logging level. If performance becomes an issue, consider caching.
                     $this->pushContextProcessors($fcHandler);
-                    // Timing: the context filter must run on the CsvHandler (at flush time), NOT on the
-                    // FingersCrossedHandler. The DebugMessageMonologHandler in the same group still needs the
-                    // log entry to render the debug widget. Side effect: buffered records keep references
-                    // to the entries (incl. exceptions and senders) until flushed or discarded at the end of the request.
-                    $csvHandler->pushProcessor($this->createContextFilterProcessor());
+                    // Timing: the context filter on the CsvHandler runs at flush time, NOT on the
+                    // FingersCrossedHandler, because the DebugMessageMonologHandler still needs the log entry.
+                    // Side effect: buffered records keep references to the entries (incl. exceptions and senders)
+                    // until flushed or discarded at the end of the request.
                     
                     // Push the wrapper.
                     $this->monolog->pushHandler($fcHandler);
@@ -208,6 +209,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
      * Creates the processor that strips the log entry object from the CSV context.
      * 
      * Must only be pushed onto the CsvHandler, because the debug message handler still needs the entry.
+     * `CsvWithDetailsHandler` calls the debug message handler before the CsvHandler.
      * 
      * @return ContextFilterProcessor
      */
