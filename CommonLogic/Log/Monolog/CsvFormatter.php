@@ -7,7 +7,8 @@ use Monolog\Formatter\NormalizerFormatter;
 use Monolog\LogRecord;
 
 /**
- * Formats log records into a valid CSV row, with columns and order defined by `CsvLogConfig`.
+ * Formats log records into a valid CSV row, with columns and order defined by `CsvLogConfig` for the given
+ * format version (current by default).
  * 
  * In case of errors, fields are sanitized instead of rejected (see `normalizeFlat()`), 
  * so a single malformed value never costs the whole row. Monolog's default JSON flags 
@@ -22,9 +23,17 @@ class CsvFormatter extends NormalizerFormatter
     // Matches the replacement Monolog uses for invalid UTF-8 in JSON (`JSON_INVALID_UTF8_SUBSTITUTE`).
     const UTF8_SUBSTITUTE_CODEPOINT = 0xFFFD;
     
-    public function __construct(?string $dateFormat = null)
+    private string $version;
+    
+    /**
+     * 
+     * @param string|null $dateFormat defaults to the date format of the version
+     * @param string $version format version from `CsvLogConfig`, that defines the columns
+     */
+    public function __construct(?string $dateFormat = null, string $version = CsvLogConfig::CURRENT_VERSION)
     {
-        $dateFormat = $dateFormat ?? CsvLogConfig::getDateFormat();
+        $this->version = $version;
+        $dateFormat = $dateFormat ?? CsvLogConfig::getDateFormat($version);
         
         parent::__construct($dateFormat);
         
@@ -34,9 +43,19 @@ class CsvFormatter extends NormalizerFormatter
         $this->setMaxNormalizeItemCount(1000);
     }
     
+    /**
+     * Returns the format version from `CsvLogConfig`, whose columns this formatter produces.
+     * 
+     * @return string
+     */
+    public function getVersion() : string
+    {
+        return $this->version;
+    }
+    
     public function format(LogRecord $record) : array
     {
-        $columns = CsvLogConfig::getColumns();
+        $columns = CsvLogConfig::getColumns($this->version);
         $context = $record->context;
         $extra = $record->extra;
         $result = [];

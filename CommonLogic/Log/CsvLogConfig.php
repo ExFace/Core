@@ -49,6 +49,11 @@ use InvalidArgumentException;
  *  Both match, because `*` in the masks also matches dots. Details stay in
  *  `logs/details/<base>/` for every version.
  *
+ *  Version switch: there is at most one file per base name. If a file with the base name already exists in an
+ *  older version, writers continue it in that version (`getVersionForWriting()`), so after an upgrade the new
+ *  format starts with the next day's daily log. Readers that only know the date can therefore always resolve
+ *  it to exactly one file (`findFiles()`).
+ *
  *  Detection: take the file name without extension and look at the part after the
  *  last dot. If it equals a known key, that's the version. If there is no
  *  dot, it's a legacy log.
@@ -254,6 +259,48 @@ final class CsvLogConfig
     {
         self::assertVersionExists($version, 'version');
         return $base . ($version === self::LEGACY_VERSION ? '' : '.' . $version) . '.' . $extension;
+    }
+    
+    /**
+     * Returns the existing files with the given base name in a folder, keyed by version (oldest version first).
+     * 
+     * Only known versions are checked, so files with unknown keys are ignored.
+     * 
+     * @param string $dir
+     * @param string $base
+     * @param string $extension
+     * @return string[] [version => path]
+     */
+    public static function findFiles(string $dir, string $base, string $extension) : array
+    {
+        $dir = rtrim($dir, '/\\');
+        $found = [];
+        foreach (array_keys(self::VERSIONS) as $version) {
+            $path = $dir . DIRECTORY_SEPARATOR . self::buildFileName($base, $extension, (string) $version);
+            if (is_file($path)) {
+                $found[$version] = $path;
+            }
+        }
+        return $found;
+    }
+    
+    /**
+     * Returns the version to write a file with the given base name: the newest version that already has a file
+     * with this base name, otherwise the current version.
+     * 
+     * Ensures one file per base name: after deploying a new version, the new format starts with the next base name
+     * (e.g. the next day for daily logs) instead of creating a second file for the same date. Otherwise, readers
+     * that only know the date (e.g. `MONITOR_ERROR.LOG_FILE`) could not tell which file to read.
+     * 
+     * @param string $dir
+     * @param string $base
+     * @param string $extension
+     * @return string
+     */
+    public static function getVersionForWriting(string $dir, string $base, string $extension) : string
+    {
+        $existing = self::findFiles($dir, $base, $extension);
+        return empty($existing) ? self::CURRENT_VERSION : (string) array_key_last($existing);
     }
     
     /**

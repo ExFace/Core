@@ -16,6 +16,7 @@ use exface\Core\Interfaces\Events\ActionEventInterface;
 use exface\Core\CommonLogic\Log\Handlers\BufferingHandler;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
+use exface\Core\CommonLogic\Log\CsvLogConfig;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\Events\DataConnection\OnBeforeConnectEvent;
 use exface\Core\Events\DataConnection\OnConnectEvent;
@@ -159,7 +160,8 @@ class Tracer extends Profiler
             $workbench = $this->getWorkbench();
             $now = \DateTime::createFromFormat('U.u', microtime(true));
             $time = $now->format("Y-m-d H-i-s-u");
-            $this->filePath = $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . self::FOLDER_NAME_TRACES . DIRECTORY_SEPARATOR . $time . '.csv';
+            // The file name carries the format version, so readers can pick the matching column layout.
+            $this->filePath = $workbench->filemanager()->getPathToLogFolder() . DIRECTORY_SEPARATOR . self::FOLDER_NAME_TRACES . DIRECTORY_SEPARATOR . CsvLogConfig::buildFileName($time, 'csv');
         }
         return $this->filePath;
     }

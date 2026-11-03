@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Log\Handlers;
 
+use exface\Core\CommonLogic\Log\CsvLogConfig;
 use exface\Core\CommonLogic\Log\Monolog\CsvFormatter;
 use exface\Core\CommonLogic\Log\Processors\ActionAliasProcessor;
 use exface\Core\CommonLogic\Log\Processors\IdProcessor;
@@ -64,7 +65,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
      *
      * @param WorkbenchInterface $workbench
      * @param string             $channelName
-     * @param string             $csvFilePath
+     * @param string             $csvFilePath the format version is derived from the file name (see `CsvLogConfig`)
      * @param string|null        $debugMsgDirPath
      * @param string             $ignoreBelowLevel completely ignore messages below this level
      * @param string             $persistAllAfterLevel dump all accumulated messages when a message with at least this level is received
@@ -122,9 +123,13 @@ class MonologCsvFileHandler implements LogHandlerInterface
         if ($this->monolog === null) {
             $this->monolog = new Logger($this->channelName);
             try {
+                // The format version is derived from the file name - the same rule readers use - so a file never
+                // contains a different format than its name says.
+                $version = CsvLogConfig::getVersionFromFileName($this->csvFilePath);
+                
                 // Create csv log handler.
-                $csvHandler = new CsvHandler($this->csvFilePath, $this->minLevel);
-                $csvHandler->setFormatter(new CsvFormatter()); // Date format will be derived from CsvLogConfig.
+                $csvHandler = new CsvHandler($this->csvFilePath, $this->minLevel, version: $version);
+                $csvHandler->setFormatter(new CsvFormatter(null, $version)); // Date format will be derived from CsvLogConfig.
                 
                 // The context filter strips the log entry from the CSV context only. It runs on the CsvHandler,
                 // i.e. after the processors of all wrapping handlers - and after the detail handler, which still

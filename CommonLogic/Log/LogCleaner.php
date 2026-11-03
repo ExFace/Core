@@ -125,7 +125,9 @@ class LogCleaner
             if (is_writable($logFile)) {
                 $mtime = filemtime($logFile);
                 if ($mtime < $limitTime) {
-                    $detailsFolderName = pathinfo($logFile, PATHINFO_FILENAME);
+                    // Details are stored per date for all format versions, so strip the version key
+                    // ("2026-10-20.v1.log" => "2026-10-20").
+                    $detailsFolderName = CsvLogConfig::getBaseName($logFile);
                     $detailsSubFolder = $pathToDetails . DIRECTORY_SEPARATOR . $detailsFolderName;
                     if (is_dir($detailsSubFolder)) {
                         $filemanager->deleteDir($detailsSubFolder);

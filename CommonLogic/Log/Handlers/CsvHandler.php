@@ -43,6 +43,8 @@ class CsvHandler extends StreamHandler
     
     /** @var resource|null Reusable in-memory buffer to build CSV lines. */
     private $lineBuffer = null;
+    
+    private string $version;
 
     /**
      * Same as `StreamHandler`, but locking is enabled by default to keep lines atomic across processes.
@@ -53,22 +55,40 @@ class CsvHandler extends StreamHandler
      * @param int|null $filePermission
      * @param bool $useLocking
      * @param string $fileOpenMode
+     * @param string $version format version from `CsvLogConfig` - defines columns, delimiter, enclosure and escape
      */
-    public function __construct($stream, int|string|Level $level = Level::Debug, bool $bubble = true, ?int $filePermission = null, bool $useLocking = true, string $fileOpenMode = 'a')
+    public function __construct($stream, int|string|Level $level = Level::Debug, bool $bubble = true, ?int $filePermission = null, bool $useLocking = true, string $fileOpenMode = 'a', string $version = CsvLogConfig::CURRENT_VERSION)
     {
+        // Validates the version early: unknown versions throw here instead of on the first record.
+        CsvLogConfig::getColumns($version);
+        $this->version = $version;
         parent::__construct($stream, $level, $bubble, $filePermission, $useLocking, $fileOpenMode);
+    }
+    
+    /**
+     * Returns the format version from `CsvLogConfig`, that this handler writes.
+     * 
+     * @return string
+     */
+    public function getVersion() : string
+    {
+        return $this->version;
     }
 
     /**
-     * Only accepts `CsvFormatter` (or subclasses), because the written column layout is defined by it.
+     * Only accepts `CsvFormatter` (or subclasses) of the same version, because the written column layout is
+     * defined by it.
      * 
-     * @throws InvalidArgumentException if the formatter is not a `CsvFormatter`
+     * @throws InvalidArgumentException if the formatter is not a `CsvFormatter` or has a different version
      * @inheritdoc
      */
     public function setFormatter(FormatterInterface $formatter) : HandlerInterface
     {
         if (! $formatter instanceof CsvFormatter) {
             throw new InvalidArgumentException(static::class . ' requires a ' . CsvFormatter::class . ', got ' . get_class($formatter) . '.');
+        }
+        if ($formatter->getVersion() !== $this->version) {
+            throw new InvalidArgumentException(static::class . ' writes version "' . $this->version . '", but the formatter produces version "' . $formatter->getVersion() . '".');
         }
         return parent::setFormatter($formatter);
     }
@@ -105,7 +125,7 @@ class CsvHandler extends StreamHandler
         
         // Safety net against formatter bugs: the row must match the configured column layout exactly,
         // otherwise readers mapping columns by position would show wrong data.
-        $hasValidLayout = is_array($row) && array_keys($row) === CsvLogConfig::getColumns();
+        $hasValidLayout = is_array($row) && array_keys($row) === CsvLogConfig::getColumns($this->version);
         if (! is_array($row)) {
             $row = [];
         }
@@ -143,9 +163,9 @@ class CsvHandler extends StreamHandler
             return null;
         }
         
-        $delimiter = CsvLogConfig::getDelimiter();
-        $enclosure = CsvLogConfig::getEnclosure();
-        $escape = CsvLogConfig::getEscape();
+        $delimiter = CsvLogConfig::getDelimiter($this->version);
+        $enclosure = CsvLogConfig::getEnclosure($this->version);
+        $escape = CsvLogConfig::getEscape($this->version);
         
         $buffer = $this->getLineBuffer();
         ftruncate($buffer, 0);
@@ -210,7 +230,7 @@ class CsvHandler extends StreamHandler
     {
         $fallback = [];
         
-        foreach (CsvLogConfig::getColumns() as $column) {
+        foreach (CsvLogConfig::getColumns($this->version) as $column) {
             $value = $row[$column] ?? null;
             $fallback[$column] = match (true) {
                 // Replace the message with a hint that the row could not be encoded.
@@ -255,6 +275,6 @@ class CsvHandler extends StreamHandler
      */
     protected function getDefaultFormatter() : FormatterInterface
     {
-        return new CsvFormatter();
+        return new CsvFormatter(null, $this->version);
     }
 }

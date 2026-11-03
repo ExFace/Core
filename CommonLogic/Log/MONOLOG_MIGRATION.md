@@ -117,10 +117,9 @@ UI loads `log/details/<date>/<log-id>.json` using the log ID found in a CSV row.
     of apostrophes/backslashes/commas/newlines proves reader compatibility. If it does not, keep the
     legacy backslash escape and document/test that mode. The escape choice must be proven against
     `CsvBuilder`, never assumed.
-    **Status:** deferred until the version-aware reader (`LogCsvBuilder`) exists — the escape char is a
-    per-version setting in `CsvLogConfig`, and the proof needs the reader that will actually consume
-    new-version files. Until then the writer keeps `\`; values that cannot round-trip with it (e.g. ending
-    in a backslash) are written as fallback rows. Tracked in `PORTING_TODO.md`.
+    **Status:** unblocked - the version-aware reader (`LogCsvBuilder`) exists and reads with the
+    per-version escape char from `CsvLogConfig`. Until decided the writer keeps `\`; values that cannot
+    round-trip with it (e.g. ending in a backslash) are written as fallback rows. Tracked in `PORTING_TODO.md`.
 
 **Column order (physical, 0-indexed).** The first ten columns are mapped by `exface.Core.LOG_ENTRY`;
 column 10 is retained for compatibility even though it is not modeled. This order is produced today by
@@ -198,6 +197,10 @@ the log/introspection UI will silently mis-map fields (e.g. show the user name u
 Keep the written column order and the `LOG_ENTRY` parsing in sync. The concrete reader is
 `QueryBuilders/CsvBuilder.php` (wrapping `league/csv`), so verify any format change against *that*
 parser, not against `explode()` or line counting.
+**Update (version-aware reader):** `LOG_ENTRY` now uses the data source `LOG_FILES` with
+`QueryBuilders/LogCsvBuilder.php`, and its attributes address columns **by name** (`CsvLogConfig` keys).
+The reader takes columns, delimiter, enclosure and escape from `CsvLogConfig` for the version in the file
+name, so the lockstep is kept by `CsvLogConfig` alone. Tracked in `PORTING_TODO.md`.
 
 ### 3. Levels
 
@@ -529,3 +532,5 @@ suite — reuse Behat where a scenario fits and retain a documented manual verif
 No `exface.Core.LOG_ENTRY` metamodel change is expected. If validation proves its current
 enclosure/escape cannot safely represent the required values, any format change must be a **separate**
 backward-compatible migration with dual-read support — not folded silently into the Monolog upgrade.
+**Update:** that dual-read migration is the version-aware reader: `LOG_ENTRY` was moved to the new data
+source `LOG_FILES` (`LogCsvBuilder`) and its data addresses to column names (see `PORTING_TODO.md`).

@@ -50,28 +50,58 @@ Goal: render logs of *all* format versions through a single `exface.Core.LOG_ENT
 addresses columns by **name**; the query builder translates names to positions per file version using
 `CsvLogConfig`. Old files are never migrated.
 
-- [ ] Find the hook point in `CsvBuilder` / `CsvBuilderTrait::readCsv()`: a single place where data
-  addresses are resolved to column indexes
-- [ ] Create `QueryBuilders\LogCsvBuilder extends CsvBuilder`
-  - [ ] Detect the version from the file name being read (`file_suffix` in `CsvLogConfig::VERSIONS`;
-    no suffix = version 1)
-  - [ ] Translate name → index via `CsvLogConfig::getColumns($version)` for **columns, filters and
-    sorters** (filters currently use the numeric data address as alias, `CsvBuilder` line ~104)
-  - [ ] Return `null` for columns that do not exist in the file's version
-  - [ ] Take delimiter/enclosure/escape from `CsvLogConfig` instead of `DATA_ADDRESS_PROPS`
-- [ ] Check how query builders are assigned (per data source, not per object); likely add a dedicated
-  "log files" data source using `LogCsvBuilder` and point `LOG_ENTRY` at it
-- [ ] Change `LOG_ENTRY` attribute DATA_ADDRESS from indexes (`0`–`10`) to column names
-  (`Model/exface.Core.LOG_ENTRY/04_ATTRIBUTE.json`)
+- [x] Find the hook point in `CsvBuilder` / `CsvBuilderTrait::readCsv()`: a single place where data
+  addresses are resolved to column indexes. **Done:** the trait got three hooks with backward-compatible
+  defaults: `getCsvHeader()` (passed to `Statement::process()` in `readCsv()` and `countRowsFiltered()`),
+  `isCsvColumnAddress()` (replaces `is_numeric()`), `getEscape()` (`setEscape()` only if not `null`).
+  `CsvBuilder::read()`/`count()` now go through `queryFile()`, so subclasses can choose the file.
+- [x] Create `QueryBuilders\LogCsvBuilder extends CsvBuilder`
+  - [x] Detect the version from the file name being read (`CsvLogConfig::getVersionFromFileName()`)
+  - [x] Map columns by **name** for columns, filters and sorters: league/csv keys every record by the
+    header from `getCsvHeader()` (the version's columns, then all other known columns), so data addresses,
+    filter and sorter aliases are column names - no name → index translation needed
+  - [x] Return `null` for columns that do not exist in the file's version (league/csv pads the header)
+  - [x] Take delimiter/enclosure/escape from `CsvLogConfig` instead of `DATA_ADDRESS_PROPS`; no header rows
+- [x] Check how query builders are assigned (per data source, not per object): new data source
+  `LOG_FILES` ("Log files", `LogCsvBuilder`, same connection as `LOCAL_CSV_FILE`, read-only) in
+  `Model/05_DATASRC.json`; `LOG_ENTRY` points to it, its `DATA_ADDRESS_PROPS` were removed
+- [x] Change `LOG_ENTRY` attribute DATA_ADDRESS from indexes (`0`–`9`) to column names
+  (`Model/exface.Core.LOG_ENTRY/04_ATTRIBUTE.json`; `levelname` → `level_name`, `timestamp` → `datetime`)
+- [ ] Verify after the model import (installer, out of process): `LOG_ENTRY` reads through `LogCsvBuilder`,
+  error dialog log tab and `Debugger::getLogData()` work for legacy and versioned files
 - [ ] Check `TRACE_LOG` entries: same reader, or keep them on plain `CsvBuilder`?
-- [ ] Choose a file naming scheme so the `LOG` / `TRACE_LOG` file masks (`logs/*.log`,
-  `logs/traces/*.csv`) match all versions, e.g. `<date>.v2.log`
-- [ ] Writer side: build file names from `CsvLogConfig` in `LoggerFactory` and `Tracer`
+- [x] Choose a file naming scheme so the `LOG` / `TRACE_LOG` file masks (`logs/*.log`,
+  `logs/traces/*.csv`) match all versions: `<base>[.<key>].<extension>`, documented in `CsvLogConfig`.
+- [x] Writer side: build file names from `CsvLogConfig` in `LoggerFactory` and `Tracer`
+  (`CsvLogConfig::buildFileName()`). New files are named `<date>.temp.log` /
+  `<time>.temp.csv` until the key is renamed (see Testing and Cleanup).
+- [ ] `MONITOR_ERROR.LOG_FILE` builds the path in SQL as `logs/<date>.log` and is used as `logfile` filter
+  on `LOG_ENTRY` (log entries tab of the error dialog). Versioned files are not found, so the tab stays
+  empty for new errors. **Decision (fallback):** `LogCsvBuilder` reads the requested file if it exists,
+  otherwise the file of the same base name from `CsvLogConfig::findFiles()` (newest version). The SQL stays
+  unchanged, so old rows keep working. One file per query - no merging of several files.
+  **Implemented** in `LogCsvBuilder::queryFile()` (resolved before querying, so a connection with
+  `error_if_file_not_found` does not throw); `logfile` of the rows is the file actually read. Remaining:
+  verify in the UI after the model import.
+- [x] **One file per date:** `CsvLogConfig::getVersionForWriting()` + `LoggerFactory` continue an existing
+  file of today in its (older) version, so a new format starts with the next day's log. This makes the
+  fallback exact: on the upgrade day there is no second file the monitor could miss. The format is derived
+  from the file name (`MonologCsvFileHandler`), `CsvFormatter`/`CsvHandler` take the version.
+  Limitation: a process started *before* the deploy keeps writing its legacy file, so it can still create
+  a legacy file after a new-version file of the same date exists (only if it logs first that day).
+- [x] Reader escape char: `CsvBuilderTrait::initCsvReader()` never called `setEscape()`, so it read with
+  league/csv's default `\`. **Done:** `LogCsvBuilder::getEscape()` returns `CsvLogConfig::getEscape()`.
+- [ ] **Pre-existing `CsvBuilder` bug - pagination with offset:** `readCsv()` lets the statement skip the
+  offset *and* caps the rows at `limit + offset`, so `limit 1, offset 1` returns 2 rows. Affects every
+  `CsvBuilder` object, not only logs. Not fixed (generic code, needs approval).
 - [ ] `LogCleaner`: validate field count and repair per version via `CsvLogConfig`
-- [ ] `LogCleaner::cleanUpLogs()` (line ~128) derives the details folder via `pathinfo(PATHINFO_FILENAME)`.
-  For `<date>.v2.log` that yields `<date>.v2` instead of `<date>` → expired v2 detail folders are never
-  deleted. Strip the version suffix (shared helper in `CsvLogConfig`)
-- [ ] Test: mixed v1 + current-version files render correctly, incl. filtering and sorting
+- [x] `LogCleaner::cleanupLogsAndDetails()` derived the details folder via `pathinfo(PATHINFO_FILENAME)`,
+  i.e. `<date>.temp` for versioned files, so their expired detail folders were never deleted. Now uses
+  `CsvLogConfig::getBaseName()`.
+- [ ] Test: mixed v1 + current-version files render correctly, incl. filtering and sorting.
+  **Query builder level done** (harness `reader.php`: legacy + versioned file, enclosure/escape round
+  trip, filter, sorter, count, fallback with relative and absolute paths, missing file, today's real log);
+  pagination fails due to the bug above. Still open on data sheet / UI level after the model import.
 
 ## Row integrity
 
@@ -92,7 +122,8 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
   **Done:** `CsvWithDetailsHandler` replaces the `GroupHandler`; record by record, also within
   `FingersCrossedHandler` batches. A failed detail file skips only its row (reported via `error_log()`).
   Still to verify with `stress.php` with kill (see Testing).
-- [ ] **Decide the escape char** (blocked until `LogCsvBuilder` exists): the escape strategy in
+- [ ] **Decide the escape char** (unblocked: `LogCsvBuilder` exists and reads with the per-version escape
+  from `CsvLogConfig`): the escape strategy in
   `MONOLOG_MIGRATION.md` must be proven against the reader that consumes new-version files, so it cannot
   be decided before the version-aware reader is ported. Candidate: `''` (no escape, enclosure doubling).
   With the current `\`, values ending in a backslash fail the round-trip and become fallback rows. Once
@@ -126,6 +157,8 @@ Monolog 1 baseline are in `out\`.
 - [ ] Remaining test matrix rows and acceptance gate in `MONOLOG_MIGRATION.md` checked; unverified items marked as such.
 
 **Remove temporary re-routes**
+- [ ] `CsvLogConfig`: rename the placeholder version key `temp` (e.g. to `v2`) before release. Dev files
+  named `*.temp.log` / `*.temp.csv` are then read as legacy (same layout, unless the escape char changed).
 - [ ] Root `composer.json`: set `exface/core` back to `dev-1.x-dev as 1.0`.
 - [ ] Root `composer.json`: remove the `hail-cookies/Core.git` `vcs` repository.
 - [ ] `composer update exface/core` and confirm the lock points at `ExFace/Core` again.

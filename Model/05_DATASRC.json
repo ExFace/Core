@@ -171,6 +171,22 @@
             "BASE_OBJECT": null,
             "LABEL": "Active Authenticators",
             "ALIAS": "WORKBENCH_AUTHENTICATORS"
+        },
+        {
+            "_EXPORT_SUMMARY": "Log files",
+            "CREATED_ON": "2026-11-03 13:29:40",
+            "MODIFIED_ON": "2026-11-03 13:29:40",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f18dd39f7b0c608dd3025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "DEFAULT_CONNECTION": "0x11e72b5df9840faea3bee4b318306b9a",
+            "DEFAULT_QUERY_BUILDER": "exface/core/QueryBuilders/LogCsvBuilder.php",
+            "READABLE_FLAG": 1,
+            "WRITABLE_FLAG": 0,
+            "BASE_OBJECT": null,
+            "LABEL": "Log files",
+            "ALIAS": "LOG_FILES"
         }
     ],
     "totals_rows": [],
