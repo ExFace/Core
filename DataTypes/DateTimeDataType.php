@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\DataTypes;
 
+use exface\Core\Factories\ConditionGroupFactory;
+use exface\Core\Interfaces\Model\ConditionGroupInterface;
+use exface\Core\Interfaces\Model\ConditionInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
@@ -159,5 +162,81 @@ class DateTimeDataType extends DateDataType
     {
         $this->timeZoneDependent = $value;
         return $this;
+    }
+
+    /**
+     * Returns the time part of a date-time string unchanged, or NULL if the string has no time.
+     * 
+     * - `2026-11-03 11:58:00` => `11:58:00`
+     * - `2026-11-03 11:58` => `11:58`
+     * 
+     * @param string $value
+     * @return string|null
+     */
+    public static function findTime(string $value) : ?string
+    {
+        // TODO use cast() here first!
+        if (preg_match('/(?:^|[\sT])((?:[01]?[0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9](?:\.[0-9]+)?)?)(?![0-9:])/', $value, $matches) === 1) {
+            return $matches[1];
+        }
+
+        return null;
+    }
+    
+    /**
+     * Splits a whole-day comparison into timestamp boundaries without changing the original condition.
+     *
+     * Equality uses `>=` midnight AND `<` next midnight; inequality uses `<` midnight OR `>=` next midnight.
+     * `<=` becomes `<` next midnight, and `>` becomes `>=` next midnight. Explicit times, empty values and other
+     * comparators return NULL. Boundaries are calendar midnights in the parsed date's time zone, not fixed
+     * 24-hour offsets, so fractional seconds and daylight-saving transitions are preserved.
+     *
+     * @param ConditionInterface $condition
+     * @return ConditionGroupInterface|null
+     * @throws \exface\Core\Exceptions\DataTypes\DataTypeCastingError
+     */
+    public static function splitDayCondition(ConditionInterface $condition) : ?ConditionGroupInterface
+    {
+        $value = $condition->getValue();
+        $comparator = $condition->getComparator();
+        if (! is_string($value)
+            || static::isValueEmpty($value)
+            || static::isValueLogicalNull($value)
+            || ! in_array($comparator, [
+                ComparatorDataType::EQUALS,
+                ComparatorDataType::EQUALS_NOT,
+                ComparatorDataType::LESS_THAN_OR_EQUALS,
+                ComparatorDataType::GREATER_THAN,
+            ], true)
+            || static::findTime($value) !== null
+        ) {
+            return null;
+        }
+
+        $date = \DateTimeImmutable::createFromInterface(static::cast($value, true))->setTime(0, 0, 0);
+        $start = static::castFromPhpDate($date);
+        $next = static::castFromPhpDate($date->modify('+1 day'));
+        $group = ConditionGroupFactory::createEmpty(
+            $condition->getWorkbench(),
+            $comparator === ComparatorDataType::EQUALS_NOT ? EXF_LOGICAL_OR : EXF_LOGICAL_AND
+        );
+        $expression = $condition->getExpression();
+        switch ($comparator) {
+            case ComparatorDataType::EQUALS:
+                $group->addConditionFromExpression($expression, $start, ComparatorDataType::GREATER_THAN_OR_EQUALS);
+                $group->addConditionFromExpression($expression, $next, ComparatorDataType::LESS_THAN);
+                break;
+            case ComparatorDataType::EQUALS_NOT:
+                $group->addConditionFromExpression($expression, $start, ComparatorDataType::LESS_THAN);
+                $group->addConditionFromExpression($expression, $next, ComparatorDataType::GREATER_THAN_OR_EQUALS);
+                break;
+            case ComparatorDataType::LESS_THAN_OR_EQUALS:
+                $group->addConditionFromExpression($expression, $next, ComparatorDataType::LESS_THAN);
+                break;
+            case ComparatorDataType::GREATER_THAN:
+                $group->addConditionFromExpression($expression, $next, ComparatorDataType::GREATER_THAN_OR_EQUALS);
+                break;
+        }
+        return $group;
     }
 }

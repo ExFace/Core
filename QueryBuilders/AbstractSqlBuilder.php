@@ -1932,7 +1932,9 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 if (!$if_comp || is_null($if_val)) {
                     throw new QueryBuilderException('Invalid argument for COUNT_IF aggregator: "' . $cond . '"!', '6WXNHMN');
                 }
-                //we have to explicitly use the datatype of the attribute here so we can parte the values correctly in the where part
+                // we have to explicitly use the datatype of the attribute here so we can parte the values correctly in the where part
+                // TODO this only works for simple expressions - a full buildSqlWhere() call based on conditions and groups would be better!
+                // Current limitations: will not work with multiple/nested conditions or compound attributes 
                 $output = "SUM(CASE WHEN " . $this->buildSqlWhereComparator($qpart, $sql, $if_comp, $if_val, false, false, $qpart->getAttribute()->getDataType()) . " THEN 1 ELSE 0 END)";
                 break;
             default:
@@ -2564,6 +2566,11 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $valueRaw = $value;
         // Check if the value is of valid type.
         try {
+            // A modeled date can still address a SQL column containing times.
+            if (null !== $rangeSql = $this->buildSqlWhereImplicitRange($qpart, $subject, $comparator, $value, $relyOnJoins, $dataType)) {
+                return $rangeSql;
+            }
+
             // Pay attention to comparators expecting concatenated values (like IN) - the concatenated value will not validate against
             // the data type, but the separated parts should
             switch (true) {
@@ -2573,7 +2580,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                         $value = $this->prepareWhereSqlListValue($value, $dataType, $dataAddressProps);
                     }
                     break;
-                    
+
                 // Parse the two sides of BETWEEN separately and use 
                 case $comparator === ComparatorDataType::BETWEEN:
                     $values = explode(ComparatorDataType::BETWEEN, $value ?? '');
@@ -2646,18 +2653,6 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 default:
                     break;
             }
-
-            $dateComparison = $this->buildSqlDateComparisonForDay(
-                $subject,
-                $comparator,
-                $value,
-                $valueIsSQL,
-                $dataType,
-                $dataAddressProps
-            );
-            if ($dateComparison !== null) {
-                return $dateComparison;
-            }
         } catch (DataTypeCastingError $e) {
             // If the data type is incompatible with the value, return a WHERE clause, that is always false.
             // A comparison of a date field with a string or a number field with
@@ -2671,69 +2666,80 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
     }
 
     /**
-     * Builds sargable day-interval predicates so date-only filters include all times stored on the selected day.
+     * Renders a range WHERE from a condition with an implicit range
+     * 
+     * Some condition imply ranges: e.g. a date-only value compared to a datetime column, a time-without-seconds
+     * value compared to a time or datetime column, etc. This method is an attempt to handle these cases in a way,
+     * that fits human expectations. 
+     * 
+     * TODO implicit ranges should probably be handled outside of the query builder or higher up the hierarchy in it.
+     * 
+     * Implicit ranges are not a problem of SQL only - it is a mismatch between the data type and the input type,
+     * where humans have a concrete expectation of the result. We already tried to solve similar problem in the UI
+     * - see `exfTool.date.findFilterRange`. It is not quite clear, if support for implicit ranges is required in the
+     * server. If so, we will probably need to let data types handle it - maybe a special interface for data types?
+     * It is definitely not the decision of a query builder, if a condition is an implicit range!
      *
-     * The next day is calculated in PHP and both boundaries use prepareWhereValue() to preserve the active SQL
-     * dialect's literal formatting without applying functions or casts to the filtered column.
-     *
+     * @param QueryPartAttribute $qpart
      * @param string $subject
      * @param string $comparator
-     * @param mixed $value
-     * @param bool $valueIsSQL
+     * @param string $value
+     * @param bool $relyOnJoins
      * @param DataTypeInterface $dataType
-     * @param array $dataAddressProps
      * @return string|null
+     * @throws DataTypeCastingError
      */
-    protected function buildSqlDateComparisonForDay(
+    protected function buildSqlWhereImplicitRange(
+        QueryPartAttribute $qpart,
         string $subject,
         string $comparator,
-        $value,
+        string $value,
         bool $valueIsSQL,
-        DataTypeInterface $dataType,
-        array $dataAddressProps = []
+        bool $relyOnJoins,
+        DataTypeInterface $dataType
     ) : ?string {
-        if (
-            $valueIsSQL === true
-            || ! $dataType instanceof DateDataType
-            || $dataType instanceof DateTimeDataType
-            || $dataType::isValueEmpty($value)
-            || $dataType::isValueLogicalNull($value)
-            || (is_string($value) && stripos($value, 'sql:') !== false)
-        ) {
+        switch (true) {
+            case $dataType instanceof DateDataType
+                && ! ($dataType instanceof DateTimeDataType)
+                && ! $valueIsSQL
+                && in_array($comparator, [
+                ComparatorDataType::EQUALS,
+                ComparatorDataType::EQUALS_NOT,
+                ComparatorDataType::LESS_THAN_OR_EQUALS,
+                ComparatorDataType::GREATER_THAN,
+                ], true)
+                && ! $dataType::isValueEmpty($value)
+                && ! $dataType::isValueLogicalNull($value)
+                && is_string($value)
+                && ! $this->isCustomSqlFilter($value)
+                && DateTimeDataType::findTime($value) === null:
+                // TODO Expand implicit ranges alongside compound filters in WHERE/HAVING to reuse group rendering,
+                // while preserving custom SQL handling and direct comparator callers such as COUNT_IF.
+                $dayCondition = $qpart instanceof QueryPartFilter
+                    ? ConditionFactory::createFromExpression($this->getWorkbench(), $qpart->getCondition()->getExpression(), $value, $comparator, false)
+                    : ConditionFactory::createFromAttribute($qpart->getAttribute(), $value, $comparator, false);
+                $grp = DateTimeDataType::splitDayCondition($dayCondition);
+                break;
+        }
+
+        if ($grp === null) {
             return null;
         }
 
-        switch ($comparator) {
-            case ComparatorDataType::LESS_THAN_OR_EQUALS:
-            case ComparatorDataType::GREATER_THAN:
-            case ComparatorDataType::EQUALS:
-            case ComparatorDataType::EQUALS_NOT:
-                break;
-            default:
-                return null;
+        $predicates = [];
+        foreach ($grp->getConditions() as $condition) {
+            $predicates[] = $this->buildSqlWhereComparatorPredicate(
+                $condition->getValue(),
+                false,
+                $condition->getComparator(),
+                $subject,
+                $dataType,
+                $qpart,
+                $relyOnJoins
+            );
         }
-
-        $date = $dataType::cast($value, true);
-        $nextDate = \DateTimeImmutable::createFromInterface($date)->modify('+1 day');
-        $preparedDate = $this->prepareWhereValue($value, $dataType, $dataAddressProps);
-        $preparedNextDate = $this->prepareWhereValue(
-            $dataType::castFromPhpDate($nextDate),
-            $dataType,
-            $dataAddressProps
-        );
-
-        switch ($comparator) {
-            case ComparatorDataType::LESS_THAN_OR_EQUALS:
-                return $subject . ' < ' . $preparedNextDate;
-            case ComparatorDataType::GREATER_THAN:
-                return $subject . ' >= ' . $preparedNextDate;
-            case ComparatorDataType::EQUALS:
-                return '(' . $subject . ' >= ' . $preparedDate . ' AND ' . $subject . ' < ' . $preparedNextDate . ')';
-            case ComparatorDataType::EQUALS_NOT:
-                return '(' . $subject . ' < ' . $preparedDate . ' OR ' . $subject . ' >= ' . $preparedNextDate . ')';
-        }
-
-        return null;
+        $sql = implode(' ' . $this->buildSqlLogicalOperator($grp->getOperator()) . ' ', $predicates);
+        return count($predicates) > 1 ? '(' . $sql . ')' : $sql;
     }
 
     /**
@@ -2831,7 +2837,7 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
             // For non-strict comparators, casting depends on how exactly the value is used.
             case $comparator === ComparatorDataType::IS_NOT:
             case $comparator === ComparatorDataType::IS:
-                if (stripos($value, 'sql:') !== false) {
+                if ($this->isCustomSqlFilter($value)) {
                     $output = $this->buildSqlWhereComparatorCustomSql($subject, $comparator, $value, $valueIsSQL);
                     break;
                 }
@@ -2858,6 +2864,17 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 throw new QueryBuilderException('Comparator "' . $comparator . '" is not supported in SQL query builders');
         }
         return $output;
+    }
+
+    /**
+     * Detects the case-insensitive custom SQL filter marker, such as `sql:like:%[0-9]`.
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    protected function isCustomSqlFilter($value) : bool
+    {
+        return is_string($value) && stripos($value, 'sql:') !== false;
     }
 
     /**
