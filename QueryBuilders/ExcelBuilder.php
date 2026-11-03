@@ -379,7 +379,7 @@ class ExcelBuilder extends FileBuilder
     {
         $rangeName = trim($address, '[]');
         $rangeName = StringHelper::strToUpper($rangeName);
-        $range = $this->ranges[$rangeName];
+        $range = $this->ranges[$rangeName] ?? null;
         
         // Generate ranges.
         if ($range !== null) {
@@ -612,7 +612,8 @@ class ExcelBuilder extends FileBuilder
                 $columnRef = $returnCellRef ? $col : ++$c;
                 //    Using getCell() will create a new cell if it doesn't already exist. We don't want that to happen
                 //        so we test and retrieve directly against cellCollection
-                $cell = $cellCollection->get($col . $row);
+                $coordinate = $col . $row;
+                $cell = $cellCollection->has($coordinate) ? $cellCollection->get($coordinate) : null;
                 $returnValue[$rowRef][$columnRef] = $nullValue;
                 if ($cell !== null) {
                     $returnValue[$rowRef][$columnRef] = $this->getCellValue(
@@ -677,7 +678,7 @@ class ExcelBuilder extends FileBuilder
                     $mergeRange = $cell->getMergeRange();
                     if ($mergeRange !== null) {
                         $mergeStart = Coordinate::rangeBoundaries($mergeRange)[0];
-                        $cell = $sheet->getCellByColumnAndRow($mergeStart[0], $mergeStart[1]);
+                        $cell = $sheet->getCell([$mergeStart[0], $mergeStart[1]]);
                     }
                     
                     $returnValue[$rRef][$cRef] = $this->getCellValue(
