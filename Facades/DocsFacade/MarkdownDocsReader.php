@@ -10,6 +10,9 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\Selectors\AliasSelectorInterface;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Exceptions\FilePathNotAllowedError;
 
 class MarkdownDocsReader extends MarkdownReader 
 {    
@@ -19,8 +22,21 @@ class MarkdownDocsReader extends MarkdownReader
         $this->workbench = $workbench;       
     }
     
+    /**
+     * Reads URL-derived documentation only from vendor so traversal cannot disclose installation files.
+     *
+     * Generated index and search markdown remains in memory because its cache path is not a URL-selected source.
+     *
+     * {@inheritDoc}
+     * @see \kabachello\FileRoute\FileReaders\MarkdownReader::readFile()
+     *
+     * @param string $filePath
+     * @param string $urlPath
+     * @return ContentInterface
+     */
     public function readFile(string $filePath, string $urlPath): ContentInterface
     {
+        $generatedMarkdown = null;
         if (strpos($urlPath, '?') !== false) {
             $query = StringDataType::substringAfter($urlPath, '?');
             $urlPath = StringDataType::substringBefore($urlPath, '?');
@@ -32,6 +48,7 @@ class MarkdownDocsReader extends MarkdownReader
             $indexPath = $this->workbench->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'index.md';
             file_put_contents($indexPath, $index);
             $filePath = $indexPath;
+            $generatedMarkdown = $index;
         } 
         
         if (isset($query) && substr($query, 0, 1) === 'q') {
@@ -39,20 +56,36 @@ class MarkdownDocsReader extends MarkdownReader
             $searchPath = $this->workbench->filemanager()->getPathToCacheFolder() . DIRECTORY_SEPARATOR . 'search.md';
             file_put_contents($searchPath, $search);
             $filePath = $searchPath;
+            $generatedMarkdown = $search;
         }
         
+        try {
+            $markdown = $generatedMarkdown
+                ?? $this->workbench->filemanager()->readFileSecure($filePath, $this->getAllowedBasePaths());
+        } catch (FileNotFoundError | FileNotReadableError | FilePathNotAllowedError $e) {
+            throw new PageNotFoundException('Page "' . $urlPath . '" not found!', 0, $e);
+        }
         // Render markdown through the central MarkdownContent so the DocsFacade uses the same
         // parser configuration (incl. the `enable_newlines` default) as the rest of the workbench.
-        if (! file_exists($filePath)) {
-            throw new PageNotFoundException('Page "' . $urlPath . '" not found at "' . $filePath . '"!');
-        }
         $fileFolder = pathinfo($filePath, PATHINFO_DIRNAME);
         $urlFolder = pathinfo($urlPath, PATHINFO_DIRNAME);
         if ($urlFolder === '.') {
             $urlFolder = '';
         }
         $folder = $this->readFolder($fileFolder, $urlFolder);
-        return new MarkdownContent($filePath, $urlPath, $folder, file_get_contents($filePath));
+        return new MarkdownContent($filePath, $urlPath, $folder, $markdown);
+    }
+
+    /**
+     * Returns the proposed default documentation roots, pending team decision.
+     *
+     * Vendor is the documented source and intentionally excludes configuration and other installation files.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        return [$this->workbench->filemanager()->getPathToVendorFolder()];
     }
     
     protected function buildMarkdownIndex()

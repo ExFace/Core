@@ -2,17 +2,24 @@
 namespace exface\Core\Facades\DocsFacade;
 
 use exface\Core\CommonLogic\TemplateRenderer\AbstractTemplateRenderer;
-use exface\Core\Exceptions\FileNotFoundError;
 
 class DocsTemplateRenderer extends AbstractTemplateRenderer 
 {
+    /**
+     * Reads documentation templates through canonical containment validation because callers may derive paths from URLs.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface::render()
+     *
+     * @param string|null $filePathAbsolute
+     * @return string
+     */
 	public function render(string $filePathAbsolute = null)
 	{
-        // Check if the file exists
-        if (!file_exists($filePathAbsolute)) {
-            throw new FileNotFoundError("File not found: $filePathAbsolute");
-        }
-        $markdown = file_get_contents($filePathAbsolute);
+        $markdown = $this->getWorkbench()->filemanager()->readFileSecure(
+            $filePathAbsolute ?? '',
+            $this->getAllowedBasePaths()
+        );
 		$phs = $this->getPlaceholders($markdown);
         $vals = $this->getPlaceholderValues($phs);
         
@@ -28,6 +35,18 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
 
         return $markdown;
 	}
+
+    /**
+     * Returns the proposed default documentation template roots, pending team decision.
+     *
+     * Vendor is the only expected source for app documentation and excludes installation secrets.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        return [$this->getWorkbench()->filemanager()->getPathToVendorFolder()];
+    }
     
     function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName, string $noprint): string
     {

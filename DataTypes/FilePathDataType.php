@@ -2,7 +2,11 @@
 namespace exface\Core\DataTypes;
 
 use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Exceptions\FileNotReadableError;
+use exface\Core\Exceptions\FilePathNotAllowedError;
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\CommonLogic\Filesystem\LocalFileInfo;
+use exface\Core\Interfaces\WorkbenchInterface;
 use Symfony\Component\Filesystem\Path;
 use exface\Core\Exceptions\DataTypes\DataTypeValidationError;
 
@@ -221,6 +225,167 @@ class FilePathDataType extends StringDataType
         }
         
         return static::normalize($path, $directorySeparator);
+    }
+
+    /**
+     * Resolves a file for an immediate read while preventing escapes from explicitly allowed directories.
+     *
+     * Canonical target and base paths are compared to block traversal, mixed separators, sibling-prefix
+     * collisions, and symlinks that resolve outside an allowed base. The caller-supplied path is retained
+     * in exception messages so canonical installation paths are available only in debug details.
+     *
+     * @param string $path
+     * @param WorkbenchInterface $workbench
+     * @param string[] $allowedBasePaths
+     * @return string
+     * @throws FileNotFoundError
+     * @throws FileNotReadableError
+     * @throws FilePathNotAllowedError
+     */
+    public static function makeSecure(string $path, WorkbenchInterface $workbench, array $allowedBasePaths) : string
+    {
+        if ($path === '' || strpos($path, "\0") !== false || strpos($path, '://') !== false) {
+            throw new FilePathNotAllowedError('Access to file "' . $path . '" is not allowed.');
+        }
+
+        $pathForFilesystem = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+        if (! static::isAbsolute($pathForFilesystem)) {
+            $pathForFilesystem = rtrim($workbench->getInstallationPath(), '/\\')
+                . DIRECTORY_SEPARATOR
+                . $pathForFilesystem;
+        }
+        if (static::hasDotSegmentInMissingRemainder($pathForFilesystem)) {
+            throw new FilePathNotAllowedError('Access to file "' . $path . '" is not allowed.');
+        }
+
+        $canonicalPath = @realpath($pathForFilesystem);
+        $pathExists = $canonicalPath !== false;
+        $pathForContainment = $pathExists
+            ? $canonicalPath
+            : static::resolveMissingPathForContainment($pathForFilesystem);
+        if ($pathForContainment === null) {
+            throw new FilePathNotAllowedError('Access to file "' . $path . '" is not allowed.');
+        }
+
+        $canonicalFileInfo = $pathExists ? new LocalFileInfo($canonicalPath) : null;
+        $pathForComparison = static::prepareSecurePathComparison($pathForContainment);
+        $isAllowed = false;
+        foreach ($allowedBasePaths as $allowedBasePath) {
+            if (! is_string($allowedBasePath) || $allowedBasePath === '') {
+                continue;
+            }
+            $baseForFilesystem = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $allowedBasePath);
+            if (! static::isAbsolute($baseForFilesystem)) {
+                $baseForFilesystem = static::makeAbsolute($baseForFilesystem, $workbench->getInstallationPath());
+            }
+            $canonicalBasePath = @realpath($baseForFilesystem);
+            if ($canonicalBasePath === false) {
+                continue;
+            }
+            $baseForComparison = rtrim(static::prepareSecurePathComparison($canonicalBasePath), '/') . '/';
+            if (strpos($pathForComparison, $baseForComparison) === 0) {
+                $isAllowed = true;
+                break;
+            }
+        }
+
+        if (! $isAllowed) {
+            throw new FilePathNotAllowedError(
+                'Access to file "' . $path . '" is not allowed.',
+                null,
+                null,
+                $canonicalFileInfo
+            );
+        }
+        if (! $pathExists) {
+            throw new FileNotFoundError('File "' . $path . '" not found!');
+        }
+        if (! is_file($canonicalPath)) {
+            throw new FilePathNotAllowedError(
+                'Access to file "' . $path . '" is not allowed.',
+                null,
+                null,
+                $canonicalFileInfo
+            );
+        }
+        if (! is_readable($canonicalPath)) {
+            throw new FileNotReadableError(
+                'Cannot read file "' . $path . '"!',
+                null,
+                null,
+                $canonicalFileInfo
+            );
+        }
+
+        return $canonicalPath;
+    }
+
+    /**
+     * Detects dot segments that follow a missing prefix before realpath can erase that unsafe distinction.
+     *
+     * Windows may resolve `missing\..\file` even though the missing component was never traversable. Rejecting such
+     * suffixes before canonicalization keeps missing-path containment deterministic across operating systems.
+     *
+     * @param string $path
+     * @return bool
+     */
+    private static function hasDotSegmentInMissingRemainder(string $path) : bool
+    {
+        preg_match_all('/(?:^|[\/\\\\])(?:\.|\.\.)(?=[\/\\\\]|$)/', $path, $matches, PREG_OFFSET_CAPTURE);
+        foreach ($matches[0] as [$match, $offset]) {
+            $prefix = rtrim(substr($path, 0, $offset), '/\\');
+            if ($prefix !== '' && ! file_exists($prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Reconstructs a missing target from its canonical deepest existing ancestor before access is classified.
+     *
+     * This prevents file-existence probing outside allowed bases while preserving symlink resolution on every
+     * existing ancestor. Dot segments in the missing suffix are rejected because they cannot be canonicalized safely.
+     *
+     * @param string $path
+     * @return string|null
+     */
+    private static function resolveMissingPathForContainment(string $path) : ?string
+    {
+        $ancestor = $path;
+        $remainingSegments = [];
+        while (! file_exists($ancestor)) {
+            $parent = dirname($ancestor);
+            if ($parent === $ancestor) {
+                return null;
+            }
+            $segment = basename($ancestor);
+            if ($segment === '' || $segment === '.' || $segment === '..') {
+                return null;
+            }
+            array_unshift($remainingSegments, $segment);
+            $ancestor = $parent;
+        }
+
+        $canonicalAncestor = @realpath($ancestor);
+        if ($canonicalAncestor === false) {
+            return null;
+        }
+        return rtrim($canonicalAncestor, '/\\')
+            . DIRECTORY_SEPARATOR
+            . implode(DIRECTORY_SEPARATOR, $remainingSegments);
+    }
+
+    /**
+     * Normalizes canonical paths for an OS-correct containment comparison that cannot be bypassed by separators.
+     *
+     * @param string $path
+     * @return string
+     */
+    private static function prepareSecurePathComparison(string $path) : string
+    {
+        $path = str_replace('\\', '/', $path);
+        return PHP_OS_FAMILY === 'Windows' ? mb_strtolower($path) : $path;
     }
 
     /**

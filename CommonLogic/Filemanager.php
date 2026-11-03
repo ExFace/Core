@@ -6,6 +6,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\Exceptions\FileNotReadableError;
 
 class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
@@ -182,6 +183,27 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             }
         }
         return $this->path_to_translations_folder;
+    }
+
+    /**
+     * Validates and immediately reads a local file so untrusted paths cannot escape approved directories.
+     *
+     * Keeping validation and reading together reduces the chance that callers accidentally use the original,
+     * non-canonical path after the security check.
+     *
+     * @param string $path
+     * @param string[] $allowedBasePaths
+     * @return string
+     * @throws FileNotReadableError
+     */
+    public function readFileSecure(string $path, array $allowedBasePaths) : string
+    {
+        $securePath = FilePathDataType::makeSecure($path, $this->getWorkbench(), $allowedBasePaths);
+        $contents = file_get_contents($securePath);
+        if ($contents === false) {
+            throw new FileNotReadableError('Cannot read file "' . $path . '"!');
+        }
+        return $contents;
     }
     
     /**
