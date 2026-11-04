@@ -1,0 +1,327 @@
+# Logging rewrite (Monolog 1 → 3): review and installation guide
+
+This guide is for reviewers and for anyone installing the rewrite. It summarizes what was changed and why.
+The full decision log is in `MONOLOG_MIGRATION.md` and `PORTING_TODO.md`. Use those for details and history.
+
+**In short:** the workbench logger now runs on Monolog 3. We replaced the third-party CSV writer with our own
+code, made writes safe under concurrency, and added versioning to the CSV format. Old log files can still be
+read. Their format is unchanged. Core and `axenox/packagemanager` **must be updated together**
+(see [Installation](#3-installation--update)).
+
+> ⚠️ **Release blocker (found while writing this guide):** on the branch head, core's `composer.json` requires
+> `monolog/monolog: ^1.22.1` and `femtopixel/monolog-csvhandler: ~0.1` again. Commit `eb12adc89` had changed
+> this to `monolog/monolog: ^3.12` + `psr/log: ^2 || ^3`, but the merge of `1.x-dev` (`19dbce82b`) took the
+> upstream version of the file. The current `composer.lock` still comes from `eb12adc89` (Monolog 3.12.1,
+> psr/log 3.0.2), so this installation works for now. The next `composer update` would install Monolog 1 again.
+> Restore the two lines and remove FemtoPixel before release.
+
+---
+
+## 1. Architecture: from a log call to the log viewer
+
+```mermaid
+flowchart TD
+    T["Trigger<br/>Workbench->getLogger()->error(...)<br/>PHP ErrorHandler, Monitor, Tracer"] --> L["Logger<br/>(exface LoggerInterface)"]
+    L -->|"one LogEntry per call"| H{"Handlers<br/>(LogHandlerInterface or native Monolog)"}
+    H --> CSV["MonologCsvFileHandler"]
+    H --> MON["MonitorLogHandler<br/>→ MONITOR_ERROR table"]
+    H --> BUF["BufferingHandler<br/>(Tracer: trace CSV)"]
+    H --> EXT["3rd-party Monolog handlers<br/>(Slack, Sentry, …)"]
+    BUF --> CSV
+    CSV --> FC["Monolog FingersCrossedHandler<br/>(buffer until trigger level,<br/>skipped if PERSIST level = debug)"]
+    FC --> CWD["CsvWithDetailsHandler"]
+    CWD -->|"1. detail first"| DET["DebugMessageMonologHandler<br/>logs/details/&lt;date&gt;/&lt;id&gt;.json"]
+    CWD -->|"2. then the row"| ROW["CsvHandler + CsvFormatter<br/>logs/&lt;date&gt;.v1.log"]
+    DET & ROW --> RD["LogCsvBuilder (data source LOG_FILES)<br/>reads CSV + detail pairs via CsvLogConfig"]
+    RD --> UI["exface.Core.LOG_ENTRY<br/>log viewer, error dialog, traces"]
+```
+
+### 1.1 Trigger → Logger
+
+- Callers only use the exface `Interfaces/Log/LoggerInterface`, which is PSR-3 plus an optional
+  `iCanGenerateDebugWidgets $sender`. **No Monolog types reach the callers.** Their API did not change.
+- The logger is wired up in `Factories/LoggerFactory.php` from the `LOG.*` config. That file also creates the
+  PHP `error_log` fallback logger.
+- Sources: any code that calls `getLogger()`, the Symfony `ErrorHandler` registered in `Debugger` (see
+  [Known gaps](#6-open-items--known-gaps)), `Monitor` and `Tracer`.
+- `CommonLogic/Log/Logger.php` keeps the recursion guard (errors raised while logging are queued), the
+  dedup in `enqueueError()`, `generateLogId()` and the shutdown function that logs fatal errors.
+
+### 1.2 Logger → LogEntry → handlers
+
+- **New:** `LogEntry` (`Interfaces/Log/LogEntryInterface`) parses the PSR-3 arguments once: level, message,
+  log ID, exception and sender. The exception comes from `context['exception']`, or from the sender if the
+  sender is an exface exception. The log ID is the sender's own ID (`IHaveLogIdInterface`) or a generated
+  one. Handlers call `getId()`, `getException()` and `getSender()` instead of reading known context keys.
+  `getContext()` returns only the caller's data (without `exception`).
+- The logger passes every entry to every handler. Two kinds of handlers are supported:
+
+| Kind | Contract | Examples |
+|---|---|---|
+| Workbench handlers | `LogHandlerInterface::handle(LogEntryInterface $entry) : void`. Not tied to Monolog's record structure | `MonologCsvFileHandler`, `MonitorLogHandler`, `BufferingHandler`, `MonologErrorLogHandler` |
+| Third-party Monolog handlers | `Monolog\Handler\HandlerInterface`, appended directly with `Logger::appendHandler()` | Slack, Sentry, Graylog, … |
+
+  For third-party handlers, `Logger::createMonologRecord()` builds a standard PSR-3 `LogRecord` once per entry:
+  exception in `context['exception']`, ID in `extra['id']`, channel `Workbench`. A handler only receives the
+  record if its `isHandling()` returns true. Its `handle()` return value (bubbling) is ignored.
+  `createMonologRecord()` is the **only** place in `Logger` that depends on Monolog's record structure.
+  No adapter class is needed.
+- A handler that throws is removed from the logger and the error is logged. If it was the only handler, the
+  error goes to the PHP `error_log` fallback logger instead.
+- **New, deduplication:** `appendHandler()` ignores an instance that is already registered. Handlers that own
+  a unique destination implement `UniqueLogHandlerInterface::getUniqueKey()`, and a second handler with the
+  same key is ignored with a warning. This applies to `MonologCsvFileHandler` (class + file path),
+  `MonitorLogHandler` (class) and `BufferingHandler` (key of the wrapped handler). Before this, a second
+  registration logged every row twice and inserted every monitor row twice.
+
+### 1.3 Handlers process the entry: the CSV + detail pipeline
+
+`MonologCsvFileHandler` is the main handler. It passes the `LogEntry` through Monolog in the context key
+`LogEntryInterface::MONOLOG_CONTEXT_KEY`, because the detail handler and `IdProcessor` need it. On the first
+entry it lazily builds a Monolog 3 stack. If building the stack fails, it logs to PHP `error_log` instead.
+
+1. **`FingersCrossedHandler`** buffers entries from `LOG.MINIMUM_LEVEL_TO_LOG`, flushes the buffer when
+   `LOG.PERSIST_LOG_LEVEL` is reached and writes `LOG.PASSTHROUGH_LOG_LEVEL` entries right away. This
+   behaviour is the same as before. If `PERSIST_LOG_LEVEL` is `debug`, this step is skipped and every entry is
+   written immediately. The `Tracer` uses that mode.
+2. **`CsvWithDetailsHandler`** (new, replaces Monolog 1's `GroupHandler`). It is used only if a details
+   folder was passed. Both the default logger and the `Tracer` pass one. Without a details folder, the
+   `CsvHandler` is used directly. It handles one record at a time, also inside a flushed batch:
+   1. `DebugMessageMonologHandler` renders the details with `DebugWidgetRenderer` and writes
+      `logs/details/<date>/<log-id>.json`. It writes a temp file, validates the JSON, then publishes it with
+      `link()`. If the file already exists, it is left untouched.
+      - Exception: on file systems without hard links, `rename()` is used instead, and two processes writing
+        the same ID at the same moment could replace each other's file.
+      - Log IDs that are not plain tokens are rejected, to prevent path traversal.
+   2. **Only if step 1 succeeded**, `CsvHandler` appends the CSV row. If the detail file fails, only that row
+      is skipped and the failure is reported via `error_log()`.
+   - Result: no CSV row ever points to a missing detail file. A detail file without a row is acceptable and
+     is removed by retention.
+   - Both inner handlers must use the same level. Otherwise the constructor throws.
+3. **`CsvHandler` + `CsvFormatter`** (new, replace `femtopixel/monolog-csvhandler`):
+   - The formatter writes the columns explicitly, as defined in `CsvLogConfig`.
+   - It sanitizes values: invalid UTF-8 becomes U+FFFD, and JSON that cannot be encoded becomes
+     `[JSON encoding failed]`. Nested data is cut off at depth 9 and after 1000 items.
+   - The handler rejects rows whose columns do not match the version's layout. It also parses every line back
+     before writing it. In both cases it writes a fallback row instead of a broken line: message
+     `[row encoding failed]`, keeping only id, requestId, level, level_name, channel and datetime. If even
+     that fails, the entry is skipped and reported via `error_log()`.
+   - Each line is written with a single `fwrite` under `LOCK_EX`. The lock is released even if the write throws.
+
+**Processors** now return immutable `LogRecord`s and write into `extra` (base class
+`AbstractContextProcessor`). Column order is decided by the formatter, not by the processors.
+
+| Processor | Attached to | Runs |
+|---|---|---|
+| `IdProcessor`, `RequestIdProcessor`, `UserNameProcessor`, `ActionAliasProcessor` | `FingersCrossedHandler` (unbuffered: the writer) | at **log time**. Do nothing before the workbench has started, and catch all errors |
+| `ContextFilterProcessor` (removes the `LogEntry` object from the CSV context) | `CsvHandler` | at **flush time**, after the detail handler has used the entry |
+
+Other handlers:
+- `MonitorLogHandler` writes to `MONITOR_ERROR`. It renders the error widget with the new standalone
+  `CommonLogic/Debugger/DebugWidgetRenderer` (this replaces the removed `DebugWidgetProcessor`).
+- `BufferingHandler` buffers entries and passes them to the handler it wraps on `__destruct`. The `Tracer` uses
+  it around an unbuffered `MonologCsvFileHandler` that writes the trace file.
+- `MonologErrorLogHandler` writes to PHP `error_log` and is the fallback when initialization or persistence fails.
+
+### 1.4 Output: CSV + detail file pairs
+
+`CommonLogic/Log/CsvLogConfig.php` is the **single source of truth** for the file format. The writer and the
+reader both use it.
+
+- File name: `<base>[.<version>].<ext>`. Examples: `logs/2026-11-05.v1.log` and
+  `logs/traces/<time>.v1.csv`. Legacy files have no version key. The masks `logs/*.log` and
+  `logs/traces/*.csv` still match.
+- Details are always stored at `logs/details/<base>/<log-id>.json`, in every version.
+- There is at most **one daily log per date**. If today's file already exists in an older version,
+  `LoggerFactory` keeps writing to it in that version (`getVersionForWriting()`). A new format therefore starts
+  on the next day. Trace files always use the current version.
+- As before, the context column contains neither the exception nor the sender. Both are stored only in the
+  detail file. `LogEntry` takes the exception out of the context.
+
+| | Legacy (no key) | `v1` (current) |
+|---|---|---|
+| Columns | id, requestId, userName, actionAlias, message, context, level, level_name, channel, datetime, extra | **datetime, id, requestId, level, level_name, channel**, userName, actionAlias, message, context, extra |
+| Enclosure / escape | `'` / `\` | `"` / none (RFC 4180, quotes doubled). Opens correctly in Excel |
+| Date format | `Y-m-d H:i:s.v` | `Y-m-d H:i:s.v` |
+
+Rules for changing the format: never edit an existing version. Append a new one and bump `CURRENT_VERSION`.
+Reordering columns needs no model change. A new column also needs a new `LOG_ENTRY` attribute.
+
+### 1.5 UI: reading via the meta model
+
+- `exface.Core.LOG_ENTRY` now uses the **new data source `LOG_FILES`**, whose query builder is
+  `QueryBuilders/LogCsvBuilder.php` (it extends `CsvBuilder`).
+- `LogCsvBuilder` reads the version from the file name. It takes the columns, delimiter, enclosure and escape
+  character for that version from `CsvLogConfig`. It returns `null` for columns that do not exist in the
+  file's version.
+- `LOG_ENTRY` attributes address columns **by name** (`datetime`, `level_name`, …) instead of index, so
+  legacy and `v1` files render through the same object.
+- `MONITOR_ERROR.LOG_FILE` still builds `logs/<date>.log` in SQL. `LogCsvBuilder::queryFile()` falls back to
+  the file with the same base name (any version), so the log tab in the error dialog works for new files.
+- A last record without a line ending (still being written) is ignored. Readers do not take locks.
+- The detail JSON is loaded using the log ID from the CSV row, the same way as before.
+- `TRACE_LOG` stays on `FileBuilder`. Its regexes now accept both `"X"` and `""X""`.
+
+---
+
+## 2. Major changes compared with the old system
+
+| Area | Before (Monolog 1) | Now (Monolog 3) |
+|---|---|---|
+| Platform | `php ^8`, `monolog ^1.22`, psr/log 1, `femtopixel/monolog-csvhandler` | Monolog 3 needs PHP 8.1+, and core already requires `php ^8.2`. Target: `monolog ^3.12`, `psr/log ^2 \|\| ^3`, **FemtoPixel removed**. ⚠️ Lost in a merge and must be restored, see the warning at the top |
+| Public interfaces (**breaking** for code outside core that implements them; none found in this installation's `vendor`) | `LogHandlerInterface::handle($level, $message, $context, $sender)` | `LogHandlerInterface::handle(LogEntryInterface $entry) : void`. `LoggerInterface` methods return `void` (PSR-3 v3). `appendHandler()`/`removeHandler()` also accept Monolog handlers. New `SecurityManagerInterface::getAuthenticatedTokenIfExists()` |
+| Record model | Mutable arrays, columns positioned with `array_slice` (`AbstractColumnPositionProcessor`) | Immutable `LogRecord`. Processors write to `extra`, and the formatter sets the column order. Abstract class removed |
+| Levels | Integers (`Logger::DEBUG`) | `Monolog\Level` enum. `LogLevelDataType` was ported, its public signatures are unchanged |
+| Handler input | Context keys (`id`, `exception`, `sender`) | `LogEntry` object |
+| Third-party handlers | Not supported directly | Appended natively with `appendHandler()` |
+| Handler duplicates | Not prevented. A second registration would have written every row twice | Checked by instance and by `UniqueLogHandlerInterface` key |
+| CSV writer | FemtoPixel, no locking | First-party `CsvHandler`: `LOCK_EX` per line, layout and round-trip checks, fallback row |
+| Detail files | Check-then-write, could be left partial | Temp file → validate → `link()`. An existing file is left untouched (except in the `rename()` fallback, see 1.3) |
+| Write order | CSV and details written independently (batch: all rows, then all details) | Detail first, then the CSV row, record by record |
+| Processor timing | All processors ran at flush time | User, action and request ID are captured at **log time**. The user name is read with `getAuthenticatedTokenIfExists()` and never triggers authentication |
+| File format | One format, read by column index | Versioned (`CsvLogConfig`). `v1` uses the RFC 4180 / Excel format and puts the fixed-width columns first |
+| Reader | `CsvBuilder`, columns addressed by index | `LogCsvBuilder` on `LOG_FILES`, columns addressed by name, works with every version |
+| `CsvBuilder` pagination | `offset` returned too many rows. With filters there was no pagination | Fixed in `CsvBuilderTrait` (affects all CSV objects) |
+| Repair (`LogCleaner`) | Counted commas, which could delete valid multi-line rows | Parses with `fgetcsv()` per version, validates each record, moves broken records to `logs/quarantine/` first, works on files in use (`LOCK_EX`), streams the file (10 MB peak on a 57 MB log) |
+| Cleanup | Detail folders of versioned files were missed | Uses `CsvLogConfig::getBaseName()` |
+| Composer scripts | Workbench booted inside Composer, which fails with Monolog 3 (Composer bundles psr/log 1) | `StaticInstaller::runInChildProcess()` (PackageManager) runs installers in a child PHP process |
+| Error widget for monitor | `MonitorLogHandler` called `DebugWidgetProcessor` with a hand-built array | `DebugWidgetRenderer`. PackageManager's `InstallApp` uses it too |
+| Dead code | `LoggerFactory::registerErrorLogger()`, `Monolog/MessageOnlyFormatter` (unused, never ported to Monolog 3) | Removed |
+| `TRACE_LOG` | Regexes expected `"X"` | Regexes accept both `"X"` and `""X""` |
+
+### Suggested review order
+
+All changes are on core branch `Migrations/Monolog` (40 files compared with `origin/1.x-dev`).
+
+0. `composer.json`: check the Monolog constraint first (see the warning at the top).
+1. `CommonLogic/Log/CsvLogConfig.php`: the format contract.
+2. `Interfaces/Log/LoggerInterface.php`, `Interfaces/Log/LogHandlerInterface.php`,
+   `Interfaces/Log/LogEntryInterface.php`, `Interfaces/Log/UniqueLogHandlerInterface.php`,
+   `CommonLogic/Log/LogEntry.php`, `CommonLogic/Log/Logger.php` (`appendHandler`, `createMonologRecord`).
+3. `Factories/LoggerFactory.php` → `Handlers/MonologCsvFileHandler.php` → `Handlers/CsvWithDetailsHandler.php`.
+4. `Handlers/CsvHandler.php`, `Monolog/CsvFormatter.php`, `Monolog/DebugMessageMonologHandler.php`.
+5. `Processors/*`, `Handlers/MonitorLogHandler.php`, `Handlers/BufferingHandler.php`,
+   `Handlers/MonologErrorLogHandler.php`, `CommonLogic/Debugger/DebugWidgetRenderer.php`,
+   `DataTypes/LogLevelDataType.php`, `CommonLogic/Tracer.php`, `Security/SecurityManager.php` and its
+   interface.
+6. Read side: `QueryBuilders/LogCsvBuilder.php`, `QueryBuilders/CsvBuilder.php`, `Traits/CsvBuilderTrait.php`,
+   `Model/05_DATASRC.json`, `Model/exface.Core.LOG_ENTRY/02_OBJECT.json` + `04_ATTRIBUTE.json`,
+   `Model/exface.Core.TRACE_LOG/04_ATTRIBUTE.json`.
+7. `CommonLogic/Log/LogCleaner.php`.
+8. `axenox/packagemanager` (branch `MonologMigration`): `StaticInstaller::runInChildProcess()` and `InstallApp`
+   (commit `7e38a60`).
+
+---
+
+## 3. Installation / update
+
+### Prerequisites
+
+- PHP **8.2+** (core requires `php ^8.2`. Monolog 3 alone would need 8.1).
+- `exface/core` **and** `axenox/packagemanager` at versions that contain the migration. Updating only one of
+  them breaks `InstallApp`. The old one does not load with the new core, and vice versa. Composer
+  constraints cannot enforce this (dev branches are aliased `as 1.0`), so check it yourself.
+- Core's `composer.json` must require `monolog/monolog: ^3.12`. Otherwise step 3 installs Monolog 1 (see the
+  warning at the top). After step 3, `composer.lock` must list `monolog/monolog` 3.x and no
+  `femtopixel/monolog-csvhandler`.
+
+### Procedure (per installation, run from the installation root)
+
+These steps are needed **once**, for the update to the Monolog 3 core. Afterwards the PackageManager runs its
+installers in a child process, and later Composer runs work with scripts as usual.
+
+1. **Back up** the database and the installation folder, including `logs/`.
+2. Make sure a single Composer run updates **both** `exface/core` and `axenox/packagemanager`.
+3. Update without scripts. Otherwise Composer may run the *old* `StaticInstaller` in-process, which fails:
+   ```
+   composer update --no-scripts
+   ```
+4. Run all installers out of process (core first, then all apps). This also clears `LastInstall.temp.json`
+   and regenerates the license BOM:
+   ```
+   php -r "require 'vendor/autoload.php'; axenox\PackageManager\StaticInstaller::composerFinishInstall();"
+   ```
+   Do **not** use `composerFinishUpdate()` here. `--no-scripts` skipped the package events that fill its
+   queue, so it would install nothing.
+5. **Verify:**
+   - `php vendor/bin/action axenox.PackageManager:InstallApp --help` lists the `apps` argument. If the
+     versions do not match, the command fails to load.
+   - The log viewer shows entries from both legacy (`<date>.log`) and new (`<date>.v1.log`) files, and
+     filtering and sorting work.
+   - The log tab in the error dialog and "Open trace" show entries.
+   - New entries appear in `logs/<date>.v1.log` from the **next day** on, or immediately if no log exists
+     for today yet.
+6. Delete any development files named `*.temp.log` / `*.temp.csv`. They came from an unreleased placeholder
+   format and are no longer read correctly.
+
+### Rollback
+
+Restore **code, Composer lock and database together**. The installer moved `LOG_ENTRY` to the
+`LOG_FILES` data source, which the old core does not have. Log files written in `v1` will not be readable by
+the old core.
+
+### Configuration
+
+No new config options. `LOG.MINIMUM_LEVEL_TO_LOG`, `LOG.PERSIST_LOG_LEVEL`, `LOG.PASSTHROUGH_LOG_LEVEL` and
+`LOG.MAX_DAYS_TO_KEEP` keep their meaning. Setting `LOG.PERSIST_LOG_LEVEL` to `debug` turns buffering off.
+
+---
+
+## 4. Adding things later
+
+- **A third-party Monolog handler:** call `$logger->appendHandler(new SlackWebhookHandler(...))`. Do not
+  add it inside `MonologCsvFileHandler`'s internal stack. The `handle()` return value (bubbling) is ignored.
+- **A workbench handler with its own destination:** implement `LogHandlerInterface`. Also implement
+  `UniqueLogHandlerInterface` if two instances must not write to the same destination.
+- **A new CSV format:** append a version to `CsvLogConfig::VERSIONS` (key with a letter, no dots), bump
+  `CURRENT_VERSION`, and keep the `.log` / `.csv` extension.
+
+---
+
+## 5. Verification status
+
+Results as recorded in `PORTING_TODO.md` (not re-run for this guide). Tested on Windows with PHP 8.3, using
+the oracle harness compared against a Monolog 1 baseline. The harness is kept in the session folder, not in
+the repo.
+
+- Corpus of hostile values: 46/46 OK, 0 regressions. The 5 cases that were broken in the baseline (backslash
+  + apostrophe, invalid UTF-8, quoted Windows paths) now pass.
+- Stress test, 8 workers × 300 × 4 runs: 2400/2400 rows per run, with no missing, duplicate or corrupted rows.
+  The baseline lost 39 rows and produced 9 corrupted fragments.
+- Kill tests: no torn rows, no invalid detail files, and no CSV row without its detail file.
+- Repair: 0 valid records lost on the corpus and on 57 MB stress logs, and exactly the injected garbage was
+  moved to quarantine.
+- Composer `post-update-cmd` runs in the child process (exit code 0). A failing child stops Composer.
+
+---
+
+## 6. Open items / known gaps
+
+- **Release blocker:** restore `monolog/monolog: ^3.12` and `psr/log: ^2 || ^3`, and remove
+  `femtopixel/monolog-csvhandler`, in core's `composer.json` (see the warning at the top).
+- **Not yet verified in the UI on a DB-imported model:** `LOG_ENTRY` reading through `LogCsvBuilder` with
+  mixed legacy and `v1` files (filters, sorting), the log tab in the error dialog for new errors, and
+  "Open trace".
+- **Not verified on Linux:** in-place repair with writers holding `'a'` handles, and `LogCsvBuilder`'s check
+  for an incomplete last record.
+- Full `composer update` **with scripts** in `exface-m3` (only `run-script post-update-cmd` was verified).
+- Release preparation in the root `composer.json` of the installation:
+  - Set `exface/core` back to `dev-1.x-dev as 1.0` and remove the `hail-cookies/Core` VCS repository.
+  - Do the same for `axenox/packagemanager`: it currently uses `dev-MonologMigration as 1.0` from the
+    `hail-cookies/PackageManager.git` repository.
+  - Run `composer update` and confirm that no harness files were committed.
+  - Release PackageManager **together with** the core.
+- `DEBUG.PRETTIFY_ERRORS` also controls whether PHP errors are logged: `Debugger::setPrettifyErrors()` only
+  registers the Symfony `ErrorHandler` → logger bridge if the option is `true`. With the default (`false`),
+  PHP warnings and non-fatal errors do not reach the log. Fatal errors are still logged by the `Logger`'s
+  shutdown function. This existed before the rewrite and is not changed here. Suggested fix: a separate
+  `DEBUG.LOG_PHP_ERRORS` option.
+- Cosmetic: a comment in `CommonLogic/Contexts/Scopes/InstallationContextScope.php` (around line 250) still
+  mentions the removed `DebugWidgetProcessor`.
+- `MonologErrorLogHandler` could be replaced by a Monolog `ErrorLogHandler` appended directly (TODO in the class).
+- Optional: cache the user name and action alias per request, write a flushed batch under a single lock,
+  add a checksum column (would require a new format version).
+- Limitations:
+  - A process started before the deploy keeps writing its legacy file for that day.
+  - Detail files are not `fsync`ed, so they may be lost on power failure (by decision).
+  - Each killed write leaves one `tmp*.tmp` file in the details folder. Retention removes it.
