@@ -1,19 +1,11 @@
 # Logging rewrite (Monolog 1 → 3): review and installation guide
 
 This guide is for reviewers and for anyone installing the rewrite. It summarizes what was changed and why.
-The full decision log is in `MONOLOG_MIGRATION.md` and `PORTING_TODO.md`. Use those for details and history.
 
 **In short:** the workbench logger now runs on Monolog 3. We replaced the third-party CSV writer with our own
 code, made writes safe under concurrency, and added versioning to the CSV format. Old log files can still be
-read. Their format is unchanged. Core and `axenox/packagemanager` **must be updated together**
+read. Their format is unchanged. Core and `axenox/packagemanager` **must be updated for this migration to work**
 (see [Installation](#3-installation--update)).
-
-> ⚠️ **Release blocker (found while writing this guide):** on the branch head, core's `composer.json` requires
-> `monolog/monolog: ^1.22.1` and `femtopixel/monolog-csvhandler: ~0.1` again. Commit `eb12adc89` had changed
-> this to `monolog/monolog: ^3.12` + `psr/log: ^2 || ^3`, but the merge of `1.x-dev` (`19dbce82b`) took the
-> upstream version of the file. The current `composer.lock` still comes from `eb12adc89` (Monolog 3.12.1,
-> psr/log 3.0.2), so this installation works for now. The next `composer update` would install Monolog 1 again.
-> Restore the two lines and remove FemtoPixel before release.
 
 ---
 
@@ -168,7 +160,7 @@ Reordering columns needs no model change. A new column also needs a new `LOG_ENT
 
 | Area | Before (Monolog 1) | Now (Monolog 3) |
 |---|---|---|
-| Platform | `php ^8`, `monolog ^1.22`, psr/log 1, `femtopixel/monolog-csvhandler` | Monolog 3 needs PHP 8.1+, and core already requires `php ^8.2`. Target: `monolog ^3.12`, `psr/log ^2 \|\| ^3`, **FemtoPixel removed**. ⚠️ Lost in a merge and must be restored, see the warning at the top |
+| Platform | `php ^8`, `monolog ^1.22`, psr/log 1, `femtopixel/monolog-csvhandler` | Monolog 3 needs PHP 8.1+, and core already requires `php ^8.2`. `monolog ^3.12`, `psr/log ^2 \|\| ^3`, **FemtoPixel removed** |
 | Public interfaces (**breaking** for code outside core that implements them; none found in this installation's `vendor`) | `LogHandlerInterface::handle($level, $message, $context, $sender)` | `LogHandlerInterface::handle(LogEntryInterface $entry) : void`. `LoggerInterface` methods return `void` (PSR-3 v3). `appendHandler()`/`removeHandler()` also accept Monolog handlers. New `SecurityManagerInterface::getAuthenticatedTokenIfExists()` |
 | Record model | Mutable arrays, columns positioned with `array_slice` (`AbstractColumnPositionProcessor`) | Immutable `LogRecord`. Processors write to `extra`, and the formatter sets the column order. Abstract class removed |
 | Levels | Integers (`Logger::DEBUG`) | `Monolog\Level` enum. `LogLevelDataType` was ported, its public signatures are unchanged |
@@ -193,7 +185,7 @@ Reordering columns needs no model change. A new column also needs a new `LOG_ENT
 
 All changes are on core branch `Migrations/Monolog` (40 files compared with `origin/1.x-dev`).
 
-0. `composer.json`: check the Monolog constraint first (see the warning at the top).
+0. `composer.json`: the dependency changes (Monolog 3, psr/log, FemtoPixel removed).
 1. `CommonLogic/Log/CsvLogConfig.php`: the format contract.
 2. `Interfaces/Log/LoggerInterface.php`, `Interfaces/Log/LogHandlerInterface.php`,
    `Interfaces/Log/LogEntryInterface.php`, `Interfaces/Log/UniqueLogHandlerInterface.php`,
@@ -221,9 +213,7 @@ All changes are on core branch `Migrations/Monolog` (40 files compared with `ori
 - `exface/core` **and** `axenox/packagemanager` at versions that contain the migration. Updating only one of
   them breaks `InstallApp`. The old one does not load with the new core, and vice versa. Composer
   constraints cannot enforce this (dev branches are aliased `as 1.0`), so check it yourself.
-- Core's `composer.json` must require `monolog/monolog: ^3.12`. Otherwise step 3 installs Monolog 1 (see the
-  warning at the top). After step 3, `composer.lock` must list `monolog/monolog` 3.x and no
-  `femtopixel/monolog-csvhandler`.
+- After step 3, `composer.lock` must list `monolog/monolog` 3.x and no `femtopixel/monolog-csvhandler`.
 
 ### Procedure (per installation, run from the installation root)
 
@@ -297,8 +287,6 @@ the repo.
 
 ## 6. Open items / known gaps
 
-- **Release blocker:** restore `monolog/monolog: ^3.12` and `psr/log: ^2 || ^3`, and remove
-  `femtopixel/monolog-csvhandler`, in core's `composer.json` (see the warning at the top).
 - **Not yet verified in the UI on a DB-imported model:** `LOG_ENTRY` reading through `LogCsvBuilder` with
   mixed legacy and `v1` files (filters, sorting), the log tab in the error dialog for new errors, and
   "Open trace".
