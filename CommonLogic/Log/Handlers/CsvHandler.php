@@ -22,8 +22,8 @@ use InvalidArgumentException;
  * - The line is built in memory first and verified by parsing it back with the settings from `CsvLogConfig`.
  *   If the round-trip does not reproduce the formatted row, a fallback row is written instead.
  * - The line is written with a single `fwrite()` while holding an exclusive `flock()` (enabled by default),
- *   so concurrent processes cannot interleave their lines. Locks are advisory: readers must take `LOCK_SH`
- *   or tolerate a trailing incomplete line.
+ *   so concurrent processes cannot interleave their lines. Readers do not lock: `LogCsvBuilder` ignores an
+ *   incomplete last record, `LogCleaner` re-checks and repairs under the same lock.
  * 
  * @author GitHub Copilot, Georg Bieger
  */

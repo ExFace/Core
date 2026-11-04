@@ -168,9 +168,15 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
   - [x] `TRACE_LOG` regexes (`ACTION`, `URL`, `PAGE`, `USER`) match the raw file text and expected `"X"`;
     the new enclosure writes `""X""`. Changed to `""?...""?`, verified to extract the same values from
     legacy and new files. **Needs the core installer** (model change).
-- [ ] **Readers:** `LogCsvBuilder` / `LogCleaner` should take `LOCK_SH` while reading, or ignore a trailing
-  line without line ending. (`LogCleaner` now quarantines an incomplete trailing record unless it happens to
-  be valid; `LogCsvBuilder` shows it padded with NULLs.)
+- [x] **Readers:** no reader locks (decided 2026-11-04 - only writers and the repair lock).
+  - `LogCsvBuilder` ignores a last record without line ending (still being written). Only reads the last byte
+    of complete files. Limitation: a write stopped right after a line break inside a multi-line value still
+    shows the incomplete record.
+  - `LogCleaner::repairBrokenLogs()` checks without lock first. Only files with broken records (or unreadable
+    ones - Windows locks are mandatory) are re-read and repaired under `LOCK_EX`, the same lock the writers use,
+    so records in progress are never quarantined. The file is rewritten in place (overwrite, then truncate)
+    instead of replaced, so loggers with the file open keep appending to it - today's log can be repaired too.
+    A crash midway leaves duplicates, never lost records. Verified with a concurrent writer holding the lock.
 - [ ] **Batches (optional):** override `CsvHandler::handleBatch()` to write a `FingersCrossedHandler` flush as
   one contiguous block under a single lock.
 - [ ] **Checksum column (optional):** add a `crc32` of the remaining fields as a new column (requires a new

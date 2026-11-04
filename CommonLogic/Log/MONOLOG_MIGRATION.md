@@ -332,8 +332,10 @@ fields + identifiers + level + timestamp + JSON, back up/quarantine before rewri
 *logical record* numbers rather than physical line numbers.
 **Status:** done (step 6) - `LogCleaner` parses logical records with the per-version settings from
 `CsvLogConfig`, validates as described (empty context/extra allowed for fallback rows), appends removed
-records as raw bytes to `logs/quarantine/<log file>` before rewriting and reports record numbers. Details
-and decisions in `PORTING_TODO.md`.
+records as raw bytes to `logs/quarantine/<log file>` before rewriting and reports record numbers. Files that
+look broken are re-checked and rewritten in place under the writers' `LOCK_EX`, so records still being
+written are not quarantined and files in use (today's log) can be repaired. Details and decisions in
+`PORTING_TODO.md`.
 
 ### 10. Composer scripts cannot boot a Monolog 3 workbench (release blocker)
 

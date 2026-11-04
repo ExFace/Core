@@ -5,7 +5,9 @@ use exface\Core\CommonLogic\DataQueries\FileContentsDataQuery;
 use exface\Core\CommonLogic\Log\CsvLogConfig;
 use exface\Core\DataConnectors\FileContentsConnector;
 use exface\Core\Interfaces\DataSources\DataConnectionInterface;
+use exface\Core\Interfaces\DataSources\DataQueryInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use League\Csv\Reader;
 
 /**
  * Reads the CSV log files of the workbench in every format version known to `CsvLogConfig`.
@@ -168,6 +170,81 @@ class LogCsvBuilder extends CsvBuilder
     protected function getEscape(MetaObjectInterface $object) : ?string
     {
         return CsvLogConfig::getEscape($this->getVersion());
+    }
+    
+    /**
+     * Same as the regular CSV reader, but ignores the last record if it is still being written.
+     * 
+     * Writers lock every line, but readers do not lock (see `CsvHandler`), so a reader can see a record, that
+     * is only partially written. It would show up as a row with missing values. Writers always end their
+     * records with a line break, so a file without a line break at the end has an incomplete last record.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\QueryBuilders\Traits\CsvBuilderTrait::initCsvReader()
+     */
+    protected function initCsvReader(DataQueryInterface $query) : ?Reader
+    {
+        $csvReader = parent::initCsvReader($query);
+        if ($csvReader === null || ! $query instanceof FileContentsDataQuery || null === ($path = $query->getPathAbsolute()) || ! is_file($path)) {
+            return $csvReader;
+        }
+        $completeRecords = $this->readCompleteRecords($path);
+        if ($completeRecords === null) {
+            return $csvReader;
+        }
+        $completeReader = Reader::createFromString($completeRecords);
+        $completeReader->setDelimiter($csvReader->getDelimiter());
+        $completeReader->setEnclosure($csvReader->getEnclosure());
+        $completeReader->setEscape($csvReader->getEscape());
+        return $completeReader;
+    }
+    
+    /**
+     * Returns the contents of the log file without its last record if that is incomplete - or NULL if the file is complete.
+     * 
+     * Only reads the last byte of complete files, so the regular (streaming) reader can be used for them.
+     * 
+     * Limitation: a record is only detected as incomplete if the file does not end with a line break. If the
+     * write stopped right after a line break inside a multi-line value, the incomplete record is still shown.
+     * 
+     * @param string $path
+     * @return string|NULL
+     */
+    protected function readCompleteRecords(string $path) : ?string
+    {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return null;
+        }
+        try {
+            $size = fstat($handle)['size'];
+            if ($size === 0 || fseek($handle, $size - 1) !== 0) {
+                return null;
+            }
+            // A failed read (e.g. Windows' mandatory lock during a write) is left to the regular reader
+            $lastByte = @fread($handle, 1);
+            if ($lastByte === false || $lastByte === '' || $lastByte === "\n") {
+                return null;
+            }
+            // Find the start of the last record. Records may span multiple lines, so the file must be parsed.
+            $version = $this->getVersion();
+            $lastRecordStart = 0;
+            rewind($handle);
+            while (ftell($handle) < $size) {
+                $recordStart = ftell($handle);
+                if (fgetcsv($handle, null, CsvLogConfig::getDelimiter($version), CsvLogConfig::getEnclosure($version), CsvLogConfig::getEscape($version)) === false) {
+                    break;
+                }
+                $lastRecordStart = $recordStart;
+            }
+            if ($lastRecordStart === 0) {
+                return '';
+            }
+            $complete = stream_get_contents($handle, $lastRecordStart, 0);
+            return $complete === false ? null : $complete;
+        } finally {
+            fclose($handle);
+        }
     }
     
     /**
