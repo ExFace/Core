@@ -46,19 +46,28 @@ flowchart TD
 |---|---|---|
 | `Handlers/MonologCsvFileHandler.php` | Yes | Main handler. Builds a `Monolog\Logger` → `CsvWithDetailsHandler` (`DebugMessageMonologHandler` first, then the first-party `CsvHandler`; was a `GroupHandler` with FemtoPixel's `CsvHandler` in Monolog 1) wrapped in `FingersCrossedHandler` with `ErrorLevelActivationStrategy`. The "accumulate then dump on trigger" behavior. Without a details folder, the `CsvHandler` is used directly. |
 | `Handlers/MonologErrorLogHandler.php` | Yes | Wraps Monolog `ErrorLogHandler` → PHP `error_log`. The fallback path. |
-| `Handlers/MonologHandlerAdapter.php` | Yes | Wraps any (third-party) Monolog handler, appended next to `MonologCsvFileHandler`. Converts the entry into a standard record: exception in `context['exception']`, log ID in `extra['id']`. The entry is available to its processors under `LogEntryInterface::MONOLOG_CONTEXT_KEY` and stripped before the handlers. |
 | `Handlers/MonitorLogHandler.php` | No | Writes to the `exface.Core.MONITOR_ERROR` meta object (DB). Renders the error widget with `DebugWidgetRenderer` from the log entry. |
 | `Handlers/BufferingHandler.php` | No | Buffers all entries, flushes on `__destruct`. |
 
-**Why third-party Monolog handlers need a wrapper.** The exface `Logger` only accepts `LogHandlerInterface`
-implementations, never Monolog handlers. So any third-party Monolog handler (Sentry, Slack, Graylog, …) that is
-attached next to the exface handlers needs a wrapper. This was already true before the migration.
+**Two kinds of handlers: workbench handlers and third-party Monolog handlers.** `LogHandlerInterface` is a
+shield: workbench handlers only depend on `LogEntryInterface`, never on Monolog's record structure. That's why
+the Monolog 1 → 3 port (array → `LogRecord`) only touched handler internals, not the handler contract. Keep
+using it for everything maintained within the workbench.
 
-What changed in the port: `LogEntry` takes the exception out of the PSR-3 context and holds the log ID and
-sender itself. A handler that passes the entry on therefore has to restore `context['exception']` and
-`extra['id']` for Monolog-based consumers. `MonologHandlerAdapter` does this once for all handlers, so
-`appendHandler(new MonologHandlerAdapter('Workbench', $handler))` is the intended way to add one. Do not push
-third-party handlers into `MonologCsvFileHandler`'s Monolog stack; see the risks in "Monolog adapters" above.
+Third-party Monolog handlers (Sentry, Slack, Graylog, …) are appended directly next to the workbench handlers:
+`$logger->appendHandler(new SlackWebhookHandler(...))`. `Logger::appendHandler()` accepts
+`LogHandlerInterface|Monolog\Handler\HandlerInterface`. For those, the `Logger` builds one standard PSR-3 record per
+entry (`Logger::createMonologRecord()`): exception in `context['exception']`, log ID in `extra['id']`, channel
+`Workbench`. The `LogEntry` itself (e.g. the sender) is not added, so their formatters do not serialize it. Their
+`handle()` return value (bubbling) is ignored: every handler receives every entry. Third-party handlers are
+responsible for themselves: a Monolog major upgrade may break them, but not the workbench handlers.
+`createMonologRecord()` is the only place in the `Logger` that depends on the `LogRecord` structure.
+
+History: before and right after the migration, the `Logger` only accepted `LogHandlerInterface`, so third-party
+handlers needed a wrapper. During the port, `LogEntry` took the exception out of the PSR-3 context, so a wrapper
+also had to restore `context['exception']` and `extra['id']`. A `MonologHandlerAdapter` was written for this and
+then replaced by the native support described above, so no wrapper is needed anymore. Do not push third-party
+handlers into `MonologCsvFileHandler`'s Monolog stack; see the risks in "Monolog adapters" below.
 
 ## Monolog adapters — the migration hotspots
 
@@ -402,7 +411,7 @@ PackageManager runs its installers in a child process, so later Composer runs wo
 **Rollback:** restore code, Composer lock **and** database together. The installer moved `LOG_ENTRY` to the
 `LOG_FILES` data source (`LogCsvBuilder`), which the old core does not have.
 
-## Latent risk: exFace handlers are appended without deduplication
+## Latent risk: exFace handlers are appended without deduplication (resolved)
 
 Handlers are **injected from outside** — the classes that need a sink construct a handler and push
 it onto the shared `Logger`. But `Logger::appendHandler()` does a raw append with no identity or
@@ -432,8 +441,8 @@ the "no duplicates" invariant is emergent, not enforced.
 |---|---|---|
 | `Factories/LoggerFactory.php` `createDefaultLogger()` | `MonologCsvFileHandler` | `static::$logger` singleton — handler built only on first call |
 | `Factories/LoggerFactory.php` `createPhpErrorLogLogger()` | `MonologErrorLogHandler` | `static::$fallbackLogger` singleton (separate logger instance) |
-| `CommonLogic/Monitor.php` `registerLogHandler()` (via `register()`) | `MonitorLogHandler` | Nothing in `register()` itself — safe only because `Workbench` calls it once |
-| `CommonLogic/Tracer.php` `registerLogHandlers()` | `BufferingHandler(MonologCsvFileHandler)` | Nothing — safe only because it is called once per trace |
+| `CommonLogic/Monitor.php` `registerLogHandler()` (via `register()`) | `MonitorLogHandler` | `UniqueLogHandlerInterface` (key: class) |
+| `CommonLogic/Tracer.php` `registerLogHandlers()` | `BufferingHandler(MonologCsvFileHandler)` | `UniqueLogHandlerInterface` (key: trace file path, passed on by the wrapper) |
 
 ### Partial mask to be aware of
 
@@ -469,19 +478,30 @@ should arguably be *registered by identity/sink* (a keyed registry or a `getOrCr
 accessor), not blindly pushed onto a list. The injection pattern works for genuinely decoupled
 sinks (Monolog's model); it does not match handlers that are single-owner by design.
 
-### Suggested fix
+### Fix (implemented 2026-11-04)
 
-Make `appendHandler()` deduplication-aware instead of relying on call-site luck:
+Design intent: the injection pattern stays for all handlers. Only handlers whose **author** knows they own
+a unique destination (a file or a table) or shared state opt in, so components that append them do not need to know.
 
-- Add a `hasHandler()` / sink-aware guard so appending an equivalent handler is a no-op (or at least
-  logs a warning). Equivalence can be identity for the simple case, or a handler-provided key
-  (class + destination path/sink) for the stronger case.
-- Optionally let `LogHandlerInterface` expose a stable identity (e.g. `getSinkId()`) so the `Logger`
-  can compare destinations, not just object instances.
+- `Logger::appendHandler()` ignores the **same instance** if it is already registered (generic, no opt-in).
+- `Interfaces/Log/UniqueLogHandlerInterface::getUniqueKey(): ?string` — opt-in. `appendHandler()` ignores a
+  handler if one with the same key is already registered and logs a warning (the caller believes its handler
+  is active). `NULL` means "no constraint".
+- Keys: `MonologCsvFileHandler` → class + normalized file path (resolved folder, `/`, lowercase on Windows),
+  so the daily log and trace files stay separate. `MonitorLogHandler` → class (one `MONITOR_ERROR` table; the
+  long-runners instance of `Monitor` is called directly and never appended). `BufferingHandler` → key of the
+  wrapped handler, so wrapping does not bypass the check.
 
-This is **version-independent** hardening, but especially worth doing before the migration: rebuilding
-the handler stack for v3 is exactly the kind of change that could accidentally introduce a second
-registration, and there is currently no safety net to catch it.
+Rejected alternatives:
+- **Owner-side guards** (`Monitor::register()`, `Tracer` register only once): convention only; every future
+  owner would have to remember it.
+- **Singletons / per-destination singletons**: both stateful handlers already have legitimate multiple
+  instances (daily log + trace file; errors + long runners). A singleton also does not prevent appending the
+  same instance twice, nor duplicates through a new wrapper (`BufferingHandler`), and adds process-global
+  state (tests with several loggers).
+
+Uniqueness is per `Logger` instance. Handlers on different loggers (e.g. the PHP error_log fallback logger)
+are not compared.
 
 ## Cleanup items (worth folding into the migration)
 
@@ -520,14 +540,10 @@ the logging pipeline.
 **Suggested fix:** decouple the two concerns — introduce a dedicated option (e.g.
 `DEBUG.LOG_PHP_ERRORS`) that controls the error -> logger bridge independently of prettification.
 
-### Dead code: `LoggerFactory::registerErrorLogger()`
+### Dead code: `LoggerFactory::registerErrorLogger()` (removed)
 
-`LoggerFactory::registerErrorLogger()` would register **Monolog's** `ErrorHandler`, but it is
-**never called anywhere** and calls an undefined `getErrorLogger()` method (it would fatal if
-invoked). It looks like an abandoned "always-on Monolog error bridge" that was superseded by the
-Symfony handler above. Since the migration will touch Monolog's `ErrorHandler` anyway, either delete
-this method or finish it as the intended always-on bridge (which would also fix the
-`PRETTIFY_ERRORS` gap above).
+The method was never called and called an undefined `getErrorLogger()`. It was deleted together with its
+unused `Monolog\ErrorHandler` import. The `PRETTIFY_ERRORS` gap above remains open.
 
 ## Execution plan (approved)
 

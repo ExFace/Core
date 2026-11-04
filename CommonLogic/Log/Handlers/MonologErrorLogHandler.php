@@ -10,10 +10,11 @@ use Monolog\Handler\ErrorLogHandler;
 /**
  * Logs to PHP error_log via Monolog
  * 
- * TODO geb 2026-11-04: This class could be reduced to a thin subclass/factory around `MonologHandlerAdapter` with a
- * preconfigured `ErrorLogHandler`. It would slightly change the error_log lines: the log ID would move from the
- * context (`context['id']`) to the extra data (`extra['id']`), which `LineFormatter` prints in a different place.
- * Left as is, because this is the last-resort fallback logger and changes there need dedicated testing.
+ * TODO geb 2026-11-04: This class could be replaced by appending a preconfigured Monolog `ErrorLogHandler` to the
+ * fallback logger directly (`Logger` accepts Monolog handlers). It would slightly change the error_log lines: the
+ * log ID would move from the context (`context['id']`) to the extra data (`extra['id']`), which `LineFormatter`
+ * prints in a different place. Left as is, because this is the last-resort fallback logger and changes there
+ * need dedicated testing.
  * 
  * @author Andrej Kabachnik
  *

@@ -11,6 +11,10 @@ use exface\Core\Factories\LoggerFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\LogLevelDataType;
 use Symfony\Component\ErrorHandler\Error\FatalError;
+use Monolog\Handler\HandlerInterface as MonologHandlerInterface;
+use Monolog\JsonSerializableDateTimeImmutable;
+use Monolog\Logger as MonologLogger;
+use Monolog\LogRecord;
 
 /**
  * Default implementation of the LoggerInterface
@@ -23,7 +27,11 @@ class Logger implements LoggerInterface
     // Defined by PSR-3: "If an Exception object is passed in the context data, it MUST be in the 'exception' key."
     private const PSR_KEY_EXCEPTION = 'exception';
 
-    /** @var LogHandlerInterface[] $handlers */
+    // Channel and extra key of the records passed to Monolog handlers
+    private const MONOLOG_CHANNEL = 'Workbench';
+    private const MONOLOG_EXTRA_KEY_ID = 'id';
+
+    /** @var array<LogHandlerInterface|MonologHandlerInterface> $handlers */
     private $handlers = array();
 
     /** @var LogEntryInterface[] entries logged while another entry was being handled */
@@ -235,9 +243,18 @@ class Logger implements LoggerInterface
         $this->current = $entry;
 
         try {
+            // Built on demand and shared by all Monolog handlers
+            $record = null;
             foreach ($this->handlers as $i => $handler) {
                 try {
-                    $handler->handle($entry);
+                    if ($handler instanceof MonologHandlerInterface) {
+                        $record ??= $this->createMonologRecord($entry);
+                        if ($handler->isHandling($record)) {
+                            $handler->handle($record);
+                        }
+                    } else {
+                        $handler->handle($entry);
+                    }
                 } catch (\Throwable $e) {
                     try {
                         if (count($this->handlers) > 1) {
@@ -277,6 +294,37 @@ class Logger implements LoggerInterface
                 }
             }
         }
+    }
+
+    /**
+     * Converts the entry into a standard PSR-3 / Monolog record for third-party Monolog handlers.
+     * 
+     * This is the only place in the logger, that depends on Monolog's record structure. Workbench handlers
+     * (`LogHandlerInterface`) never see the record, so a Monolog upgrade only affects this method.
+     * 
+     * The record only contains PSR-3 data: the log entry itself (e.g. its sender) is not added, so formatters
+     * of third-party handlers do not serialize it.
+     * 
+     * Security: the exception and the context are passed on unfiltered. Make sure appended third-party handlers
+     * do not send sensitive data (e.g. stack traces) to untrusted destinations.
+     * 
+     * @param LogEntryInterface $entry
+     * @return LogRecord
+     */
+    protected function createMonologRecord(LogEntryInterface $entry) : LogRecord
+    {
+        $context = $entry->getContext();
+        if ($entry->getException() !== null) {
+            $context[self::PSR_KEY_EXCEPTION] = $entry->getException();
+        }
+        return new LogRecord(
+            datetime: new JsonSerializableDateTimeImmutable(true),
+            channel: self::MONOLOG_CHANNEL,
+            level: MonologLogger::toMonologLevel($entry->getLevel()),
+            message: $entry->getMessage(),
+            context: $context,
+            extra: [self::MONOLOG_EXTRA_KEY_ID => $entry->getId()]
+        );
     }
 
     /**
@@ -345,7 +393,7 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::appendHandler()
      */
-    public function appendHandler(LogHandlerInterface $handler): LoggerInterface|static
+    public function appendHandler(LogHandlerInterface|MonologHandlerInterface $handler): LoggerInterface|static
     {
         $key = $handler instanceof UniqueLogHandlerInterface ? $handler->getUniqueKey() : null;
         foreach ($this->handlers as $registered) {
@@ -368,7 +416,7 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::removeHandler()
      */
-    public function removeHandler(LogHandlerInterface $handler): LoggerInterface|static
+    public function removeHandler(LogHandlerInterface|MonologHandlerInterface $handler): LoggerInterface|static
     {
         foreach ($this->handlers as $i => $h){
             if ($h === $handler){

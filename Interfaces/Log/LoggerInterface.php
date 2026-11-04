@@ -191,24 +191,32 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface
      * 
      * Does nothing if the same instance is already registered. If the handler implements
      * `UniqueLogHandlerInterface` and another handler with the same key is registered, it is ignored too.
+     * 
+     * Workbench handlers implement `LogHandlerInterface`. It shields them from changes in the logging library,
+     * so prefer it for everything maintained within the workbench.
+     * 
+     * Third-party Monolog handlers (Sentry, Slack, Graylog, ...) can be appended directly. They receive a
+     * standard PSR-3 record: the exception in `context['exception']` and the log ID in `extra['id']`. Workbench
+     * data without a PSR-3 equivalent (e.g. the sender) is not passed to them. Their return value (bubbling)
+     * is ignored: every handler receives every entry.
      *
-     * @param LogHandlerInterface $handler            
+     * @param LogHandlerInterface|\Monolog\Handler\HandlerInterface $handler
      * @return LoggerInterface
      */
-    public function appendHandler(LogHandlerInterface $handler);
+    public function appendHandler(LogHandlerInterface|\Monolog\Handler\HandlerInterface $handler);
 
     /**
      * Removes the given handler from the handler stack.
      * 
-     * @param LogHandlerInterface
+     * @param LogHandlerInterface|\Monolog\Handler\HandlerInterface $handler
      * @return LoggerInterface
      */
-    public function removeHandler(LogHandlerInterface $handler);
+    public function removeHandler(LogHandlerInterface|\Monolog\Handler\HandlerInterface $handler);
 
     /**
      * Returns a numeric array with all log handlers currently registered
      *
-     * @return LogHandlerInterface[]
+     * @return array<LogHandlerInterface|\Monolog\Handler\HandlerInterface>
      */
     public function getHandlers();
 }
