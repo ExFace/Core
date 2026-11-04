@@ -91,6 +91,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     private ?Uploader $uploader = null;
     private ?UxonObject $uploaderUxon = null;
     private bool $uploadEnabled = false;
+    private bool $enableMarkdown = false;
     
     private ?MetaObjectInterface $checkedBehaviorForObject = null;
 
@@ -106,6 +107,35 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         $this->setHideHeader(true);
         $this->setHideFooter(true);
         return;
+    }
+
+    /**
+     * Whether comment text should be displayed as Markdown.
+     *
+     * @return bool
+     */
+    public function getEnableMarkdown() : bool
+    {
+        return $this->enableMarkdown;
+    }
+
+    /**
+     * Enable Markdown formatting in displayed comments instead of showing plain text.
+     * 
+     * Comments remain plain text by default. When enabled in a supporting facade,
+     * users enter and edit Markdown source; rendering does not change saved text.
+     * 
+     * @uxon-property enable_markdown
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return CommentsFeed
+     */
+    public function setEnableMarkdown(bool $value) : CommentsFeed
+    {
+        $this->enableMarkdown = $value;
+        return $this;
     }
 
     /**
