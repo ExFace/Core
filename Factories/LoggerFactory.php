@@ -4,7 +4,6 @@ namespace exface\Core\Factories;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\MonologErrorLogHandler;
-use Monolog\ErrorHandler;
 use exface\Core\CommonLogic\Log\Logger;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
 use exface\Core\DataTypes\DateDataType;
@@ -78,17 +77,6 @@ abstract class LoggerFactory extends AbstractStaticFactory
             'onCleanUp'
         ]);
         return static::$logger;
-    }
-    
-    /**
-     * Registers error logger at monolog ErrorHandler.
-     *
-     * @param WorkbenchInterface $workbench
-     * @return void
-     */
-    public static function registerErrorLogger(WorkbenchInterface $workbench)
-    {
-        ErrorHandler::register(static::getErrorLogger($workbench));
     }
     
     /**

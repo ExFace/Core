@@ -15,7 +15,7 @@ use Monolog\Handler\FingersCrossedHandler;
 use Monolog\Handler\ProcessableHandlerInterface;
 use Monolog\Logger;
 use exface\Core\CommonLogic\Log\Monolog\DebugMessageMonologHandler;
-use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Interfaces\Log\UniqueLogHandlerInterface;
 use exface\Core\CommonLogic\Log\Processors\ContextFilterProcessor;
 use Monolog\Handler\ErrorLogHandler;
 
@@ -33,7 +33,7 @@ use Monolog\Handler\ErrorLogHandler;
  * @author andrej.kabachnik
  *
  */
-class MonologCsvFileHandler implements LogHandlerInterface
+class MonologCsvFileHandler implements UniqueLogHandlerInterface
 {
     // Monolog only accepts array contexts, so the log entry travels through Monolog under this key. Processors
     // and handlers below receive the key via constructor, the CSV context filter removes it again.
@@ -91,6 +91,32 @@ class MonologCsvFileHandler implements LogHandlerInterface
         $this->passthroughLevel = $passthroughLevel;
         $this->debugMsgDirPath = $debugMsgDirPath;
         $this->doubleBackslashes = CsvLogConfig::getEscape(CsvLogConfig::getVersionFromFileName($csvFilePath)) === '\\';
+    }
+    
+    /**
+     * Unique per CSV file: two handlers for the same file would buffer and flush independently into it.
+     * 
+     * The key is the class name plus the normalized file path, e.g. on Windows:
+     * `exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler:c:/edf/wamp/www/exface/exface-m3/logs/2026-11-04.temp.log`
+     * 
+     * Different spellings of the same file (relative paths, `..`, `\` vs `/`, case on Windows) give the same key.
+     * Different files, e.g. the daily log and a trace file, give different keys.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\UniqueLogHandlerInterface::getUniqueKey()
+     */
+    public function getUniqueKey() : ?string
+    {
+        // Resolve the folder, so different spellings of the same path (relative, `..`, slashes) match. The file
+        // itself may not exist yet.
+        $dir = realpath(dirname($this->csvFilePath));
+        $path = ($dir !== false ? $dir : dirname($this->csvFilePath)) . '/' . basename($this->csvFilePath);
+        $path = str_replace('\\', '/', $path);
+        // Windows file systems are case-insensitive
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $path = strtolower($path);
+        }
+        return self::class . ':' . $path;
     }
     
     /**

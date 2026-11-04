@@ -10,6 +10,7 @@ use exface\Core\CommonLogic\Monitor;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\LogLevelDataType;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Interfaces\Log\UniqueLogHandlerInterface;
 use exface\Core\Exceptions\RuntimeException;
 
 /**
@@ -18,7 +19,7 @@ use exface\Core\Exceptions\RuntimeException;
  * @author rml
  *
  */
-class MonitorLogHandler implements LogHandlerInterface
+class MonitorLogHandler implements UniqueLogHandlerInterface
 {
     private $monitor;
     
@@ -44,6 +45,21 @@ class MonitorLogHandler implements LogHandlerInterface
         $this->monitor = $monitor;
         $this->minLogLevel = $level;
         $this->debugWidgetRenderer = new DebugWidgetRenderer($workbench);
+    }
+    
+    /**
+     * Unique per logger: there is only one `exface.Core.MONITOR_ERROR` table, and the handler performs
+     * non-idempotent inserts and holds shared state (`busy`/`failed`, the monitor's last row).
+     * 
+     * Instances that are called directly instead of being appended (e.g. the long-runners handler of the
+     * `Monitor`) are not affected.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\UniqueLogHandlerInterface::getUniqueKey()
+     */
+    public function getUniqueKey() : ?string
+    {
+        return self::class;
     }
     
     /**

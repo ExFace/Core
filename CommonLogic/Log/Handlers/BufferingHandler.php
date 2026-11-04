@@ -3,6 +3,7 @@ namespace exface\Core\CommonLogic\Log\Handlers;
 
 use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Interfaces\Log\UniqueLogHandlerInterface;
 use exface\Core\DataTypes\BooleanDataType;
 
 /**
@@ -15,7 +16,7 @@ use exface\Core\DataTypes\BooleanDataType;
  * @author Andrej Kabachnik
  *
  */
-class BufferingHandler implements LogHandlerInterface
+class BufferingHandler implements UniqueLogHandlerInterface
 {
 
     private $handler = null;
@@ -44,6 +45,17 @@ class BufferingHandler implements LogHandlerInterface
     public function handle(LogEntryInterface $entry) : void
     {
         $this->entries[] = $entry;
+    }
+    
+    /**
+     * Passes on the key of the wrapped handler, so wrapping does not bypass its uniqueness.
+     * 
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Log\UniqueLogHandlerInterface::getUniqueKey()
+     */
+    public function getUniqueKey() : ?string
+    {
+        return $this->handler instanceof UniqueLogHandlerInterface ? $this->handler->getUniqueKey() : null;
     }
     
     /**

@@ -5,6 +5,7 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Interfaces\Log\UniqueLogHandlerInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\Exceptions\RuntimeException;
@@ -346,6 +347,17 @@ class Logger implements LoggerInterface
      */
     public function appendHandler(LogHandlerInterface $handler): LoggerInterface|static
     {
+        $key = $handler instanceof UniqueLogHandlerInterface ? $handler->getUniqueKey() : null;
+        foreach ($this->handlers as $registered) {
+            if ($registered === $handler) {
+                return $this;
+            }
+            // Duplicates of stateful handlers would write every entry twice or corrupt their state
+            if ($key !== null && $registered instanceof UniqueLogHandlerInterface && $registered->getUniqueKey() === $key) {
+                $this->warning('Log handler "' . get_class($handler) . '" ignored: a handler for "' . $key . '" is already registered.');
+                return $this;
+            }
+        }
         $this->handlers[] = $handler;
         
         return $this;

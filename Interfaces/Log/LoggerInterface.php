@@ -188,6 +188,9 @@ interface LoggerInterface extends \Psr\Log\LoggerInterface
 
     /**
      * Pushes a handler on to the stack.
+     * 
+     * Does nothing if the same instance is already registered. If the handler implements
+     * `UniqueLogHandlerInterface` and another handler with the same key is registered, it is ignored too.
      *
      * @param LogHandlerInterface $handler            
      * @return LoggerInterface
