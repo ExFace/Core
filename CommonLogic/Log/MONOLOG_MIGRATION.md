@@ -46,8 +46,19 @@ flowchart TD
 |---|---|---|
 | `Handlers/MonologCsvFileHandler.php` | Yes | Main handler. Builds a `Monolog\Logger` → `CsvWithDetailsHandler` (`DebugMessageMonologHandler` first, then the first-party `CsvHandler`; was a `GroupHandler` with FemtoPixel's `CsvHandler` in Monolog 1) wrapped in `FingersCrossedHandler` with `ErrorLevelActivationStrategy`. The "accumulate then dump on trigger" behavior. Without a details folder, the `CsvHandler` is used directly. |
 | `Handlers/MonologErrorLogHandler.php` | Yes | Wraps Monolog `ErrorLogHandler` → PHP `error_log`. The fallback path. |
+| `Handlers/MonologHandlerAdapter.php` | Yes | Wraps any (third-party) Monolog handler, appended next to `MonologCsvFileHandler`. Converts the entry into a standard record: exception in `context['exception']`, log ID in `extra['id']`. The entry is available to its processors under `LogEntryInterface::MONOLOG_CONTEXT_KEY` and stripped before the handlers. |
 | `Handlers/MonitorLogHandler.php` | No | Writes to the `exface.Core.MONITOR_ERROR` meta object (DB). Renders the error widget with `DebugWidgetRenderer` from the log entry. |
 | `Handlers/BufferingHandler.php` | No | Buffers all entries, flushes on `__destruct`. |
+
+**Why third-party Monolog handlers need a wrapper.** The exface `Logger` only accepts `LogHandlerInterface`
+implementations, never Monolog handlers. So any third-party Monolog handler (Sentry, Slack, Graylog, …) that is
+attached next to the exface handlers needs a wrapper. This was already true before the migration.
+
+What changed in the port: `LogEntry` takes the exception out of the PSR-3 context and holds the log ID and
+sender itself. A handler that passes the entry on therefore has to restore `context['exception']` and
+`extra['id']` for Monolog-based consumers. `MonologHandlerAdapter` does this once for all handlers, so
+`appendHandler(new MonologHandlerAdapter('Workbench', $handler))` is the intended way to add one. Do not push
+third-party handlers into `MonologCsvFileHandler`'s Monolog stack; see the risks in "Monolog adapters" above.
 
 ## Monolog adapters — the migration hotspots
 
@@ -77,7 +88,7 @@ on the inner handlers only run when the buffer is flushed — possibly long afte
 | Processor | Pushed onto | Runs at | Why |
 |---|---|---|---|
 | `IdProcessor`, `RequestIdProcessor`, `UserNameProcessor`, `ActionAliasProcessor` | `FingersCrossedHandler` (buffered) / outermost writer, i.e. `CsvWithDetailsHandler` or `CsvHandler` (unbuffered) | log time | Values describe the moment of logging. In Monolog 1 they ran at flush, so buffered rows got the user/action current at flush (behaviour change, intended). |
-| `ContextFilterProcessor` (log entry) | `CsvHandler` only | flush time | `MonologCsvFileHandler` passes the `LogEntry` through Monolog under one private context key. The `DebugMessageMonologHandler` (called before the `CsvHandler` by `CsvWithDetailsHandler`) still needs it; filtering earlier silently drops all debug widgets. If the `CsvHandler` is used directly (unbuffered, no details folder), it is pushed *before* the other processors, so it runs last (LIFO). |
+| `ContextFilterProcessor` (log entry) | `CsvHandler` only | flush time | `MonologCsvFileHandler` passes the `LogEntry` through Monolog under the context key `LogEntryInterface::MONOLOG_CONTEXT_KEY`. The `DebugMessageMonologHandler` (called before the `CsvHandler` by `CsvWithDetailsHandler`) still needs it; filtering earlier silently drops all debug widgets. If the `CsvHandler` is used directly (unbuffered, no details folder), it is pushed *before* the other processors, so it runs last (LIFO). |
 
 The `IdProcessor` and `DebugMessageMonologHandler` receive that context key via constructor and read the log
 ID from the entry. The former second `IdProcessor` on the `DebugMessageMonologHandler` is gone.
@@ -118,27 +129,37 @@ UI loads `log/details/<date>/<log-id>.json` using the log ID found in a CSV row.
     of apostrophes/backslashes/commas/newlines proves reader compatibility. If it does not, keep the
     legacy backslash escape and document/test that mode. The escape choice must be proven against
     `CsvBuilder`, never assumed.
-    **Status:** unblocked - the version-aware reader (`LogCsvBuilder`) exists and reads with the
-    per-version escape char from `CsvLogConfig`. Until decided the writer keeps `\`; values that cannot
-    round-trip with it (e.g. ending in a backslash) are written as fallback rows. Tracked in `PORTING_TODO.md`.
+    **Status: decided (2026-11-04)** - new versions follow RFC 4180 / the Excel convention: enclosure `"`,
+    quotes inside values doubled (`""`), no escape char (`''`). Excel only accepts `"` as enclosure, so the
+    escape char alone could not make the files Excel-compatible (compared with 10-row samples in Excel).
+    Legacy files keep `'` / `\` and are read with those settings. Round-trip proven with the real writer
+    (`CsvHandler` + `CsvFormatter`), league/csv with the `LogCsvBuilder` settings and `LogCleaner`,
+    including values ending in a backslash, which no longer become fallback rows. The backslash doubling in
+    `MonologCsvFileHandler::handle()` now only applies to formats with `\` as escape char (legacy).
+    The `TRACE_LOG` regexes (`Model/exface.Core.TRACE_LOG/04_ATTRIBUTE.json`) match raw file text, so they
+    accept both `"X"` (legacy) and `""X""` (new).
 
-**Column order (physical, 0-indexed).** The first ten columns are mapped by `exface.Core.LOG_ENTRY`;
-column 10 is retained for compatibility even though it is not modeled. This order is produced today by
-the processors (which prepend columns 0–3) followed by `NormalizerFormatter` (columns 4–10):
+**Column order (current version `temp`, 0-indexed).** Fixed-width or short columns come first so a human can
+scan the file; variable-length columns come last. The order is defined by `CsvLogConfig::VERSIONS` and
+is the only place to change it. Readers map columns by name (`LogCsvBuilder::getCsvHeader()`), so
+`exface.Core.LOG_ENTRY` needs no change when the order changes:
 
-| Index | Value | Source |
+| Index | Column | Value |
 |---:|---|---|
-| 0 | Log ID | `IdProcessor` |
-| 1 | Request ID | `RequestIdProcessor` |
-| 2 | User name | `UserNameProcessor` |
-| 3 | Action alias | `ActionAliasProcessor` |
-| 4 | Message | record `message` |
-| 5 | Context as JSON | record `context` (after `ContextFilterProcessor` strips `exception`/`sender`) |
-| 6 | Numeric Monolog level | record `level` |
-| 7 | Uppercase level name | record `level_name` |
-| 8 | Channel | record `channel` |
-| 9 | Timestamp `Y-m-d H:i:s.v` | record `datetime` (ms precision) |
-| 10 | Extra data as JSON | record `extra` |
+| 0 | `datetime` | Timestamp `Y-m-d H:i:s.v` (ms precision) |
+| 1 | `id` | Log ID (`IdProcessor`) |
+| 2 | `requestId` | Request ID (`RequestIdProcessor`) |
+| 3 | `level` | Numeric Monolog level |
+| 4 | `level_name` | Uppercase level name |
+| 5 | `channel` | Channel |
+| 6 | `userName` | User name (`UserNameProcessor`) |
+| 7 | `actionAlias` | Action alias (`ActionAliasProcessor`) |
+| 8 | `message` | Record `message` |
+| 9 | `context` | Context as JSON (after `ContextFilterProcessor` strips `exception`/`sender`) |
+| 10 | `extra` | Extra data as JSON |
+
+The legacy version keeps its original order (ID, request ID, user, action, message, context, level,
+level name, channel, datetime, extra). Its files are never rewritten.
 
 **Integrity rules**
 

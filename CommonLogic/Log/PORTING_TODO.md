@@ -73,8 +73,8 @@ addresses columns by **name**; the query builder translates names to positions p
   error dialog's log tab, "Open trace" and the log viewer, each with a legacy and a `.temp` file.
 - [x] Check `TRACE_LOG` entries: same reader, or keep them on plain `CsvBuilder`?
   **Decision: no change.** `TRACE_LOG` is a file listing (`FileBuilder`) that extracts action/URL/page/user
-  with regexes on `"` - unaffected by enclosure/escape and by the version key (`*.csv` mask, sorting by name
-  still works). The entries of a trace ("Open trace" = `DEFAULT_EDITOR_UXON`, `Debugger::getLogData()`) are
+  with regexes on `"` - unaffected by the version key (`*.csv` mask, sorting by name still works); the regexes
+  were adapted to the `"` enclosure later (see "Decide the escape char"). The entries of a trace ("Open trace" = `DEFAULT_EDITOR_UXON`, `Debugger::getLogData()`) are
   read through `LOG_ENTRY` with `logfile` = the trace file, i.e. already through `LogCsvBuilder`.
 - [x] Choose a file naming scheme so the `LOG` / `TRACE_LOG` file masks (`logs/*.log`,
   `logs/traces/*.csv`) match all versions: `<base>[.<key>].<extension>`, documented in `CsvLogConfig`.
@@ -157,13 +157,17 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
   **Done:** `CsvWithDetailsHandler` replaces the `GroupHandler`; record by record, also within
   `FingersCrossedHandler` batches. A failed detail file skips only its row (reported via `error_log()`).
   Still to verify with `stress.php` with kill (see Testing).
-- [ ] **Decide the escape char** (unblocked: `LogCsvBuilder` exists and reads with the per-version escape
-  from `CsvLogConfig`): the escape strategy in
-  `MONOLOG_MIGRATION.md` must be proven against the reader that consumes new-version files, so it cannot
-  be decided before the version-aware reader is ported. Candidate: `''` (no escape, enclosure doubling).
-  With the current `\`, values ending in a backslash fail the round-trip and become fallback rows. Once
-  decided: set `PRP_ESCAPE` for the current version in `CsvLogConfig` (resolves the TODO there) and remove
-  the `str_replace('\\', '\\\\')` workaround in `MonologCsvFileHandler`, if no longer needed.
+- [x] **Decide the escape char:** **Decided (2026-11-04): RFC 4180 / Excel convention** for the current
+  version - enclosure `"`, quotes doubled, no escape char (`''`). Excel only accepts `"` as enclosure, so
+  `'` + doubling (also evaluated) does not open correctly in Excel. Set in `CsvLogConfig` (TODO resolved);
+  the `temp` entry was changed in place (it is an unreleased placeholder - dev files written before, e.g.
+  `logs/2026-11-03.temp.log`, are now misread and must be deleted). The backslash doubling in
+  `MonologCsvFileHandler::handle()` is kept for formats with `\` as escape char (legacy) only.
+  Verified: real writer + league/csv with the `LogCsvBuilder` settings + `LogCleaner` round-trip 15
+  adversarial values (incl. trailing backslash, `\"`, `""`, multi-line, Unicode) without fallback rows.
+  - [x] `TRACE_LOG` regexes (`ACTION`, `URL`, `PAGE`, `USER`) match the raw file text and expected `"X"`;
+    the new enclosure writes `""X""`. Changed to `""?...""?`, verified to extract the same values from
+    legacy and new files. **Needs the core installer** (model change).
 - [ ] **Readers:** `LogCsvBuilder` / `LogCleaner` should take `LOCK_SH` while reading, or ignore a trailing
   line without line ending. (`LogCleaner` now quarantines an incomplete trailing record unless it happens to
   be valid; `LogCsvBuilder` shows it padded with NULLs.)
@@ -183,9 +187,10 @@ Monolog 1 baseline are in `out\`.
 - [ ] `corpus.php`: all 41 baseline-OK cases decode to the same values as `out\corpus\oracle.json`
       (compare decoded fields; ignore request ID, user, action and timestamp values).
 - [ ] `corpus.php`: the 5 baseline-BROKEN cases now pass (`bslash_apos`, `bslash_apos_end`,
-      `ctx_bad_utf8`, `ctx_bslash_apos`, `win_path_quoted`). Depends on the escape char decision; with
-      `\` the backslash cases are expected to become fallback rows instead.
-- [ ] Decide and document whether message backslash doubling (`handle()`) is kept.
+      `ctx_bad_utf8`, `ctx_bslash_apos`, `win_path_quoted`). Escape char decided (`"` + doubling, no
+      escape), so the backslash cases are expected to pass now instead of becoming fallback rows.
+- [x] Decide and document whether message backslash doubling (`handle()`) is kept: only for formats with
+      `\` as escape char (legacy); see "Decide the escape char".
 - [ ] `stress.php` (8×300 ×3, 16×300 ×2): 0 missing, corrupted or unattributed rows
       (baseline lost ~1.8%).
 - [ ] `stress.php` with kill (1 worker, several delays): no CSV row without a valid detail JSON.
@@ -195,7 +200,8 @@ Monolog 1 baseline are in `out\`.
 
 **Remove temporary re-routes**
 - [ ] `CsvLogConfig`: rename the placeholder version key `temp` (e.g. to `v2`) before release. Dev files
-  named `*.temp.log` / `*.temp.csv` are then read as legacy (same layout, unless the escape char changed).
+  named `*.temp.log` / `*.temp.csv` are then read as legacy, which no longer matches (different enclosure),
+  so delete them.
 - [ ] Root `composer.json`: set `exface/core` back to `dev-1.x-dev as 1.0`.
 - [ ] Root `composer.json`: remove the `hail-cookies/Core.git` `vcs` repository.
 - [ ] `composer update exface/core` and confirm the lock points at `ExFace/Core` again.
