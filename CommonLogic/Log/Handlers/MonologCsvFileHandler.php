@@ -97,7 +97,7 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
      * Unique per CSV file: two handlers for the same file would buffer and flush independently into it.
      * 
      * The key is the class name plus the normalized file path, e.g. on Windows:
-     * `exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler:c:/edf/wamp/www/exface/exface-m3/logs/2026-11-04.temp.log`
+     * `exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler:c:/edf/wamp/www/exface/exface-m3/logs/2026-11-04.v1.log`
      * 
      * Different spellings of the same file (relative paths, `..`, `\` vs `/`, case on Windows) give the same key.
      * Different files, e.g. the daily log and a trace file, give different keys.

@@ -74,7 +74,7 @@ use InvalidArgumentException;
 final class CsvLogConfig
 {
     const LEGACY_VERSION = '';
-    const CURRENT_VERSION = 'temp';
+    const CURRENT_VERSION = 'v1';
     
     const KEY_ID = 'id';
     const KEY_REQUEST_ID = 'requestId';
@@ -94,8 +94,11 @@ final class CsvLogConfig
     const PRP_ESCAPE = 'escape';
     const PRP_DATE_FORMAT = 'date_format';
 
-    // DO NOT MODIFY existing entries, because they are already in use.
-    // Append newer versions at the end of this array to allow proper version comparison.
+    // DO NOT MODIFY existing entries!
+    // APPEND newer versions at the end of this array to allow proper version comparison.
+    // APPEND new versions only when necessary.
+    // UPDATE the `CURRENT_VERSION` constant to the new version key.
+    // A new version will only apply the following day OR if you delete the old file for the current day.
     const VERSIONS = [
         self::LEGACY_VERSION => [ // legacy log files without version key
             self::PRP_COLUMNS => [ // will be written to the CSV file in this order
@@ -116,7 +119,7 @@ final class CsvLogConfig
             self::PRP_ESCAPE => '\\',
             self::PRP_DATE_FORMAT => 'Y-m-d H:i:s.v'
         ],
-        'temp' => [
+        'v1' => [
             self::PRP_COLUMNS => [ // will be written to the CSV file in this order
                 // Fixed-width or short columns first, so they line up when the file is read by a human.
                 self::KEY_DATETIME,

@@ -320,7 +320,8 @@ using exclusive create/lock. Treat an already-valid final file as success; never
 **Status: done for `DebugMessageMonologHandler`.** It writes a temp file in the target folder, validates the
 JSON, and publishes with `link()` (falls back to `rename()` only without hard links). Existing files are
 never overwritten. Durability on power loss is **not** guaranteed: `fsync()` is skipped on purpose (see the
-`publish()` docblock). The ordering against the CSV row is still open (execution plan step 4).
+`publish()` docblock). The ordering against the CSV row is done too (execution plan step 4,
+`CsvWithDetailsHandler`) and verified with the kill runs of the oracle stress test.
 
 ### 9. "Repair" does not actually parse CSV
 
@@ -334,8 +335,9 @@ fields + identifiers + level + timestamp + JSON, back up/quarantine before rewri
 `CsvLogConfig`, validates as described (empty context/extra allowed for fallback rows), appends removed
 records as raw bytes to `logs/quarantine/<log file>` before rewriting and reports record numbers. Files that
 look broken are re-checked and rewritten in place under the writers' `LOCK_EX`, so records still being
-written are not quarantined and files in use (today's log) can be repaired. Details and decisions in
-`PORTING_TODO.md`.
+written are not quarantined and files in use (today's log) can be repaired. Records are streamed, so memory
+does not grow with the file size (10 MB peak on a 57 MB log). Details, decisions and oracle results in
+`PORTING_TODO.md` ("Testing and Cleanup").
 
 ### 10. Composer scripts cannot boot a Monolog 3 workbench (release blocker)
 

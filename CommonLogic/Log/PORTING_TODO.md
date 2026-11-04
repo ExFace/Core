@@ -113,10 +113,12 @@ addresses columns by **name**; the query builder translates names to positions p
     matching `level_name`, date-time prefix + `strtotime()`, `context`/`extra` empty (fallback rows) or valid JSON.
   - **Quarantine (decision: removed records only):** broken records are appended as raw bytes to
     `logs/quarantine/<log file>` *before* the rewrite, so a repair can be undone by appending them back. If
-    the rewrite fails (file open on Windows), the quarantine append is rolled back. Quarantine files expire
+    the rewrite fails before the log file was changed, the quarantine append is rolled back. Quarantine files expire
     with their log file. Reports logical record numbers.
-  - **Active files (decision: keep current behaviour):** files are still rewritten via temp file + rename,
-    even if a process still writes to them (on Linux its next rows go to the replaced file).
+  - **Active files:** superseded - files are now rewritten in place under the writers' lock (see "Readers").
+  - **Memory:** records are streamed (`fgetcsv()` on the file handle, valid/broken records copied to
+    `php://temp` streams that spill to disk above 2 MB). The first version held the file content about three
+    times and exceeded the default 128 MB `memory_limit` on a 57 MB log; now peaks at 10 MB on the same file.
   - No `trim()` anymore: the old repair removed the last line break, so the next row was glued to the last one.
   - Limitation: rows that parse correctly but carry values mangled by the legacy escaping (3 of the 5
     baseline-broken corpus cases) are structurally valid and kept.
@@ -187,27 +189,34 @@ original plan (step 3 in `MONOLOG_MIGRATION.md` is updated accordingly).
 
 Finalization checklist. The baseline oracle harness (step 1 in `MONOLOG_MIGRATION.md`) lives outside the repo, in the
 Copilot session folder `files\oracle\` (copy it somewhere permanent if needed). Results from the
-Monolog 1 baseline are in `out\`.
+Monolog 1 baseline are in `out\`. The harness adapted to the port (fixed log IDs, version-aware reader,
+comparison against the baseline, real `LogCleaner` repair on a copy) is in session folder `files\oracle-m3\`.
 
-**Verify against the oracle**
-- [ ] `corpus.php`: all 41 baseline-OK cases decode to the same values as `out\corpus\oracle.json`
+**Verify against the oracle** (run 2026-11-04 on Windows, PHP 8.3, default `memory_limit` 128 MB)
+- [x] `corpus.php`: all 41 baseline-OK cases decode to the same values as `out\corpus\oracle.json`
       (compare decoded fields; ignore request ID, user, action and timestamp values).
-- [ ] `corpus.php`: the 5 baseline-BROKEN cases now pass (`bslash_apos`, `bslash_apos_end`,
+      Result: 46/46 OK, 0 regressions; 45 messages exact, `ctx_bad_utf8` with invalid UTF-8 replaced by U+FFFD.
+- [x] `corpus.php`: the 5 baseline-BROKEN cases now pass (`bslash_apos`, `bslash_apos_end`,
       `ctx_bad_utf8`, `ctx_bslash_apos`, `win_path_quoted`). Escape char decided (`"` + doubling, no
       escape), so the backslash cases are expected to pass now instead of becoming fallback rows.
 - [x] Decide and document whether message backslash doubling (`handle()`) is kept: only for formats with
       `\` as escape char (legacy); see "Decide the escape char".
-- [ ] `stress.php` (8×300 ×3, 16×300 ×2): 0 missing, corrupted or unattributed rows
-      (baseline lost ~1.8%).
-- [ ] `stress.php` with kill (1 worker, several delays): no CSV row without a valid detail JSON.
+- [x] `stress.php` (8×300 ×4): 2400/2400 rows each run, 0 missing, duplicate, corrupted or unattributed rows
+      (baseline lost 39 rows and had 9 corrupted fragments). 16×300 not run.
+- [x] `stress.php` with kill (1 worker; 700, 1100, 1500 ×2, 1900 ms; plus a parallel run): 0 torn rows, 0
+      invalid detail files, no CSV row without detail JSON, file always ends with a line break. Each kill
+      leaves one `tmp*.tmp` in the day's details folder (removed with the folder by the cleanup).
 - [x] `repair_sim.php` / new repair on `corpus.log`: no valid multi-line record destroyed
       (verified with harness `cleaner.php`, see `LogCleaner` above).
+- [x] Repair on the 57 MB stress logs (with injected garbage line and truncated tail record): 0 valid records
+      destroyed, exactly the injected bytes quarantined, 10 MB peak memory.
+- [ ] Not verified: Linux (in-place rewrite with writers' `'a'` handles, `LogCsvBuilder` tail check).
 - [ ] Remaining test matrix rows and acceptance gate in `MONOLOG_MIGRATION.md` checked; unverified items marked as such.
 
 **Remove temporary re-routes**
-- [ ] `CsvLogConfig`: rename the placeholder version key `temp` (e.g. to `v2`) before release. Dev files
-  named `*.temp.log` / `*.temp.csv` are then read as legacy, which no longer matches (different enclosure),
-  so delete them.
+- [x] `CsvLogConfig`: rename the placeholder version key `temp` before release. Done: key `v1` (with the
+  reordered columns), `CURRENT_VERSION = 'v1'`. Dev files named `*.temp.log` / `*.temp.csv` are now read as
+  legacy, which no longer matches (different enclosure), so delete them.
 - [ ] Root `composer.json`: set `exface/core` back to `dev-1.x-dev as 1.0`.
 - [ ] Root `composer.json`: remove the `hail-cookies/Core.git` `vcs` repository.
 - [ ] `composer update exface/core` and confirm the lock points at `ExFace/Core` again.
