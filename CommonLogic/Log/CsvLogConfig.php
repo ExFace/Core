@@ -118,21 +118,24 @@ final class CsvLogConfig
         ],
         'temp' => [
             self::PRP_COLUMNS => [ // will be written to the CSV file in this order
+                // Fixed-width or short columns first, so they line up when the file is read by a human.
+                self::KEY_DATETIME,
                 self::KEY_ID,
                 RequestIdProcessor::KEY_REQUEST_ID,
+                self::KEY_LEVEL,
+                self::KEY_LEVEL_NAME,
+                self::KEY_CHANNEL,
+                // Variable-length columns last.
                 UserNameProcessor::KEY_USER_NAME,
                 ActionAliasProcessor::KEY_ACTION_ALIAS,
                 self::KEY_MESSAGE,
                 self::KEY_CONTEXT,
-                self::KEY_LEVEL,
-                self::KEY_LEVEL_NAME,
-                self::KEY_CHANNEL,
-                self::KEY_DATETIME,
                 self::KEY_EXTRA
             ],
+            // RFC 4180 / Excel convention: double quote enclosure, quotes inside values are doubled, no escape char.
             self::PRP_DELIMITER => ',',
-            self::PRP_ENCLOSURE => '\'',
-            self::PRP_ESCAPE => '\\', // TODO: test double quote or empty string for better compatibility with Excel and other CSV readers
+            self::PRP_ENCLOSURE => '"',
+            self::PRP_ESCAPE => '',
             self::PRP_DATE_FORMAT => 'Y-m-d H:i:s.v'
         ],
     ];

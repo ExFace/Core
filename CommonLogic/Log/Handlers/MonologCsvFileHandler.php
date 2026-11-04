@@ -37,7 +37,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
 {
     // Monolog only accepts array contexts, so the log entry travels through Monolog under this key. Processors
     // and handlers below receive the key via constructor, the CSV context filter removes it again.
-    private const CONTEXT_KEY_LOG_ENTRY = 'logEntry';
+    private const CONTEXT_KEY_LOG_ENTRY = LogEntryInterface::MONOLOG_CONTEXT_KEY;
     
     // Defined by PSR-3: lets Monolog format the stack trace
     private const PSR_KEY_EXCEPTION = 'exception';
@@ -60,6 +60,8 @@ class MonologCsvFileHandler implements LogHandlerInterface
     private ?Logger $monolog = null;
     
     private bool $disabled = false;
+    
+    private bool $doubleBackslashes;
 
     /**
      *
@@ -88,6 +90,7 @@ class MonologCsvFileHandler implements LogHandlerInterface
         $this->persistLevel = $persistAllAfterLevel;
         $this->passthroughLevel = $passthroughLevel;
         $this->debugMsgDirPath = $debugMsgDirPath;
+        $this->doubleBackslashes = CsvLogConfig::getEscape(CsvLogConfig::getVersionFromFileName($csvFilePath)) === '\\';
     }
     
     /**
@@ -105,8 +108,12 @@ class MonologCsvFileHandler implements LogHandlerInterface
         $context = $entry->getContext();
         $context[self::CONTEXT_KEY_LOG_ENTRY] = $entry;
         
-        // Use PHP escape and log the message.
-        $message = str_replace('\\', '\\\\', $entry->getMessage());
+        $message = $entry->getMessage();
+        // Formats with `\` as escape char (legacy) cannot round-trip a backslash before the enclosure, so backslashes
+        // are doubled there. Formats without escape char (enclosure doubling) store the message unchanged.
+        if ($this->doubleBackslashes === true) {
+            $message = str_replace('\\', '\\\\', $message);
+        }
         $this->getMonolog()->log($entry->getLevel(), $message, $context);
     }
     

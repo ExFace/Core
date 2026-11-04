@@ -14,6 +14,16 @@ use exface\Core\Interfaces\iCanGenerateDebugWidgets;
 interface LogEntryInterface
 {
     /**
+     * Context key of the entry inside a Monolog `LogRecord`.
+     * 
+     * Monolog only accepts array contexts, so handlers that pass entries on to Monolog put the entry itself
+     * under this key. Monolog processors and handlers can read it from `$record->context[MONOLOG_CONTEXT_KEY]`
+     * to access data, that has no PSR-3 equivalent (e.g. the sender). Remove it before formatting, if the
+     * context is serialized (see `ContextFilterProcessor`).
+     */
+    const MONOLOG_CONTEXT_KEY = 'logEntry';
+    
+    /**
      * PSR-3 log level, e.g. `LoggerInterface::ERROR`.
      * 
      * @return string
