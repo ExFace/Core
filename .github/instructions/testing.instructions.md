@@ -58,6 +58,12 @@ Widget, an Action or any other production class.
    changed path needs a persisted metamodel/DB or the full application lifecycle, so it belongs in
    application-level/Behat tests per "Cover Changes Without Mocking Workbench"). Never conclude a PHP
    change with only lint/build validation and no testing statement.
+7. **Do not write tests that assert the contents of JSON metamodel files in an app's `Model/`
+   folder.** These models can be changed through the administration UI and exported again; tests
+   that freeze their records, values or structure would then fail on legitimate configuration
+   changes. Test the PHP behavior that processes models using dedicated fixtures instead, not the
+   current exported model files. This does not prohibit parsing edited JSON files as a one-off
+   validation step.
 
 
 ## Cover Changes Without Mocking Workbench
