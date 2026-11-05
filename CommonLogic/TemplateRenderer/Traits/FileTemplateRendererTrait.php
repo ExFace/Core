@@ -4,7 +4,6 @@ namespace exface\Core\CommonLogic\TemplateRenderer\Traits;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\Filemanager;
 use exface\Core\Interfaces\TemplateRenderers\TemplateRendererInterface;
-use exface\Core\Exceptions\FileNotReadableError;
 
 /**
  * Trait for templates stored as files: text, XML, HTML, etc.
@@ -45,7 +44,8 @@ trait FileTemplateRendererTrait
     }
     
     /**
-     * 
+     * Reads a template only after canonical containment validation prevents UXON paths from escaping vendor.
+     *
      * @param string $tplPath
      * @throws RuntimeException
      * @return string
@@ -61,13 +61,19 @@ trait FileTemplateRendererTrait
         } else {
             $absPath = $this->getWorkbench()->filemanager()->getPathToVendorFolder() . DIRECTORY_SEPARATOR . $tplPath;
         }
-        if (file_exists($absPath) === false) {
-            throw new RuntimeException('Template file "' . $absPath . '" not found!');
-        }
-        $string = file_get_contents($absPath);
-        if ($string === false) {
-            throw new FileNotReadableError('Cannot read file "' . $absPath . '"!');
-        }
-        return $string;
+        return $this->getWorkbench()->filemanager()->readFileSecure($absPath, $this->getAllowedBasePaths());
+    }
+
+    /**
+     * Returns the proposed default template roots, pending team decision.
+     *
+     * Restricting file-backed templates to vendor blocks configured absolute paths, traversal, and symlink escapes
+     * from exposing installation secrets while keeping app-owned templates available.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        return [$this->getWorkbench()->filemanager()->getPathToVendorFolder()];
     }
 }

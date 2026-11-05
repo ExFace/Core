@@ -386,12 +386,33 @@ class Html extends Display
         return null;
     }
     
+    /**
+     * Reads file-bound HTML only from approved roots so UXON cannot expose arbitrary installation files.
+     *
+     * @return string|null
+     */
     public function getFileContents() : ?string
     {
         if ($absPath = $this->getFilePathAbsolute()) {
-            return file_get_contents($absPath);
+            return $this->getWorkbench()->filemanager()->readFileSecure($absPath, $this->getAllowedBasePaths());
         }
         return null;
+    }
+
+    /**
+     * Returns the proposed default HTML file roots, pending team decision.
+     *
+     * Vendor retains app-provided HTML templates and data retains installation-owned content without exposing config.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        $filemanager = $this->getWorkbench()->filemanager();
+        return [
+            $filemanager->getPathToVendorFolder(),
+            $filemanager->getPathToDataFolder()
+        ];
     }
     
     /**

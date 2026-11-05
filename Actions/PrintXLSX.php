@@ -118,6 +118,12 @@ class PrintXLSX extends PrintTemplate
     /**
      * Returns an array of the form [file_path => rendered_template].
      *
+     * The XLSX path is canonicalized immediately before PhpSpreadsheet opens it so configured paths and symlinks
+     * cannot escape the template roots inherited from PrintTemplate.
+     *
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\Actions\iRenderTemplate::renderTemplate()
+     *
      * @param DataSheetInterface $inputData
      * @param bool               $preview
      * @return string[]
@@ -137,7 +143,10 @@ class PrintXLSX extends PrintTemplate
         $baseRenderer->addPlaceholder(new ConfigPlaceholders($this->getWorkbench(), '~config:'));
         $baseRenderer->addPlaceholder(new TranslationPlaceholders($this->getWorkbench(), '~translate:'));
 
-        $path = $this->getWorkbench()->getInstallationPath() . DIRECTORY_SEPARATOR . $tplPath;
+        $path = FilePathDataType::isAbsolute($tplPath)
+            ? $tplPath
+            : FilePathDataType::join([$this->getWorkbench()->getInstallationPath(), $tplPath]);
+        $path = FilePathDataType::makeSecure($path, $this->getWorkbench(), $this->getAllowedBasePaths());
 
         try {
             $readerXlsx = IOFactory::createReaderForFile($path);
