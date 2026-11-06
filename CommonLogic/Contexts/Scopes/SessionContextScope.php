@@ -119,7 +119,7 @@ class SessionContextScope extends AbstractContextScope
     public function getSavedContexts($context_alias = null)
     {
         if ($context_alias) {
-            $obj = $this->getSessionContextData()[$context_alias];
+            $obj = $this->getSessionContextData()[$context_alias] ?? null;
         } else {
             $obj = $this->getSessionContextData();
         }
@@ -436,13 +436,13 @@ class SessionContextScope extends AbstractContextScope
     }
 
     /**
-     * Returns the raw array of context data from the current session
+     * Returns saved contexts, or an empty array when this session has no contexts yet.
      *
      * @return array
      */
     protected function getSessionContextData()
     {
-        return $_SESSION['exface'][$this->installation_name]['contexts'];
+        return $_SESSION['exface'][$this->installation_name]['contexts'] ?? [];
     }
 
     /**
@@ -459,13 +459,14 @@ class SessionContextScope extends AbstractContextScope
     }
     
     /**
-     * 
+     * Returns an optional session value without requiring an initialized ExFace session.
+     *
      * @param string $key
      * @return mixed
      */
     protected function getSessionData(string $key)
     {
-        return $_SESSION['exface'][$this->installation_name][$key];
+        return $_SESSION['exface'][$this->installation_name][$key] ?? null;
     }
     
     /**
