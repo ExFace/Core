@@ -17,6 +17,14 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * - loaded from a data source (by specifying an `attribute_alias` for the widget)
  * - loaded from a file (by specifying the path in `file`)
  * - directly specified in the `html` property of the widget
+ * 
+ * The `Html` widget embeds the HTML code into the page optionally added custom CSS and Javascript too. So the HTML
+ * becomes and integral part of the page rendered by the selected facade and will be affected by the facades scripts
+ * and styling. The CSS and Javascript defined in the widget are merely supplements. If you need "clean" HTML rendering,
+ * consider the `Browser` widget.
+ * 
+ * **NOTE:** HTML pages saved somewhere on the web server may be accessible directly (bypassing the workbench security
+ * system) depending on the server configuration. Take care to secure them properly!
  *
  * @author Andrej Kabachnik
  *        
