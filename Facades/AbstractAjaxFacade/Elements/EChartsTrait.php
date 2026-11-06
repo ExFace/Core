@@ -715,7 +715,7 @@ JS;
     }
     
     /**
-     * javascript function to handle clicks on the chart
+     * Toggle selection on single clicks and ensure double-clicked data points stay selected.
      *
      * @return string
      */
@@ -725,6 +725,12 @@ JS;
         
         {$this->buildJsEChartsVar()}.on('click', function(params){
             {$this->buildJsClicks('params')}
+        });
+        {$this->buildJsEChartsVar()}.on('dblclick', function(params){
+            var oRow = {$this->buildJsGetSelectedRowFunction('params.data')};
+            if (!{$this->buildJsRowCompare($this->buildJsEChartsVar() . '._oldSelection', 'oRow')}) {
+                {$this->buildJsSingleClick('params')}
+            }
         });
         
 JS;
