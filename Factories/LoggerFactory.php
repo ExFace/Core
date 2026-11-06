@@ -4,12 +4,12 @@ namespace exface\Core\Factories;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\CommonLogic\Log\Handlers\MonologErrorLogHandler;
-use Monolog\ErrorHandler;
 use exface\Core\CommonLogic\Log\Logger;
 use exface\Core\CommonLogic\Log\Handlers\MonologCsvFileHandler;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\Events\Workbench\OnCleanUpEvent;
 use exface\Core\CommonLogic\Log\LogCleaner;
+use exface\Core\CommonLogic\Log\CsvLogConfig;
 
 /**
  * Instantiates default loggers
@@ -39,7 +39,11 @@ abstract class LoggerFactory extends AbstractStaticFactory
                 $coreLogDir = $workbench->filemanager()->getPathToLogFolder();
                 $coreLogFileExt = 'log';
                 $date = DateDataType::now();
-                $coreLogFilePath = $coreLogDir . DIRECTORY_SEPARATOR . $date . '.' . $coreLogFileExt;
+                // The file name carries the format version, so readers can pick the matching column layout. If
+                // today's file already exists in an older version (e.g. on the day of an upgrade), it is continued
+                // in that version: the new format starts tomorrow, so there is never more than one file per date.
+                $version = CsvLogConfig::getVersionForWriting($coreLogDir, $date, $coreLogFileExt);
+                $coreLogFilePath = $coreLogDir . DIRECTORY_SEPARATOR . CsvLogConfig::buildFileName($date, $coreLogFileExt, $version);
                 $detailsLogDir = $workbench->filemanager()->getPathToLogDetailsFolder($date);
                 
                 $config             = $workbench->getConfig();
@@ -73,17 +77,6 @@ abstract class LoggerFactory extends AbstractStaticFactory
             'onCleanUp'
         ]);
         return static::$logger;
-    }
-    
-    /**
-     * Registers error logger at monolog ErrorHandler.
-     *
-     * @param WorkbenchInterface $workbench
-     * @return void
-     */
-    public static function registerErrorLogger(WorkbenchInterface $workbench)
-    {
-        ErrorHandler::register(static::getErrorLogger($workbench));
     }
     
     /**

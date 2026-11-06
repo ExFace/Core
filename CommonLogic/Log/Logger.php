@@ -1,15 +1,20 @@
 <?php
 namespace exface\Core\CommonLogic\Log;
 
-use exface\Core\Interfaces\Debug\IHaveLogIdInterface;
 use exface\Core\Interfaces\iCanGenerateDebugWidgets;
+use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Log\LogHandlerInterface;
+use exface\Core\Interfaces\Log\UniqueLogHandlerInterface;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Factories\LoggerFactory;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\DataTypes\LogLevelDataType;
 use Symfony\Component\ErrorHandler\Error\FatalError;
+use Monolog\Handler\HandlerInterface as MonologHandlerInterface;
+use Monolog\JsonSerializableDateTimeImmutable;
+use Monolog\Logger as MonologLogger;
+use Monolog\LogRecord;
 
 /**
  * Default implementation of the LoggerInterface
@@ -19,10 +24,20 @@ use Symfony\Component\ErrorHandler\Error\FatalError;
  */
 class Logger implements LoggerInterface
 {
-    /** @var LogHandlerInterface[] $handlers */
+    // Defined by PSR-3: "If an Exception object is passed in the context data, it MUST be in the 'exception' key."
+    private const PSR_KEY_EXCEPTION = 'exception';
+
+    // Channel and extra key of the records passed to Monolog handlers
+    private const MONOLOG_CHANNEL = 'Workbench';
+    private const MONOLOG_EXTRA_KEY_ID = 'id';
+
+    /** @var array<LogHandlerInterface|MonologHandlerInterface> $handlers */
     private $handlers = array();
 
-    private $queue = [];
+    /** @var LogEntryInterface[] entries logged while another entry was being handled */
+    private array $queue = [];
+
+    private ?LogEntryInterface $current = null;
 
     // Shared between instances: multiple loggers may be alive, but a fatal error must only be logged once
     private static bool $fatalErrorLogged = false;
@@ -195,52 +210,59 @@ class Logger implements LoggerInterface
      */
     public function log($level, $message, array $context = array(), iCanGenerateDebugWidgets $sender = null) : void
     {
-        if (($context['exception'] ?? null) instanceof FatalError) {
+        try {
+            $entry = new LogEntry($level, (string) $message, $context, $sender);
+        } catch (\Throwable $e) {
+            // Log to PHP error log if the entry cannot even be created (e.g. the sender fails to provide its log ID)
+            error_log($e);
+            return;
+        }
+        $this->logEntry($entry);
+    }
+
+    /**
+     * Passes the entry to all handlers - or queues it if another entry is being handled right now.
+     *
+     * @param LogEntryInterface $entry
+     * @return void
+     */
+    protected function logEntry(LogEntryInterface $entry) : void
+    {
+        if ($entry->getException() instanceof FatalError) {
             self::$fatalErrorLogged = true;
         }
 
         // If the current log message occurred while another was being logged, don't process it immediately
         // as this might cause recursion. We will enqueue errors and skip any other interruption.
-        if ($this->isLogging()) {
-            $this->enqueueError($level, $message, $context, $sender);
+        if ($this->current !== null) {
+            $this->enqueueError($entry);
             return;
         }
 
         // Mark as "logging" now. Any errors occurring here on, will be deferred to the queue above.
-        $this->setLogging([
-            'level' => $level,
-            'message' => $message,
-            'context' => $context,
-            'sender' => $sender
-        ]);
+        $this->current = $entry;
 
         try {
-            if (is_null($sender) && ($context['exception'] ?? null) instanceof iCanGenerateDebugWidgets) {
-                $sender = $context['exception'];
-            }
-
-            if ($sender instanceof ExceptionInterface) {
-                $context['exception'] = $sender;
-                $level = $level ?? $sender->getLogLevel();
-            }
-            
-            if ($sender instanceof IHaveLogIdInterface) {
-                $context['id'] = $sender->getLogId();
-            } else {
-                $context['id'] = $this::generateLogId();
-            }
-            
+            // Built on demand and shared by all Monolog handlers
+            $record = null;
             foreach ($this->handlers as $i => $handler) {
                 try {
-                    $handler->handle($level, $message, $context, $sender);
+                    if ($handler instanceof MonologHandlerInterface) {
+                        $record ??= $this->createMonologRecord($entry);
+                        if ($handler->isHandling($record)) {
+                            $handler->handle($record);
+                        }
+                    } else {
+                        $handler->handle($entry);
+                    }
                 } catch (\Throwable $e) {
                     try {
                         if (count($this->handlers) > 1) {
                             unset($this->handlers[$i]);
-                            $this->setLogging(false);
+                            $this->current = null;
                             $this->logException(new RuntimeException('Log handler error (handler ' . $i . ' disabled now): ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine(), null, $e));
                         } else {
-                            LoggerFactory::createPhpErrorLogLogger()->alert('Log handler error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine(), ['exception' => $e]);
+                            LoggerFactory::createPhpErrorLogLogger()->alert('Log handler error: ' . $e->getMessage() . ' in ' . $e->getFile() . ' on line ' . $e->getLine(), [self::PSR_KEY_EXCEPTION => $e]);
                         }
                     } catch (\Throwable $ee) {
                         // Log both errors to PHP error log if regular logging fails
@@ -254,40 +276,67 @@ class Logger implements LoggerInterface
             error_log($e);
         } finally {
             // clear "in logging process" mark
-            $this->setLogging(false);
+            $this->current = null;
         }
         
         // See if logging the current error produced any errors in the queue and try to
         // process this queue now
-        if (!empty($this->queue)) {
+        if (! empty($this->queue)) {
             if (count($this->queue) > 30) {
                 $this->queue = [];
                 $this->alert('Logger queue for errors while logging overfilled! Recurrence in error processing suspected: dumping error queue to avoid infinite loop!');
             } else {
-                foreach ($this->queue as $i => $queued) {
-                    if(empty($queued)) {
-                        continue;
-                    }
-
-                    $this->queue[$i] = [];
-                    $this->log($queued['level'], $queued['message'], $queued['context'], $queued['sender']);
+                // Take the entries out of the queue first: nested calls must not process them a second time
+                $queued = $this->queue;
+                $this->queue = [];
+                foreach ($queued as $queuedEntry) {
+                    $this->logEntry($queuedEntry);
                 }
             }
         }
-
-        // Empty the queue.
-        unset($this->queue);
     }
 
     /**
-     * @param string $level
-     * @param string $message
-     * @param array $context
-     * @param iCanGenerateDebugWidgets|null $sender
+     * Converts the entry into a standard PSR-3 / Monolog record for third-party Monolog handlers.
+     * 
+     * This is the only place in the logger, that depends on Monolog's record structure. Workbench handlers
+     * (`LogHandlerInterface`) never see the record, so a Monolog upgrade only affects this method.
+     * 
+     * The record only contains PSR-3 data: the log entry itself (e.g. its sender) is not added, so formatters
+     * of third-party handlers do not serialize it.
+     * 
+     * Security: the exception and the context are passed on unfiltered. Make sure appended third-party handlers
+     * do not send sensitive data (e.g. stack traces) to untrusted destinations.
+     * 
+     * @param LogEntryInterface $entry
+     * @return LogRecord
+     */
+    protected function createMonologRecord(LogEntryInterface $entry) : LogRecord
+    {
+        $context = $entry->getContext();
+        if ($entry->getException() !== null) {
+            $context[self::PSR_KEY_EXCEPTION] = $entry->getException();
+        }
+        return new LogRecord(
+            datetime: new JsonSerializableDateTimeImmutable(true),
+            channel: self::MONOLOG_CHANNEL,
+            level: MonologLogger::toMonologLevel($entry->getLevel()),
+            message: $entry->getMessage(),
+            context: $context,
+            extra: [self::MONOLOG_EXTRA_KEY_ID => $entry->getId()]
+        );
+    }
+
+    /**
+     * @param LogEntryInterface $entry
      * @return void
      */
-    protected function enqueueError(string $level, string $message, array $context, ?iCanGenerateDebugWidgets $sender) : void
+    protected function enqueueError(LogEntryInterface $entry) : void
     {
+        $level = $entry->getLevel();
+        $message = $entry->getMessage();
+        $sender = $entry->getSender();
+        
         if (LogLevelDataType::compareLogLevels($level, self::ERROR) < 0) {
             return;
         }
@@ -297,16 +346,16 @@ class Logger implements LoggerInterface
             // If the logged item is an exception, a duplicate would be the same
             // level, message, file and line number.
             foreach ($this->queue as $queued) {
+                $queuedEx = $queued->getSender();
                 // If the already queued item is NOT an exception, it cannot be a duplicate
-                if (! ($queued['sender'] instanceof \Throwable)) {
+                if (! ($queuedEx instanceof \Throwable)) {
                     continue;
                 }
                 // Same goes for the case when it does not have the same level or message
-                if ($queued['level'] !== $level && $queued['message'] !== $message) {
+                if ($queued->getLevel() !== $level && $queued->getMessage() !== $message) {
                     continue;
                 }
                 // For exceptions with equal levels and message, compare the file and line
-                $queuedEx = $queued['sender'];
                 if ($queuedEx->getFile() === $sender->getFile() && $queuedEx->getLine() === $sender->getLine()) {
                     return;
                 }
@@ -314,18 +363,13 @@ class Logger implements LoggerInterface
         } else {
             // For all other senders simply compare the sender: e.g. is it the same data sheet
             foreach ($this->queue as $queued) {
-                if ($queued['level'] === $level && $queued['message'] === $message && $queued['sender'] === $sender) {
+                if ($queued->getLevel() === $level && $queued->getMessage() === $message && $queued->getSender() === $sender) {
                     return;
                 }
             }
         }
 
-        $this->queue[] = [
-            'level' => $level,
-            'message' => $message,
-            'context' => $context,
-            'sender' => $sender
-        ];
+        $this->queue[] = $entry;
     }
 
     /**
@@ -339,7 +383,7 @@ class Logger implements LoggerInterface
         if ($e instanceof ExceptionInterface){
             $this->log($level ?? $e->getLogLevel(), $e->getMessage(), [], $e);
         } else {
-            $this->log($level ?? LoggerInterface::CRITICAL, $e->getMessage(), ["exception" => $e]);
+            $this->log($level ?? LoggerInterface::CRITICAL, $e->getMessage(), [self::PSR_KEY_EXCEPTION => $e]);
         }
         return $this;
     }
@@ -349,8 +393,19 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::appendHandler()
      */
-    public function appendHandler(LogHandlerInterface $handler): LoggerInterface|static
+    public function appendHandler(LogHandlerInterface|MonologHandlerInterface $handler): LoggerInterface|static
     {
+        $key = $handler instanceof UniqueLogHandlerInterface ? $handler->getUniqueKey() : null;
+        foreach ($this->handlers as $registered) {
+            if ($registered === $handler) {
+                return $this;
+            }
+            // Duplicates of stateful handlers would write every entry twice or corrupt their state
+            if ($key !== null && $registered instanceof UniqueLogHandlerInterface && $registered->getUniqueKey() === $key) {
+                $this->warning('Log handler "' . get_class($handler) . '" ignored: a handler for "' . $key . '" is already registered.');
+                return $this;
+            }
+        }
         $this->handlers[] = $handler;
         
         return $this;
@@ -361,7 +416,7 @@ class Logger implements LoggerInterface
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LoggerInterface::removeHandler()
      */
-    public function removeHandler(LogHandlerInterface $handler): LoggerInterface|static
+    public function removeHandler(LogHandlerInterface|MonologHandlerInterface $handler): LoggerInterface|static
     {
         foreach ($this->handlers as $i => $h){
             if ($h === $handler){
@@ -381,44 +436,6 @@ class Logger implements LoggerInterface
         return $this->handlers;
     }
 
-    /**
-     * Set the error currently being processed. To signal that you are done with logging
-     * simply set `beingLogged` to be false or empty.
-     *
-     *
-     * @param array|false $beingLogged
-     * @return LoggerInterface
-     */
-    protected function setLogging(array|false $beingLogged) : LoggerInterface
-    {
-        if(empty($beingLogged)) {
-            unset($this->queue['logging']);
-        } else {
-            $this->queue['logging'] = $beingLogged;
-        }
-
-        return $this;
-    }
-
-    /**
-     * Get the error currently being processed, if any.
-     *
-     * @return array
-     */
-    protected function getLogging() : array
-    {
-        return $this->queue['logging'] ?? [];
-    }
-
-    /**
-     * 
-     * @return boolean
-     */
-    protected function isLogging() : bool
-    {
-        return !empty($this->queue['logging']);
-    }
-    
     /**
      * 
      * @return string
