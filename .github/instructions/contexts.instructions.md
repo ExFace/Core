@@ -25,13 +25,13 @@ Theoretically each context can be placed in any of the scopes. But in practice, 
 
 ## Context menus
 
-Each context can provide an interactive popup via the getContextBarPopup() method. This popup is displayed when the user clicks the context icon in the context bar. The popup is a container widget that the context fills with its own widgets (buttons, lists, forms, etc.).
+Each context can provide an interactive popup via the `getContextBarPopup()` method. This popup is displayed when the user clicks the context icon in the context bar. The popup is a container widget that the context fills with its own widgets (buttons, lists, forms, etc.).
 
-The ShowContextPopup action is responsible for rendering the context popup and can be triggered by clicking a context icon. The popup exists in a specific scope and can interact with that scope's data.
+The `ShowContextPopup` action is responsible for rendering the context popup and can be triggered by clicking a context icon. The popup exists in a specific scope and can interact with that scope's data.
 
 ### Example: implementing a context popup
 
-`php
+```php
 class MyContext extends AbstractContext
 {
     public function getContextBarPopup(Container $container)
@@ -42,20 +42,20 @@ class MyContext extends AbstractContext
         return $container;
     }
 }
-`
+```
 
 ### Example: triggering a context popup
 
-A context popup is automatically shown when clicking a context bar icon. You can also trigger it programmatically via the ShowContextPopup action by passing the context alias and scope name as parameters.
+A context popup is automatically shown when clicking a context bar icon. You can also trigger it programmatically via the `ShowContextPopup` action by passing the context alias and scope name as parameters.
 
 ### Context indicators
 
-Contexts can display an indicator (small badge or text) on their icon in the context bar. For example, the NotificationContext displays the number of unread notifications. Use setIndicator() to set the indicator value and setColor() to control its visual appearance.
+Contexts can display an indicator (small badge or text) on their icon in the context bar. For example, the `NotificationContext` displays the number of unread notifications. Use `setIndicator()` to set the indicator value and `setColor()` to control its visual appearance.
 
 ### Visibility control
 
-Use setVisibility() to control when a context appears in the context bar:
+Use `setVisibility()` to control when a context appears in the context bar:
 
-- CONTEXT_BAR_SHOW - always visible
-- CONTEXT_BAR_SHOW_IF_NOT_EMPTY - only visible if the context has data (default)
-- CONTEXT_BAR_HIDE - never visible
+- `CONTEXT_BAR_SHOW` - always visible
+- `CONTEXT_BAR_SHOW_IF_NOT_EMPTY` - only visible if the context has data (default)
+- `CONTEXT_BAR_HIDE` - never visible
