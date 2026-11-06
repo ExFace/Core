@@ -258,7 +258,7 @@ class Profiler implements WorkbenchDependantInterface, iCanGenerateDebugWidgets,
         $tab->setNumberOfColumns(1);
         $htmlWidget = WidgetFactory::create($debug_widget->getPage(), 'Html', $tab);
         $htmlWidget->setWidth('100%');
-        $htmlWidget->setHtml($this->buildHtmlProfilerTable($htmlWidget->getId() . '_profile'));
+        $htmlWidget->setValue($this->buildHtmlProfilerTable($htmlWidget->getId() . '_profile'));
         $tab->addWidget($htmlWidget);
         $debug_widget->addTab($tab);
         return $debug_widget;

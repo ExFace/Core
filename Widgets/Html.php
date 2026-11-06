@@ -7,7 +7,7 @@ use exface\Core\Factories\DataPointerFactory;
 use exface\Core\Events\Widget\OnPrefillChangePropertyEvent;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 /**
- * The HTML widget simply shows some HTML.
+ * The HTML widget simply shows some HTML - either static or from an attribute.
  * 
  * In contrast to a Text widget it will be seamlessly embedded in an HTML-based facade
  * and not put into a paragraph as plain text.
@@ -17,6 +17,9 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * - loaded from a data source (by specifying an `attribute_alias` for the widget)
  * - loaded from a file (by specifying the path in `file`)
  * - directly specified in the `html` property of the widget
+ * 
+ * To make the HTML better fit the facade, you can add `html_template` to wrap the HTML in a template, add `css` to 
+ * style the HTML and add `javascript` to add custom JS code.
  * 
  * The `Html` widget embeds the HTML code into the page optionally added custom CSS and Javascript too. So the HTML
  * becomes and integral part of the page rendered by the selected facade and will be affected by the facades scripts
@@ -60,17 +63,12 @@ class Html extends Display
     }
 
     /**
-     * Defines the HTML to show.
-     * 
-     * NOTE: Any <script> tags will be automatically extracted and placed in the "javascript" property!
-     * 
-     * @uxon-property html
-     * @uxon-type string
+     * @depracated use value instead
      * 
      * @param string $value
-     * @return \exface\Core\Widgets\Text
+     * @return \exface\Core\Widgets\Html
      */
-    public function setHtml($value)
+    protected function setHtml($value)
     {
         return $this->setValue($value);
     }
@@ -102,8 +100,21 @@ class Html extends Display
     }
     
     /**
+     * Explicitly sets the value of the widget: static value, widget link or formula.
      * 
-     * {@inheritDoc}
+     * *WARNING:** If a calculated expression (link of formula) is used as `value`, the widget
+     * will not be able to read the value of its attribute or prefill data. In fact, it will not
+     * get prefilled at all: the formula replaces the own value. However, if the widget is interactive,
+     * the value will still change on user input as long as the widget is not disabled.
+     * 
+     * If you want the widget to have its own value in addition to a calculation use the `calculation`
+     * option explicitly. In this case, the calculation will only be performed if the widget has no
+     * explicit value.
+     *
+     * @uxon-property value
+     * @uxon-type metamodel:expression
+     * @uxon-translatable true
+     * 
      * @see \exface\Core\Widgets\Value::setValue()
      */
     public function setValue($value, bool $parseStringAsExpression = true)
