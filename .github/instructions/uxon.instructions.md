@@ -16,27 +16,19 @@ called UXON prototypes.
 
 Use these rules whenever you implement or modify UXON prototype classes.
 
-- Prototype classes must have the 
-  `\exface\Core\Interfaces\iCanBeConvertedToUxon` 
-  interface and mostly use the 
-  `\exface\Core\CommonLogic\Traits\iCanBeConvertedToUxonTrait`. The trait 
-  implements the `importUxon()` method, that is normally called in the 
-  constructor of the class and `exportUxon()` to dumpt the current 
-  configuration back to UXON.
-- A class-level Docblock must explain the use of this prototype from the 
-  point of view of a designer.
-- Every UXON property must map to a setter named `set + PascalCase
-(property_name)` - e.g. `setAttributeAlias` for the property `attribute_alias`.
+- Prototype classes must have the `\exface\Core\Interfaces\iCanBeConvertedToUxon` interface. Use the 
+`\exface\Core\CommonLogic\Traits\iCanBeConvertedToUxonTrait`. The trait implements the `importUxon()` method, that is normally called in the constructor of the class and `exportUxon()` to dump the current configuration back to UXON. Prefer the trait to custom importers and exporters as it makes future development easier and more consistent.
+- A class-level Docblock must explain the use of this prototype from the point of view of a designer.
+- Every UXON property must map to a setter named `set + PascalCase (property_name)` - e.g. `setAttributeAlias` for the property `attribute_alias`.
 - UXON properties can contain scalar values or nested UXON objects
 - Mapping is strict: missing setters must be treated as configuration error.
-- Do not invent new mapping mechanisms when existing setter-based import is 
-  available.
+- Do not invent new mapping mechanisms when existing setter-based import is available.
 
 ## UXON annotations
 
 Every UXON prototype class must have app designer oriented documentation explaining its purpose and how to use it. This
 is done by adding `@uxon-` annotations to the code. These will be read by the `PhpAnnotationsReader` and presented to
-the designers in the UXON editor autosuggesta and quick refs, in debug widgets and in the form of generated documentation.
+the designers in the UXON editor autosuggest and quick refs, in debug widgets and in the form of generated documentation.
 
 Remember: UXON annotations are written primarily for app designers. They must be well understandable without PHP 
 knowledge and focus on the UXON structures, not on code.
@@ -51,7 +43,7 @@ query builders). All UXON prototypes treat their class dockblock as UXON documen
 UXON Docblocks must adhere to the following rules:
 
 - Everything is written in English.
-- Write them as instructions, proposing solutions to potential challanges.
+- Write them as instructions, proposing solutions to potential challenges.
 - Ensure the first line of the dockblock is a one-liner summary of its purpose
 - Provide detailed instructions between the first line and the first `@` annotation - this is the documentation.
 - Use markdown
@@ -65,13 +57,13 @@ UXON Docblocks must adhere to the following rules:
 be rendering issues.
 - Markdown codeblocks in UXON docblocks must end with an empty line containing a single space before the closing fence.
 - Every blank line in a Docblock must contain at least one space  to be recognized as a blank line in the generated 
-  documentation. This is a limitation of our current annoutation reader.
+  documentation. This is a limitation of our current annotation reader.
 
-Regular Phpdoc annotation are allowed too, but do not have effect on UXON. If a separate description for developers is 
+Regular PHPdoc annotation are allowed too, but do not have effect on UXON. If a separate description for developers is 
 needed, it must be separated by at least one annotation (typically the block of `@uxon-` tags) from the UXON description. 
 The parser responsible for documentation generation considers only the first part of the Docblock to be a description.
 
-### Class-level Docblocks for prototypes
+### Class-level docblocks for prototypes
 
 The class-level Docblock must include the following:
 
@@ -102,7 +94,7 @@ method, switch annotate the getter or any other semantically related method.
 - `@uxon-default <value>` - if the property has a concrete default value
 - `@uxon-template` - always add a single-line JSON template for nested UXON objects and arrays. This auto-expands the
 property in the UXON editor
-- `@uxon-required true` - if ommitting this property will cause an error
+- `@uxon-required true` - if omitting this property will cause an error
 - `@uxon-translatable true` - true if this property is translatable
 - `@uxon-placeholder <placeholder>` - for every `[#placeholders#]` if the property value allows placeholders. Use multiple annotations for multiple placeholders.
 
@@ -118,12 +110,11 @@ Follow these rules to make the examples easy to read in IDEs, the UXON editor an
 - Do not use truly empty lines anywhere inside the code-block - always leave a single ` ` space.
 - Collapse child UXON objects with only one or two short properties to a single line
 - Place each property of bigger UXON objects on separate lines
-- Place scalar proprties of a UXON object first - before any array or object properties. This makes it easier to read the configuration and find the relevant properties.
+- Place scalar properties of a UXON object first - before any array or object properties. This makes it easier to read the configuration and find the relevant properties.
 
 Good example:
 
-```
- 
+```json
 {
     "widget_type": "DataTable",
     "object_alias": "exface.Core.ATTRIBUTE",

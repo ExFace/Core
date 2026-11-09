@@ -37,13 +37,40 @@ Carefully read the following chapters explaining what to check. Note the suggest
 
 ## The Platform
 
-Power UI is designed to be used by skilled teams of business analysts to develop complex custom soluzions. It is a project accelerator rather than a mass product. We specialize on big business apps: hundreds of screens and DB tables, thousands of security policies, etc. It is not a self-service app builder.
+Power UI is designed to be used by skilled teams of business analysts to develop complex custom solutions. It is a project accelerator rather than a mass product. We specialize on big business apps: hundreds of screens and DB tables, thousands of security policies, etc. It is not a self-service app builder.
 
-Power UI uses models for everything - data, logic, UI, security - even for deployement processes. You need to make sure new developments fit well in the model architecture and new code is well organized, easy to understand and maintain.
+Power UI uses models for everything - data, logic, UI, security - even for deployment processes. You need to make sure new developments fit well in the model architecture and new code is well organized, easy to understand and maintain.
 
 Read [platform instructions](../copilot-instructions.md) and follow them. 
 
-## Check code
+## 1. Check documentation
+
+**IMPORTANT:** First check the documentation, UXON annotations and comments. This will help you understand the context and purpose of the code. **STOP** the review if PHPdoc or UXON annotations/examples are missing - ask the author to provide them before you continue the review.
+
+- UXON prototypes must follow [UXON annotation instructions](../instructions/uxon.instructions.md) -> `HIGH`
+- Markdown must follow [documentation instructions](../instructions/documentation.instructions.md) -> `MEDIUM`
+- PHPdoc and other comments in PHP files must follow [PHPdoc conventions](../../Docs/developer_docs/code_conventions/PHP/PHPdoc_and_comments.md) -> `HIGH`
+
+Check these rules in particular:
+
+- Each type of documentation is easy to understand for its target audience -> `HIGH`
+- Information is placed in their right type of docs. For example, comments of widget implementation should not be visible in UXON property docs. Usage manuals for behaviors must be separated from their architectural documentation. -> `MEDIUM`
+- UXON prototypes are documented according to [instructions](../instructions/uxon.instructions.md). Pay special attention to class docs - they must show, how to use the prototype -> `HIGH`
+- Do not allow adding passages not fitting well just because there is no better place. Instead, propose a new file/folder with just few sentences, but in the right location - it will grow quickly if it can be found easily. -> `MEDIUM`
+
+### Mandatory UXON annotation audit
+
+Complete this audit before concluding every review that touches PHP:
+
+- Identify every UXON prototype: any class implementing `iCanBeConvertedToUxon` is one.
+- Make sure, every UXON prototype has at least one example documented on class level.
+- Inspect the complete UXON surface of each affected prototype: every property accepted by `importUxonObject()` MUST be documented and have its own `@uxon-property` and `@uxon-type` annotation. Check required/default annotations where applicable and JSON templates for nested configuration against the [UXON annotation instructions](../instructions/uxon.instructions.md) Check existing properties in touched classes too, not only newly added methods.
+- Verify class-level documentation explains the purpose and use of the prototype for app designers and includes a valid UXON example. 
+- Prefer standard `iCanBeConvertedToUxonTrait` to custom importers and exporters. Custom importers and exporters should only add supplementary behavior, not replace the default mechanisms - otherwise, future development will get much more complicated just because of being different from standard.
+
+## 2. Check code
+
+Now make sure the code fits the intended design, fits platform principles and follows established conventions.
 
 - read existing documentation about the part of the app, that the new code affects.
 - makes sure you understand the structure of existing model components around - objects, widgets, actions, etc.
@@ -97,7 +124,7 @@ For example, our Gantt widget has a tooltip for its bars. The client asked asked
 available in the exception. Propose a logbook if appropriate. -> `SUGGESTION`
 - Pass the workbench logger to 3rd party libraries if possible. If not, wrap their exceptions in our exception classes and log them. -> `SUGGESTION`
 
-### Check security
+## 3. Check security
 
 - Ensure common security best practices are followed. -> `SUGGESTION`
 - Pay special attention to HTTP facades: check if the properly handle headers, check payload and validate data. -> `HIGH`
@@ -105,7 +132,7 @@ available in the exception. Propose a logbook if appropriate. -> `SUGGESTION`
 
 If uncertain, raise a concern via `DISCUSSION`!
 
-### Backwards compatibility
+## 4. Backwards compatibility
 
 Keep backwards compatibility if possible, but do not let existing code block innovations! We have a lot of automatic migration tools.
 
@@ -113,27 +140,27 @@ Keep backwards compatibility if possible, but do not let existing code block inn
 - propose better structures if you see potential simplification
 - point out, where documentation is scarce - even outside of the current change
 
-## Check documentation
-
-**IMPORTANT**
-
-- UXON prototypes must follow [UXON annotation instructions](../instructions/uxon.instructions.md) -> `HIGH`
-- Markdown must follow [documentation instructions](../instructions/documentation.instructions.md) -> `MEDIUM`
-- PHPdoc and other comments in PHP files must follow [PHPdoc conventions](../../Docs/developer_docs/code_conventions/PHP/PHPdoc_and_comments.md) -> `HIGH`
-
-Check these rules in particular:
-
-- Each type of documentation is easy to understand for its target audience -> `HIGH`
-- Information is placed in their right type of docs. For example, comments of widget implementation should not be visible in UXON property docs. Usage manuals for behaviors must be separated from their architectural documentation. -> `MEDIUM`
-- UXON prototypes are documented according to [instructions](../instructions/uxon.instructions.md). Pay special attention to class docs - they must show, how to use the prototype -> `HIGH`
-- Documentation chapters are continuously readable. Avoid unconnected paragraphs. -> `SUGGESTION`
-- Do not allow adding passages not fitting well just because there is no better place. Instead, propose a new file/folder with just few sentences, but in the right location - it will grow quickly if it can be found easily. -> `MEDIUM`
-
-## Check tests
+## 5. Check tests
 
 - no config hard coding -> `HIGH`, instead test must set config option explicitly
 - no translation hard coding -> `HIGH`
 
-### Separate platform and projects
+## 6. Separate platform and projects
 
 **NEVER** allow code or docs of infrastructure apps to contain real project data! Especially not client data! -> `HIGH`
+
+## End the review with a summary
+
+End the review with the following summary. For every item note the result: "not applicable" (with a concrete reason), "blocked" (e.g. if stopped after documentation checks failed), "passed" or "failed" (reasons are the findings in this case).
+
+```markdown
+- Business case(s) documented, change reasons justified: **<outcome>**
+- UXON annotations present and correct: **<outcome>**
+- Comments and PHPdoc present and well formatted: **<outcome>**
+- Markdown docs well structured: **<outcome>**
+- Code structure clear: **<outcome>**
+- Models documented and extensible: **<outcome>**
+- Exception handling follows best practices: **<outcome>**
+- DataType static handlers used: **<outcome>**
+- No project specific information exposed: **<outcome>**
+```
