@@ -65,15 +65,12 @@ trait FileTemplateRendererTrait
     }
 
     /**
-     * Returns the proposed default template roots, pending team decision.
-     *
-     * Restricting file-backed templates to vendor blocks configured absolute paths, traversal, and symlink escapes
-     * from exposing installation secrets while keeping app-owned templates available.
+     * Resolves FILES.UXON_ALLOWED_BASE_PATHS for UXON-configured templates while allowing apps to override this policy.
      *
      * @return string[]
      */
     protected function getAllowedBasePaths() : array
     {
-        return [$this->getWorkbench()->filemanager()->getPathToVendorFolder()];
+        return $this->getWorkbench()->filemanager()->resolveAllowedBasePaths('FILES.UXON_ALLOWED_BASE_PATHS');
     }
 }

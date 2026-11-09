@@ -400,19 +400,15 @@ class Html extends Display
     }
 
     /**
-     * Returns the proposed default HTML file roots, pending team decision.
+     * Resolves FILES.UXON_ALLOWED_BASE_PATHS for file-backed HTML while allowing apps to override this policy.
      *
-     * Vendor retains app-provided HTML templates and data retains installation-owned content without exposing config.
+     * The shared default deliberately excludes data so installation-owned files require an explicit configuration.
      *
      * @return string[]
      */
     protected function getAllowedBasePaths() : array
     {
-        $filemanager = $this->getWorkbench()->filemanager();
-        return [
-            $filemanager->getPathToVendorFolder(),
-            $filemanager->getPathToDataFolder()
-        ];
+        return $this->getWorkbench()->filemanager()->resolveAllowedBasePaths('FILES.UXON_ALLOWED_BASE_PATHS');
     }
     
     /**

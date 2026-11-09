@@ -205,6 +205,66 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
         return $contents;
     }
+
+    /**
+     * Resolves configured read roots without canonicalizing symlinks so the read-time guard can validate their targets.
+     *
+     * Relative entries are anchored to the installation path rather than the process working directory. Entries that
+     * could expose the installation or its configuration are skipped and logged instead of weakening the allowlist.
+     *
+     * @param string $configOption
+     * @return string[]
+     */
+    public function resolveAllowedBasePaths(string $configOption) : array
+    {
+        $configuredPaths = $this->getWorkbench()->getConfig()->getOption($configOption);
+        if ($configuredPaths instanceof UxonObject) {
+            $configuredPaths = $configuredPaths->toArray();
+        }
+
+        $installationPath = FilePathDataType::normalize($this->getPathToBaseFolder(), '/');
+        $configPath = FilePathDataType::normalize($this->getPathToConfigFolder(), '/');
+        if (PHP_OS_FAMILY === 'Windows') {
+            $installationPath = mb_strtolower($installationPath);
+            $configPath = mb_strtolower($configPath);
+        }
+
+        $allowedPaths = [];
+        foreach ((array) $configuredPaths as $configuredPath) {
+            $path = is_string($configuredPath) ? trim($configuredPath) : '';
+            $isStreamWrapper = strpos($path, '://') !== false;
+            if ($path === '' || $isStreamWrapper) {
+                $this->getWorkbench()->getLogger()->warning(
+                    'Ignoring unsafe path entry in configuration option "' . $configOption . '".'
+                );
+                continue;
+            }
+
+            $absolutePath = FilePathDataType::isAbsolute($path)
+                ? $path
+                : FilePathDataType::makeAbsolute($path, $this->getPathToBaseFolder());
+            $comparisonPath = FilePathDataType::normalize($absolutePath, '/');
+            if (PHP_OS_FAMILY === 'Windows') {
+                $comparisonPath = mb_strtolower($comparisonPath);
+            }
+
+            $comparisonPathWithSeparator = rtrim($comparisonPath, '/') . '/';
+            $configPathWithSeparator = rtrim($configPath, '/') . '/';
+            if (
+                $comparisonPath === $installationPath
+                || strpos($configPathWithSeparator, $comparisonPathWithSeparator) === 0
+            ) {
+                $this->getWorkbench()->getLogger()->warning(
+                    'Ignoring unsafe path entry in configuration option "' . $configOption . '".'
+                );
+                continue;
+            }
+
+            $allowedPaths[] = $absolutePath;
+        }
+
+        return $allowedPaths;
+    }
     
     /**
      * Returns the absolute path to the log folder

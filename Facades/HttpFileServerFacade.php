@@ -265,30 +265,17 @@ class HttpFileServerFacade extends AbstractHttpFacade
     }
 
     /**
-     * Returns the proposed default local download roots, pending team decision.
-     *
-     * The cache is always permitted for backward-compatible generated downloads. Additional roots are explicit
-     * configuration entries and relative entries are anchored to the installation instead of the process directory.
+     * Resolves configured download roots through the shared safety rules while always retaining cache downloads.
      *
      * @return string[]
      */
     protected function getAllowedBasePaths() : array
     {
-        $workbench = $this->getWorkbench();
-        $allowedPaths = [$workbench->filemanager()->getPathToCacheFolder()];
-        $configuredPaths = $this->getConfig()->getOption('FACADES.HTTPFILESERVERFACADE.ALLOWED_LOCAL_PATHS');
-        if ($configuredPaths instanceof \exface\Core\CommonLogic\UxonObject) {
-            $configuredPaths = $configuredPaths->toArray();
-        }
-        foreach ((array) $configuredPaths as $configuredPath) {
-            if (! is_string($configuredPath) || $configuredPath === '') {
-                continue;
-            }
-            $allowedPaths[] = FilePathDataType::isAbsolute($configuredPath)
-                ? $configuredPath
-                : FilePathDataType::makeAbsolute($configuredPath, $workbench->getInstallationPath());
-        }
-        return $allowedPaths;
+        $filemanager = $this->getWorkbench()->filemanager();
+        return array_merge(
+            [$filemanager->getPathToCacheFolder()],
+            $filemanager->resolveAllowedBasePaths('FACADES.HTTPFILESERVERFACADE.ALLOWED_LOCAL_PATHS')
+        );
     }
 
     /**

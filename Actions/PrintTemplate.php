@@ -425,15 +425,15 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     }
 
     /**
-     * Returns the proposed default template roots, pending team decision.
+     * Resolves FILES.UXON_ALLOWED_BASE_PATHS for print templates while allowing apps to override this policy.
      *
-     * Vendor is the documented template location and excludes installation config, data, and arbitrary absolute paths.
+     * PrintXLSX inherits this allowlist because it opens its configured workbook through the same template contract.
      *
      * @return string[]
      */
     protected function getAllowedBasePaths() : array
     {
-        return [$this->getWorkbench()->filemanager()->getPathToVendorFolder()];
+        return $this->getWorkbench()->filemanager()->resolveAllowedBasePaths('FILES.UXON_ALLOWED_BASE_PATHS');
     }
     
     /**
