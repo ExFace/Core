@@ -501,7 +501,7 @@
     "WIDGET.GANTT_CHARD.VIEW_MODE_YEAR": "Jahr",
     "WIDGET.GANTT_CHARD.POPUP_CAPTION_DAYS": "Tage",
     "WIDGET.GANTT_CHARD.POPUP_CAPTION_EXCLUDED": "ausgeschlossen",
-    "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "Der angegebene Datenzeitraum liegt vollständig in der Vergangenheit oder Zukunft und enthält das heutige Datum nicht.",
+    "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TEXT": "Das heutige Datum liegt außerhalb des dargestellten Zeitraums. Dieser richtet sich nach dem frühesten Beginn und dem spätesten Ende der geladenen bzw. gefilterten Einträge.",
     "WIDGET.GANTT_CHARD.TODAY_MISSING_POPUP_TITLE": "Der heutige Tag ist nicht enthalten.",
     "WIDGET.GANTT_CHARD.EXCEL.SHEET_TITLE": "Terminübersicht",
     "WIDGET.GANTT_CHARD.EXCEL.GANTT": "Ablauf-Gantt",

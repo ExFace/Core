@@ -231,9 +231,7 @@ Always follow our [PHP](../Docs/developer_docs/code_conventions/PHP/Conventions.
 
 ## Documentation
 
-Most apps will have a `Docs` folder with markdown files. The core 
-documentation has a handy table of contents in `Docs/sitemap.md`, which is a 
-good entry point to look through the docs.
+Most apps will have a `Docs` folder with markdown files.
 
 ## Global rules
 

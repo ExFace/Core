@@ -1,6 +1,6 @@
 ---
-description: "Use when throwing exceptions, writing exception classes and planning error handling"
-name: "Error handling"
+name: "Exception handling and logging"
+description: "Use when throwing exceptions, writing exception classes, planning log output and error handling"
 ---
 
 The workbench uses its own advanced exception classes, that allow to generate very detailed debug widgets for the logs. 
@@ -58,6 +58,17 @@ All debug widgets include
 
 - a general information tab with the description from the message model and a collection of documentation links for further reference 
 - a stack trace tab with a markdown stack trace
+
+## Logbooks
+
+Logbooks are special classes, that help collect logic flow information and decisions and visualize them for app designers.
+Logbooks are easy to use in code and will be automatically converted to markdown and mermaid flow diagrams in the debug 
+widgets. Good examples are [PreventDuplicatesBehavior](../../Behaviors/PreventDuplicatesBehavior.php) or [ActionChain](../../Actions/ActionChain.php). 
+
+Many base components (like actions and behaviors) already support logbooks natively. Many exceptions and events accept 
+logbooks as constructor arguments. Fill logbooks whenever you see existing support. Propose logbook support for 
+components, that don't have it, where understanding internal logic is important for app designers.
+
 ## Log performance
 
 **IMPORTANT:** despite the high complexity of logged information, logging must not affect performance of regular (non-error) requests! 
