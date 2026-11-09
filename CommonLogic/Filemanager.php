@@ -7,9 +7,17 @@ use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Exceptions\Configuration\ConfigOptionNotFoundError;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\Exceptions\FileNotReadableError;
+use RuntimeException;
 
 class Filemanager extends Filesystem implements WorkbenchDependantInterface
 {
+    /**
+     * Keeps repeated configuration errors visible without flooding one request's logs.
+     *
+     * @var \WeakMap|null
+     */
+    private static ?\WeakMap $loggedUnsafeAllowedBasePaths = null;
+
     const FOLDER_NAME_VENDOR = 'vendor';
     
     const FOLDER_NAME_DATA = 'data';
@@ -207,13 +215,15 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
     }
 
     /**
-     * Resolves configured read roots without canonicalizing symlinks so the read-time guard can validate their targets.
+     * Resolves configured read roots without canonicalizing accepted symlinks so the read-time guard can validate their targets.
      *
      * Relative entries are anchored to the installation path rather than the process working directory. Entries that
-     * could expose the installation or its configuration are skipped and logged instead of weakening the allowlist.
+     * could expose the installation or its configuration are rejected both lexically and by their resolved targets,
+     * because the read-time guard canonicalizes paths before opening files.
      *
      * @param string $configOption
      * @return string[]
+     * @throws RuntimeException When the installation or config folder cannot be resolved.
      */
     public function resolveAllowedBasePaths(string $configOption) : array
     {
@@ -222,11 +232,23 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             $configuredPaths = $configuredPaths->toArray();
         }
 
-        $installationPath = FilePathDataType::normalize($this->getPathToBaseFolder(), '/');
-        $configPath = FilePathDataType::normalize($this->getPathToConfigFolder(), '/');
+        $installationPathOriginal = $this->getPathToBaseFolder();
+        $configPathOriginal = $this->getPathToConfigFolder();
+        $realInstallationPath = realpath($installationPathOriginal);
+        $realConfigPath = realpath($configPathOriginal);
+        if ($realInstallationPath === false || $realConfigPath === false) {
+            throw new RuntimeException('Cannot resolve the installation or config folder while validating allowed base paths.');
+        }
+
+        $installationPath = FilePathDataType::normalize($installationPathOriginal, '/');
+        $configPath = FilePathDataType::normalize($configPathOriginal, '/');
+        $realInstallationPath = FilePathDataType::normalize($realInstallationPath, '/');
+        $realConfigPath = FilePathDataType::normalize($realConfigPath, '/');
         if (PHP_OS_FAMILY === 'Windows') {
             $installationPath = mb_strtolower($installationPath);
             $configPath = mb_strtolower($configPath);
+            $realInstallationPath = mb_strtolower($realInstallationPath);
+            $realConfigPath = mb_strtolower($realConfigPath);
         }
 
         $allowedPaths = [];
@@ -234,9 +256,7 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
             $path = is_string($configuredPath) ? trim($configuredPath) : '';
             $isStreamWrapper = strpos($path, '://') !== false;
             if ($path === '' || $isStreamWrapper) {
-                $this->getWorkbench()->getLogger()->warning(
-                    'Ignoring unsafe path entry in configuration option "' . $configOption . '".'
-                );
+                $this->logSkippedAllowedBasePath($configOption, $configuredPath);
                 continue;
             }
 
@@ -248,15 +268,38 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
                 $comparisonPath = mb_strtolower($comparisonPath);
             }
 
-            $comparisonPathWithSeparator = rtrim($comparisonPath, '/') . '/';
-            $configPathWithSeparator = rtrim($configPath, '/') . '/';
-            if (
-                $comparisonPath === $installationPath
-                || strpos($configPathWithSeparator, $comparisonPathWithSeparator) === 0
-            ) {
-                $this->getWorkbench()->getLogger()->warning(
-                    'Ignoring unsafe path entry in configuration option "' . $configOption . '".'
-                );
+            $pathsToCheck = [[
+                'path' => $comparisonPath,
+                'installation' => $installationPath,
+                'config' => $configPath
+            ]];
+            $realPath = realpath($absolutePath);
+            if ($realPath !== false) {
+                $comparisonRealPath = FilePathDataType::normalize($realPath, '/');
+                if (PHP_OS_FAMILY === 'Windows') {
+                    $comparisonRealPath = mb_strtolower($comparisonRealPath);
+                }
+                $pathsToCheck[] = [
+                    'path' => $comparisonRealPath,
+                    'installation' => $realInstallationPath,
+                    'config' => $realConfigPath
+                ];
+            }
+
+            $isUnsafe = false;
+            foreach ($pathsToCheck as $paths) {
+                $pathWithSeparator = rtrim($paths['path'], '/') . '/';
+                $configPathWithSeparator = rtrim($paths['config'], '/') . '/';
+                if (
+                    $paths['path'] === $paths['installation']
+                    || strpos($configPathWithSeparator, $pathWithSeparator) === 0
+                ) {
+                    $isUnsafe = true;
+                    break;
+                }
+            }
+            if ($isUnsafe) {
+                $this->logSkippedAllowedBasePath($configOption, $configuredPath);
                 continue;
             }
 
@@ -264,6 +307,34 @@ class Filemanager extends Filesystem implements WorkbenchDependantInterface
         }
 
         return $allowedPaths;
+    }
+
+    /**
+     * Logs a rejected configured entry once per Workbench so repeated service lookups do not hide or flood admin errors.
+     *
+     * @param string $configOption
+     * @param mixed $configuredPath
+     * @return void
+     */
+    private function logSkippedAllowedBasePath(string $configOption, $configuredPath) : void
+    {
+        if (self::$loggedUnsafeAllowedBasePaths === null) {
+            self::$loggedUnsafeAllowedBasePaths = new \WeakMap();
+        }
+
+        $workbench = $this->getWorkbench();
+        $loggedEntries = self::$loggedUnsafeAllowedBasePaths[$workbench] ?? [];
+        $logKey = $configOption . "\0" . var_export($configuredPath, true);
+        if (isset($loggedEntries[$logKey])) {
+            return;
+        }
+
+        $loggedEntries[$logKey] = true;
+        self::$loggedUnsafeAllowedBasePaths[$workbench] = $loggedEntries;
+        $workbench->getLogger()->error(
+            'Ignoring unsafe path entry ' . var_export($configuredPath, true)
+            . ' in configuration option "' . $configOption . '".'
+        );
     }
     
     /**
