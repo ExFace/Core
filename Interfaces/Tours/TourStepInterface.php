@@ -19,4 +19,11 @@ interface TourStepInterface extends WidgetPartInterface
     public function getSide() : string;
     
     public function getAlign() : string;
+
+    /**
+     * Returns an optional CSS query within the target widget.
+     *
+     * @return string|null
+     */
+    public function getFocusCssQuery() : ?string;
 }

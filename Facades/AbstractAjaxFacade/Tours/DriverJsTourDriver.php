@@ -172,7 +172,7 @@ JS;
             foreach ($steps as $step) {
                 $aStepsJs .= <<<JS
                 {
-                    element: '#{$this->getStepHighlightedElementId($step)}',
+                    element: () => {$this->buildJsStepElementGetter($step)},
                     popover: {
                       title: {$this->escapeString($step->getTitle())},
                       description: {$this->escapeString($step->getBody())},
@@ -259,6 +259,27 @@ JS;
     protected function escapeString($value) : string
     {
         return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Resolves the first CSS match within the target widget, falling back to the widget.
+     *
+     * @param TourStepInterface $step
+     * @return string
+     */
+    public function buildJsStepElementGetter(TourStepInterface $step) : string
+    {
+        $widget = $this->getFocusedWidget($step);
+        if ($widget === null) {
+            return 'null';
+        }
+        $elementJs = $this->getFacade()->getElement($widget)->buildJsDomElementGetter();
+        $query = $step->getFocusCssQuery();
+        if ($query === null) {
+            return $elementJs;
+        }
+        return '((element) => element ? (element.querySelector(' . $this->escapeString($query)
+            . ') || element) : null)(' . $elementJs . ')';
     }
 
     /**

@@ -20,6 +20,10 @@ If you prefer real-world examples, take a look at the administration pages (Admi
 - [Creating an editor-dialog for an object](Forms_and_inputs/Editor-dialogs_for_objects.md)
 - [Inputs with Autosuggest](Forms_and_inputs/Inputs_with_autosuggest.md)
 
+## Guided tours
+
+- [Tours (UI tours)](Tours/index.md) - interactive step-by-step walkthroughs of pages and dialogs
+
 ## Displaying external content
 
 - [Using IFrames](Special_widgets/Browser_widget_(Iframe).md) to integrate external web pages

@@ -53,6 +53,7 @@ abstract class AbstractTourStep implements TourStepInterface
     private ?string $body = "";
     private ?string $side = null;
     private ?string $align = null;
+    private ?string $focusCssQuery = null;
     private $onNextStepFunction = null;
     private $onNextStepFunctionUxon = null;
 
@@ -166,6 +167,33 @@ abstract class AbstractTourStep implements TourStepInterface
             throw new Error("Invalid tour step align value: $align. Allowed values are: start, center, end.");
         }
         $this->align = $align;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see TourStepInterface::getFocusCssQuery()
+     */
+    public function getFocusCssQuery() : ?string
+    {
+        return $this->focusCssQuery;
+    }
+
+    /**
+     * Highlight the first element matching this CSS query inside the target widget.
+     * If no element matches, highlight the target widget itself instead.
+     * Omit this property or leave it empty to highlight the whole widget.
+     * For story steps, set `widget_to_focus` to define the target widget.
+     * Queries depend on the facade's HTML structure; invalid CSS syntax causes a browser error.
+     * @uxon-property focus_css_query
+     * @uxon-type string
+     * @param string $query
+     * @return TourStepInterface
+     */
+    protected function setFocusCssQuery(string $query) : TourStepInterface
+    {
+        $query = trim($query);
+        $this->focusCssQuery = $query === '' ? null : $query;
         return $this;
     }
 
