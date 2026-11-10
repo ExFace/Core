@@ -312,6 +312,7 @@
     "INSTALLER.SQLSCHEMA.NO_UPDATES": "Keine SQL-Schema-Updates gefunden.",
     "LOCALIZATION.LOCALE": "de_DE",
     "LOCALIZATION.DATATYPE.FORMAT_HINT": "Eingabeformate: ",
+    "LOCALIZATION.DATE.FIRST_DAY_OF_WEEK": "MONDAY",
     "LOCALIZATION.DATE.DATE_FORMAT": "dd.MM.yyyy",
     "LOCALIZATION.DATE.DATE_FORMAT_HINT": "übliche Datumsformate (z.B. 31.12.2019), Kurznotation (z.B. 31122019), Kurznotation für aktuelles Jahr (z.B. 3112), relative Angaben (z.B. 0 für heute, +1 für morgen, +1w, +1m, -1d, -1y  etc.)",
     "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
