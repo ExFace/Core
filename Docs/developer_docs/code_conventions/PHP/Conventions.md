@@ -22,7 +22,7 @@ The file/class name suffix "Class" as used with PHP v4 and v5 must not be used: 
 
 ### Constructors and Factories 
 
-"Static factories" should be used for instantiating classes unless the class has a very narrow scope and will only be instantiated in one or two places. Factories should reside in their own namespace (e.g., exface\Core\Factories). Sub-namespaces may be used.
+"Static factories" should be used for instantiating classes unless the class has a very narrow scope and will only be instantiated in one or two places. Factories should reside in their own namespace (e.g., `my\App\Factories`). Sub-namespaces may be used. Each factory class MUST end with `Factory` to make them easily searchable.
 
 If public `__construct()` methods are needed in classes with factories, these methods should be marked as @deprecated with a reference to the factory.
 
@@ -78,6 +78,10 @@ This allows to change the internal logic of a class at any time without refactor
 ### Method names
 
 Use well readable method names, that clearly show the purpose of the method. 
+
+**IMPORTANT:**
+
+- start the method name with a verb, that describes the action performed by the method.
 
 #### `get`, `set`, `is`, `has`, `will`, methods
 

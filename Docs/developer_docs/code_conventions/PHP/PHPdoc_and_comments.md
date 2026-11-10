@@ -18,14 +18,13 @@ A description is required for the following entities:
 
 - Interface
 - Class
-- Public method
-
-Descriptions are recommended, but not strictly required, for the following entities:
-
-- Protected method
-- Private method
+- Method (unless it is really trivial)
 
 Description must show the intention behind the method, object or interface. Include responsibilities, rules for extending, and any other information that is not obvious from the code itself.
+
+### Interface annotations
+
+The class-level docblock of an interface must explain the responsibilities of classes implementing this interface - the role and meaning of the interface for the application.
 
 ### Class annotations
 
