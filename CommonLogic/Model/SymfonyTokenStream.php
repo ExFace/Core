@@ -185,7 +185,9 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
             $name = $token['name'] ?? null;
             if ($name !== null && $name !== $this->getFormulaName()) {
                 
-                if (mb_strtoupper($name) === 'TRUE' || mb_strtoupper($name) === 'FALSE') {
+                //true, false or null are explicitly treated as arguments and not as possible attributes in a formula
+                //TODO maybe implement a check for attribute alias that they do not conflict with reserved keywords like TRUE, FALSE, NULL
+                if (mb_strtoupper($name) === 'TRUE' || mb_strtoupper($name) === 'FALSE' || mb_strtoupper($name) === 'NULL') {
                     $args[] = $name;
                     continue;
                 }
