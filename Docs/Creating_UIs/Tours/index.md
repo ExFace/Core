@@ -186,6 +186,8 @@ Inside `on_next_step`, rename `function` to `widget_function` as well.
 | `autostart_tour_id` | Id of a tour to start automatically once the corresponding view is loaded |
 | `skip_if_standalone` | Boolean, default `false`. Skips this step's entire action (`widget_function` and `autostart_tour_id`) when the tour is started from its menu |
 
+`browser_click` simulates the mouse-down and mouse-up events as well as the click, so UI5 buttons recognize the interaction. A right click uses the right mouse button and ends with `contextmenu`, without a left click. A double click sends two left-click sequences followed by `dblclick`. Disabled controls are not activated. These are synthetic events, not trusted user input.
+
 ### Example: clicking a CSS-targeted element
 
 `widget_function` needs a widget. A step that highlights a part of a widget via `focus_css_query` has only a DOM element, so use `browser_click`:
@@ -263,6 +265,8 @@ Set `"hide_in_menu": true` on a tour to hide its entry from manual selection, fo
 ```
 
 The tour remains available through `autostart_tour_id`, its URL parameter and `autorun`. The default is `false`, so existing tours remain visible. If all tours on a widget are hidden, no tour menu button is shown; automatic starts still work.
+
+In UI5 lookup dialogs (`DataLookupDialog`), visible tour menus are added separately to the standard footer toolbar, between the left and right button groups, matching the order in other dialogs. Normal buttons remain in the dialog's `buttons` aggregation and are available through `getButtons()`. The automatically generated table and header filters remain unchanged.
 
 ## Starting tours automatically
 

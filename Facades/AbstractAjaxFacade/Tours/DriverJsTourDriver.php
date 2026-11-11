@@ -272,14 +272,32 @@ JS;
      */
     protected function buildJsBrowserClick(string $browserClick) : string
     {
-        switch ($browserClick) {
-            case 'right_click':
-                return "element.dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true, view: window, button: 2}));";
-            case 'double_click':
-                return "element.dispatchEvent(new MouseEvent('dblclick', {bubbles: true, cancelable: true, view: window, detail: 2}));";
-            default:
-                return "element.click();";
-        }
+        // Events in the same order a real browser fires them.
+        // UI5 needs mouse-down and mouse-up to recognize a button press.
+        $leftClick = ['mousedown', 'mouseup', 'click'];
+        $events = [
+            'left_click' => $leftClick,
+            'right_click' => ['mousedown', 'mouseup', 'contextmenu'],
+            'double_click' => array_merge($leftClick, $leftClick, ['dblclick'])
+        ][$browserClick];
+        $eventsJs = json_encode($events);
+        $button = $browserClick === 'right_click' ? 2 : 0;
+        $buttons = $browserClick === 'right_click' ? 2 : 1;
+
+        return <<<JS
+                  if (!element.matches(':disabled')) {
+                      var iClick = 0;
+                      {$eventsJs}.forEach(function(sType) {
+                          // Every mouse-down starts a new click: detail is the click count.
+                          if (sType === 'mousedown') iClick++;
+                          element.dispatchEvent(new MouseEvent(sType, {
+                              bubbles: true, cancelable: true, view: window,
+                              button: {$button}, buttons: sType === 'mousedown' ? {$buttons} : 0,
+                              detail: iClick
+                          }));
+                      });
+                  }
+JS;
     }
 
     /**

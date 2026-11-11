@@ -40,9 +40,9 @@ class TourBrowserClickTest extends TestCase
     public function testGeneratesEventPerClickType() : void
     {
         $expected = [
-            'left_click' => 'element.click();',
-            'right_click' => "new MouseEvent('contextmenu'",
-            'double_click' => "new MouseEvent('dblclick'"
+            'left_click' => '["mousedown","mouseup","click"]',
+            'right_click' => '["mousedown","mouseup","contextmenu"]',
+            'double_click' => '"click","dblclick"]'
         ];
         foreach ($expected as $type => $needle) {
             $js = $this->buildJs(['browser_click' => $type]);
@@ -55,7 +55,7 @@ class TourBrowserClickTest extends TestCase
     public function testBrowserClickWinsOverWidgetFunction() : void
     {
         $js = $this->buildJs(['browser_click' => 'left_click', 'widget_function' => 'press']);
-        self::assertStringContainsString('element.click();', $js);
+        self::assertStringContainsString('["mousedown","mouseup","click"]', $js);
         self::assertStringNotContainsString('widgetFunction();', $js);
     }
 
@@ -63,14 +63,53 @@ class TourBrowserClickTest extends TestCase
     {
         $js = $this->buildJs(['browser_click' => 'left_click', 'autostart_tour_id' => 'next']);
         self::assertStringContainsString('targetTourId: "next"', $js);
-        self::assertLessThan(strpos($js, 'element.click();'), strpos($js, 'setPendingTour('));
+        self::assertLessThan(strpos($js, 'new MouseEvent(sType,'), strpos($js, 'setPendingTour('));
     }
 
     public function testSkippedInStandaloneRun() : void
     {
         $js = $this->buildJs(['browser_click' => 'left_click', 'skip_if_standalone' => true], true);
         self::assertStringNotContainsString('onNextClick:', $js);
-        self::assertStringNotContainsString('element.click();', $js);
+        self::assertStringNotContainsString('new MouseEvent(', $js);
+    }
+
+    /**
+     * A normal click includes the mouse-down/up pair and fires only one click sequence.
+     */
+    public function testLeftClickIncludesMouseSequence() : void
+    {
+        $js = $this->buildJs(['browser_click' => 'left_click']);
+
+        self::assertStringContainsString("if (!element.matches(':disabled'))", $js);
+        self::assertStringContainsString('["mousedown","mouseup","click"].forEach', $js);
+        self::assertStringContainsString("button: 0, buttons: sType === 'mousedown' ? 1 : 0", $js);
+        self::assertStringContainsString("if (sType === 'mousedown') iClick++;", $js);
+        self::assertStringNotContainsString('dblclick', $js);
+    }
+
+    /**
+     * Right clicks use the right mouse button without triggering a normal button action.
+     */
+    public function testRightClickDoesNotGenerateLeftClick() : void
+    {
+        $js = $this->buildJs(['browser_click' => 'right_click']);
+
+        self::assertStringContainsString('["mousedown","mouseup","contextmenu"].forEach', $js);
+        self::assertStringContainsString("button: 2, buttons: sType === 'mousedown' ? 2 : 0", $js);
+        self::assertStringNotContainsString('"click"', $js);
+        self::assertStringNotContainsString('dblclick', $js);
+    }
+
+    /**
+     * Double clicks emit two complete left-click sequences before the double-click event.
+     */
+    public function testDoubleClickIncludesBothClickSequences() : void
+    {
+        $js = $this->buildJs(['browser_click' => 'double_click']);
+
+        self::assertStringContainsString('["mousedown","mouseup","click","mousedown","mouseup","click","dblclick"].forEach', $js);
+        self::assertStringContainsString("button: 0, buttons: sType === 'mousedown' ? 1 : 0", $js);
+        self::assertLessThan(strpos($js, 'driver.moveNext()'), strpos($js, 'dblclick'));
     }
 
     private function buildJs(array $onNextStep, bool $standalone = false) : string
