@@ -7,7 +7,7 @@ Tours guide users step by step through a page or dialog: a popover with a title 
 - [Tour guide (`tour_guide`)](#tour-guide-tour_guide)
 - [Tour (`tours`)](#tour-tours)
 - [Steps](#steps)
-- [Action on "Next" (`on_next_step_function`)](#action-on-next-on_next_step_function)
+- [Action on "Next" (`on_next_step`)](#action-on-next-on_next_step)
 - [Starting tours automatically](#starting-tours-automatically)
 - [Architecture for developers](#architecture-for-developers)
 
@@ -77,13 +77,14 @@ If `tour_guide` is defined on a widget that is located **inside** a dialog, its 
 |----------|------|---------|-------------|
 | `title` | string (translatable, required) | - | Title in the tour menu |
 | `description` | string (translatable) | - | Description. Currently not shown in the UI because the dropdown cannot display descriptions |
-| `id` | string | - | Tour id. Required to start the tour via `on_next_step_function.autostart_tour_id` or a URL parameter |
+| `id` | string | - | Tour id. Required to start the tour via `on_next_step.autostart_tour_id` or a URL parameter |
 | `icon` | string | - | Icon in the tour menu |
 | `steps` | story steps[] | - | Ordered steps (see below) |
 | `waypoints_route` | string | `~all` | Which waypoints the tour visits |
 | `show_progress` | boolean | `true` | Shows the current step number and total in the popover |
 | `disable_active_interaction` | boolean | `false` | Prevents clicks on the highlighted element while the tour is active. The tour can still be closed by clicking outside |
 | `autorun` | boolean | `false` | Starts the tour automatically when the view is loaded |
+| `hide_in_menu` | boolean | `false` | Hides the tour from manual selection. Automatic continuations, URL starts and `autorun` are unaffected |
 
 ### Waypoint route
 
@@ -106,7 +107,7 @@ Both step types share these properties (`AbstractTourStep`):
 | `side` | `top`, `right`, `bottom`, `left` | `bottom` | Side of the popover relative to the highlighted element |
 | `align` | `start`, `center`, `end` | `start` | Alignment of the popover relative to the element |
 | `focus_css_query` | string | - | CSS query within the target widget. Highlights the first match; without a match, highlights the widget itself |
-| `on_next_step_function` | object | - | Action when the user clicks "Next" |
+| `on_next_step` | object | - | Action when the user clicks "Next" |
 
 Invalid values for `side` and `align` cause an error.
 
@@ -133,7 +134,7 @@ The query is evaluated when the step is displayed, inside the widget's DOM eleme
 
 The query does not search the whole document. A story step without `widget_to_focus` remains a centered popover, even if a query is configured. For waypoint steps, the query is relative to the step's own widget (or its input for filters).
 
-Selectors depend on the facade's HTML structure. Hidden or virtualized rows must already be visible and rendered to be highlighted; a CSS query does not load data, expand headers or scroll to an unrendered row. `on_next_step_function` still calls a function on the linked widget, not on the element found by CSS.
+Selectors depend on the facade's HTML structure. Hidden or virtualized rows must already be visible and rendered to be highlighted; a CSS query does not load data, expand headers or scroll to an unrendered row. `on_next_step` still calls a function on the linked widget, not on the element found by CSS.
 
 ### Story steps (`steps` in the tour)
 
@@ -173,27 +174,83 @@ Every widget can have `tour_steps`. The **widget itself** is highlighted (for a 
 ]
 ```
 
-## Action on "Next" (`on_next_step_function`)
+## Action on "Next" (`on_next_step`)
+
+Rename `on_next_step_function` to `on_next_step` in existing tour configurations; the old property name is no longer supported.
+Inside `on_next_step`, rename `function` to `widget_function` as well.
 
 | Property | Description |
 |----------|-------------|
-| `function` | Name of the widget function to call on the highlighted widget (e.g. `press`). An argument list in parentheses is stripped |
+| `widget_function` | Name of the widget function to call on the highlighted widget (e.g. `press`). An argument list in parentheses is stripped |
 | `autostart_tour_id` | Id of a tour to start automatically once the corresponding view is loaded |
+| `skip_if_standalone` | Boolean, default `false`. Skips this step's entire action (`widget_function` and `autostart_tour_id`) when the tour is started from its menu |
 
 ### Example: continuing a tour inside a dialog
 
-1. The last step of the first tour highlights a button that opens the dialog and has `"function": "press"`.
+1. The last step of the first tour highlights a button that opens the dialog and has `"widget_function": "press"`.
 2. The dialog defines a `tour_guide` with a tour that has an `id` (e.g. `"dialog_tour"`).
 3. The step from 1. gets `"autostart_tour_id": "dialog_tour"`.
 
 ```json
-"on_next_step_function": {
-    "function": "press",
+"on_next_step": {
+    "widget_function": "press",
     "autostart_tour_id": "dialog_tour"
 }
 ```
 
 When the user clicks "Next", the dialog opens and the dialog tour starts automatically. The pending tour intent expires after 60 seconds.
+
+Steps with `autostart_tour_id` keep the translated "Next" button label even at the end of a tour, because the walkthrough continues with another tour. Without a continuation, the last step uses the translated "Done" label.
+
+### Offering a partial tour separately
+
+Set `"skip_if_standalone": true` inside a step's `on_next_step` to skip that action when the user starts the tour from its menu. This lets a partial tour stand on its own while keeping its continuation in a longer walkthrough:
+
+```json
+{
+    "title": "Recalculate progress history",
+    "id": "progress_history",
+    "steps": [
+        {
+            "title": "Close",
+            "widget_to_focus": "Dialog_Schliessen",
+            "on_next_step": {
+                "skip_if_standalone": true,
+                "widget_function": "press",
+                "autostart_tour_id": "sections"
+            }
+        }
+    ]
+}
+```
+
+Starting this tour from its menu ends at "Done": neither the close button nor the `sections` tour is triggered, so the dialog stays open. If another tour starts `progress_history` via `autostart_tour_id`, its final button says "Next", closes the dialog and continues to `sections`. No duplicate steps are needed.
+
+The flag applies to the whole action, regardless of the widget function, step position or presence of `autostart_tour_id`. The step itself remains visible; only its action is skipped. Unmarked actions in the same tour still execute, including their follow-up tours. On the final step, a skipped continuation uses "Done" rather than "Next".
+
+The default is `false`, preserving existing behavior. URL starts and `autorun` continue to follow `autostart_tour_id`. A new menu start discards any pending continuation from a previous walkthrough; its mode does not affect later runs.
+
+The former tour-level property `standalone_on_manual_start` is no longer supported. Remove it and add `skip_if_standalone` to each `on_next_step` action that should be skipped during a menu start.
+
+### Hiding a tour from the menu
+
+Set `"hide_in_menu": true` on a tour to hide its entry from manual selection, for example when it is only intended as a continuation of another tour:
+
+```json
+{
+    "title": "Dialog details",
+    "id": "dialog_tour",
+    "hide_in_menu": true,
+    "steps": [
+        {
+            "title": "Dialog",
+            "body": "This part of the walkthrough explains the dialog."
+        }
+    ]
+}
+```
+
+The tour remains available through `autostart_tour_id`, its URL parameter and `autorun`. The default is `false`, so existing tours remain visible. If all tours on a widget are hidden, no tour menu button is shown; automatic starts still work.
 
 ## Starting tours automatically
 
@@ -215,7 +272,7 @@ classDiagram
     TourStepInterface <|.. AbstractTourStep
     AbstractTourStep <|-- TourStoryStep
     AbstractTourStep <|-- TourWaypointStep
-    AbstractTourStep --> TourOnNextStepFunction
+    AbstractTourStep --> TourOnNextStep
     TourableFacadeInterface --> TourDriverInterface
     TourDriverInterface <|.. DriverJsTourDriver
 ```
@@ -230,7 +287,7 @@ classDiagram
 | `Interfaces\Tours\TourStepInterface`, `AbstractTourStep` | Common step properties (title, body, side, align, next-step function) |
 | `TourStoryStep` | Ordered step with `widget_to_focus` (widget link) |
 | `TourWaypointStep` | Step defined on a widget (`WidgetInterface::getTourSteps()`, property `tour_steps` in `AbstractWidget`) with `waypoints` |
-| `TourOnNextStepFunction` | Configuration of `function` and `autostart_tour_id` |
+| `TourOnNextStep` | Configuration of `widget_function` and `autostart_tour_id` |
 
 ### Rendering side (facades)
 
@@ -244,9 +301,11 @@ classDiagram
 ### Flow in the UI5 facade
 
 1. `UI5AbstractElement` registers the `tour_steps` of every widget as waypoint steps at the driver when the element is created.
-2. `UI5Container`, `UI5Dashboard`, `UI5Dialog` and `UI5DataElementTrait` add the menu to their toolbars via `buildJsTourGuideDropdown()`.
+2. `UI5Container`, `UI5Dashboard`, `UI5Dialog` and `UI5DataElementTrait` add the menu to their toolbars via `buildJsTourGuideDropdown()`. This shared integration initializes `window.exfTourContext` when the controller is initialized, including pages without data widgets.
 3. Clicking a menu item makes the driver generate the JS (`driver.js.driver({...}).drive()`).
-4. With `autostart_tour_id` the driver calls `window.exfTourContext.setPendingTour()`; the target view consumes the intent via `consumePendingTour()` and starts the tour after 500 ms.
+4. With `autostart_tour_id` the driver calls `window.exfTourContext.setPendingTour()` before invoking the widget function, so even a synchronously opened dialog can find the intent. The target view consumes the intent via `consumePendingTour()` and starts the tour after 500 ms.
+
+Closing a popup dialog also notifies visible tour hosts to check for a pending tour. This allows a dialog's last step to close the dialog and continue with a tour on the underlying page. This check does not repeat the page's view lifecycle, reload data, process URL triggers or restart unconditional `autorun` tours. Listeners are removed when their view is destroyed; hidden or closed tour hosts do not consume pending intents.
 
 DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. Explicit links to individual column or filter widgets still target those elements. Column and row references within a widget link are not yet used to select tour targets.
 
@@ -258,4 +317,4 @@ To support another tour library, implement a new `TourDriverInterface` and add i
 
 - The tour `description` is currently not displayed.
 - `position_in_tour` will be removed in the future.
-- `on_next_step_function` on steps whose widget lives in another view may fail because of a missing controller; the error is currently caught and logged via `console.warn`.
+- `on_next_step` on steps whose widget lives in another view may fail because of a missing controller; the error is currently caught and logged via `console.warn`.

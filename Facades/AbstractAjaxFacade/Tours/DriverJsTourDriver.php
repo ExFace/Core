@@ -152,9 +152,10 @@ class DriverJsTourDriver implements TourDriverInterface
      * based on the steps of the given tour.
      * 
      * @param TourInterface $tour
+     * @param bool $isStandalone True for a manual menu start; skips actions marked skip_if_standalone.
      * @return string
      */
-    public function buildJsStartTour(TourInterface $tour) : string
+    public function buildJsStartTour(TourInterface $tour, bool $isStandalone = false) : string
     {
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $aStepsJs = '';
@@ -170,6 +171,12 @@ class DriverJsTourDriver implements TourDriverInterface
 JS;
         } else {
             foreach ($steps as $step) {
+                // A step that continues with another tour is not the end of the user's walkthrough.
+                // Skipped actions do not continue, so their final button keeps the "Done" label.
+                $onNextStep = $step->getOnNextStep();
+                $doneBtnTextJs = !($isStandalone && $onNextStep->getSkipIfStandalone()) && $onNextStep->getAutostartTourId()
+                    ? 'doneBtnText: ' . $this->escapeString($translator->translate('TOUR.STEP.ACTION.NEXT')) . ','
+                    : '';
                 $aStepsJs .= <<<JS
                 {
                     element: () => {$this->buildJsStepElementGetter($step)},
@@ -178,7 +185,8 @@ JS;
                       description: {$this->escapeString($step->getBody())},
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
-                      {$this->buildJsOnNextClick($step)}
+                      {$doneBtnTextJs}
+                      {$this->buildJsOnNextClick($step, $isStandalone)}
                     }
                 },
 JS;
@@ -209,12 +217,17 @@ JS;
      * which will be executed when the user clicks the "Next" button in the popover of that step.
      * 
      * @param TourStepInterface $step
+     * @param bool $isStandalone True for a manual menu start.
      * @return string
      */
-    protected function buildJsOnNextClick(TourStepInterface $step) :string
+    protected function buildJsOnNextClick(TourStepInterface $step, bool $isStandalone = false) :string
     {
-        $onNextStepFunction = $step->getOnNextStepFunction();
-        if (($functionName = $onNextStepFunction->getFunctionName()) === null) {
+        $onNextStep = $step->getOnNextStep();
+        // Skip the entire action, not the step: the default handler still advances or ends the tour.
+        if ($isStandalone && $onNextStep->getSkipIfStandalone()) {
+            return '';
+        }
+        if (($functionName = $onNextStep->getWidgetFunction()) === null) {
             return '';
         }
         
@@ -231,9 +244,9 @@ JS;
             $callFunctionJs = 'console.warn(' . $this->escapeString($e->getMessage()) . ');';
         }
         
-        //set the tour of that step to pending, so it will autostart if the view with that tour is loaded:
+        // Register the intent before calling the widget: a cached dialog may open synchronously.
         $pendingDialogTourJs = '';
-        $autostartTourId = $onNextStepFunction->getAutostartTourId();
+        $autostartTourId = $onNextStep->getAutostartTourId();
         
         if ($autostartTourId) {
             $pendingDialogTourJs = <<<JS
@@ -247,9 +260,9 @@ JS;
 
           onNextClick: (element, step, { driver }) => {
               if (element) {
-                  {$callFunctionJs}
-                
                   {$pendingDialogTourJs}
+
+                  {$callFunctionJs}
               }
               driver.moveNext();
           }

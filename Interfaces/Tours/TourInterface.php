@@ -8,6 +8,13 @@ interface TourInterface
     public function getDescription() : string;
 
     /**
+     * Whether this tour is hidden from the menu for manual selection.
+     *
+     * @return bool
+     */
+    public function getHideInMenu() : bool;
+
+    /**
      * @return TourStepInterface[]
      */
     public function getSteps(TourDriverInterface $driver) : array;

@@ -26,9 +26,8 @@ use exface\Core\Interfaces\WidgetInterface;
  *          "body": "This text will appear in the popover when the step is active.",
  *          "side": "bottom",
  *          "align": "center",
- *          "$click_on_next_step": true
- *          "$on_next_step": {
- *              "function": "press",
+ *          "on_next_step": {
+ *              "widget_function": "press",
  *              "autostart_tour_id" : "news"
  *          }
  *     },
@@ -54,8 +53,8 @@ abstract class AbstractTourStep implements TourStepInterface
     private ?string $side = null;
     private ?string $align = null;
     private ?string $focusCssQuery = null;
-    private $onNextStepFunction = null;
-    private $onNextStepFunctionUxon = null;
+    private $onNextStep = null;
+    private $onNextStepUxon = null;
 
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
@@ -198,30 +197,30 @@ abstract class AbstractTourStep implements TourStepInterface
     }
 
     /**
-     * @return TourOnNextStepFunction
+     * @return TourOnNextStep
      */
-    public function getOnNextStepFunction() : TourOnNextStepFunction
+    public function getOnNextStep() : TourOnNextStep
     {
-        if ($this->onNextStepFunction === null) {
-            $this->onNextStepFunction = new TourOnNextStepFunction($this, $this->onNextStepFunctionUxon);
+        if ($this->onNextStep === null) {
+            $this->onNextStep = new TourOnNextStep($this, $this->onNextStepUxon);
         }
-        return $this->onNextStepFunction;
+        return $this->onNextStep;
     }
 
     /**
      * It defines a function that will be executed when the user clicks on the "next" button in the popover of this step.
      * 
-     * @uxon-property on_next_step_function
-     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourOnNextStepFunction
-     * @uxon-template {"function": "press"}
+     * @uxon-property on_next_step
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourOnNextStep
+     * @uxon-template {"widget_function": "press"}
      * 
-     * @param UxonObject $onNextStepFunctionUxon
+     * @param UxonObject $onNextStepUxon
      * @return TourStepInterface
      */
-    protected function setOnNextStepFunction(UxonObject $onNextStepFunctionUxon) : TourStepInterface
+    protected function setOnNextStep(UxonObject $onNextStepUxon) : TourStepInterface
     {
-        $this->onNextStepFunctionUxon = $onNextStepFunctionUxon;
-        $this->onNextStepFunction = null;
+        $this->onNextStepUxon = $onNextStepUxon;
+        $this->onNextStep = null;
         return $this;
     }
 }
