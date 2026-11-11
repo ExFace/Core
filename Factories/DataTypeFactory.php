@@ -128,6 +128,10 @@ abstract class DataTypeFactory extends AbstractSelectableComponentFactory
         $selector = new DataTypeSelector($workbench, $alias);
         $type = static::create($selector);
         try {
+            // Copy data type to avoid modifying the prototype base config of the prototype. `App::get()` will return
+            // cached instances of previously requested prototypes. Not quite sure, if this is the right place to
+            // to fix this problem. 
+            $type = $type->copy();
             $type->importUxonObject($uxon);
         } catch (\Throwable $e) {
             if (! $e instanceof DataTypeExceptionInterface) {
