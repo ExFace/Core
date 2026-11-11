@@ -182,8 +182,20 @@ Inside `on_next_step`, rename `function` to `widget_function` as well.
 | Property | Description |
 |----------|-------------|
 | `widget_function` | Name of the widget function to call on the highlighted widget (e.g. `press`). An argument list in parentheses is stripped |
+| `browser_click` | `left_click`, `right_click` or `double_click`. Fires that mouse event on the highlighted DOM element instead of calling a widget function. Wins over `widget_function` if both are set |
 | `autostart_tour_id` | Id of a tour to start automatically once the corresponding view is loaded |
 | `skip_if_standalone` | Boolean, default `false`. Skips this step's entire action (`widget_function` and `autostart_tour_id`) when the tour is started from its menu |
+
+### Example: clicking a CSS-targeted element
+
+`widget_function` needs a widget. A step that highlights a part of a widget via `focus_css_query` has only a DOM element, so use `browser_click`:
+
+```json
+"focus_css_query": ".myToolbarButton",
+"on_next_step": {
+    "browser_click": "left_click"
+}
+```
 
 ### Example: continuing a tour inside a dialog
 

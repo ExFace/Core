@@ -227,24 +227,19 @@ JS;
         if ($isStandalone && $onNextStep->getSkipIfStandalone()) {
             return '';
         }
-        if (($functionName = $onNextStep->getWidgetFunction()) === null) {
+        $browserClick = $onNextStep->getBrowserClick();
+        $functionName = $onNextStep->getWidgetFunction();
+        if ($browserClick === null && $functionName === null) {
             return '';
         }
         
-        $focusedWidget = $this->getFocusedWidget($step);
-        
-        //function call:
-        try {
-            //TODO: If this is in a dialog, it currently gets one step from the called page and tries to click on it.
-            // At this case the controller of the called page is not found and we getting an error here.
-            // The Quick fix is to catch the missing controller error.
-            // A propper Fix must be implemented! For that, start at the point where the "registerWaypointStep()" is called.
-            $callFunctionJs = $this->getFacade()?->getElement($focusedWidget)?->buildJsCallFunction($functionName);
-        } catch (\Exception $e) {
-            $callFunctionJs = 'console.warn(' . $this->escapeString($e->getMessage()) . ');';
+        if ($browserClick !== null) {
+            $callFunctionJs = $this->buildJsBrowserClick($browserClick);
+        } else {
+            $callFunctionJs = $this->buildJsWidgetFunctionCall($step, $functionName);
         }
         
-        // Register the intent before calling the widget: a cached dialog may open synchronously.
+        // Register the intent before acting: a cached dialog may open synchronously.
         $pendingDialogTourJs = '';
         $autostartTourId = $onNextStep->getAutostartTourId();
         
@@ -267,6 +262,48 @@ JS;
               driver.moveNext();
           }
 JS;
+    }
+
+    /**
+     * Builds JS dispatching the mouse event(s) on the highlighted `element` variable.
+     *
+     * @param string $browserClick
+     * @return string
+     */
+    protected function buildJsBrowserClick(string $browserClick) : string
+    {
+        switch ($browserClick) {
+            case 'right_click':
+                return "element.dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true, view: window, button: 2}));";
+            case 'double_click':
+                return "element.dispatchEvent(new MouseEvent('dblclick', {bubbles: true, cancelable: true, view: window, detail: 2}));";
+            default:
+                return "element.click();";
+        }
+    }
+
+    /**
+     * Builds JS calling the given function on the focused widget.
+     *
+     * @param TourStepInterface $step
+     * @param string $functionName
+     * @return string
+     */
+    protected function buildJsWidgetFunctionCall(TourStepInterface $step, string $functionName) : string
+    {
+        $focusedWidget = $this->getFocusedWidget($step);
+        
+        try {
+            //TODO: If this is in a dialog, it currently gets one step from the called page and tries to click on it.
+            // At this case the controller of the called page is not found and we getting an error here.
+            // The Quick fix is to catch the missing controller error.
+            // A propper Fix must be implemented! For that, start at the point where the "registerWaypointStep()" is called.
+            $callFunctionJs = $this->getFacade()?->getElement($focusedWidget)?->buildJsCallFunction($functionName);
+        } catch (\Exception $e) {
+            $callFunctionJs = 'console.warn(' . $this->escapeString($e->getMessage()) . ');';
+        }
+        
+        return (string) $callFunctionJs;
     }
     
     protected function escapeString($value) : string
