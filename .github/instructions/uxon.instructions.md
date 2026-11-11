@@ -33,6 +33,9 @@ the designers in the UXON editor autosuggest and quick refs, in debug widgets an
 Remember: UXON annotations are written primarily for app designers. They must be well understandable without PHP 
 knowledge and focus on the UXON structures, not on code.
 
+Here are some good examples of well-annotated UXON prototypes:
+- [UnionBehavior](../../Behaviors/UnionBehavior.php)
+
 ### Global UXON annotation rules
 
 All classes implementing `\exface\Core\Interfaces\iCanBeConvertedToUxon` support UXON annotations. They can be placed
