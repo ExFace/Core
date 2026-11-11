@@ -48,6 +48,8 @@ UXON Docblocks must adhere to the following rules:
 - Provide detailed instructions between the first line and the first `@` annotation - this is the documentation.
 - Use markdown
 - Use examples in markdown code blocks to illustrate usage
+- Place `@uxon-` annotations in a block separated with a single empty line from  the description on top and from the
+regular PHPdoc annotations below.
 - Do **not** include technical implementation details - they are not relevant for app designers. If really needed, they
   can follow after the `@uxon-` tags in a separate comment section.
   
@@ -98,7 +100,7 @@ property in the UXON editor
 - `@uxon-translatable true` - true if this property is translatable
 - `@uxon-placeholder <placeholder>` - for every `[#placeholders#]` if the property value allows placeholders. Use multiple annotations for multiple placeholders.
 
-### UXON examples
+### How to write good UXON examples
 
 It is good practice to include examples of UXON configurations, especially if you need to explain specific setups.
 
@@ -108,7 +110,9 @@ Follow these rules to make the examples easy to read in IDEs, the UXON editor an
 - Surround the fences with padding lines: add a line containing a single ` ` space directly above the opening fence and
   above+below closing fence. These lines must not be truly empty - they must contain exactly one space.
 - Do not use truly empty lines anywhere inside the code-block - always leave a single ` ` space.
-- Collapse child UXON objects with only one or two short properties to a single line
+- Collapse child UXON objects with only one or two short properties to a single line. Only for child-object, not on top
+level! Also don't collapse object, that would cause very long lines. The goal is to make the examples easy to overview
+and understand at first glance.
 - Place each property of bigger UXON objects on separate lines
 - Place scalar properties of a UXON object first - before any array or object properties. This makes it easier to read the configuration and find the relevant properties.
 
@@ -132,16 +136,17 @@ Good example:
         {
             "caption": "Open", 
             "bind_to_double_click": true,
-            "action": {
-                "alias": "exface.Core.ShowObjectEditDialog"
-            }
+            "action": {"alias": "exface.Core.ShowObjectEditDialog"}
         }
     ]
 }
  
 ```
 
-### Inheritance and Overrides
+Top-level UXON uses one line per property. Filter and columns include only very simple child-objects, so they are
+collapsed to single lines to save some space. The button is a more complex child-object, so it is expanded. 
+
+### Inheritance and overrides
 
 Our documentation renderer supports inheritance only partially: class docblocks and overridden method summaries are NOT rendered in the editor. Documentation therefore has to be duplicated onto every subclass, and that duplication has to be kept in sync by hand.
 
