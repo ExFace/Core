@@ -30,6 +30,10 @@ use Monolog\Handler\ErrorLogHandler;
  * Additionally, the `$passthroughLevel` allows to log messages starting with this level regularly
  * without triggering the total dump.
  * 
+ * The accumulated messages are limited to `$bufferSize` records: if more arrive, the oldest are dropped.
+ * Buffered records keep their log entries (incl. senders like data sheets) in memory, so an unlimited
+ * buffer makes long-running requests (e.g. installers) run out of memory.
+ * 
  * @author andrej.kabachnik
  *
  */
@@ -56,6 +60,8 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
     
     private string $passthroughLevel;
     
+    private int $bufferSize;
+    
     /** @var ?Logger $monolog */
     private ?Logger $monolog = null;
     
@@ -72,6 +78,7 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
      * @param string             $ignoreBelowLevel completely ignore messages below this level
      * @param string             $persistAllAfterLevel dump all accumulated messages when a message with at least this level is received
      * @param string             $passthroughLevel log messages with this level or above regularly (only them, not the accumulated ones)
+     * @param int                $bufferSize max. number of accumulated messages, older ones are dropped - `0` for unlimited
      */
     public function __construct(
         WorkbenchInterface $workbench,
@@ -80,9 +87,14 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
         ?string $debugMsgDirPath = null,
         string $ignoreBelowLevel = LoggerInterface::DEBUG,
         string $persistAllAfterLevel = LoggerInterface::ALERT,
-        string $passthroughLevel = LoggerInterface::ERROR
+        string $passthroughLevel = LoggerInterface::ERROR,
+        int $bufferSize = 1000
     )
     {
+        if ($bufferSize < 0) {
+            throw new \InvalidArgumentException('Invalid log buffer size ' . $bufferSize . ': expecting 0 (unlimited) or a positive number!');
+        }
+        $this->bufferSize = $bufferSize;
         $this->channelName = $channelName;
         $this->csvFilePath = $csvFilePath;
         $this->workbench = $workbench;
@@ -195,11 +207,12 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
                     $this->monolog->pushHandler($writer);
                 } else {
                     // If we only want to log certain messages, we wrap everything in a FingersCrossedHandler,
-                    // which serves as a dynamic buffer.
+                    // which serves as a dynamic buffer. The buffer is limited, because every buffered record keeps
+                    // its log entry incl. the sender in memory until the end of the request.
                     $fcHandler = new FingersCrossedHandler(
                         $writer,
                         new ErrorLevelActivationStrategy(Logger::toMonologLevel($this->persistLevel)),
-                        0,
+                        $this->bufferSize,
                         true,
                         true,
                         Logger::toMonologLevel($this->passthroughLevel)

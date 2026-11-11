@@ -51,6 +51,7 @@ abstract class LoggerFactory extends AbstractStaticFactory
                 $passthroughLevel   = $config->getOption('LOG.PASSTHROUGH_LOG_LEVEL');
                 $persistLevel       = $config->getOption('LOG.PERSIST_LOG_LEVEL');
                 $minLogLevel        = $config->getOption('LOG.MINIMUM_LEVEL_TO_LOG');
+                $bufferSize         = $config->hasOption('LOG.BUFFER_SIZE') ? (int) $config->getOption('LOG.BUFFER_SIZE') : 1000;
                 
                 $handlers[] = new MonologCsvFileHandler( // Init the actual logger
                     $workbench, 
@@ -59,7 +60,8 @@ abstract class LoggerFactory extends AbstractStaticFactory
                     $detailsLogDir, 
                     $minLogLevel, 
                     $persistLevel, 
-                    $passthroughLevel
+                    $passthroughLevel,
+                    $bufferSize
                 );
                 
                 foreach ($handlers as $handler) {

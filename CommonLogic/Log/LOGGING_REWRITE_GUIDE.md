@@ -135,6 +135,9 @@ entry it lazily builds a Monolog 3 stack. If building the stack fails, it logs t
    `LOG.PERSIST_LOG_LEVEL` is reached and writes `LOG.PASSTHROUGH_LOG_LEVEL` entries right away. This
    behaviour is the same as before. If `PERSIST_LOG_LEVEL` is `debug`, this step is skipped and every entry is
    written immediately. The `Tracer` uses that mode.
+   - **New:** the buffer holds at most `LOG.BUFFER_SIZE` entries (default `1000`, `0` = unlimited). If more
+     arrive, the oldest are dropped. Each buffered entry keeps its `LogEntry` incl. the sender in memory, so an
+     unlimited buffer made long requests (e.g. `composerFinishInstall`) run out of memory.
 2. **`CsvWithDetailsHandler`** (new, replaces Monolog 1's `GroupHandler`). It is used only if a details
    folder was passed. Both the default logger and the `Tracer` pass one. Without a details folder, the
    `CsvHandler` is used directly. It handles one record at a time, also inside a flushed batch:
