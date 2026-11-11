@@ -239,12 +239,11 @@ class ColorDataType extends AbstractDataType
      * Chooses black or white text using the weighted WCAG contrast of a background color.
      *
      * A weight of `0` always chooses white, while `1` always chooses black. Invalid or empty
-     * background colors use black. (Semi-)transparent backgrounds are blended over
-     * `$backdropCssColor` (white by default).
+     * background colors use black.
      */
-    public static function pickTextColorForBackgroundColor(?string $backgroundCssColor, ?float $weight = null, ?string $backdropCssColor = null): string
+    public static function pickTextColorForBackgroundColor(?string $backgroundCssColor, ?float $weight = null): string
     {
-        return ColorTools::pickTextColorForBackgroundColor($backgroundCssColor, $weight, $backdropCssColor);
+        return ColorTools::pickTextColorForBackgroundColor($backgroundCssColor, $weight);
     }
     
     /**

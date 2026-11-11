@@ -34,12 +34,8 @@ abstract class ColorTools
      *
      * A weight of `0` always chooses white, while `1` always chooses black. Invalid or empty
      * background colors use black, matching the JavaScript helper's fallback behavior.
-     *
-     * Transparent and semi-transparent backgrounds are alpha-blended over `$backdropCssColor`
-     * (the color assumed to be visible underneath the element) before measuring contrast.
-     * If no valid opaque backdrop is given, white is assumed.
      */
-    public static function pickTextColorForBackgroundColor(?string $backgroundCssColor, ?float $weight = null, ?string $backdropCssColor = null): string
+    public static function pickTextColorForBackgroundColor(?string $backgroundCssColor, ?float $weight = null): string
     {
         if ($backgroundCssColor === null || $backgroundCssColor === '') {
             return '#000';
@@ -47,9 +43,6 @@ abstract class ColorTools
         $rgba = static::cssColorToRgba($backgroundCssColor);
         if ($rgba === null) {
             return '#000';
-        }
-        if ($rgba['a'] < 1.0) {
-            $rgba = static::blendOverBackdrop($rgba, $backdropCssColor);
         }
 
         $backgroundLuminance = static::relativeLuminance($rgba);
@@ -63,53 +56,6 @@ abstract class ColorTools
     }
 
     /**
-     * Alpha-blends a (semi-)transparent color over an opaque backdrop color.
-     *
-     * Falls back to a white backdrop if the given one is empty, invalid, or not fully opaque.
-     *
-     * @param array{r:int,g:int,b:int,a:float} $rgba
-     * @return array{r:int,g:int,b:int,a:float}
-     */
-    private static function blendOverBackdrop(array $rgba, ?string $backdropCssColor): array
-    {
-        $backdrop = ($backdropCssColor !== null && $backdropCssColor !== '')
-            ? static::cssColorToRgba($backdropCssColor)
-            : null;
-        if ($backdrop === null) {
-            $backdrop = ['r' => 255, 'g' => 255, 'b' => 255];
-        }
-        
-        // Ensure the backdrop is fully opaque, since the blending formula assumes it is.
-        $backdrop['a'] = 1.0;
-
-        // Source-over compositing on an opaque backdrop is a lerp weighted by the source alpha
-        return static::lerpRgba($backdrop, array_merge($rgba, ['a' => 1.0]), $rgba['a']);
-    }
-
-    /**
-     * Linearly interpolates between two RGBA colors, channel by channel (including alpha).
-     *
-     * `$t = 0` returns `$from`, `$t = 1` returns `$to`; values outside `[0..1]` are clamped.
-     * Interpolation happens in sRGB space, which matches how browsers composite colors.
-     *
-     * @param array{r:int,g:int,b:int,a?:float} $from
-     * @param array{r:int,g:int,b:int,a?:float} $to
-     * @return array{r:int,g:int,b:int,a:float}
-     */
-    public static function lerpRgba(array $from, array $to, float $t): array
-    {
-        $t = max(0.0, min(1.0, $t));
-        $lerp = static fn(float $a, float $b): float => $a + ($b - $a) * $t;
-
-        return [
-            'r' => (int) round($lerp($from['r'], $to['r'])),
-            'g' => (int) round($lerp($from['g'], $to['g'])),
-            'b' => (int) round($lerp($from['b'], $to['b'])),
-            'a' => $lerp($from['a'] ?? 1.0, $to['a'] ?? 1.0),
-        ];
-    }
-
-    /**
      * Converts supported CSS color notation to red, green, blue, and alpha components.
      *
      * @return array{r:int,g:int,b:int,a:float}|null
@@ -117,9 +63,6 @@ abstract class ColorTools
     private static function cssColorToRgba(string $color): ?array
     {
         $color = trim($color);
-        if (strcasecmp($color, 'transparent') === 0) {
-            return ['r' => 0, 'g' => 0, 'b' => 0, 'a' => 0.0];
-        }
         if (preg_match(
             '/^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*([.\d]+))?\s*\)$/i',
             $color,

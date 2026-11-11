@@ -63,64 +63,6 @@
       return { r:Math.round(r*255), g:Math.round(g*255), b:Math.round(b*255) };
     },
 
-    /**
-     * Returns the opaque theme background as {r,g,b,a}, falling back to white.
-     * Reads the UI5 theming CSS variable, so dark themes are respected automatically.
-     *
-     * @returns {{r:number,g:number,b:number,a:number}}
-     */
-    _getDefaultBackdropRgba: function() {
-      const white = { r: 255, g: 255, b: 255, a: 1 };
-      if (typeof document === 'undefined' || !document.documentElement) return white;
-      const sThemeBg = getComputedStyle(document.documentElement).getPropertyValue('--sapBackgroundColor').trim();
-      const rgba = sThemeBg ? this._cssColorToRgba(sThemeBg) : null;
-      return (rgba && rgba.a >= 1) ? rgba : white;
-    },
-
-    /**
-     * Alpha-blends a (semi-)transparent color over an opaque backdrop.
-     * Invalid or non-opaque backdrops are replaced by the theme default.
-     *
-     * @param {{r:number,g:number,b:number,a:number}} rgba
-     * @param {string} [backdropCssColor]
-     * @returns {{r:number,g:number,b:number,a:number}}
-     */
-    _blendOverBackdrop: function(rgba, backdropCssColor) {
-      let backdrop = backdropCssColor ? this._cssColorToRgba(backdropCssColor) : null;
-      if (!backdrop) {
-        backdrop = this._getDefaultBackdropRgba();
-      }
-      
-      // Ensure that the backdrop is treated as opaque for blending purposes.
-      backdrop.a = 1.0;
-      
-      // Source-over compositing on an opaque backdrop is a lerp weighted by the source alpha
-      return this.lerpRgba(backdrop, Object.assign({}, rgba, { a: 1 }), rgba.a);
-    },
-
-    /**
-     * Linearly interpolates between two {r,g,b,a} colors, channel by channel (including alpha).
-     * `t = 0` returns `from`, `t = 1` returns `to`; values outside [0..1] are clamped.
-     * Interpolation happens in sRGB space, which matches how browsers composite colors.
-     *
-     * @param {{r:number,g:number,b:number,a?:number}} from
-     * @param {{r:number,g:number,b:number,a?:number}} to
-     * @param {number} t
-     * @returns {{r:number,g:number,b:number,a:number}}
-     */
-    lerpRgba: function(from, to, t) {
-      t = Math.max(0, Math.min(1, t));
-      const lerp = (x, y) => x + (y - x) * t;
-      const aFrom = from.a === undefined ? 1 : from.a;
-      const aTo = to.a === undefined ? 1 : to.a;
-      return {
-        r: Math.round(lerp(from.r, to.r)),
-        g: Math.round(lerp(from.g, to.g)),
-        b: Math.round(lerp(from.b, to.b)),
-        a: lerp(aFrom, aTo)
-      };
-    },
-
     // WCAG-Helpers
     _srgbToLinear: function(c01) {
       // c01: 0..1
@@ -170,19 +112,12 @@
      *  - `1` means the return value is always `#000000` (black).
      *  
      *  Default value is `0.5`, i.e. equal weight for black and white.
-     * @param backdropCssColor
-     * Optional color assumed to be visible underneath the element. Transparent and
-     * semi-transparent backgrounds are alpha-blended over it before measuring contrast.
-     * Defaults to the theme background (CSS variable `--sapBackgroundColor`) or white.
      * @returns {string|string}
      */
-    pickTextColorForBackgroundColor: function(backgroundCssColor, weight, backdropCssColor) {
+    pickTextColorForBackgroundColor: function(backgroundCssColor, weight) {
       if (!backgroundCssColor) return '#000';
-      let rgba = this._cssColorToRgba(backgroundCssColor);
+      const rgba = this._cssColorToRgba(backgroundCssColor);
       if (!rgba) return '#000';
-      if (rgba.a < 1) {
-        rgba = this._blendOverBackdrop(rgba, backdropCssColor);
-      }
 
       const Lbg = this._relativeLuminance(rgba);
       const contrastToWhite = this._contrastRatio(1.0, Lbg);
