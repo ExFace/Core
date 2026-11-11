@@ -819,6 +819,24 @@ class DataSheetMapper implements DataSheetMapperInterface
         }
         return $this;
     }
+
+    /**
+     * Map attribute sorters, preserving their direction unless explicitly overridden.
+     *
+     * @uxon-property sorter_to_sorter_mappings
+     * @uxon-type \exface\Core\CommonLogic\DataSheets\Mappings\DataSorterToSorterMapping[]
+     * @uxon-template [{"from": "", "to": ""}]
+     * 
+     * @param UxonObject $uxon
+     * @return DataSheetMapperInterface
+     */
+    protected function setSorterToSorterMappings(UxonObject $uxon) : DataSheetMapperInterface
+    {
+        foreach ($uxon as $prop) {
+            $this->addMapping(new \exface\Core\CommonLogic\DataSheets\Mappings\DataSorterToSorterMapping($this, $prop));
+        }
+        return $this;
+    }
     
     /**
      * Join other data similarly to left/right JOINs in SQL
