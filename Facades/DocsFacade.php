@@ -5,6 +5,7 @@ use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\MimeTypeDataType;
 use exface\Core\Exceptions\InvalidArgumentException;
+use exface\Core\Facades\DocsFacade\Middleware\ComponentPrinterMiddleware;
 use exface\Core\Facades\DocsFacade\Middleware\MetaObjectPrinterMiddleware;
 use exface\Core\Facades\DocsFacade\Middleware\UxonPrototypePrinterMiddleware;
 use exface\Core\Facades\DocsFacade\RawMarkdownTemplate;
@@ -223,6 +224,7 @@ class DocsFacade extends AbstractHttpFacade
         $handler->add(new AppUrlRewriterMiddleware($this));
         $handler->add(new UxonPrototypePrinterMiddleware($this, $baseUrl, 'exface/core/Docs/UXON/UXON_prototypes.md', $reader, 'selector'));
         $handler->add(new MetaObjectPrinterMiddleware($this, $baseUrl, 'exface/core/Docs/creating_metamodels/Available_metaobjects.md', $reader, 'selector'));
+        $handler->add(new ComponentPrinterMiddleware($this, $baseUrl, 'exface/core/Docs/understanding_the_metamodel/Model_components.md', $reader));
         
         return $handler;
     }
@@ -275,6 +277,19 @@ class DocsFacade extends AbstractHttpFacade
                 throw new InvalidArgumentException('Cannot generate docs URL for meta object: expecting object/selector instance or alias, got "' . gettype($aliasOrUid) . '"');
         }
         return 'api/docs/exface/Core/Docs/creating_metamodels/Available_metaobjects.md?selector=' . urlencode($selectorString);
+    }
+
+    /**
+     * Builds a documentation URL for a registered component type and selector.
+     *
+     * @param string $component
+     * @param string $selector
+     * @return string
+     */
+    public static function buildUrlToDocsForComponent(string $component, string $selector) : string
+    {
+        return 'api/docs/exface/Core/Docs/Components.md?component=' . urlencode($component)
+            . '&selector=' . urlencode($selector);
     }
 
     /**

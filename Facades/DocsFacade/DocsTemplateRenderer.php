@@ -4,6 +4,9 @@ namespace exface\Core\Facades\DocsFacade;
 use exface\Core\CommonLogic\TemplateRenderer\AbstractTemplateRenderer;
 use exface\Core\Exceptions\FileNotFoundError;
 
+/**
+ * Renders documentation placeholders while preserving surrounding Markdown.
+ */
 class DocsTemplateRenderer extends AbstractTemplateRenderer 
 {
 	public function render(string $filePathAbsolute = null)
@@ -29,6 +32,11 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
         return $markdown;
 	}
     
+    /**
+     * Replaces a placeholder using its existing line endings, or the document's for inline blocks.
+     *
+     * @return string
+     */
     function replaceAtOffset(string $markdown, string $startTag, string $endTag, string $replacement, int $offset, string $placeholderName, string $noprint): string
     {
         if ($offset > strlen($markdown)) {
@@ -47,11 +55,18 @@ class DocsTemplateRenderer extends AbstractTemplateRenderer
 
         $endPos += strlen($endTag);
 
+        if (!preg_match('/\r\n|\r|\n/', substr($markdown, $startPos, $endPos - $startPos), $lineEndings)) {
+            preg_match('/\r\n|\r|\n/', $markdown, $lineEndings);
+        }
+        $lineEnding = $lineEndings[0] ?? "\n";
+        $replacement = $this->checkPrintStatus($replacement, $noprint);
+        $replacement = str_replace("\n", $lineEnding, str_replace(["\r\n", "\r"], "\n", $replacement));
+
         if ($placeholderName === 'ImageRef') {
-            $newBlock = $startTag . $this->checkPrintStatus($replacement, $noprint) . $endTag;
+            $newBlock = $startTag . $replacement . $endTag;
         }
         else {
-            $newBlock = $startTag . PHP_EOL . $this->checkPrintStatus($replacement, $noprint) . PHP_EOL . $endTag;
+            $newBlock = $startTag . $lineEnding . $replacement . $lineEnding . $endTag;
         }
 
         return substr_replace($markdown, $newBlock, $startPos, $endPos - $startPos);

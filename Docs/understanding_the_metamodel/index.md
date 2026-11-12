@@ -1,6 +1,7 @@
 # Understanding the metamodel
 
 - [App](App_metamodel.md) - The container for everything else
+- [Model components](Model_components.md) - the building blocks of app models: pages, objects, actions, etc.
 - [Meta objects](Meta_objects.md)
   - [Attributes of meta objects](Attributes_of_meta_objects.md)
   - Relations between objects

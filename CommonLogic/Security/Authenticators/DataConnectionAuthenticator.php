@@ -8,7 +8,6 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\CommonLogic\Security\AuthenticationToken\DataConnectionUsernamePasswordAuthToken;
 use exface\Core\Factories\DataConnectionFactory;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use exface\Core\CommonLogic\Security\Authenticators\Traits\CreateUserFromTokenTrait;
 use exface\Core\Exceptions\Security\AuthenticatorConfigError;
 use exface\Core\Widgets\Form;
@@ -80,15 +79,11 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         
         $user = $this->userExists($token) ? $this->getUserFromToken($token) : null;
         
-        try {
-            $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $token->getDataConnectionAlias());;
-            if ($user === null) {
-                $authenticatedToken = $connector->authenticate($token, false);
-            } else {
-                $authenticatedToken = $connector->authenticate($token, true, $user, true);
-            }
-        } catch (AuthenticationException $e) {
-            throw new AuthenticationFailedError($this, $e->getMessage(), null, $e);
+        $connector = DataConnectionFactory::createFromModel($this->getWorkbench(), $token->getDataConnectionAlias());;
+        if ($user === null) {
+            $authenticatedToken = $connector->authenticate($token, false);
+        } else {
+            $authenticatedToken = $connector->authenticate($token, true, $user, true);
         }
         
         if ($user === null) {

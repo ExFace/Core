@@ -154,9 +154,7 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
-     *
      * {@inheritdoc}
-     *
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::addRow()
      */
     public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $index = null) : DataSheetInterface
@@ -204,6 +202,33 @@ class DataSheet implements DataSheetInterface
                 }
             }
             $this->setFresh(true);
+        }
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setRowValues()
+     */
+    public function setRowValues(int $rowNr, array $values, bool $auto_add_columns = true, bool $overwrite = true) : DataSheetInterface
+    {
+        foreach ($values as $column => $value) {
+            $newColAdded = false;
+            if (! $col = $this->getColumns()->getByExpression($column)) {
+                if ($auto_add_columns === true) {
+                    $col = $this->getColumns()->addFromExpression($column);
+                    $newColAdded = true;
+                } else {
+                    continue;
+                }
+            }
+            if ($overwrite === true || $newColAdded === true) {
+                $this->setCellValue($col->getName(), $rowNr, $value);
+            } else {
+                if ($col->getDataType()::isValueEmpty($this->getCellValue($col->getName(), $rowNr))) {
+                    $this->setCellValue($col->getName(), $rowNr, $value);
+                }
+            }
         }
         return $this;
     }
@@ -836,6 +861,9 @@ class DataSheet implements DataSheetInterface
         
         $eventBefore = $this->getWorkbench()->eventManager()->dispatch(new OnBeforeReadDataEvent($this, $limit, $offset));
         if ($eventBefore->isPreventRead() === true) {
+            if ($eventBefore->isReadPerformed()) {
+                return $this->countRows();
+            }
             return 0;
         }
         
@@ -3216,6 +3244,16 @@ class DataSheet implements DataSheetInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setPaged()
+     */
+    public function setPaged(bool $value) : DataSheetInterface
+    {
+        $this->dataSourceHasMoreRows = $value;
+        return $this;
+    }
+
+    /**
      * 
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\DataSheets\DataSheetInterface::setFresh()
@@ -3640,8 +3678,8 @@ class DataSheet implements DataSheetInterface
     }
     
     /**
-     * 
-     * @return DataSheetInterface
+     * {@inheritDoc}
+     * @see DataSheetInterface::extractSystemColumns()
      */
     public function extractSystemColumns() : DataSheetInterface
     {

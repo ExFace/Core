@@ -80,7 +80,9 @@ class Chart extends AbstractWidget implements
     iSupportLazyLoading, 
     iFillEntireContainer
 {
-    use iHaveButtonsAndToolbarsTrait;
+    use iHaveButtonsAndToolbarsTrait {
+        setButtons as setButtonsViaTrait;
+    }
     use iSupportLazyLoadingTrait;
     use iHaveConfiguratorTrait {
         setConfiguratorWidget as setConfiguratorWidgetViaTrait;
@@ -1114,5 +1116,19 @@ class Chart extends AbstractWidget implements
         $objs = parent::getMetaObjectsEffectingThisWidget();
         $objs = array_merge($objs, $this->getData()->getMetaObjectsEffectingThisWidget());
         return array_unique($objs);
+    }
+
+    /**
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\DataButton[]
+     * @uxon-template [{"action_alias": ""}]
+     *
+     * @see \exface\Core\Interfaces\Widgets\iHaveButtons::setButtons()
+     */
+    public function setButtons($buttons)
+    {
+        // This method is just here for its annotations: otherwise the uxon-type would
+        // be Button[] instead of DataButton[]
+        return $this->setButtonsViaTrait($buttons);
     }
 }

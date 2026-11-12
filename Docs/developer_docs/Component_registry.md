@@ -1,20 +1,30 @@
 # Component registry
 
-The component registry in `Config/ComponentRegistry.config.json` describes model component types that can be discovered and handled consistently across apps. Core owns this registry and does not depend on consumers such as GenAI.
+The component registry in `<installation_root>/config/ComponentRegistry.config.json` describes model component types that can be discovered and handled consistently across apps. Core owns this registry and does not depend on consumers such as GenAI. It is maintained automatically when apps are installed. Each app must register its UXON prototypes and configurable administration components here to make the properly discoverable.
+
+## Structure overview
 
 Each top-level key is a component type. Common properties include:
 
-| Property | Purpose |
-| --- | --- |
-| `name` and `description` | Human-readable component metadata. |
-| `uxon_properties` | UXON properties that reference this component type. |
-| `selector` | Selector class and factory used to instantiate components. |
-| `search_selector_data` | One DataSheet or a list of DataSheets for finding saved component instances. |
-| `search_prototype_data` | DataSheet used to find PHP-backed component prototypes. |
-| `documentation` | Component documentation configuration. |
-| `save_component_data` | Optional allowlisted DataSheet template for creating component model data. |
+| Property                 | Purpose                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------- |
+| `name` and `description` | Human-readable component metadata.                                           |
+| `uxon_properties`        | UXON properties that reference this component type.                          |
+| `selector`               | Selector class and factory used to instantiate components.                   |
+| `documentation`          | Component documentation configuration.                                       |
+| `search_selector_data`   | One DataSheet or a list of DataSheets for finding saved component instances. |
+| `search_prototype_data`  | DataSheet used to find PHP-backed component prototypes.                      |
+| `save_component_data`    | Optional allowlisted DataSheet template for creating component model data.   |
 
-## Component save templates
+## Data templates
+
+Most components will have configuration DB tables (or other type of configuration data sources), that should be discribed in the registry to let external tools properly read and write these components.
+
+### Component search data template
+
+<br />
+
+### Component save data templates
 
 `save_component_data` is regular DataSheet UXON. Consumers obtain a copy through `ComponentRegistryInterface::getComponentSaveData()`. A missing value means that the component type is not available for registry-driven writes.
 
@@ -52,8 +62,60 @@ Include the UID column when a consumer supports editing existing components. `Da
 
 Core supplies defaults, fixed values, relation keys for nested children, context values, behaviors, authorization checks, and required-value validation during DataSheet writes. Schema consumers may expose configured attributes with defaults or fixed values as nullable so Core can supply their values. Core does not invent missing business values. Every required writable attribute without a Core-provided value must therefore be included in the template.
 
-## Instructions and documentation
+## App fragments and the registry installer
 
-Save instructions do not belong inside `save_component_data`, because it must remain valid DataSheet UXON. Tool-specific instructions belong to the consuming tool or agent. The existing `documentation.ai_instructions` property is reserved for component documentation, but Core does not currently evaluate it as part of component saving.
+Each app can include its own `Config/omponentRegistry.config.json`. When an app is instaled, the [`ComponentRegistryInstaller`](../../../CommonLogic/AppInstallers/ComponentRegistryInstaller.php) will copy the content of the app registry file to the global registry. This installer does not need to be registered separately - it is included by default (like the `MetaModelInstaller)`. It will keep the global registry up-to-date every time apps are installed. Consequently, if you change something in the component registry of an app, you must install/repair the app to make your changes effective. Avoid editing the global config manually because your change will be overwritten the next time the corresponding app is installed.
 
-Before adding a template, instantiate it with `DataSheetFactory::createFromUxon()` and verify that all flat and nested columns resolve to writable attributes. Registry consumers must rebuild write DataSheets from the trusted template rather than accepting model-supplied columns, filters, or object aliases.
+An app fragment is a JSON object keyed by unique, lowercase component keys:
+
+```json
+{
+  "agent": {
+    "name": "AI agent",
+    "description": "Configured agents",
+    "uxon_properties": ["agent_alias"]
+  }
+}
+```
+
+Use the fields appropriate to the component; not every type supports every
+operation. The example above declares metadata only, not a working agent selector
+or save template.
+
+On installation or repair, the installer combines app fragments into:
+
+```text
+<installation_folder>/config/ComponentRegistry.config.json
+```
+
+The generated file contains the combined definitions and their ownership:
+
+```json
+{
+  "COMPONENTS": {
+    "object": {"name": "Meta object"},
+    "agent": {"name": "AI agent"}
+  },
+  "SOURCES": {
+    "exface.Core": ["object"],
+    "axenox.GenAI": ["agent"]
+  }
+}
+```
+
+- Installing an app replaces its complete previous contribution. Renamed or
+  deleted keys are removed, and repeated installation does not duplicate entries.
+- If an app removes its fragment, its next installation removes the old entries.
+- Uninstalling an app removes only its own entries.
+- A component key can belong to only one app. Collisions fail installation
+  rather than silently overriding another app's metadata.
+- Definitions are copied as complete objects, not recursively merged. Ordered
+  lists, including DataSheet columns, retain their order.
+- When creating the global file for the first time, the installer includes Core's
+  fragment even if a different app is being installed first.
+
+Writers hold a lock on `ComponentRegistry.config.json.lock` throughout the
+read-modify-write operation and use the file manager's atomic file replacement.
+The lock file intentionally remains in place. Invalid JSON, invalid component
+containers, inconsistent ownership and write failures are reported as errors;
+failed validation does not replace the existing registry.

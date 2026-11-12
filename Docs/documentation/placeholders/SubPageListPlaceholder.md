@@ -1,4 +1,4 @@
-## SubPageList Placeholder
+# SubPageList Placeholder
 
 The `SubPageList` placeholder generates a table of contents based on the folder structure of the current document.  
 It scans the directory where the Markdown file resides and lists all subfolders and files according to the following rules:
@@ -14,12 +14,28 @@ It scans the directory where the Markdown file resides and lists all subfolders 
 
 ### Available Options
 
-- `depth` (integer): How many subdirectory levels should be included in the table of contents.
-- `list-type` (string): Determines the formatting of the list.  Defaults to `none`.
+- `depth` (integer): How many levels should be included in the table of contents. Defaults to `1`, listing only immediate child pages and folders.
+- `list-type` (string): Determines the formatting of the list. Defaults to `bullet`.
   - `none`: No bullet points. Sub-items are indented with a tab character.
   - `bullet`: Uses standard bullet points.
 
 ### Example Usage
+
+No options are required for a bullet list of immediate children:
+
+```html
+<!-- BEGIN SubPageList -->
+  - [ImageCaptionNr Placeholder](ImageCaptionNumberPlaceholder.md)
+  - [ImageList Placeholder](ImageListPlaceholder.md)
+  - [ImageRef Placeholder](ImageReferencePlaceholder.md)
+  - [NavButtons Placeholder](NavButtonsPlaceholder.md)
+  - [SubPageList Placeholder](SubPageListPlaceholder.md)
+
+
+<!-- END SubPageList -->
+```
+
+To include more levels without bullet points:
 
 ```html
 <!-- BEGIN SubPageList:depth=3&list-type=none -->

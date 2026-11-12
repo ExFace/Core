@@ -47,6 +47,7 @@ use exface\Core\CommonLogic\Traits\ImportUxonObjectTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\CommonLogic\AppInstallers\MetaModelInstaller;
+use exface\Core\CommonLogic\AppInstallers\ComponentRegistryInstaller;
 
 /**
  * This is the base implementation of the AppInterface aimed at providing an
@@ -485,6 +486,7 @@ class App implements AppInterface
         
         // Add the model installer by default
         $installerContainer->addInstaller(new MetaModelInstaller($this->getSelector()));
+        $installerContainer->addInstaller(new ComponentRegistryInstaller($this->getSelector()));
         
         // DEPRECATED! Add the injected installer if provided
         if ($injected_installer !== null) {

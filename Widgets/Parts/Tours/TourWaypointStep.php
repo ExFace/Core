@@ -18,7 +18,7 @@ use exface\Core\Interfaces\WidgetInterface;
  * 
  * - `waypoints` array property contains the identifiers of the tours, that this step belongs to. One Step can belong to multiple tours.
  * 
- * ##Examples:
+ * ## Examples:
  * 
  * ```
  *  "tour_steps": [
@@ -35,6 +35,7 @@ use exface\Core\Interfaces\WidgetInterface;
  *          "align": "center",
  *     },
  * ]
+ * 
  * ```
  * 
  * @author Sergej Riel

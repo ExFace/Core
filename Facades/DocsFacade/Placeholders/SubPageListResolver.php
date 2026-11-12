@@ -8,7 +8,7 @@ use exface\Core\Interfaces\TemplateRenderers\PlaceholderResolverInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 
 /**
- * 
+ * Lists immediate child pages as bullets by default, with optional depth and formatting.
  */
 class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements PlaceholderResolverInterface
 {
@@ -21,6 +21,7 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
     private string $pagePath;
     private string $vendorPath;
     private array $optionDefaults = [
+        self::OPTION_DEPTH => 1,
         self::OPTION_LIST_TYPE => self::OPTION_LIST_TYPE_BULLET,
     ];
 
@@ -41,10 +42,10 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
         $names = array_map(fn($ph) => $ph['name'], $placeholders);
         $filteredNames = $this->filterPlaceholders($names);
         foreach ($placeholders as $i => $placeholder) {
-            if (in_array($placeholder['name'], $filteredNames)) {
+            if ($placeholder['name'] === rtrim($this->getPrefix(), ':') || in_array($placeholder['name'], $filteredNames)) {
                 $options = $placeholder['options'];
                 parse_str($options, $optionsArray);
-                if (null !== $rootDirectory = $optionsArray[self::OPTION_ROOT]) {
+                if (null !== $rootDirectory = ($optionsArray[self::OPTION_ROOT] ?? null)) {
                     if (! FilePathDataType::isAbsolute($rootDirectory)) {
                         $rootDirectory = $this->vendorPath . DIRECTORY_SEPARATOR . FilePathDataType::normalize($rootDirectory, DIRECTORY_SEPARATOR);
                     }
@@ -73,7 +74,7 @@ class SubPageListResolver extends AbstractMarkdownPlaceholderResolver implements
             // validation
         }
         if($optionName == self::OPTION_DEPTH) {
-            $value = (int)$value;
+            $value = (int)($value ?? $default);
         }
         return $value ?? $default;
     }

@@ -13,6 +13,8 @@ use exface\Core\Events\AbstractEvent;
  * 
  * Use `$event->preventRead()` to disable the default reading logic - i.e. performing a read-query
  * on the data source - and use custom logic to fill the data sheet from `$event->getDataSheet()`.
+ * After a replacement read, dispatch OnReadDataEvent for the completed result and call
+ * `preventRead(true)` to return its row count without executing the default query.
  * 
  * @event exface.Core.DataSheet.OnBeforeReadData
  * 
@@ -26,6 +28,8 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
     private $limit = null;
     
     private $offset = 0;
+
+    private bool $readPerformedExternally = false;
     
     /**
      *
@@ -61,16 +65,31 @@ class OnBeforeReadDataEvent extends AbstractEvent implements DataSheetEventInter
     /**
      * Prevents the default read operation.
      * 
-     * Use this if the event handler fills the data sheet.
-     * 
+     * Set $readPerformedExternally to TRUE after completing a replacement read.
+     * The replacing handler is responsible for dispatching OnReadDataEvent.
+     * DataSheet then returns the resulting row count without firing that event again.
+     * The default FALSE retains the original short-circuit return value of zero.
+     *
+     * @param bool $readPerformedExternally
      * @return OnBeforeReadDataEvent
      */
-    public function preventRead() : OnBeforeReadDataEvent
+    public function preventRead(bool $readPerformedExternally = false) : OnBeforeReadDataEvent
     {
         $this->preventDefault();
+        $this->readPerformedExternally = $this->readPerformedExternally || $readPerformedExternally;
         return $this;
     }
-    
+
+    /**
+     * Whether a replacement read was performed.
+     *
+     * @return bool
+     */
+    public function isReadPerformed() : bool
+    {
+        return $this->readPerformedExternally;
+    }
+
     /**
      * 
      * @return bool

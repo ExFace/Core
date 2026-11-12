@@ -989,19 +989,17 @@ class ExportJSON extends ReadData implements iExportData
                 }
                 
                 // Wert, gehoert der Filter zu einer Relation soll das Label und nicht
-                // die UID geschrieben werden
+                // der Filterwert geschrieben werden
                 if ($filterExpression->isMetaAttribute()) {
                     if ($dataSheet->getMetaObject()->hasAttribute($filterExpression->toString()) && ($metaAttribute = $dataSheet->getMetaObject()->getAttribute($filterExpression->toString())) && $metaAttribute->isRelation()) {
-                        $relatedObject = $metaAttribute->getRelation()->getRightObject();
-                        if ($relatedObject->isReadable() && empty($relatedObject->getDataAddressRequiredPlaceholders(false, true))) {
+                        $relation = $metaAttribute->getRelation();
+                        $relatedObject = $relation->getRightObject();
+                        if ($relatedObject->hasLabelAttribute() && $relatedObject->isReadable() && empty($relatedObject->getDataAddressRequiredPlaceholders(false, true))) {
+                            // The filter value holds the right key of the relation, which is not necessarily the UID
+                            $rightKeyAttr = $relation->getRightKeyAttribute();
                             $filterValueRequestSheet = DataSheetFactory::createFromObject($relatedObject);
-                            $uidColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getUidAttribute())->getName();
-                            if ($relatedObject->hasLabelAttribute()) {
-                                $labelColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute())->getName();
-                            } else {
-                                $labelColName = $uidColName;
-                            }
-                            $filterValueRequestSheet->getFilters()->addCondition(ConditionFactory::createFromExpression($this->getWorkbench(), ExpressionFactory::createFromAttribute($relatedObject->getUidAttribute()), $filterValue, $condition->getComparator()));
+                            $labelColName = $filterValueRequestSheet->getColumns()->addFromAttribute($relatedObject->getLabelAttribute())->getName();
+                            $filterValueRequestSheet->getFilters()->addCondition(ConditionFactory::createFromExpression($this->getWorkbench(), ExpressionFactory::createFromAttribute($rightKeyAttr), $filterValue, $condition->getComparator()));
                             $filterValueRequestSheet->dataRead();
                             
                             if ($requestValue = implode(', ', $filterValueRequestSheet->getColumnValues($labelColName))) {

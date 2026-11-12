@@ -244,7 +244,11 @@ class ServiceParameter implements ServiceParameterInterface
         return true;
     }
     
-    public function parseValue($val) : string
+    /**
+     * {@inheritDoc}
+     * @see ServiceParameterInterface::parseValue()
+     */
+    public function parseValue($val) : mixed
     {
         $service = $this->getService();
         if ($this->isRequired() && $this->getDataType()->isValueEmpty($val)) {

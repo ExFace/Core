@@ -658,7 +658,7 @@
         {
             "_EXPORT_SUMMARY": "Component [COMPONENT]",
             "CREATED_ON": "2026-08-18 15:50:34",
-            "MODIFIED_ON": "2026-08-18 15:50:34",
+            "MODIFIED_ON": "2026-11-11 20:49:00",
             "CREATED_BY_USER": "0x31000000000000000000000000000000",
             "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
             "UID": "0x11f1be83c8f3d272be83025041000001",
@@ -683,7 +683,7 @@
             "ICON_SET": "",
             "ABBREVIATION": "",
             "ALIAS": "COMPONENT",
-            "DATATYPE": "0x30000000000000000000000000000000",
+            "DATATYPE": "0x11f1bdf5d58238b8bdf5025041000001",
             "DATA_ADDRESS": "component",
             "OBJECT": "0x11ee8692965c23ce8692025041000001",
             "FORMATTER": "",
@@ -701,9 +701,7 @@
             "DATA_ADDRESS_PROPS": null,
             "DEFAULT_VALUE": "",
             "FIXED_VALUE": "",
-            "CUSTOM_DATA_TYPE": {
-                "length_max": 9
-            }
+            "CUSTOM_DATA_TYPE": null
         },
         {
             "_EXPORT_SUMMARY": "Full alias [INSTANCE_ALIAS_WITH_NS]",

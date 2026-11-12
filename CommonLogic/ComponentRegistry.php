@@ -10,28 +10,61 @@ use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Interfaces\ComponentRegistryInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Facades\MarkdownInstancePrinterInterface;
-use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
-use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
 use exface\Core\Templates\Placeholders\ArrayPlaceholders;
 use exface\Core\Templates\Placeholders\ConfigPlaceholders;
 use exface\Core\Templates\Placeholders\FormulaPlaceholders;
 
+/**
+ * Provides component metadata installed by Core and other apps.
+ */
 class ComponentRegistry implements ComponentRegistryInterface
 {
+    public const CONFIG_FILENAME = 'ComponentRegistry.config.json';
+    public const CONFIG_COMPONENTS = 'COMPONENTS';
+    public const CONFIG_SOURCES = 'SOURCES';
+
     private WorkbenchInterface $workbench;
     private array $config;
     
+    /**
+     * @param WorkbenchInterface $workbench
+     */
     public function __construct(WorkbenchInterface $workbench)
     {
         $this->workbench = $workbench;
-        $this->config = [];
-        $baseConfigFile = $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath() . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . 'ComponentRegistry.config.json';
-        if (is_readable($baseConfigFile)) {
-            $json = JsonDataType::decodeJson(file_get_contents($baseConfigFile), true);
-            $this->config = array_merge_recursive($this->config, $json);
+        $this->reload();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ComponentRegistryInterface::reload()
+     */
+    public function reload() : void
+    {
+        $file = $this->getWorkbench()->filemanager()->getPathToConfigFolder()
+            . DIRECTORY_SEPARATOR . self::CONFIG_FILENAME;
+        $installed = file_exists($file);
+        if (! $installed) {
+            $file = $this->getWorkbench()->getCoreApp()->getDirectoryAbsolutePath()
+                . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . self::CONFIG_FILENAME;
         }
+        $contents = file_get_contents($file);
+        if ($contents === false) {
+            throw new RuntimeException('Cannot read component registry "' . $file . '"');
+        }
+        $json = JsonDataType::decodeJson($contents, false);
+        $models = $installed ? ($json->{self::CONFIG_COMPONENTS} ?? null) : $json;
+        if (! $models instanceof \stdClass) {
+            throw new RuntimeException('Expected a component object in registry "' . $file . '"');
+        }
+        foreach ($models as $key => $model) {
+            if (! is_string($key) || $key === '' || $key !== mb_strtolower($key) || ! $model instanceof \stdClass) {
+                throw new RuntimeException('Invalid component "' . $key . '" in registry "' . $file . '"');
+            }
+        }
+        $this->config = JsonDataType::decodeJson(JsonDataType::encodeJson($models), true);
     }
 
     /**
@@ -47,6 +80,28 @@ class ComponentRegistry implements ComponentRegistryInterface
             });
         }
         return $keys;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ComponentRegistryInterface::getComponentNames()
+     */
+    public function getComponentNames() : array
+    {
+        $array = [];
+        foreach ($this->config as $key => $component) {
+            $array[$key] = $component['name'] ?? $key;
+        }
+        return $array;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ComponentRegistryInterface::getComponentProperty()
+     */
+    public function getComponentProperty(string $componentKey, string $property)
+    {
+        return $this->config[$componentKey][$property] ?? null;
     }
 
     /**

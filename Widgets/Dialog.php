@@ -33,6 +33,16 @@ use exface\Core\Widgets\Traits\PopupTrait;
  * parent dialog automatically or leave it open (`close_dialog`). This way, stacks of open dialogs
  * can be created.
  * 
+ * ## Close button
+ * 
+ * Every dialog receives a close button by default. Depending on the facade it can be rendered as a real button
+ * in the toolbar and/or as a small "X" somewhere in the corner. In any case, it does not do anything except for
+ * closing the dialog by default. 
+ * 
+ * You can customize the close button and give it a different caption or icon, or event give it an action to perform
+ * right before closing the dialog: use `close_button` or `close_button_action` to define the button properties and
+ * its action.
+ * 
  * ## Lazy loading
  * 
  * Most facades will send a server request when the open-button is pressed to lazy load the dialog, however 

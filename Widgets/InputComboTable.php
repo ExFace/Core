@@ -8,12 +8,13 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
+use exface\Core\Interfaces\Tours\TourSubrouteInterface;
 use exface\Core\Interfaces\Widgets\iCanPreloadData;
 use exface\Core\Exceptions\Widgets\WidgetPropertyNotSetError;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Events\Widget\OnWidgetLinkedEvent;
-use exface\Core\Interfaces\Events\WidgetLinkEventInterface;
+use exface\Core\Interfaces\Widgets\IHaveTourSubrouteInterface;
 use exface\Core\Interfaces\Widgets\iTakeInputAsDataSubsheet;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\CommonLogic\DataSheets\DataAggregation;
@@ -23,6 +24,7 @@ use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Widgets\Parts\Tours\InputComboTableSubroute;
 use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
 
 /**
@@ -159,7 +161,7 @@ use exface\Core\Widgets\Traits\iTrackIncomingLinksTrait;
  * @author Andrej Kabachnik
  *        
  */
-class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iCanPreloadData
+class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, IHaveTourSubrouteInterface, iCanPreloadData
 {
     use iTrackIncomingLinksTrait;
     
@@ -1023,5 +1025,14 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, iC
             return true;
         }
         return false;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see IHaveTourSubrouteInterface::getTourSubroute()
+     */
+    public function getTourSubroute(UxonObject $config): TourSubrouteInterface
+    {
+        return new InputComboTableSubroute($this, $config);
     }
 }

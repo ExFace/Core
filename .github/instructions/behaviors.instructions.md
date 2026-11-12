@@ -18,11 +18,21 @@ Each behavior is attached to exactly one object. The behavior prototype implemen
 Behavior prototypes are PHP classes implementing the `\exface\Core\Interfaces\BehaviorInterface`. Extend the `exface\Core\CommonLogic\Model\Behaviors\AbstractBehavior` to get comfortable base functionality.
 
 Behavior classes must be located the folder `my/app/Behaviors` in order for the model editor to discover and list them correctly. Additional classes used inside behaviors should be placed in the `Common` folder or it's subfolders.
+
 ## Workflow
 
 ### Listening to events
 
-Behaviors are instatiated when their object is loaded. If the behavior is based on the `AbstractBehavior`, the method `registerEventsListeners()` will be called. Override this method and attach behavior methods to specific workbench events.
+Behaviors are instantiated when their object is loaded. If the behavior is based on the `AbstractBehavior`, the method `registerEventsListeners()` will be called. Override this method and attach behavior methods to specific workbench events.
+
+### Event listener methods
+
+Most listeners are public methods of the behavior class. Use a special naming convention for them to make them appear as a block in alphabetical outlines:
+
+- `onBeforeReadCheck($event)`
+- `onReadDoSomething($event)`
+
+Start the name with `on` followed by the shortened event name and a descriptive action. This will help navigate through the code a lot!
 
 ### Handling events
 
@@ -37,3 +47,13 @@ When the behavior is done processing an event, it must fire `OnBehaviorApplied`.
 ### Using logbooks
 
 Many behaviors implement complex and highly configurable logic, so it is very important to let app designers understand the exact logic flow. Create and instance of `BehaviorLogbook`, fill it with a brief description, of what the behavior is doing, and pass it on to events and exceptions. 
+
+
+### Lazy instantiation
+
+If a behavior uses complex configuration properties, that are UXON prototypes themselves, it is recommended to cache
+their UXON at config-time and only instantiate the prototypes when really needed. This will save memory and performance
+as most behaviors will only to their work in very specific situations and remain silent on most requests.
+
+For example, the `UnionMapping`s of the `UnionBehavior` only really need to be instantiated when the behaviors object
+is read. In all other case, they can remain as UXON.
