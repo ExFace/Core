@@ -6,6 +6,7 @@ Each placeholder can optionally accept parameters, formatted as key-value pairs 
 
 In order for placeholders to be processed, an **`Export Model`** must be applied via the relevant application.  
 Every time an export model is run, the values of all placeholders will be recalculated and updated accordingly.
+Generated content uses the placeholder block's existing line endings; line endings outside the block are left unchanged.
 
 Folders named **`Bilder`**, **`Archive`**, **`Pictures`**  and **`Intro`** are **excluded** from all placeholder operations.  
 Any files or content within these folders will **not** be scanned or processed by placeholder logic.
