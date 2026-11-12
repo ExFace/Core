@@ -75,7 +75,7 @@ class DataConnectionAuthenticator extends AbstractAuthenticator
         if (! $token instanceof DataConnectionUsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token type!');
         }
-        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
+        $this->checkUserDisabledFlag($token->getUsername());
         
         $user = $this->userExists($token) ? $this->getUserFromToken($token) : null;
         

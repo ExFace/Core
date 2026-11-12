@@ -378,7 +378,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 throw new UserNotFoundError("No user found matching the username '{$token->getUsername()}'!");
             }
             if (BooleanDataType::cast($userDataSheet->getRow(0)['DISABLED_FLAG']) === true) {
-                throw new UserDisabledError("User with the username '{$this->getUsernameInWorkbench($token)}' is disabled!");
+                throw new UserDisabledError("User with the username '{$this->getUsernameInWorkbench($token)}' is disabled!", '88RY4GT');
             }
             $this->userData[$token->getUsername()] = $userDataSheet;
         }

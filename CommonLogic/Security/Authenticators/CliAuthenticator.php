@@ -57,7 +57,7 @@ class CliAuthenticator extends AbstractAuthenticator
             throw new AuthenticationFailedError($this, "Authenticator '{$this->getName()}' can only be used to authenticate when php scripts are run from command line!");
         }
         
-        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
+        $this->checkUserDisabledFlag($token->getUsername());
         
         $currentUsername = (new CliEnvAuthToken())->getUsername();
         if ($token->getUsername() !== $currentUsername) {
