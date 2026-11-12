@@ -21,7 +21,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  * 
  * - `widget_to_focus` property is a WidgetLink to a widget that will be highlighted when the step is active.
  * 
- *  ##Examples:
+ * ## Examples:
  *
  *  ```
  *   "steps": [
@@ -34,6 +34,7 @@ use exface\Core\Interfaces\Widgets\WidgetPartInterface;
  *           "align": "center",
  *      },
  *  ]
+ * 
  *  ```
  * 
  * @author Sergej Riel
