@@ -1224,4 +1224,80 @@ class DataColumn implements DataColumnInterface
     {
         return $this->nestedSheetTemplateUxon;
     }
+
+    /**
+     * Create multiple similar columns here: one for every attribute in the group.
+     *
+     * This is more like a template for columns for attributes from the group. If you only place
+     * an `attribute_group_alias` in a column, it will be replaced by columns for every attribute 
+     * in the group. If you define other properties (e.g. `data_type`), they will act as a template 
+     * and every group column will get them.
+     *
+     * Attribute group aliases may include relation paths and aggregators, just like single attribute
+     * aliases.
+     *
+     * ## Available attribute groups
+     *
+     * In addition to attribute groups defined in the model of the object, there are also some built-in
+     * groups:
+     *
+     * - `~ALL`
+     * - `~VISIBLE`
+     * - `~REQUIRED`
+     * - `~EDITABLE``
+     * - `~DEFAULT_DISPLAY`
+     * - `~WRITABLE`
+     * - `~READABLE`
+     * - `~COPYABLE`
+     * - `~CUSTOM`
+     *
+     * ## Combining multiple groups
+     *
+     * You can combine multiple attribute groups, like `~VISIBLE~REQUIRED`. This works
+     * like filtering attributes with an AND operator. The above group would contain all attributes that
+     * are both visible AND required. You can negate a group alias like `~VISIBLE~!REQUIRED`.
+     * This example would select all attributes that are visible AND not required.
+     *
+     * ## Sorting via attribute group modifiers
+     *
+     * You can change the order of the attributes in any group by using modifiers in square braces: e.g.
+     * `~EDITABLE[:SORT(alias, asc)]` will sort the group by attribute alias ascending. You can sort by any
+     * UXON property of an attribute.
+     *
+     * Additionally custom attributes produced by the `CustomAttributeDefinitionBehavior` have the `source_index`
+     * attribute, that holds the original sequence number of the attribute when it was created. Thus, you can
+     * merge two groups of custom attributes and sort the result like this: `(GRP1&GRP2)[:SORT(source_index, asc)]`.
+     *
+     * ## Examples
+     *
+     * Assuming, we have a DataSheet based on the `ORDER` object, we can use the following attribute groups:
+     *
+     * - `~DEFAULT_DISPLAY` - attributes of the `ÒRDER`, that are selected for default display
+     * - `CUSTOMER__~CUSTOM` - all custom attributes of the customer of the give purchase order
+     * - `~CUSTOM[:SORT(source_index, desc)]` - all custom attributes of the current object in reverse order
+     * - `CUSTOMER__my.App.IMPORTANT_ATTRIBUTES` - explicitly defined attribute group of the customer
+     * - `ORDER_POS__~DEFAULT_DISPLAY:LIST_DISTINCT` - Lists of default display attributes of the order positions.
+     * The `LIST_DISTINCT` aggregator will be applied to every attribute from the group: e.g. `ORDER_POS__NAME:LIST_DISTINCT`,
+     * etc.
+     * - `~EDITABLE~REQUIRED` - all attributes, that are editable and required`
+     * - `~EDITABLE[:SORT(alias, asc)]` all editable attributes sorted by attribute alias ascending
+     * - `my.App.GRP1&my.App.GRP2[:SORT(alias, asc)]` attributes from two groups sorted by their aliases
+     * - `my.App.GRP1&my.App.GRP2[:SORT(source_index, asc)]` custom attributes from two groups sorted by the original
+     * order of the attributes being created - first attribute of GRP1, first of GRP2, second of GRP1, etc.
+     *
+     * @uxon-property attribute_group_alias
+     * @uxon-type metamodel:attribute_group
+     * @uxon-template ~VISIBLE
+     *
+     * @param string|null $groupAlias
+     * @return $this
+     * 
+     * @see DataSheet::expandColumnAttributeGroup()
+     */
+    protected function setAttributeGroupAlias(?string $groupAlias) : static
+    {
+        // TODO do we need to save the alias? Widget use it for debugging.
+        // The actual logic happens in DataSheet::expandAttributeGroupColumns()
+        return $this;
+    }
 }

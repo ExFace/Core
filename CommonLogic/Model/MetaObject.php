@@ -1284,7 +1284,7 @@ class MetaObject implements MetaObjectInterface
         
         // Resolve parsed alias into attribute groups.
         foreach ($parsedAlias as $groupIndex => $parserGroup) {
-            $attributeGroup = $resolvedAttributeGroups[$groupIndex];
+            $attributeGroup = $resolvedAttributeGroups[$groupIndex] ?? null;
             // Parser group has already been resolved.
             if($attributeGroup !== null) {
                 continue;
