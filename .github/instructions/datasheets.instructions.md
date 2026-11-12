@@ -1,7 +1,6 @@
 ---
 description: "Use when reading and writing data or working with data sheets in general"
 name: "DataSheets"
-applyTo: "CommonLogic/DataSheets/*.php"
 ---
 # DataSheets
 
@@ -95,10 +94,14 @@ All operations for reading and writing data will trigger events, that allow subs
 
 ## Data collectors
 
-Very often, model components like actions or behaviors require certain data columns for their logic. These columns may or may not be present in their particular input data. Missing data cen be read from the data source in many cases. 
+Very often, model components like actions or behaviors require certain data columns for their logic. These columns may or may not be present in their particular input data. Missing data cen be read from the data source in many cases.
 
-To ensure, all required data is present, create a `exface\Core\CommonLogic\DataSheets\DataCollector` and `addAttribute()`, `addExpression()` to it. Then you can either `enrich()` an existing data sheet or call `collectFrom()` read all required data without modifying the original sheet. 
+To ensure, all required data is present, create a `exface\Core\CommonLogic\DataSheets\DataCollector` and `addAttribute()`, `addExpression()` to it. Then you can either `enrich()` an existing data sheet or call `collectFrom()` to read all required data without modifying the original sheet. Always use a Collector to make sure required data is present as it has sophisticated logit to read missing data in different situations. Do write your own missing data loaders.
 
 ## Data mappers
 
+Use mappers to transform data sheet by mapping columns, filters, etc. from the from-sheet ot the same or different parts of the to-sheet. Mappers are separate prototypes each serving a specific kind of transformation. See [data mappers instructions](data-mappers.instructions.md).
+
 ## Data matchers
+
+TODO

@@ -5940,6 +5940,26 @@
             "WRAP_PATH": "",
             "UXON_SCHEMA": "widget",
             "THUMBNAIL": "exface/core/Uxon/Thumbnails/gantt.gif"
+        },
+        {
+            "_EXPORT_SUMMARY": "Redirect to a URL",
+            "CREATED_ON": "2026-11-06 10:58:37",
+            "MODIFIED_ON": "2026-11-06 10:58:37",
+            "CREATED_BY_USER": "0x31000000000000000000000000000000",
+            "MODIFIED_BY_USER": "0x31000000000000000000000000000000",
+            "UID": "0x11f1bd6ba321210cbd6b025041000001",
+            "APP": "0x31000000000000000000000000000000",
+            "NAME": "Redirect to a URL",
+            "DESCRIPTION": "Redirects to any URL when the page is loaded. Use this widget as the only widget on a page.",
+            "PROTOTYPE": "",
+            "UXON": {
+                "widget_type": "Redirect",
+                "url": "",
+                "open_in_new_window": true
+            },
+            "WRAP_PATH": "",
+            "UXON_SCHEMA": "widget",
+            "THUMBNAIL": ""
         }
     ],
     "totals_rows": [],

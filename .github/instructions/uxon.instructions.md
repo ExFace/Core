@@ -16,56 +16,59 @@ called UXON prototypes.
 
 Use these rules whenever you implement or modify UXON prototype classes.
 
-- Prototype classes must have the 
-  `\exface\Core\Interfaces\iCanBeConvertedToUxon` 
-  interface and mostly use the 
-  `\exface\Core\CommonLogic\Traits\iCanBeConvertedToUxonTrait`. The trait 
-  implements the `importUxon()` method, that is normally called in the 
-  constructor of the class and `exportUxon()` to dumpt the current 
-  configuration back to UXON.
-- A class-level Docblock must explain the use of this prototype from the 
-  point of view of a designer.
-- Every UXON property must map to a setter named `set + PascalCase
-(property_name)` - e.g. `setAttributeAlias` for the property `attribute_alias`.
+- Prototype classes must have the `\exface\Core\Interfaces\iCanBeConvertedToUxon` interface. Use the 
+`\exface\Core\CommonLogic\Traits\iCanBeConvertedToUxonTrait`. The trait implements the `importUxon()` method, that is normally called in the constructor of the class and `exportUxon()` to dump the current configuration back to UXON. Prefer the trait to custom importers and exporters as it makes future development easier and more consistent.
+- A class-level Docblock must explain the use of this prototype from the point of view of a designer.
+- Every UXON property must map to a setter named `set + PascalCase (property_name)` - e.g. `setAttributeAlias` for the property `attribute_alias`.
 - UXON properties can contain scalar values or nested UXON objects
 - Mapping is strict: missing setters must be treated as configuration error.
-- Do not invent new mapping mechanisms when existing setter-based import is 
-  available.
+- Do not invent new mapping mechanisms when existing setter-based import is available.
 
 ## UXON annotations
 
-Code annotations and docblocks are very important in UXON prototypes. They 
-are are used as a data source to generate autosuggests, templates and 
-contextual help in the UXON editors used by designers.
+Every UXON prototype class must have app designer oriented documentation explaining its purpose and how to use it. This
+is done by adding `@uxon-` annotations to the code. These will be read by the `PhpAnnotationsReader` and presented to
+the designers in the UXON editor autosuggest and quick refs, in debug widgets and in the form of generated documentation.
 
-Remember: UXON annotations are written primarily for app designers. They 
-must be well understandable without PHP knowledge and focus on the UXON 
-structures, not on code.
+Remember: UXON annotations are written primarily for app designers. They must be well understandable without PHP 
+knowledge and focus on the UXON structures, not on code.
 
-### Common annotation rules
+Here are some good examples of well-annotated UXON prototypes:
+- [UnionBehavior](../../Behaviors/UnionBehavior.php)
+
+### Global UXON annotation rules
+
+All classes implementing `\exface\Core\Interfaces\iCanBeConvertedToUxon` support UXON annotations. They can be placed
+on method level (typically on setters for the corresponding property) and sometimes on constant level (e.g. in
+query builders). All UXON prototypes treat their class dockblock as UXON documentation. Every method or constant with a
+`@uxon-property` annotation will be treated as a UXON property. Again, the dockblock will be used for documentation.
 
 UXON Docblocks must adhere to the following rules:
 
 - Everything is written in English.
-- Must have a one-liner summary (first line) telling the designer, what this 
-  prototype, property or other element is for
-- Should have a description if the summary alone is not clear anough. The 
-  description must be formatted as Markdown and separated from the summary 
-  with a blank line
-- Every code block inside descriptions must end with a blank line with a 
-  single space character before the closing ```` ``` ````. This is a 
-  limitation of our current annoutation reader.
-- Every blank line in a Docblock must contain at least one space after the 
-  leading `*` to be recognized as a blank line in the generated 
-  documentation. This is a limitation of our current annoutation reader.
+- Write them as instructions, proposing solutions to potential challenges.
+- Ensure the first line of the dockblock is a one-liner summary of its purpose
+- Provide detailed instructions between the first line and the first `@` annotation - this is the documentation.
+- Use markdown
+- Use examples in markdown code blocks to illustrate usage
+- Place `@uxon-` annotations in a block separated with a single empty line from  the description on top and from the
+regular PHPdoc annotations below.
+- Do **not** include technical implementation details - they are not relevant for app designers. If really needed, they
+  can follow after the `@uxon-` tags in a separate comment section.
+  
+**IMPORTANT:**
 
-Regular Phpdoc annotation are allowed too, but do not have effect on UXON. 
-If a separate description for developers is needed, it must be separated by 
-at least one annotation (e.g. `@author` or `@param`) from the UXON 
-description. The parser responsible for documentation generation considers 
-only the first part of the Docblock to be a description.
+- All lines in a UXON docblock must start with a space after the leading `*` - even empty lines! Otherwise there will 
+be rendering issues.
+- Markdown codeblocks in UXON docblocks must end with an empty line containing a single space before the closing fence.
+- Every blank line in a Docblock must contain at least one space  to be recognized as a blank line in the generated 
+  documentation. This is a limitation of our current annotation reader.
 
-### Class-level Docblocks for prototypes
+Regular PHPdoc annotation are allowed too, but do not have effect on UXON. If a separate description for developers is 
+needed, it must be separated by at least one annotation (typically the block of `@uxon-` tags) from the UXON description. 
+The parser responsible for documentation generation considers only the first part of the Docblock to be a description.
+
+### Class-level docblocks for prototypes
 
 The class-level Docblock must include the following:
 
@@ -73,30 +76,89 @@ The class-level Docblock must include the following:
   is for
 - description listing most important UXON properties and use cases. It 
   should include typical example UXONs.
-
-If a component can be used in multiple scenarios, add an `## Examples` section
-with a sub-chapter for very typical use case. Explain the scenario and the
-critical properties required for it. If examples are present already, do not 
+- Include at least one example of a typical configuration
+- Use markdown headings to structure the documentation if it is long
+- If a component can be used in multiple scenarios, add an `## Examples` section with a sub-chapter for very typical 
+use case. Explain the scenario and the critical properties required for it. If examples are present already, do not 
 change their structure - only update syntax if needed or add new examples.
 
 ### Method annotations for UXON properties
 
-Setter methods for UXON properties MUST have `@uxon-` annotations in their 
-Dockblock to be discovered by the UXON editor as available properties.
+Setter methods for UXON properties MUST have `@uxon-` annotations in their docblock to be discovered by the UXON
+editor as available properties. Place property annotations on the corresponding setter method. If there is no setter
+method, switch annotate the getter or any other semantically related method.
 
-### Required annotations
+#### Required annotations
 
-Each setter method for a UXON property must have these annotations:
-
+- Start with a one-liner, that sums up how the property affects the component's behavior. For example, `DataTable` has the property `filters`: "A list of filters to control what data is shown."
 - `@uxon-property` -  the UXON property name in snake_case, used for autosuggests
 - `@uxon-type` - one of the allowed types - see below.
 
-### Optional annotations for properties 
+#### Optional annotations for properties 
 
-- `@uxon-default` - the default value if exists
-- `@uxon-template` - JSON template for nested UXON objects. Inserted automatically in the UXON editor to be filled out by designers.
-- `@uxon-required` - `true` if this is property is required for the model
-- `@uxon-translatable` - true if this property is translatable
+- `@uxon-default <value>` - if the property has a concrete default value
+- `@uxon-template` - always add a single-line JSON template for nested UXON objects and arrays. This auto-expands the
+property in the UXON editor
+- `@uxon-required true` - if omitting this property will cause an error
+- `@uxon-translatable true` - true if this property is translatable
+- `@uxon-placeholder <placeholder>` - for every `[#placeholders#]` if the property value allows placeholders. Use multiple annotations for multiple placeholders.
+
+### How to write good UXON examples
+
+It is good practice to include examples of UXON configurations, especially if you need to explain specific setups.
+
+Follow these rules to make the examples easy to read in IDEs, the UXON editor and generated docs:
+
+- Use markdown code fences with the language set to `json`
+- Surround the fences with padding lines: add a line containing a single ` ` space directly above the opening fence and
+  above+below closing fence. These lines must not be truly empty - they must contain exactly one space.
+- Do not use truly empty lines anywhere inside the code-block - always leave a single ` ` space.
+- Collapse child UXON objects with only one or two short properties to a single line. Only for child-object, not on top
+level! Also don't collapse object, that would cause very long lines. The goal is to make the examples easy to overview
+and understand at first glance.
+- Place each property of bigger UXON objects on separate lines
+- Place scalar properties of a UXON object first - before any array or object properties. This makes it easier to read the configuration and find the relevant properties.
+
+Good example:
+
+```json
+{
+    "widget_type": "DataTable",
+    "object_alias": "exface.Core.ATTRIBUTE",
+    "filters": [
+        {"attribute_alias": "OBJECT"}
+    ],
+    "columns": [
+        {"attribute_alias": "OBJECT__LABEL"},
+        {"attribute_alias": "LABEL"}
+    ],
+    "sorters": [
+        {"attribute_alias": "LABEL", "direction": "asc"}
+    ],
+    "buttons": [
+        {
+            "caption": "Open", 
+            "bind_to_double_click": true,
+            "action": {"alias": "exface.Core.ShowObjectEditDialog"}
+        }
+    ]
+}
+ 
+```
+
+Top-level UXON uses one line per property. Filter and columns include only very simple child-objects, so they are
+collapsed to single lines to save some space. The button is a more complex child-object, so it is expanded. 
+
+### Inheritance and overrides
+
+Our documentation renderer supports inheritance only partially: class docblocks and overridden method summaries are NOT rendered in the editor. Documentation therefore has to be duplicated onto every subclass, and that duplication has to be kept in sync by hand.
+
+When editing documentation, you MUST:
+
+- Before finishing any change to a class docblock, search for its subclasses and update every one that carries its own copy of the affected section. Example: `ExportXLSX extends ExportJSON` and duplicates the "How the data is read" section, so a change to that section in `ExportJSON` must be mirrored in `ExportXLSX`.
+- Before finishing any change to a method summary, search for classes that override that method and update each overridden summary that duplicates the affected text.
+- When first documenting a class that inherits from another, copy the relevant documentation from the parent and adapt it to the subclass.
+- Treat "does a subclass (or override) copy this?" as a routine check for every docblock/summary edit — do not rely on the file you are editing to hint that a copy exists elsewhere.
 
 ## UXON types
 

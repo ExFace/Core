@@ -9,14 +9,15 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
 /**
  * Makes easy to manage comments widgets with the same table structure.
  * 
+ * Add this behavior to your objects representing comments and comment-widgets will automatically show them
+ * correctly without any attribute configuration.
  * 
- * * ## Examples
+ * ## Examples
  * 
  * ### Simple comments
  * 
  * ```
  * {
- *    "comment_id_attribute": "UID",
  *    "comment_created_date_attribute": "CREATED_ON",
  *    "comment_edited_date_attribute": "MODIFY_ON",
  *    "comment_author_id_attribute": "CREATED_BY",
@@ -31,31 +32,13 @@ use exface\Core\Exceptions\Behaviors\BehaviorConfigurationError;
  */
 class CommentBehavior extends AbstractBehavior
 {    
-    private $commentContentAttributeAlias = null;
-    
-    private $commentCreatedDateAttributeAlias = null;
-    
-    private $commentEditedDateAttributeAlias = null;
-    
-    private $commentAuthorAttributeAlias = null;
-    
-    private $commentIdAttributeAlias = null;
-    
-    private $commentAuthorIdAttributeAlias = null;
-    
-    private $timeModifiedAttributeAlias = null;
-    
-    private $allowedFileExtensions = [];
-    
-    private $allowedMimeTypes = [];
-    
-    private $maxFilenameLength = 255;
-    
-    private $maxFileSizeMb = null;
-
-    private $imageResizeToMaxSide = null;
-
-    private $imageResizeQuality = null;
+    private ?string $commentContentAttributeAlias = null;
+    private ?string $commentCreatedDateAttributeAlias = null;
+    private ?string $commentEditedDateAttributeAlias = null;
+    private ?string $commentAuthorAttributeAlias = null;
+    private ?string $commentAvatarUrlAttributeAlias = null;
+    private ?string $commentIdAttributeAlias = null;
+    private ?string $commentAuthorIdAttributeAlias = null;
     
     /**
      * 
@@ -156,6 +139,36 @@ class CommentBehavior extends AbstractBehavior
         $this->commentAuthorAttributeAlias = $value;
         return $this;
     }
+
+    /**
+     * Return the author's avatar URL attribute, or null when avatars are not configured.
+     *
+     * @return MetaAttributeInterface|null
+     */
+    public function getCommentAvatarUrlAttribute() : ?MetaAttributeInterface
+    {
+        return $this->commentAvatarUrlAttributeAlias === null
+            ? null
+            : $this->getObject()->getAttribute($this->commentAvatarUrlAttributeAlias);
+    }
+
+    /**
+     * Select the attribute containing the URL of each comment author's avatar.
+     * 
+     * Comments feeds use this attribute unless they specify their own avatar attribute.
+     * Leave it unset to hide author avatars on existing comments.
+     * 
+     * @uxon-property comment_avatar_url_attribute
+     * @uxon-type metamodel:attribute
+     * 
+     * @param string $value
+     * @return CommentBehavior
+     */
+    protected function setCommentAvatarUrlAttribute(string $value) : CommentBehavior
+    {
+        $this->commentAvatarUrlAttributeAlias = $value;
+        return $this;
+    }
     
     /**
      * 
@@ -211,10 +224,11 @@ class CommentBehavior extends AbstractBehavior
     } 
     
     /**
+     * Returns comment attributes defined in this behavior
      * 
      * @return array<MetaAttributeInterface|null>
      */
-    public function getFileAttributes() : array
+    public function getCommentAttributes() : array
     {
         $attrs = [];
         if (null !== $attr = $this->getCommentIdAttribute()) {
@@ -233,6 +247,9 @@ class CommentBehavior extends AbstractBehavior
             $attrs[] = $attr;
         }
         if (null !== $attr = $this->getCommentAuthorAttribute()) {
+            $attrs[] = $attr;
+        }
+        if (null !== $attr = $this->getCommentAvatarUrlAttribute()) {
             $attrs[] = $attr;
         }
         return $attrs;

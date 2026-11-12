@@ -49,12 +49,13 @@ interface ServiceParameterInterface extends  iCanBeConvertedToUxon, WorkbenchDep
     public function isValidValue($val) : bool;
     
     /**
-     * 
+     * Validates and parses a value using the parameter's data type without converting its result to a string.
+     *
      * @param mixed $val
      * @throws DataTypeValidationError
-     * @return string
+     * @return string|int|float|bool|array The parsed value, retaining the data type's native type.
      */
-    public function parseValue($val) : string;
+    public function parseValue($val) : mixed;
     
     /**
      * 

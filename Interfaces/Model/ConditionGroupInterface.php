@@ -162,9 +162,26 @@ interface ConditionGroupInterface extends ConditionalExpressionInterface
 
     /**
      * Returns a condition group with the same conditions, but based on a related object specified by the given relation path.
+     * 
+     * The optional filter callback selects which conditions to rebase. It is called before
+     * rebasing each condition, including conditions in nested groups processed recursively:
+     *
+     * ```
+     * function(ConditionInterface $condition, string $relationPathToNewBaseObject) : bool
+     * ```
+     *
+     * The first argument is the original condition, still based on its current object.
+     * The second argument is the relation path as a string, relative to the group being
+     * processed. It may be empty if that group's base relation path already identifies
+     * the target object.
+     *
+     * Return `false` to omit the condition, or `true` to rebase and include it. Only a
+     * strict `false` excludes a condition. With no callback, no conditions are excluded
+     * by this filter. If the supplied relation path is empty, the group is copied without
+     * invoking the callback.
      *
      * @param MetaRelationPathInterface|string $relationPathToNewBaseObject
-     * @param callable|null $conditionFilterCallback
+     * @param callable(ConditionInterface, string): bool|null $conditionFilterCallback
      * @return ConditionGroupInterface
      * @see ExpressionInterface::rebase()
      */

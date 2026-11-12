@@ -3,33 +3,56 @@ namespace exface\Core\Widgets;
 
 use exface\Core\Behaviors\CommentBehavior;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\DataTypes\ImageUrlDataType;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Widgets\iContainOtherWidgets;
 use exface\Core\Widgets\Parts\Uploader;
-use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Interfaces\Widgets\iTakeInput;
 use exface\Core\Widgets\Traits\EditableTableTrait;
-use exface\Core\Interfaces\WidgetInterface;
-use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\LogicException;
-use exface\Core\Facades\HttpFileServerFacade;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Widgets\iCanEditData;
 use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 
 /**
- * BETA! Shows a feed of comments (as seen in blogs or news pages) with a on option of quickly adding a comment
+ * Shows a feed of comments (as seen in blogs or news pages) with an option of quickly adding a comment
+ * 
+ * This widget simplifies building good comment UX. It includes actions to create, edit and delete comments
+ * automatically. Users can edit their own comments any time, but can only view other peoples comments. You can define
+ * `comment_moderator_roles` to make users with these roles act as moderators and allow them to edit or delete other 
+ * peoples comments too. 
+ * 
+ * The `CommentsFeed` need to know where to get certain information from: e.g. the comment body, the author, creation
+ * times, etc. It is recommended to give the object, that stores comments, a `CommentBehavior`. This will automatically
+ * allow all comment widgets to understand, how to deal with in. Alternatively, you can specify `comment_` attributes
+ * in this widget manually.
+ * 
+ * You can also use a regular `DataTable` for comments and configure all that logic manually, but a special comments
+ * widget simplifies this a lot!
  * 
  * ## Examples
  * 
- * ### Simple comments
+ * ### Comment feed with an object with `CommentBehavior`
+ * 
+ * If you have a dedicated comment object, give it the `CommentBehavior` to tell the workbench, that it is a comment.
+ * All comment-related widget will then work with minimal configuration!
+ * 
+ * ```
+ *  {
+ *     "widget_type": "CommentsFeed",
+ *     "object_alias": "my.App.COMMENTS",
+ *  }
+ * 
+ * ```
+ * 
+ * ### Comment feed with custom-defined attributes
+ * 
+ * If there is no `CommentBehavior` on the object of the widget, you will need to specify `comment_` attributes manually.
  * 
  * ```
  * {
  *    "widget_type": "CommentsFeed",
  *    "object_alias": "my.App.COMMENTS",
- *    "comment_id_attribute": "UID",
  *    "comment_created_date_attribute": "CREATED_ON",
  *    "comment_edited_date_attribute": "MODIFY_ON",
  *    "comment_author_id_attribute": "CREATED_BY",
@@ -45,56 +68,36 @@ use exface\Core\Interfaces\Widgets\iFillEntireContainer;
 class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntireContainer
 {
     use EditableTableTrait;
-    const ORIENTATION_HORIZONTAL = 'horizontal';
-    const ORIENTATION_VERTICAL = 'vertical';
+    
+    private ?DataColumn $commentContentColumn = null;
+    private ?string $commentContentAttributeAlias = null;
+    private ?DataColumn $commentCreatedDateColumn = null;
+    private ?string $commentCreatedDateAttributeAlias = null;
+    private ?DataColumn $commentEditedDateColumn = null;
+    private ?string $commentEditedDateAttributeAlias = null;
+    private ?DataColumn $commentAuthorColumn = null;
+    private ?string $commentAuthorAttributeAlias = null;
+    private ?DataColumn $commentAvatarUrlColumn = null;
+    private ?string $commentAvatarUrlAttributeAlias = null;
+    private ?DataColumn $commentIdColumn = null;
+    private ?string $commentIdAttributeAlias = null;
+    private ?DataColumn $commentAuthorIdColumn = null;
+    private ?string $commentAuthorIdAttributeAlias = null;
+    private ?DataColumn $commentAuthorIsCurrentUserColumn = null;
+    private array $commentModeratorRoles = [
+        'exface.Core.SUPERUSER'
+    ];
+    
+    private ?Uploader $uploader = null;
+    private ?UxonObject $uploaderUxon = null;
+    private bool $uploadEnabled = false;
+    private bool $enableMarkdown = false;
+    
+    private ?MetaObjectInterface $checkedBehaviorForObject = null;
 
-    private $imageUrlColumn = null;
-
-    private $imageUrlAttributeAlias = null;
-    
-    private $commentContentColumn = null;
-    
-    private $commentContentAttributeAlias = null;
-    
-    private $commentCreatedDateColumn = null;
-    
-    private $commentCreatedDateAttributeAlias = null;
-    
-    private $commentEditedDateColumn = null;
-    
-    private $commentEditedDateAttributeAlias = null;
-    
-    private $commentAuthorColumn = null;
-    
-    private $commentAuthorAttributeAlias = null;
-    
-    private $commentIdColumn = null;
-    
-    private $commentIdAttributeAlias = null;
-
-    private $commentAuthorIdColumn = null;
-    
-    private $commentAuthorIdAttributeAlias = null;
-    
-    private $isCurrentUserAuthor = false;
-    
-    private $orientation = self::ORIENTATION_HORIZONTAL;
-    
-    private $uploader = null;
-    
-    private $uploaderUxon = null;
-    
-    private $uploadEnabled = false;
-    
-    private $downloadEnabled = true;
-    
-    private $checkedBehaviorForObject = null;
-
-    private $btnCreate;
-
-    private $btnEdit;
-
-    private $btnDelete;
+    private ?DataButton $btnCreate = null;
+    private ?DataButton $btnEdit = null;
+    private ?DataButton $btnDelete = null;
 
     protected function init()
     {
@@ -103,42 +106,86 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         // explicitly enabled by the user.
         $this->setHideHeader(true);
         $this->setHideFooter(true);
-
-        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
-        
-        //buttons are created from the framework their click functions will be used in the ui 
-        $this->btnCreate = $this->createButton(new UxonObject([
-            'widget_type' => 'DataButton',
-            'visibility' => 'hidden',
-            'action_alias' => 'exface.Core.CreateData'
-        ]));
-        $this->addButton($this->btnCreate);$this->btnEdit = $this->createButton(new UxonObject([
-            'widget_type' => 'DataButton',
-            'visibility' => 'hidden',
-            'action_alias' => 'exface.Core.UpdateData'
-        ]));
-        $this->addButton($this->btnEdit);
-        $this->btnDelete = $this->createButton(new UxonObject([
-            'widget_type' => 'DataButton',
-            'visibility' => 'hidden',
-            'action_alias' => 'exface.Core.DeleteObject'
-        ]));
-        $this->addButton($this->btnDelete);
         return;
     }
 
+    /**
+     * Whether comment text should be displayed as Markdown.
+     *
+     * @return bool
+     */
+    public function getEnableMarkdown() : bool
+    {
+        return $this->enableMarkdown;
+    }
+
+    /**
+     * Enable Markdown formatting in displayed comments instead of showing plain text.
+     * 
+     * Comments remain plain text by default. When enabled in a supporting facade,
+     * users enter and edit Markdown source; rendering does not change saved text.
+     * 
+     * @uxon-property enable_markdown
+     * @uxon-type boolean
+     * @uxon-default false
+     * 
+     * @param bool $value
+     * @return CommentsFeed
+     */
+    public function setEnableMarkdown(bool $value) : CommentsFeed
+    {
+        $this->enableMarkdown = $value;
+        return $this;
+    }
+
+    /**
+     * Return the create action with a stable ID independent of facade toolbar grouping.
+     */
     public function getButtonCreate() : DataButton
     {
+        if ($this->btnCreate === null) {
+            $this->btnCreate = $this->createButton(new UxonObject([
+                'id' => $this->getId(false) . '_create',
+                'widget_type' => 'DataButton',
+                'visibility' => 'hidden',
+                'action_alias' => 'exface.Core.CreateData'
+            ]));
+            $this->addButton($this->btnCreate);
+        }
         return $this->btnCreate;
     }
 
+    /**
+     * Return the delete action with a stable ID independent of facade toolbar grouping.
+     */
     public function getButtonDelete() : DataButton
     {
+        if ($this->btnDelete === null) {
+            $this->btnDelete = $this->createButton(new UxonObject([
+                'id' => $this->getId(false) . '_delete',
+                'widget_type' => 'DataButton',
+                'visibility' => 'hidden',
+                'action_alias' => 'exface.Core.DeleteObject'
+            ]));
+            $this->addButton($this->btnDelete);
+        }
         return $this->btnDelete;
     }
 
+    /**
+     * Return the update action with a stable ID independent of facade toolbar grouping.
+     */
     public function getButtonEdit() : DataButton
     {
+        if ($this->btnEdit === null) {
+            $this->btnEdit = $this->createButton(new UxonObject([
+                'id' => $this->getId(false) . '_edit',
+                'widget_type' => 'DataButton',
+                'visibility' => 'hidden',
+                'action_alias' => 'exface.Core.UpdateData'
+            ]));
+            $this->addButton($this->btnEdit);
+        }
         return $this->btnEdit;
     }
 
@@ -171,6 +218,10 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
     
     /**
+     * The attribute containing the text of each comment.
+     * 
+     * Required unless the object has a `CommentBehavior` with a comment content attribute.
+     * 
      * @uxon-property comment_content_attribute
      * @uxon-type metamodel:attribute
      * 
@@ -211,6 +262,9 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
     
     /**
+     * Attribute containing the creation time of each comment.
+     * 
+     * Required unless the object has a `CommentBehavior` with a comment created date attribute.
      * 
      * @uxon-property comment_created_date_attribute
      * @uxon-type metamodel:attribute
@@ -252,6 +306,9 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
     
     /**
+     * Attribute containing the edited time of each comment.
+     * 
+     * Required unless the object has a `CommentBehavior` with a comment edited date attribute.
      * 
      * @uxon-property comment_edited_date_attribute
      * @uxon-type metamodel:attribute
@@ -293,6 +350,10 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
     
     /**
+     * Attribute containing the unique ID of each comment.
+     * 
+     * By default, the widget will use the UID attribute of the object if it has one. Only override this property if
+     * comments really need some custom UIDs - e.g. public ids. That should be very rare.
      * 
      * @uxon-property comment_id_attribute
      * @uxon-type metamodel:attribute
@@ -334,6 +395,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
     
     /**
+     * Attribute with the UID of each comment's author - used to determine whether the current user is the author.
      * 
      * @uxon-property comment_author_id_attribute
      * @uxon-type metamodel:attribute
@@ -351,7 +413,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         $col2 = $this->createColumnFromUxon(new UxonObject(["Calculation"=>"=IsTrue(User('UID') == $value)"]));
         $col2->setHidden(true);
         $this->addColumn($col2);
-        $this->isCurrentUserAuthor = $col2;
+        $this->commentAuthorIsCurrentUserColumn = $col2;
 
         return $this;
     }
@@ -378,13 +440,15 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
      * 
      * @return DataColumn
      */
-    public function getIsCurrentUserAuthor() : DataColumn
+    public function getCommentAuthorIsCurrentUserColumn() : DataColumn
     {
-        return $this->isCurrentUserAuthor;
-    }
+        return $this->commentAuthorIsCurrentUserColumn;
+    }   
 
     /**
+     * Attribute containing the visible name of each comment's author.
      * 
+     * Required unless the object has a `CommentBehavior` with a comment author attribute.
      * 
      * @uxon-property comment_author_attribute
      * @uxon-type metamodel:attribute
@@ -402,65 +466,89 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     }
 
     /**
+     * Return the optional column containing comment authors' avatar URLs.
+     *
+     * @throws WidgetConfigurationError
+     * @return DataColumn
+     */
+    public function getCommentAvatarUrlColumn() : DataColumn
+    {
+        if ($this->commentAvatarUrlAttributeAlias === null) {
+            $this->guessColumns();
+        }
+        if ($this->commentAvatarUrlColumn !== null) {
+            return $this->commentAvatarUrlColumn;
+        }
+        throw new WidgetConfigurationError($this, 'No comment avatar URL attribute configured!');
+    }
+
+    /**
+     * Return whether an avatar column is configured on the widget or its object's comment behavior.
+     *
+     * @return bool
+     */
+    public function hasCommentAvatarUrlColumn() : bool
+    {
+        if ($this->commentAvatarUrlAttributeAlias === null) {
+            $this->guessColumns();
+        }
+        return $this->commentAvatarUrlAttributeAlias !== null;
+    }
+
+    /**
+     * Attribute containing the URL of each comment author's avatar.
+     * 
+     * Leave this property unset to use the avatar attribute from the object's comment behavior.
+     * If neither provides an avatar attribute, author avatars are hidden on existing comments.
+     * 
+     * @uxon-property comment_avatar_url_attribute
+     * @uxon-type metamodel:attribute
+     *
+     * @param string $value
+     * @return CommentsFeed
+     */
+    public function setCommentAvatarUrlAttribute(string $value) : CommentsFeed
+    {
+        $col = $this->createColumnFromAttribute($this->getMetaObject()->getAttribute($value), null, true);
+        $this->addColumn($col);
+        $this->commentAvatarUrlAttributeAlias = $value;
+        $this->commentAvatarUrlColumn = $col;
+        return $this;
+    }
+    
+    public function getCommentModeratorRoles() : array
+    {
+        return $this->commentModeratorRoles;
+    }
+
+    /**
+     * List of user role aliases or UIDs that allow moderating comments (editing or deleting any comment, not just the user's own).
+     * 
+     * @uxon-property comment_moderator_roles
+     * @uxon-type array
+     * @uxon-template ["exface.Core.SUPERUSER"]
+     * 
+     * @param string[] $roles
+     * @return $this
+     */
+    public function setCommentModeratorRoles(array $roles) : CommentsFeed
+    {
+        $this->commentModeratorRoles = $roles;
+        return $this;
+    }
+
+    /**
      *
      * @return ?bool
      */
-    public function isCurrentUserAdmin() : ?bool
+    public function isCurrentUserModerator() : ?bool
     {
-        return $this->getWorkbench()->getSecurity()->getAuthenticatedUser()->getRoles() === "Comment Admin Role";
-    }
-
-
-
-    /**
-     *
-     * @return ?string
-     */
-    protected function getOrientation() : ?string
-    {
-        return $this->orientation;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function isVertical() : bool
-    {
-        return $this->getOrientation() === self::ORIENTATION_VERTICAL;
-    }
-    
-    /**
-     * 
-     * @return bool
-     */
-    public function isHorizontal() : bool
-    {
-        return $this->getOrientation() === self::ORIENTATION_HORIZONTAL;
-    }
-    
-    /**
-     * Makes the gallery vertically or horizontally oriented.
-     * 
-     * By default, the temaplate will set the orientation automatically. Use this property to override
-     * the default orientation.
-     * 
-     * @uxon-property orientation
-     * @uxon-type [vertical,horizontal]
-     * 
-     * @param ?string $value
-     * @return CommentsFeed
-     */
-    public function setOrientation(?string $value) : CommentsFeed
-    {
-        $value = trim(strtolower($value));
-        
-        if ($value !== self::ORIENTATION_HORIZONTAL && $value !== self::ORIENTATION_VERTICAL) {
-            throw new WidgetConfigurationError($this, 'Invalid CommentsFeed orientation "' . $value . '": only "vertical" or "horizontal" are allowed!');
+        foreach ($this->getCommentModeratorRoles() as $role) {
+            if ($this->getWorkbench()->getSecurity()->getAuthenticatedUser()->hasRole($role)) {
+                return true;
+            }
         }
-        
-        $this->orientation = $value;
-        return $this;
+        return false;
     }
     
     public function isUploadEnabled() : bool
@@ -522,6 +610,10 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
      */
     public function getChildren() : \Iterator
     {
+        // Register internal actions before traversing their toolbars so IDs are stable on AJAX reconstruction.
+        $this->getButtonCreate();
+        $this->getButtonEdit();
+        $this->getButtonDelete();
         yield from parent::getChildren();
         
         if ($this->isUploadEnabled()) {
@@ -535,86 +627,24 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
         }
         
         return;
-    }
+    }  
     
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\AbstractWidget::getWidth()
+     * Fill unspecified comment columns from the object's behavior without replacing explicit widget settings.
      */
-    public function getWidth()
-    {
-        if ($this->isHorizontal() && parent::getWidth()->isUndefined()) {
-            $this->setWidth(WidgetDimension::MAX);
-        }
-        return parent::getWidth();
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Widgets\AbstractWidget::getHeight()
-     */
-    public function getHeight()
-    {
-        if (! $this->isHorizontal() && parent::getHeight()->isUndefined()) {
-            $this->setHeight(WidgetDimension::MAX);
-        }
-        return parent::getHeight();
-    }
-    
-    /**
-     * In an CommentsFeed readonly means it cannot upload, so there is no point in an
-     * extra uxon-property here.
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTakeInput::setReadonly()
-     */
-    public function setReadonly($true_or_false) : WidgetInterface
-    {
-        $this->setUploadEnabled(BooleanDataType::cast($true_or_false));
-        return $this;
-    }
-    
-    /**
-     * An CommentsFeed is readonly if it does not do upload as part of form data.
-     *
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Widgets\iTakeInput::isReadonly()
-     */
-    public function isReadonly() : bool
-    {
-        return $this->isUploadEnabled() === false || $this->getUploader()->isInstantUpload();
-    }
-
-    /**
-     * 
-     * @param string $uid
-     * @param string $width
-     * @param string $height
-     * @param bool $relativeToSiteRoot
-     * @return string
-     */
-    public function buildUrlForImage(string $uid = null, string $width = null, string $height = null, bool $relativeToSiteRoot = true) : string
-    {
-        if ($uid === null) {
-            $uid = '[#' . $this->getUidColumn()->getDataColumnName() . '#]';
-        }
-        if ($width !== null && $height !== null) {
-            $url = HttpFileServerFacade::buildUrlToThumbnail($this->getMetaObject(), $uid, $width, $height, false, $relativeToSiteRoot);
-        } else {
-            $url = HttpFileServerFacade::buildUrlToViewData($this->getMetaObject(), $uid, false, $relativeToSiteRoot);
-        }
-        return $url;
-    }    
-    
     protected function guessColumns()
     {
-        // Try to get the columns from the CommentBehavior
-        /* @var $behavior \exface\Core\Behaviors\CommentBehavior */
-        if ($this->checkedBehaviorForObject !== $this->getMetaObject() && null !== $behavior = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(CommentBehavior::class)->getFirst()) {
+        if ($this->checkedBehaviorForObject !== $this->getMetaObject()
+            && ! ($behaviors = $this->getMetaObject()->getBehaviors()->getByPrototypeClass(CommentBehavior::class))->isEmpty()
+        ) {
+            /* @var $behavior \exface\Core\Behaviors\CommentBehavior */
+            $behavior = $behaviors->getFirst();
             if ($this->commentAuthorColumn === null && $attr = $behavior->getCommentAuthorAttribute()) {
                 $this->setCommentAuthorAttribute($attr->getAliasWithRelationPath());
+            }
+
+            if ($this->commentAvatarUrlColumn === null && $attr = $behavior->getCommentAvatarUrlAttribute()) {
+                $this->setCommentAvatarUrlAttribute($attr->getAliasWithRelationPath());
             }
             
             if ($this->commentContentColumn === null && $attr = $behavior->getCommentContentAttribute()) {

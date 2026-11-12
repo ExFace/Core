@@ -752,7 +752,7 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * attribute if it has an `attribute_alias`, etc. However, if none of this applies, the calculation
      * will be used instead of leaving the widget empty.
      *
-     * NOTE: `calculation` can be used used without an `attribute_alias` producing a calculated column,
+     * NOTE: `calculation` can be used without an `attribute_alias` producing a calculated column,
      * that does not affect subsequent actions or in addition to an `attribute_alias`, which will place
      * the calculated value in the attribute's column for further processing.
      *

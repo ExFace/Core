@@ -19,9 +19,9 @@ trait PopupTrait
 {
     private $hide_close_button = false;
     
-    private $close_button = null;
-    
-    private $close_button_action = null;
+    private ?Button $close_button = null;
+    private ?UxonObject $close_button_uxon = null;
+    private ?UxonObject $close_button_action_uxon = null;
     
     /**
      * Returns the button that opened the dialog or NULL if not available
@@ -53,17 +53,17 @@ trait PopupTrait
                     // If the action shows a dialog, that's it
                     case $action instanceof iShowDialog:
                         return $action;
-                        // If the action calls other actions, see if one of them fits: that is, it shows exactly
-                        // our dialog. It is importantch to check for the dialog id as CallAction action might
-                        // have multiple actions calling each their own dialog!
+                    // If the action calls other actions, see if one of them fits: that is, it shows exactly
+                    // our dialog. It is importantch to check for the dialog id as CallAction action might
+                    // have multiple actions calling each their own dialog!
                     case $action instanceof iCallOtherActions:
-                            $thisDialogId = $this->getId();
-                            foreach ($action->getActionsRecursive() as $innerAction) {
-                                if (($innerAction instanceof iShowDialog) && $innerAction->getDialogWidget()->getId() === $thisDialogId) {
-                                    return $innerAction;
-                                }
+                        $thisDialogId = $this->getId();
+                        foreach ($action->getActionsRecursive() as $innerAction) {
+                            if (($innerAction instanceof iShowDialog) && $innerAction->getDialogWidget()->getId() === $thisDialogId) {
+                                return $innerAction;
                             }
-                            break;
+                        }
+                        break;
                 }
             }
         }
@@ -114,14 +114,19 @@ trait PopupTrait
     
     protected function createCloseButton() : Button
     {
-        $btn = $this->createButton();
+        $uxon = new UxonObject([
+            'refresh_input' => false,
+            'icon' => Icons::TIMES,
+            'caption' => $this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'),
+            'align' => EXF_ALIGN_OPPOSITE
+        ]);
+        if ($this->close_button_uxon !== null) {
+            $uxon = $uxon->extend($this->close_button_uxon);
+        }
+        $btn = $this->createButton($uxon);
         if ($btn instanceof DialogButton) {
             $btn->setCloseDialogAfterActionSucceeds(true);
         }
-        $btn->setRefreshInput(false);
-        $btn->setIcon(Icons::TIMES);
-        $btn->setCaption($this->translate('WIDGET.DIALOG.CLOSE_BUTTON_CAPTION'));
-        $btn->setAlign(EXF_ALIGN_OPPOSITE);
         if ($this->getHideCloseButton()) {
             $btn->setHidden(true);
         }
@@ -129,6 +134,26 @@ trait PopupTrait
             $btn->setAction($this->getCloseButtonActionUxon());
         }
         return $btn;
+    }
+
+    /**
+     * Custom configuration for the auto-added close button
+     * 
+     * This configuration will override the default close button config, so you can change the caption, icon, etc.
+     * You can also change the `action` inside the button configuration or use the separate `close_button_action`
+     * property - the effect will be the same. Just don't use both at the same time!
+     * 
+     * @uxon-property close_button
+     * @uxon-type \exface\Widgets\DialogButton
+     * @uxon-template {"caption": ""}
+     * 
+     * @param UxonObject $uxon
+     * @return iAmClosable
+     */
+    public function setCloseButton(UxonObject $uxon) : iAmClosable
+    {
+        $this->close_button_uxon = $uxon;
+        return $this;
     }
     
     /**
@@ -146,7 +171,7 @@ trait PopupTrait
      */
     public function setCloseButtonAction(UxonObject $uxon) : iAmClosable
     {
-        $this->close_button_action = $uxon;
+        $this->close_button_action_uxon = $uxon;
         if ($this->close_button !== null) {
             $this->close_button->setAction($uxon);
         }
@@ -160,16 +185,22 @@ trait PopupTrait
      */
     protected function getCloseButtonActionUxon() : ?UxonObject
     {
-        return $this->close_button_action;
+        return $this->close_button_action_uxon;
     }
     
     /**
-     * Returns true if the close button has an action uxon
+     * Returns true if the close button has a custom action UXON
      *
      * @return boolean
      */
     public function hasCloseButtonAction() : bool
     {
-        return $this->close_button_action !== null;
+        return $this->close_button_action_uxon !== null 
+            || ($this->close_button_uxon !== null 
+                && (
+                    $this->close_button_uxon->hasProperty('action')
+                    || $this->close_button_uxon->hasProperty('action_alias')
+                )
+            );
     }
 }

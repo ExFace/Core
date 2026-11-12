@@ -58,6 +58,12 @@ Widget, an Action or any other production class.
    changed path needs a persisted metamodel/DB or the full application lifecycle, so it belongs in
    application-level/Behat tests per "Cover Changes Without Mocking Workbench"). Never conclude a PHP
    change with only lint/build validation and no testing statement.
+7. **Do not write tests that assert the contents of JSON metamodel files in an app's `Model/`
+   folder.** These models can be changed through the administration UI and exported again; tests
+   that freeze their records, values or structure would then fail on legitimate configuration
+   changes. Test the PHP behavior that processes models using dedicated fixtures instead, not the
+   current exported model files. This does not prohibit parsing edited JSON files as a one-off
+   validation step.
 
 
 ## Cover Changes Without Mocking Workbench
@@ -198,6 +204,33 @@ when genuinely run on its own.
 
 Run the narrowest suite from the app root to confirm (`--testsuite unit` first), then report
 the command and result per "Validate And Report".
+
+### Standard PHPUnit command
+
+Use one consistent command form so developers can narrowly approve the runner in VS Code
+without approving new launchers for every test:
+
+```powershell
+phpunit --configuration phpunit.xml.dist --testsuite unit --filter SomeTest
+```
+
+- Run from the owning app's root, with that app's `phpunit.xml.dist` explicitly selected.
+- In an installation, resolve `phpunit` from the host's `vendor/bin` directory on `PATH`.
+  On Windows this uses Composer's `phpunit.bat` launcher. Provision this once; do not install
+  another global PHPUnit or a per-app copy just to run tests inside the installation.
+- For a standalone app, use its own Composer runner with the same configuration and options.
+- Keep option order stable: `--configuration`, `--testsuite`, then optional `--filter`.
+  Replace `SomeTest` with the relevant test class or method; omit `--filter` for a suite run.
+  Select `integration` only when the changed behavior requires that suite and its dependencies
+  are available. Append `--order-by=random` when randomized execution is required.
+- Invoke PHPUnit directly. Do not switch between Composer scripts, `php -r`, custom bootstrap
+  scripts, PHAR downloads or alternate wrappers. Do not chain navigation, environment setup,
+  tests or output filters into the test command; set the working directory separately.
+- If `phpunit` is not on `PATH`, use the host's verified Composer launcher directly with the
+  same options and report the missing PATH setup. Do not repeatedly search for alternative runners
+  or change persistent environment settings without user authorization.
+- Runner approval does not waive approval for changing existing test intent or the obligation
+  to stop and report failing tests. Do not enable blanket terminal auto-approval.
 
 ## Keep Scenarios Independent
 

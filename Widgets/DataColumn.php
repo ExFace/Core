@@ -1363,8 +1363,23 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
     }
     
     /**
+     * Additional explanation typically used as tooltip on column headers
      * 
-     * {@inheritDoc}
+     * If not set, the widget will attempt to generate a meaningful hint automatically:
+     * 
+     * - If the widget is bound to an attribute
+     *      - If it has an aggregation like `:SUM`, the hint will remain empty
+     *      - If it is relation and the left-most attribute is the LABEL of its object, the description
+     *      of the relation attribute in the model will be used (not the description of the LABEL attribute)
+     *      - otherwise the description of the attribute will be used as hint
+     * - otherwise the hint will remain empty
+     * 
+     * You can use a static formula as widget hint: e.g. `=Translate()` or `=GetConfg()` or even `=Lookup()`.
+     * 
+     * @uxon-property hint
+     * @uxon-type string|metamodel:formula
+     * @uxon-translatable true
+     * 
      * @see \exface\Core\Widgets\AbstractWidget::setHint()
      */
     public function setHint($value)

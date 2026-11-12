@@ -1737,7 +1737,8 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $relq_attribute_alias = str_replace($rev_rel_path->toString() . RelationPath::getRelationSeparator(), '', $qpart->getAlias());
 
         // Some aggregators require customized subselects - handle them here
-        if (($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator()) {
+        $qpartHasAggregator = ($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator();
+        if ($qpartHasAggregator) {
             $aggr = $qpart->getAggregator()->getFunction()->__toString();
             // MIN_OF and MAX_OF basically do subselect with LIMIT 1 ordered by the first argument of the aggregator
             if ($aggr === AggregatorFunctionsDataType::MAX_OF || $aggr === AggregatorFunctionsDataType::MIN_OF) {
@@ -1758,18 +1759,20 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
         $relq->addAttribute($relq_attribute_alias);
 
         // Let the subquery inherit all filters of the main query, that need to be applied to objects beyond the reverse relation.
-        // In our examplte, those would be any filter on ORDER->CUSTOMER<-CUSTOMER_CARD or ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE, etc. Filters
-        // over ORDER oder ORDER->CUSTOMER would be applied to the base query and ar not neeede in the subquery any more.
-        // If we would rebase and add all filters, it will still work, but the SQL would get much more complex and surely
+        // In our example, those would be any filter on `ORDER->CUSTOMER<-CUSTOMER_CARD` or `ORDER->CUSTOMER<-CUSTOMER_CARD->TYPE`,
+        // etc. Filters over ORDER or ORDER->CUSTOMER would be applied to the base query and are not needed in the subquery
+        // anymore.
+        // If we rebased and add all filters, it will still work, but the SQL would get much more complex and surely
         // slow with large data sets.
         // Filtering out applicable filters (conditions) is done via the following callback, that returns TRUE only if the
         // path we rebase to matches the beginning of the condition's relation path.
-        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
-            if(($qpart instanceof QueryPartAttribute) && $qpart->hasAggregator() && !$condition->willApplyToAggregatedValues()) {
+        $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpartHasAggregator) {
+            if($qpartHasAggregator && ! $condition->willApplyToAggregatedValues()) {
                 return false;
             }
-
-            if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+            // If a condition is not applicable (is applied to something else than the tables in our
+            // subquery or in other words does not start with the relation to the subquery) - skip it.
+            if ($condition->getExpression()->isMetaAttribute() && stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object . RelationPath::getRelationSeparator()) !== 0) {
                 return false;
             } else {
                 return true;
@@ -2930,23 +2933,26 @@ abstract class AbstractSqlBuilder extends AbstractQueryBuilder
                 // filter set for the query. So we need all applicable non-aggregating filters in our subquery.
                 // This is achieved by rebasing all filters with the following filter callback, that excludes
                 // certain conditions.
-                $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpart) {
+                $qpartExpr = $qpart->getExpression();
+                $relq_condition_filter = function($condition, $relation_path_to_new_base_object) use ($qpartExpr) {
                     // If the condition is not an attribute, keep it - other parts of the code will deal with it
                     if (! $condition->getExpression()->isMetaAttribute()) {
                         return true;
                     }
+                    $condExpr = $condition->getExpression();
+                    $condExprString = $condExpr->__toString();
                     // If a condition matches the query part we are processing right now, skip it - we will
                     // add it later explicitly.
-                    if ($condition->getExpression()->toString() === $qpart->getExpression()->__toString()){
+                    if ($condExpr->getMetaObject()->is($qpartExpr->getMetaObject()) && $condExprString === $qpartExpr->__toString()) {
                         return false;
                     }
-                    // If a condition  has an aggregator itself - skip it as it will get its own subquery.
-                    if (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $condition->getExpression()->toString())) {
+                    // If a condition has an aggregator itself - skip it as it will get its own subquery.
+                    if (DataAggregation::getAggregatorFromAlias($this->getWorkbench(), $condExprString)) {
                         return false;
                     }
                     // If a condition is not applicable (is applied to something else than the tables in our
-                    // subquery) - skip it.
-                    if (stripos($condition->getExpression()->toString(), $relation_path_to_new_base_object) !== 0) {
+                    // subquery or in other words does not start with the relation to the subquery) - skip it.
+                    if (stripos($condExprString, $relation_path_to_new_base_object . RelationPath::getRelationSeparator()) !== 0) {
                         return false;
                     }
                     return true;
