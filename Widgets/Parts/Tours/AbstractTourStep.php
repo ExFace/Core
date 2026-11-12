@@ -6,7 +6,9 @@ use Error;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tours\TourStepInterface;
+use exface\Core\Interfaces\Tours\TourSubrouteInterface;
 use exface\Core\Interfaces\WidgetInterface;
+use exface\Core\Interfaces\Widgets\IHaveTourSubrouteInterface;
 
 /**
  * Represents a single step in a tour. 
@@ -49,6 +51,7 @@ abstract class AbstractTourStep implements TourStepInterface
     const ALIGN_END = 'end';
 
     private WidgetInterface $widget;
+    private ?TourSubrouteInterface $subroute = null;
     private ?string $title = null;
     private ?string $body = "";
     private ?string $side = null;
@@ -194,6 +197,38 @@ abstract class AbstractTourStep implements TourStepInterface
     {
         $this->onNextStepFunctionUxon = $onNextStepFunctionUxon;
         $this->onNextStepFunction = null;
+        return $this;
+    }
+
+    /**
+     * @return TourSubrouteInterface|null
+     */
+    public function getSubroute() : ?TourSubrouteInterface
+    {
+        // TODO maybe get the subroute completely from the widget?
+        return $this->subroute;
+    }
+
+    /**
+     * Customize the widget-specific tour subroute (only if widget supports it!)
+     * 
+     * @uxon-property subroute
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\AbstractSubroute
+     * 
+     * TODO how to we generate a good template?
+     * Probably need an extra exface\Core\Uxon\TourStepSchema, that will call Subroute::getUxonTemplate() to
+     * generate the subroute part of the template.
+     * 
+     * @param UxonObject $uxon
+     * @return TourStepInterface
+     */
+    protected function setSubroute(UxonObject $uxon) : TourStepInterface
+    {
+        $widget = $this->getWidget();
+        if (! $widget instanceof IHaveTourSubrouteInterface) {
+            // TODO
+        }
+        $this->subroute = $widget->getTourSubroute($uxon);
         return $this;
     }
 }

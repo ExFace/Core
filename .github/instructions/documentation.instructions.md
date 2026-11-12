@@ -7,11 +7,11 @@ description: "Use when writing documentation - in particular markdown files in t
 
 We have different types of documentation:
 
-- UXON docs embedded in Phpdoc comments inside UXON prototype classes. This are quick references available in all UXON editors. They should explain app designers, how to use the prototype. Most app designers will use only these docs. But they are not programmers, so these docs must be understandable for the. Sure, if we are talking about a UXON property, that takes SQL, we can assume, that the designer knows SQL - but not PHP or JS.
+- UXON annotations embedded in PHPdoc comments inside UXON prototype classes. These are quick references available in all UXON editors. They should explain app designers, how to use the prototype. Most app designers will use only these docs. But they are not programmers, so these docs must be understandable for the. Sure, if we are talking about a UXON property, that takes SQL, we can assume, that the designer knows SQL - but not PHP or JS.
 - App docs - markdown files in `Docs` folders of apps. These are more like wikis - meant to be read when searching for some information explicitly. Depending on the app, there may be different app docs areas (folders)
     - Introductions and tutorials for app designers
     - Manuals for end users
-    - Technical documentions for developers
+    - Technical documentation for developers
 - Descriptions in models - these are shown as tooltips in the UI in most cases. Sometimes there are also hidden notes for app designers only.
 
 ## UXON annotations
@@ -21,6 +21,16 @@ Always follow [UXON annotation rules](uxon.instructions.md). Make sure all UXON 
 The documentation for the apps running on the workbench is to be placed in the Docs folder of every app in the form of markdown files.
 
 This markdown documentation must be readable on a Git platform - Github, Gitlab, etc. - as well as on a running installation rendered by the `exface/core/Facades/DocsFacade`.
+
+## PHPdoc and inline comments
+
+Use PHPdoc regularly. Combine it with UXON annotations in prototype classes. Follow [PHPdoc guidelines](../../Docs/developer_docs/code_conventions/PHP/PHPdoc_and_comments.md).
+
+- **Always** write multiline comments for class and method descriptions.
+- **Write more comments** in general
+- Use simple words, make comments easy to understand
+- Place each `@tag` on its own line!
+- Use inline comments whenever a code passage has multiple `if` or `case` blocks to explain the logic and document every decision.
 
 ## App docs (`Docs` folder)
 

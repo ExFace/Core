@@ -29,5 +29,11 @@ It lists each image found in a `div` with the class `image-container`, including
 
 ```html
 <!-- BEGIN ImageList:list-type=none -->
+<div class="list-wrapper">
+<ul style="list-style-type: none; padding-left: 0;">
+<li><a href="documentation/placeholders/ImageCaptionNumberPlaceholder.md#your-unique-id">Your caption text here.</a></li>
+</ul>
+</div>
+
 <!-- END ImageList -->
 ```

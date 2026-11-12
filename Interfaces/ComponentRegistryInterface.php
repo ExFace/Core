@@ -1,5 +1,4 @@
 <?php
-
 namespace exface\Core\Interfaces;
 
 use exface\Core\CommonLogic\UxonObject;
@@ -14,9 +13,28 @@ use exface\Core\Interfaces\Facades\MarkdownPrinterInterface;
 interface ComponentRegistryInterface extends WorkbenchDependantInterface
 {
     /**
+     * Reloads installed component metadata after an app installation or removal.
+     *
+     * @return void
+     */
+    public function reload() : void;
+
+    /**
      * @return string[]
      */
     public function getComponentKeys(?string $havingKey = null) : array;
+    
+    /**
+     * @return string[]
+     */
+    public function getComponentNames() : array;
+
+    /**
+     * @param string $componentKey
+     * @param string $property
+     * @return string|int|float|bool|array|null
+     */
+    public function getComponentProperty(string $componentKey, string $property);
 
     /**
      * Returns the configured DataSheet template for saving the component type.

@@ -75,7 +75,7 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * $merge_uid_dublicates is TRUE, given rows with UIDs already present in the sheet, will overwrite 
      * old rows instead of being added at the end of the sheet.
      *
-     * @see importRows() for an easy way of adding rows from another data sheet
+     * See `merge()` for more details on different approaches to combining data sheets.
      * 
      * @param array[] $rows
      * @param bool $merge_uid_dublicates
@@ -97,6 +97,8 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * starting from that position. Row numbers, that are out of the sequence will be ignored: e.g. if
      * you try to add a row at position 2 to an empty sheet, it will be added at position 0, becase 2 is 
      * not a valid sequential position in this case.
+     *
+     * See `merge()` for more details on different approaches to combining data sheets.
      * 
      * @param array $row
      * @param bool $merge_uid_dublicates
@@ -107,11 +109,40 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function addRow(array $row, bool $merge_uid_dublicates = false, bool $auto_add_columns = true, int $position = null) : DataSheetInterface;
 
     /**
+     * Updates selected cells of a row identified by its numeric row number.
+     *
+     * `$values` maps column expressions (or matching column names) to values. Only supplied cells are
+     * changed; omitted cells keep their values, even with `$overwrite = TRUE`. Missing columns are
+     * created if `$auto_add_columns` is TRUE; otherwise their values are ignored.
+     *
+     * If `$overwrite` is FALSE, a value is written only if its column was just added or the previous
+     * cell value is empty according to the column's data type. This is a fill-empty-cells operation,
+     * not a check whether the array key exists. With TRUE, supplied values overwrite even non-empty
+     * cells, including when the supplied value itself is empty.
+     *
+     * No UID or join-key lookup is performed: the caller must select the correct row number.
+     * Rows are not inserted or shifted. Use an existing row number for updates; a missing index can
+     * create a sparse row through `setCellValue()`, so use `addRow()` to append or insert rows instead.
+     * This changes in-memory values only; it does not write to the data source.
+     *
+     * See `merge()` for more details on different approaches to combining data sheets.
+     *
+     * @param int $rowNr Numeric row number, not a UID.
+     * @param array<string,mixed> $values Column expressions or names mapped to their new values.
+     * @param bool $auto_add_columns
+     * @param bool $overwrite
+     * @return DataSheetInterface
+     */
+    public function setRowValues(int $rowNr, array $values, bool $auto_add_columns = true, bool $overwrite = true) : DataSheetInterface;
+
+    /**
      * Makes this data sheet LEFT OUTER JOIN the other data sheet ON $this.$left_key_column = $data_sheet.$right_key_column
      * All joined columns are prefixed with the $column_prefix.
      *
      * IDEA improve performance by checking, which data sheet has less rows and iterating through that one instead of alwasy the left one.
      * This would be especially effective if there is nothing to join...
+     *
+     * See `merge()` for more details on different approaches to combining data sheets.
      *
      * @param DataSheetInterface      $otherSheet
      * @param string|null             $leftKeyColName
@@ -149,6 +180,8 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * disable this via $calculateFormulas if you just need the values. This may have side effects though because
      * the columns will still be based on their formulas and will probably get recalculated with the next read
      * operation.
+     *
+     * See `merge()` for more details on different approaches to combining data sheets.
      * 
      * @param DataSheetInterface $other_sheet
      * @param bool $calculateFormulas
@@ -174,6 +207,8 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
      * via $totals_values in the same manner. This is usefull when applying data functions to columns.
      * NOTE: if the data sheet does not contain a column with the given name, it will be added automatically.
      *
+     * See `merge()` for more details on different approaches to combining data sheets.
+     *
      * @param string $column_name
      * @param mixed|array $column_values
      * @param mixed|array|null $totals_values
@@ -190,7 +225,10 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function getCellValue(string $column_name, int $row_number);
 
     /**
+     * Overwrites the value of a cell in a given column identified by the row index
      * 
+     * See `merge()` for more details on different approaches to combining data sheets.
+     *
      * @param string $column_name
      * @param int $row_number
      * @param mixed $value
@@ -731,6 +769,14 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
     public function isPaged() : bool;
 
     /**
+     * Override the automatic `isPaged()` detection - whether the read left additional rows in its data sources.
+     *
+     * @param bool $value
+     * @return DataSheetInterface
+     */
+    public function setPaged(bool $value) : DataSheetInterface;
+
+    /**
      * Returns TRUE if the data of this sheet can/should be cached.
      * 
      * By default, a data sheet is considered cacheable, if:
@@ -771,10 +817,51 @@ interface DataSheetInterface extends WorkbenchDependantInterface, iCanBeCopied, 
 
     /**
      * Merges the current data sheet with another one.
+     *
+     * If `$overwriteValues = TRUE`, values of the other sheet overwrite identical columns in the
+     * current sheet. Otherwise, current values take precedence, even when empty.
      * 
-     * If $overwriteValues=true, values of the other sheet will overwrite those of identical columns in 
-     * the current sheet - otherwise current sheet values will prevale!
+     * ## Comparison with other data sheet combination methods
+     *
+     * Choosing an approach to combining data sheets (all modify in-memory data, not the data source!):
+     * - `setRowValues()` patches supplied cells at a known numeric row number without key matching.
+     *   Omitted cells stay unchanged. With `$overwrite = FALSE`, it fills cells that are empty
+     *   according to their data type, unlike `merge()`, which preserves existing empty values.
+     * - `addRow()`/`addRows()` append or insert rows. With `$merge_uid_dublicates = TRUE`, they merge
+     *   supplied cells into the first matching UID row, or append if none matches. Supplied
+     *   values overwrite existing ones; there is no fill-empty-cells option.
+     * - `joinLeft()` matches arbitrary key columns, supports relation-path prefixes and duplicates
+     *   left rows for multiple right matches. Matching right values overwrite left values,
+     *   even when empty.
+     * - `merge()` requires the same metaobject and normally delegates to a UID-based `joinLeft()`.
+     *   With `$overwriteValues = FALSE`, it joins onto a copy of the other sheet, so the resulting
+     *   row set/order can differ from this sheet's original rows.
+     * - `importRows()` copies matching columns by row position, not UID, and requires compatible
+     *   row counts and metaobjects. It normally recalculates formulas and can bring across UID
+     *   and system columns. `setColumnValues()` replaces one whole column without row matching.
      * 
+     * ## Performance considerations
+     *
+     * Performance guidance (these operations are not interchangeable):
+     * - For a few cells in a known row, prefer `setRowValues()`: it avoids row searches and creating
+     *   another sheet. `setCellValue()` also avoids expression lookup when the column name is
+     *   known and no fill-empty-cells logic is needed.
+     * - For whole, already aligned columns, prefer `setColumnValues()`, or `importRows()` for a
+     *   compatible sheet: bulk writes avoid repeated per-cell expression lookups. Formula
+     *   recalculation in `importRows()` can add work.
+     * - UID-deduplicating `addRows()` and keyed `joinLeft()`/`merge()` repeatedly search rows in the
+     *   current implementation. Use them when key matching is needed, not for known positions.
+     *   `merge()` adds wrapper work and copies a sheet in its non-overwriting branch; duplicate
+     *   join matches add row-copying and insertion work.
+     *
+     * @see setRowValues()
+     * @see setCellValue()
+     * @see setColumnValues()
+     * @see addRow()
+     * @see addRows()
+     * @see joinLeft()
+     * @see importRows()
+     *
      * @param DataSheetInterface $other_sheet
      * @param bool $overwriteValues
      * @param bool $addColumns
