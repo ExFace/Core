@@ -123,7 +123,7 @@ class ShowObjectInfoDialog extends ShowDialog
         $default_editor_uxon = $dialog->getMetaObject()->getDefaultEditorUxon();
         $dialog_uxon = $default_editor_uxon->copy();
         
-        // If there is a default editor, make sure it gets it's own id space, so widget links inside still work
+        // If there is a default editor, make sure it gets its own id space, so widget links inside still work
         // if multiple editors of the same object are located in the same page (e.g. for creating, editing, etc.)
         $this->addIdSpaceToWidgetUxon($dialog_uxon);
         
@@ -138,8 +138,8 @@ class ShowObjectInfoDialog extends ShowDialog
             
             // Otherwise check, if there is a default editor for an object, and instantiate it if so
             $default_editor_type = $default_editor_uxon->getProperty('widget_type');
-            // If the default editor has no widget_type or it is "Dialog" or an extension of it,
-            // apply all UXON properties directly to the tidalog.
+            // If the default editor has no widget_type, or it is "Dialog" or an extension of it,
+            // apply all UXON properties directly to the dialog.
             if (! $default_editor_type || is_a(WidgetFactory::getWidgetClassFromType($default_editor_type), '\\'.get_class($dialog), true) === true) {
                 $dialog->importUxonObject($dialog_uxon);
                 if ($dialog->isEmpty()) {
@@ -150,7 +150,7 @@ class ShowObjectInfoDialog extends ShowDialog
                 $dialog->addWidget($default_editor);
             }
         } else {
-            // Lastly, try to generate a usefull editor from the meta model
+            // Lastly, try to generate a useful editor from the metamodel
             // IDEA A separate method "create_object_editor" would probably be handy, once we have attribute groups and
             // other information, that would enable us to build better editors (with tabs, etc.)
             $dialog->addWidgets($this->createWidgetsForAttributes($dialog));
