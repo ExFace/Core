@@ -270,14 +270,14 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * Checks if the authenticator is flagged as disabled for the given username.
+     * Checks if the user is flagged as disabled.
      * Throws exception if it is flagged as disabled.
      *
      * @param string $username
      * @throws AuthenticationFailedError
      * @return AbstractAuthenticator
      */
-    protected function checkAuthenticatorDisabledForUsername(string $username) : AbstractAuthenticator
+    protected function checkUserDisabledFlag(string $username) : AbstractAuthenticator
     {
         $dataSheet = $this->getAuthenticatorData($username);
         if ($dataSheet->isEmpty() === true) {
@@ -285,7 +285,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         }
         foreach ($dataSheet->getRows() as $row) {
             if (BooleanDataType::cast($row['DISABLED_FLAG']) === true) {
-                throw new AuthenticationFailedError($this, "Authentication failed. Authenticator '{$this->getName()}' disabled for username '$username'!", '7AL3J9X');
+                throw new AuthenticationFailedError($this, "Authentication failed. Account for '$username' has been disabled!", '88RY4GT');
             }
         }
         return $this;
