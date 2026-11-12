@@ -20,13 +20,13 @@ and the apps to install are kept in `vendor/axenox/packagemanager/LastInstall.te
 
 2. Run this command from the installation folder (i.e. "C:\EDF\wamp\www\exface\exface"):
    ```
-   php vendor/axenox/packagemanager/bin/composer-script.php composerFinishUpdate
+   php vendor/axenox/packagemanager/bin/composer-script.php composerFinishInstall
    ```
    If you had the legacy callbacks in your root `composer.json`, this replaces them with the new `@php` scripts and prints a notice 
 for every replaced entry:
    ```
-   MIGRATION: replaced legacy Composer callback "axenox\PackageManager\StaticInstaller::composerFinishUpdate" 
-   in "scripts.post-update-cmd" of the root composer.json by "@php vendor/axenox/packagemanager/bin/composer-script.php composerFinishUpdate"
+   MIGRATION: replaced legacy Composer callback "axenox\PackageManager\StaticInstaller::composerFinishInstall" 
+   in "scripts.post-update-cmd" of the root composer.json by "@php vendor/axenox/packagemanager/bin/composer-script.php composerFinishInstall"
    ```
    
 3. All later `composer install/update` runs work without manual steps.
