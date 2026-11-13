@@ -271,6 +271,9 @@ abstract class AbstractExceptionRenderer
     }
 
     /**
+     * Renders exception locations and stack traces relative to this installation's vendor directory where possible.
+     *
+     * @param bool $includeTrace
      * @param bool $onlyBottomTrace
      * @return string
      */
@@ -278,6 +281,12 @@ abstract class AbstractExceptionRenderer
     {
         $message = '';
         $next = false;
+
+        $vendorFolder = DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
+        $vendorPath = StringDataType::substringBefore(__FILE__, $vendorFolder, false);
+        if ($vendorPath !== false) {
+            $vendorPath .= $vendorFolder;
+        }
         
         $prevs = $this->getAllPrevious();
         $length = count($prevs) + 1;
@@ -294,17 +303,18 @@ abstract class AbstractExceptionRenderer
             if ('' != $exception->getMessage()) {
                 $message .= ":\n ".$exception->getMessage();
             }
-            $message .= "\n in " . $exception->getFile().':'.$exception->getLine();
+            $file = $exception->getFile();
+            if ($vendorPath !== false && strpos($file, $vendorPath) === 0) {
+                $file = substr($file, strlen($vendorPath));
+            }
+            $message .= "\n in " . $file . ':' . $exception->getLine();
 
             // Stack trace
             if ($includeTrace === true && ($onlyBottomTrace === false || $length === ($i + 1))) {
                 $trace = $exception->getTraceAsString();
                 // Remove the absolute path to the vendor directory from the stack trace, as it is not relevant for
                 // debugging and clutters the output.
-                $vendorFolder = DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR;
-                $vendorPath = StringDataType::substringBefore(__FILE__, $vendorFolder , false);
                 if ($vendorPath !== false) {
-                    $vendorPath .= $vendorFolder;
                     $trace = str_replace(' ' . $vendorPath, ' ', $trace);
                 }
                 $message .= "\n" . StringDataType::indent($trace, '  ') . "\n\n";
