@@ -3,6 +3,7 @@ namespace exface\Core\Widgets;
 
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\TimestampDataType;
+use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\Widgets\Traits\SingleValueInputTrait;
 
@@ -61,6 +62,26 @@ class InputDate extends Input
     const FUNCTION_ADD = 'add';
     
     private $format = null;
+
+    /**
+     * Resolves SUNDAY to 0 or MONDAY to 1 from the Core translation.
+     *
+     * The weekday is prescribed by LOCALIZATION.DATE.FIRST_DAY_OF_WEEK, not by widget UXON.
+     *
+     * @return int
+     */
+    public function getFirstDayOfWeek() : int
+    {
+        $firstDayOfWeek = $this->getWorkbench()->getCoreApp()->getTranslator()->translate('LOCALIZATION.DATE.FIRST_DAY_OF_WEEK');
+        $weekdays = [
+            'SUNDAY' => DateDataType::WEEKDAY_SUNDAY,
+            'MONDAY' => DateDataType::WEEKDAY_MONDAY
+        ];
+        if (! array_key_exists($firstDayOfWeek, $weekdays)) {
+            throw new UnexpectedValueException('LOCALIZATION.DATE.FIRST_DAY_OF_WEEK must be MONDAY or SUNDAY.');
+        }
+        return $weekdays[$firstDayOfWeek];
+    }
     
     /**
      * @return string
