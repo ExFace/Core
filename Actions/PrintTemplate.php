@@ -355,16 +355,27 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     }
     
     /**
-     * 
+     * Resolves the original configured template path without replacing it by a canonical path.
+     *
+     * Keeping the configured value unchanged avoids leaking real paths through customer installations that use a
+     * symlinked current directory, while the immediate read performs canonical security validation.
+     *
      * @return string
      */
     protected function getTemplatePathAbsolute() : string
     {
-        return $this->templatePath;
+        if ($this->templatePath === null || FilePathDataType::isAbsolute($this->templatePath)) {
+            return $this->templatePath;
+        }
+        return Filemanager::pathJoin([
+            $this->getWorkbench()->filemanager()->getPathToVendorFolder(),
+            $this->templatePath
+        ]);
     }
     
     /**
-     * Path to a template file instad of `template` (absolute or relative to the vendor folder)
+     * Path to a template file instad of `template` (absolute or relative to the vendor folder). The original value
+     * is retained because canonical paths must be used only for the immediate protected read.
      * 
      * @uxon-property template_path
      * @uxon-type string
@@ -374,7 +385,7 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
      */
     public function setTemplatePath(string $value) : iUseTemplate
     {
-        $this->templatePath = FilePathDataType::isAbsolute($value) ? $value : FilePathDataType::join($this->getWorkbench()->filemanager()->getPathToVendorFolder(), $value);
+        $this->templatePath = $value;
         return $this;
     }
     
@@ -400,12 +411,29 @@ class PrintTemplate extends AbstractAction implements iUseTemplate, iRenderTempl
     }
     
     /**
-     * 
+     * Reads configured template files through the canonical containment guard to prevent configuration path escapes.
+     *
      * @return string
      */
     protected function getTemplate() : string
     {
-        return $this->template ?? file_get_contents($this->getTemplatePathAbsolute());
+        return $this->template
+            ?? $this->getWorkbench()->filemanager()->readFileSecure(
+                $this->getTemplatePathAbsolute(),
+                $this->getAllowedBasePaths()
+            );
+    }
+
+    /**
+     * Resolves FILES.UXON_ALLOWED_BASE_PATHS for print templates while allowing apps to override this policy.
+     *
+     * PrintXLSX inherits this allowlist because it opens its configured workbook through the same template contract.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        return $this->getWorkbench()->filemanager()->resolveAllowedBasePaths('FILES.UXON_ALLOWED_BASE_PATHS');
     }
     
     /**

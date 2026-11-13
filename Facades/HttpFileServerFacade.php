@@ -34,6 +34,9 @@ use exface\Core\Exceptions\Filesystem\FileCorruptedError;
 use exface\Core\Interfaces\Log\LoggerInterface;
 use Symfony\Component\Cache\Adapter\PhpFilesAdapter;
 use Symfony\Component\Cache\Psr16Cache;
+use exface\Core\Exceptions\FilePathNotAllowedError;
+use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Exceptions\FileNotReadableError;
 
 
 /**
@@ -113,7 +116,11 @@ class HttpFileServerFacade extends AbstractHttpFacade
     }
     
     /**
-     * 
+     * Resolves local URL paths only after canonical containment validation to prevent arbitrary file disclosure.
+     *
+     * Local access failures are caught here and debug-logged before the generic facade handler can log them as
+     * server errors, ensuring existing and missing paths have the same non-disclosing 404 response.
+     *
      * {@inheritDoc}
      * @see \exface\Core\Facades\AbstractHttpFacade\AbstractHttpFacade::createResponse()
      */
@@ -152,12 +159,21 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $mode = self::URL_PATH_THUMB;
             $options = $params['resize'];
         }
-        
+
+        $requestedLocalPath = null;
+        try {
         switch (true) {
             // temp/path/to/file
             case $mode === self::URL_PATH_TEMP:
                 $filename = urldecode(implode('/', $pathParts));
-                $fileInfo = new LocalFileInfo(self::getPathToTempFolder($this->getWorkbench()) . $filename);
+                $requestedLocalPath = $filename;
+                $originalPath = FilePathDataType::normalize(self::getPathToTempFolder($this->getWorkbench()) . $filename);
+                FilePathDataType::makeSecure(
+                    $originalPath,
+                    $this->getWorkbench(),
+                    [$this->getWorkbench()->filemanager()->getPathToCacheFolder()]
+                );
+                $fileInfo = new LocalFileInfo($originalPath);
                 break;
             // obj_alias/uid
             // TODO this is a bit too simple - what about files within a single folder? The would end up here too.
@@ -183,17 +199,20 @@ class HttpFileServerFacade extends AbstractHttpFacade
                 }
             // just path/to/file
             default:
-                $path = FilePathDataType::normalize(urldecode(implode('/', $pathParts)));
+                $requestedLocalPath = urldecode(implode('/', $pathParts));
+                $path = FilePathDataType::normalize($requestedLocalPath);
                 if (FilePathDataType::isAbsolute($path)) {
-                    $fileInfo = new LocalFileInfo($path);
+                    $originalPath = $path;
                 } else {
-                    $fileInfo = new LocalFileInfo(FilePathDataType::normalize($this->getWorkbench()->getInstallationPath()) . '/' . $path);
+                    $originalPath = FilePathDataType::normalize($this->getWorkbench()->getInstallationPath()) . '/' . $path;
                     // If the file cannot be found directly, see if it is in the temp/ folder
                     $pathInCacheFolder = FilePathDataType::normalize($this->getWorkbench()->filemanager()->getPathToCacheFolder()) . '/' . $path;
-                    if (! $fileInfo->exists() && file_exists($pathInCacheFolder)) {
-                        $fileInfo = new LocalFileInfo($pathInCacheFolder);
+                    if (! file_exists($originalPath) && file_exists($pathInCacheFolder)) {
+                        $originalPath = $pathInCacheFolder;
                     }
                 }
+                FilePathDataType::makeSecure($originalPath, $this->getWorkbench(), $this->getAllowedBasePaths());
+                $fileInfo = new LocalFileInfo($originalPath);
                 break;
         }
         
@@ -233,7 +252,30 @@ class HttpFileServerFacade extends AbstractHttpFacade
             $this->setCache($fileInfo, $options);
         }
         
-        return $response;        
+        return $response;
+        } catch (FilePathNotAllowedError | FileNotFoundError | FileNotReadableError $e) {
+            if ($requestedLocalPath === null) {
+                throw $e;
+            }
+            $this->getWorkbench()->getLogger()->debug(
+                'Local file request rejected for path "' . $requestedLocalPath . '".'
+            );
+            return new Response(404, $this->buildHeadersCommon());
+        }
+    }
+
+    /**
+     * Resolves configured download roots through the shared safety rules while always retaining cache downloads.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        $filemanager = $this->getWorkbench()->filemanager();
+        return array_merge(
+            [$filemanager->getPathToCacheFolder()],
+            $filemanager->resolveAllowedBasePaths('FACADES.HTTPFILESERVERFACADE.ALLOWED_LOCAL_PATHS')
+        );
     }
 
     /**
