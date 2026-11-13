@@ -211,6 +211,7 @@
     
     "LOCALIZATION.LOCALE": "en",
     "LOCALIZATION.DATATYPE.FORMAT_HINT": "Input formats: ",
+    "LOCALIZATION.DATE.FIRST_DAY_OF_WEEK": "MONDAY",
 	"LOCALIZATION.DATE.DATE_FORMAT": "dd.MM.yyyy",
 	"LOCALIZATION.DATE.DATE_FORMAT_HINT": "common date formats (e.g. 31/12/2019), short notation (e.g. 31122019), short notation for current year (e.g. 3112), relative entries (e.g. 0 for today, +1 for tomorrow, +1w, +1m, -1d, -1y  etc.)",
     "LOCALIZATION.DATE.DATE_FORMAT_EXCEL": "DD.MM.YYYY",
