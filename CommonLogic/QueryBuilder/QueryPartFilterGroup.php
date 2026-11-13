@@ -3,6 +3,8 @@ namespace exface\Core\CommonLogic\QueryBuilder;
 
 use exface\Core\CommonLogic\Model\Condition;
 use exface\Core\CommonLogic\Model\ConditionGroup;
+use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Exceptions\QueryBuilderException;
 use exface\Core\Factories\ConditionGroupFactory;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\Model\ConditionGroupInterface;
@@ -204,8 +206,36 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
         // Add all conditions and nested groups to the query part, but only if they are applicable to the main object of the query
         foreach ($group->getConditions() as $c) {
             $conditionObj = $c->getExpression()->getMetaObject();
-            if ($conditionObj !== null && ! $conditionObj->is($targetObj)) {
-                continue;
+            // If the objects do not match, see if we can make them match by rebasing
+            if ($conditionObj !== null && $conditionObj !== $targetObj) {
+                switch (true) {
+                    // E.g. a query based on my.App.ConstructionReport is filtered via my.App.Report and ConstructionReport
+                    // extends from Report. In this case we can use the condition from Report on ConstructionReport
+                    // because all attributes of Report are also available on ConstructionReport.
+                    case $targetObj->isExtendedFrom($conditionObj):
+                        $c = $c->rebaseOnChild($targetObj);
+                        break;
+                    // E.g. a query based on my.App.Report is filtered via my.App.ConstructionReport and ConstructionReport
+                    // extends from Report. In this case we can only use the condition from ConstructionReport on Report
+                    // if it applies to an inherited attribute - rebaseOnParent() will check that and throw an exception.
+                    case $conditionObj->isExtendedFrom($targetObj):
+                        try {
+                            $c = $c->rebaseOnParent($targetObj);
+                        } catch (ExpressionRebaseImpossibleError $e) {
+                            $qpart->getWorkbench()->getLogger()->logException(
+                                new QueryBuilderException(
+                                  'Ignoring filter `' . $c->__toString() . '` because it is not applicable to the main object of the query ' . $queryObj->__toString(), 
+                                  null, 
+                                  $e
+                                )
+                            );
+
+                        }
+                        break;
+                    default:
+                        // The condition is not applicable to the main object of the query, so we skip it
+                        continue 2;
+                }
             }
             $qpart->addCondition($c);
         }

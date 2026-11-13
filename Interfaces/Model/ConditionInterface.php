@@ -2,6 +2,7 @@
 namespace exface\Core\Interfaces\Model;
 
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Factories\ConditionFactory;
 
 /**
  * A condition is a simple conditional predicate to compare two expressions.
@@ -106,4 +107,23 @@ interface ConditionInterface extends ConditionalExpressionInterface
      * @return ConditionInterface
      */
     public function rebase(MetaRelationPathInterface|string $relationPathToNewBaseObject) : ConditionInterface;
+
+    /**
+     * Returns a new expression based on the given object if the current object extends from it
+     *
+     * In case of attributes this only works if the attribute is inherited from the parent object. Otherwise,
+     * an exception is thrown.
+     *
+     * @param MetaObjectInterface $parentObject
+     * @return ConditionInterface
+     */
+    public function rebaseOnParent(MetaObjectInterface $parentObject) : ConditionInterface;
+
+    /**
+     * Returns a new expression based on the given object if it extends from the current object of the expression
+     *
+     * @param MetaObjectInterface $childObject
+     * @return ConditionInterface
+     */
+    public function rebaseOnChild(MetaObjectInterface $childObject) : ConditionInterface;
 }

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Interfaces\Model;
 
+use exface\Core\Exceptions\Model\ExpressionRebaseImpossibleError;
+use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\iCanBeCopied;
 use exface\Core\Interfaces\WorkbenchDependantInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
@@ -197,6 +199,25 @@ interface ExpressionInterface extends WorkbenchDependantInterface, iCanBeCopied
      * @return ExpressionInterface
      */
     public function rebase($relation_path_to_new_base_object);
+
+    /**
+     * Returns a new expression based on the given object if the current object extends from it
+     * 
+     * In case of attributes this only works if the attribute is inherited from the parent object. Otherwise,
+     * an exception is thrown.
+     * 
+     * @param MetaObjectInterface $parentObject
+     * @return ExpressionInterface
+     */
+    public function rebaseOnParent(MetaObjectInterface $parentObject) : ExpressionInterface;
+
+    /**
+     * Returns a new expression based on the given object if it extends from the current object of the expression
+     * 
+     * @param MetaObjectInterface $childObject
+     * @return ExpressionInterface
+     */
+    public function rebaseOnChild(MetaObjectInterface $childObject) : ExpressionInterface;
     
     /**
      * Returns the meta attribute, represented by this expression or FALSE if the expression represents something else (a formula, a constant, etc.)

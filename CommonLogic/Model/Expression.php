@@ -608,6 +608,52 @@ class Expression implements ExpressionInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @see ExpressionInterface::rebaseOnParent()
+     */
+    public function rebaseOnParent(MetaObjectInterface $parentObject) : ExpressionInterface
+    {
+        $thisObj = $this->getMetaObject();
+        if ($thisObj === null) {
+            $copy = $this->copy();
+            $copy->setMetaObject($parentObject);
+            return $copy;
+        }
+        if (! $thisObj->isExtendedFrom($parentObject)) {
+            throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->__toString() . '" on parent object "' . $parentObject->getAliasWithNamespace() . '" - the expression\'s meta object "' . $thisObj->getAliasWithNamespace() . '" is not a child of the given parent object!');
+        }
+        if ($this->isMetaAttribute()) {
+            if (! $parentObject->hasAttribute($this->getAttributeAlias())) {
+                throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->__toString() . '" on parent object "' . $parentObject->getAliasWithNamespace() . '" - the expression\'s attribute "' . $this->getAttributeAlias() . '" is not present in the given parent object!');
+            }
+            // TODO what do we do with formulas? Should we check each attribute in the formula???
+        }
+        $copy = ExpressionFactory::createForObject($parentObject, $this->__toString(), $this->isUnknownType() ? false : true);
+        return $copy;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see ExpressionInterface::rebaseOnChild()
+     */
+    public function rebaseOnChild(MetaObjectInterface $childObject) : ExpressionInterface
+    {
+        $thisObj = $this->getMetaObject();
+        if ($thisObj === null) {
+            $copy = $this->copy();
+            $copy->setMetaObject($childObject);
+            return $copy;
+        }
+        if (! $childObject->isExtendedFrom($thisObj)) {
+            throw new ExpressionRebaseImpossibleError('Cannot rebase expression "' . $this->__toString() . '" on child object "' . $childObject->getAliasWithNamespace() . '" - the expression\'s meta object "' . $thisObj->getAliasWithNamespace() . '" is not a child of the given child object!');
+        }
+        // No need to check if attribute exists - this should always work, because the child object inherits all
+        // attributes of the parent object.
+        $copy = ExpressionFactory::createForObject($childObject, $this->__toString(), $this->isUnknownType() ? false : true);
+        return $copy;
+    }
+
+    /**
      * {@inheritdoc}
      * @see \exface\Core\Interfaces\Model\ExpressionInterface::getAttribute()
      */
