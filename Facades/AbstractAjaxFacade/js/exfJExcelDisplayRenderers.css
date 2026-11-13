@@ -1,0 +1,82 @@
+.jexcel .exf-jexcel-display {
+    box-sizing: border-box;
+    vertical-align: middle;
+    max-width: 100%;
+}
+.jexcel .exf-jexcel-display[hidden] {
+    display: none;
+}
+.jexcel .exf-jexcel-swatch {
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    border-radius: 50%;
+}
+.jexcel .exf-jexcel-badge {
+    display: block;
+    width: 100%;
+    padding: 0.2em 0.35em;
+    line-height: 1.35;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    border-radius: 0.2em;
+}
+.jexcel .exf-jexcel-colored-text {
+    font-weight: bold;
+}
+.jexcel .exf-jexcel-progress {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    border-radius: 0.2em;
+    background-color: var(--sapProgress_Background, rgba(127, 127, 127, 0.08));
+}
+.jexcel .exf-jexcel-progress-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    overflow: hidden;
+}
+.jexcel .exf-jexcel-progress-label,
+.jexcel .exf-jexcel-progress-fill::after {
+    box-sizing: border-box;
+    display: block;
+    padding: 0.2em 0.35em;
+    line-height: 1.35;
+    min-height: 1.35em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.jexcel .exf-jexcel-progress-fill::after {
+    content: attr(data-label);
+    width: var(--exf-jexcel-label-width);
+}
+.sapUiBody .jexcel .exf-jexcel-badge {
+    border-radius: 0.25rem;
+}
+.sapUiBody .jexcel .exf-jexcel-progress {
+    border-radius: 999px;
+}
+.sapUiBody .jexcel .exf-jexcel-progress-label {
+    position: relative;
+    z-index: 2;
+    margin-left: var(--exf-jexcel-progress);
+    width: calc(100% - var(--exf-jexcel-progress));
+}
+.sapUiBody .jexcel .exf-jexcel-progress-fill::after {
+    display: none;
+}
+.sapUiBody .jexcel .exf-jexcel-progress-filled-label .exf-jexcel-progress-label {
+    margin-left: 0;
+    width: var(--exf-jexcel-progress);
+    color: var(--exf-jexcel-fill-text-color);
+}
+.jexcel .exf-jexcel-progress-invalid {
+    border-style: dashed;
+}

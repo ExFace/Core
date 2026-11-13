@@ -16,6 +16,17 @@ trait HtmlColorIndicatorTrait
 {
     use JqueryAlignmentTrait;
     use JsValueScaleTrait;
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildHtmlHeadTags()
+     */
+    public function buildHtmlHeadTags()
+    {
+        $includes = parent::buildHtmlHeadTags();
+        $includes[] = '<script src="' . $this->getFacade()->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfColorTools.js') . '"></script>';
+        return $includes;
+    }
     
     /**
      * Returns the <img> HTML tag with the given source.
@@ -27,7 +38,8 @@ trait HtmlColorIndicatorTrait
         $value = null,
         string $text = null,
         string $hint = null,
-        string $color = null
+        string $color = null,
+        string $textColor = null
     ) : string
     {
         $widget = $this->getWidget();
@@ -56,7 +68,8 @@ trait HtmlColorIndicatorTrait
         }
         
         if ($widget->getFill()) {
-            $style .= " padding: 0 3px; background-color: {$color} !important;";
+            $textColor = $textColor ?? 'inherit';
+            $style .= " padding: 0 3px; background-color: {$color} !important; color: {$textColor} !important;";
         } else {
             $style .= " font-weight: bold; color: {$color} !important;";
         }
@@ -90,8 +103,13 @@ HTML;
     public function buildJsValueDecorator($value_js)
     {
         $tpl = json_encode(
-            $this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-hint', 'exfph-color')
+            $this->buildHtmlIndicator('exfph-val', 'exfph-text', 'exfph-hint', 'exfph-color', 'exfph-foreground')
         );
+        $config = $this->getFacade()->getConfig();
+        $preference = $config->hasOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE')
+            ? (float) $config->getOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE') : 0.5;
+        $textColorJs = $this->getWidget()->getFill()
+            ? "exfColorTools.pickTextColorForBackgroundColor(sColor, {$preference})" : '""';
         $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
         $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
         $dataType = $this->getWidget()->getValueDataType();
@@ -121,7 +139,7 @@ function() {
         sText = {$jsEmptyText} !== null ? {$jsEmptyText} : '&nbsp;';
     }
     
-    sColor = {$this->buildJsColorResolver('mValue')};
+    var sColor = {$this->buildJsColorResolver('mValue')};
     
     if (oSemanticColors[sColor] !== undefined) {
        sColor = oSemanticColors[sColor];
@@ -130,6 +148,7 @@ function() {
     return sHtml
         .replace(/exfph-mValue/g, mValue)
         .replace("exfph-color", sColor)
+        .replace("exfph-foreground", {$textColorJs})
         .replace(/exfph-text/g, sText)
         .replace(/exfph-hint/g, sHint);
 }()

@@ -9,8 +9,9 @@ traps. It is a companion to:
 - `Spreadsheet_editor_virtualization_plan.md` — plan for row virtualization (rendering
   performance at thousands of rows).
 
-Everything lives in one trait:
+The shared generator lives in
 `vendor/exface/core/Facades/AbstractAjaxFacade/Elements/JExcelTrait.php`.
+Read-only display-column rendering is delegated to the external module described in 5.4.
 
 It powers the `DataSpreadSheet` and `DataImporter` widgets and is consumed by facade
 element classes (e.g. in the AdminLTE / UI5 facades) that `use JExcelTrait`.
@@ -33,7 +34,7 @@ Two consequences follow from this and explain most of the "why is it like this":
   or otherwise escaped. A stray `$word` in JS will be silently eaten by PHP.
 
 The underlying library is **jspreadsheet CE (jExcel) v4** (`npm-asset/jspreadsheet-ce`,
-currently 4.14). It is a single minified file; it renders **all** rows (no built‑in
+currently 4.15.0). It is a single minified file; it renders **all** rows (no built‑in
 virtualization unless `lazyLoading` is enabled, which this trait does not use).
 
 ## 2. Two runtime objects: `jexcel` vs `exfWidget`
@@ -188,6 +189,118 @@ Changed cells are earmarked with the `exf-spreadsheet-change` class in `validate
 only those rows. A `DataButton` with `input_rows: changed` makes `buildJsDataGetter` use
 `getDataChanged()` instead of `getData()`. Note this is **DOM‑based**, so anything that
 removes off‑screen rows from the DOM would break it (relevant if virtualization is added).
+
+### 5.4 Read-only display columns
+
+Visible columns with `isEditable() === false` and a `ColorIndicator` or `ProgressBar`
+cell widget use the official CE v4 custom-column `editor` object. Hidden columns are
+handled first; editable columns and other widget types retain their existing mappings.
+Numeric/boolean display columns retain numeric/checkbox base types for sorting, but the
+custom editor handles their DOM: there is no numeric mask or checkbox input.
+
+The implementation lives outside the generator:
+
+- `Facades/AbstractAjaxFacade/js/exfJExcelDisplayRenderers.js`
+- `Facades/AbstractAjaxFacade/js/exfJExcelDisplayRenderers.css`
+
+The shared head-tag path and `UI5JExcelTrait::registerExternalModules()` register these
+resources. No facade-specific controls, IDs or widget styles are required.
+
+`buildJsJExcelDisplayEditorOptions()` emits a JSON configuration plus display-only
+datatype formatters. The external factories are:
+
+```js
+exfJExcelDisplayRenderers.createColorIndicator(config, function () { return widget; });
+exfJExcelDisplayRenderers.createProgressBar(config, function () { return widget; });
+```
+
+The deferred adapter returns the spreadsheet's `exfWidget`, not the jExcel instance.
+It can return `undefined` during the initial, detached `createCell()` callback.
+The editors use `getJExcel()`, `getColumnIndex()` and `getColumnModel()` to resolve
+canonical values and current, parsed dependency-column values.
+
+Configuration includes `color`, `colorColumn`, ordered `[key, result]` pairs in
+`colorScale`/`hintScale`, range flags, semantic colors, a static hint and a `format`
+callback. Numeric separator metadata is used for local display/scale calculations;
+numeric enum keys are passed unchanged to their label formatter. ColorIndicator adds
+`fill` and `colorOnly`. ProgressBar adds finite `min < max`, `text`, `textColumn`,
+`textScale` and, for bound labels, `formatText`. Boolean formatters are requested in
+text mode, never HTML mode.
+
+ColorIndicator supports static colors, prepared attribute/data-column/calculation
+bindings, exact and range scales, filled badges, colored text and color-only swatches.
+ProgressBar resolves its color scale against its own value. Label precedence is a bound
+text attribute, then static text, then threshold text, then the formatted value. Its
+visual width is `(value - min) / (max - min) * 100`, clamped to 0–100; zero and
+out-of-range values are not rewritten. Empty progress values are hidden. Invalid values
+have no fill/ARIA progress value and use a dashed track; invalid ranges raise a
+`WidgetConfigurationError` during generation (the external factory also rejects them).
+Hints live on the renderer's child node so spreadsheet validation can still own the
+cell tooltip. Labels and hints are assigned as text, not interpreted as HTML.
+
+Filled labels reuse `exfColorTools.pickTextColorForBackgroundColor()` and the
+facade's `WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE` (default `0.5`). Both facade
+loaders register the helper. Progress bars have one real label on the remaining
+track and an `aria-hidden`, clipped CSS-generated copy on the fill, each with its
+own contrasting foreground; DOM text and canonical data are not duplicated.
+Badges fill the cell's available content width, include padding on every line,
+and wrap long words without overflowing. UI5-scoped rules match ObjectStatus's
+rounded badges and ProgressIndicator's pill-shaped track without creating UI5
+controls. In UI5 only, the real progress label sits within the remaining portion
+at 0-50% and within the filled portion above 50%, matching native ProgressIndicator
+placement. CSS uses the clamped visual percentage, adjusts automatically on column
+resize, and applies the configured contrast for the chosen portion. Long labels
+retain padding and ellipsis; the overlaid fill copy is hidden. EasyUI retains its
+full-track, split-contrast label.
+See the [shared color-rendering requirements](../../UI_facades/index.md#colored-backgrounds-and-readable-text)
+when adding any other colored renderer.
+
+**Raw-value invariant:** custom `updateCell()` and `setValue()` return the exact supplied
+value and type; `createCell()` returns the original cell. The normal column model uses
+identity parser/formatter functions for these columns. Renderers never call a value
+setter, never replace data with markup/labels/percentages, and never toggle the
+spreadsheet's validation, selection or change-tracking classes.
+
+`setData(widget, indexedRows, sourceRows)` is the data-loading integration, not a
+renderer. It restores display-column null/undefined values after CE 4.15's normalization
+to empty strings, then refreshes their DOM. It also associates the original auxiliary
+fields with the actual indexed row arrays using a `WeakMap`. CE 4.15 preserves those
+arrays through sorting, moving, deleting and history restoration, so dependencies do
+not use the visual row index to look up `_initData`. When a dependency is a real grid
+column, its current grid value takes precedence. Auxiliary fields add no hidden
+columns or metadata to action payloads. Reloads must supply prepared auxiliary fields
+again; newly inserted/reset rows do not inherit another row's auxiliary values.
+
+`onevent` forwards relevant lifecycle events to `onEvent(widget, event, row)`.
+Edits refresh the affected row; load/structural/history events refresh all display
+columns. Refreshes are idempotent and only replace renderer-owned child nodes when
+their display state changed. Existing striped-row handling remains untouched.
+`install(widget)` adds two narrowly scoped CE compatibility guards: history can
+restore forced updates to custom read-only cells, and copy/export reads their raw
+values even in `copyCompatibility` mode. Other cells, including dropdown clipboard
+labels, retain their existing behavior. Framework data getters use `getData(false, true)`
+to request canonical data explicitly.
+
+Limits: spreadsheet layout governs dimensions; there are no standalone controls,
+animations or interactive display editors. Calculated binding fields are prepared by
+the existing server pipeline, not recalculated client-side after edits to their formula
+inputs. Numeric base-type sorting is CE's raw numeric sorting; localized numeric strings
+may render correctly without being sortable as numbers by CE. The library's standard
+filter/search behavior is retained: search considers both stored data and cell HTML.
+CSV necessarily serializes values as text (including empty fields for null/undefined);
+it must not serialize renderer HTML. Browser coverage is in
+`Tests/JavaScript/DataSpreadSheetDisplay.test.js`; contrast, wrapping and layout
+coverage is in `Tests/JavaScript/DataSpreadSheetDisplayStyle.test.js`. Load either
+file in a playground and call `testDataSpreadSheetDisplay()` or
+`testDataSpreadSheetDisplayStyle()` respectively. Standalone fixtures must load
+`exfColorTools.js` before the display renderers, just like the facade loaders.
+UI5's 50% label-placement boundary, resizing and EasyUI isolation are covered by
+`Tests/JavaScript/DataSpreadSheetProgressPlacement.test.js`; call
+`testDataSpreadSheetProgressPlacement()` in either playground.
+Generator coverage is in `Tests/PHPUnit/Unit/Facades/JExcelDisplayRenderersTest.php`
+and `JExcelDisplayContrastTest.php`; run
+`phpunit --configuration phpunit.xml.dist --testsuite unit --filter JExcel`
+from Core using the project's PHP interpreter.
 
 ## 6. Gotchas (read before you touch anything)
 

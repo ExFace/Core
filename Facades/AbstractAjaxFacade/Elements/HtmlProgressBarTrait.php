@@ -26,6 +26,17 @@ use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 trait HtmlProgressBarTrait
 {
     use JqueryAlignmentTrait;
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildHtmlHeadTags()
+     */
+    public function buildHtmlHeadTags()
+    {
+        $includes = parent::buildHtmlHeadTags();
+        $includes[] = '<script src="' . $this->getFacade()->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfColorTools.js') . '"></script>';
+        return $includes;
+    }
     
     /**
      * Returns the <img> HTML tag with the given source.
@@ -33,7 +44,14 @@ trait HtmlProgressBarTrait
      * @param string $src
      * @return string
      */
-    protected function buildHtmlProgressBar($value = null, string $text = null, $progress = null, string $color = null) : string
+    protected function buildHtmlProgressBar(
+        $value = null,
+        string $text = null,
+        $progress = null,
+        string $color = null,
+        string $textColor = 'inherit',
+        string $trackTextColor = 'inherit'
+    ) : string
     {
         $widget = $this->getWidget();
         $style = '';
@@ -57,7 +75,8 @@ trait HtmlProgressBarTrait
 
 <div id="{$this->getId()}" class="exf-progressbar" style="{$style}" {$titleProp}>{$text}
     <div class="exf-progressbar-bar" style="width:{$progress}%; background:{$color};">&nbsp;</div>
-    <div class="exf-progressbar-text" style="text-align: {$this->buildCssTextAlignValue($widget->getAlign())}">{$text}</div>
+    <div class="exf-progressbar-text" style="text-align: {$this->buildCssTextAlignValue($widget->getAlign())}; color: {$trackTextColor}">{$text}</div>
+    <div class="exf-progressbar-text" aria-hidden="true" style="text-align: {$this->buildCssTextAlignValue($widget->getAlign())}; color: {$textColor}; clip-path: inset(0 calc(100% - {$progress}%) 0 0)">{$text}</div>
 </div>
 
 HTML;
@@ -92,7 +111,12 @@ HTML;
         $colorMapJs = rtrim($colorMapJs, ",");
         
         $textMapJs = json_encode($widget->getTextScale());
-        $tpl = json_encode($this->buildHtmlProgressBar('exfph-val', 'exfph-text', 'exfph-progress', 'exfph-color'));
+        $tpl = json_encode($this->buildHtmlProgressBar(
+            'exfph-val', 'exfph-text', 'exfph-progress', 'exfph-color', 'exfph-foreground', 'exfph-track-foreground'
+        ));
+        $config = $this->getFacade()->getConfig();
+        $preference = $config->hasOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE')
+            ? (float) $config->getOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE') : 0.5;
         $semanticColors = ($this->getFacade() instanceof AbstractAjaxFacade) ? $this->getFacade()->getSemanticColors() : [];
         $semanticColorsJs = json_encode(empty($semanticColors) ? new \stdClass() : $semanticColors);
         
@@ -122,8 +146,10 @@ function(val) {
     
     html = html
         .replace(/exfph-val/g, val)
-        .replace("exfph-progress", ((numVal / {$widget->getMax()} - {$widget->getMin()}) * 100))
-        .replace("exfph-color", color);
+        .replace(/exfph-progress/g, ((numVal / {$widget->getMax()} - {$widget->getMin()}) * 100))
+        .replace("exfph-color", color)
+        .replace("exfph-foreground", exfColorTools.pickTextColorForBackgroundColor(color, {$preference}))
+        .replace("exfph-track-foreground", exfColorTools.pickTextColorForBackgroundColor('transparent', {$preference}));
 
     if (textMap.length > 0) {
         html = html.replace(/exfph-text/g, textMap[val]);

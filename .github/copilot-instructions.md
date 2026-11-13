@@ -222,6 +222,11 @@ test layout, dependencies, isolation and validation.
 
 Always follow our [PHP](../Docs/developer_docs/code_conventions/PHP/Conventions.md) and [JavaScript](../Docs/developer_docs/code_conventions/JavaScript/Conventions.md) coding guidelines when writing code. 
 
+For any colored-background UI implementation, reuse the existing dynamic text
+contrast logic in `exfColorTools.pickTextColorForBackgroundColor()`, honor facade
+text-color preferences, and verify both portions of partially filled progress
+bars. See [colored rendering requirements](../Docs/developer_docs/Facades/UI_facades/index.md#colored-backgrounds-and-readable-text).
+
 ## Advanced features
 
 - Filesystem abstraction

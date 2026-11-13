@@ -35,6 +35,9 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Widgets\ColorIndicator;
+use exface\Core\Widgets\ProgressBar;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsBooleanFormatter;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -247,6 +250,9 @@ JS;
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS') . '" rel="stylesheet" media="screen">',
             '<link href="' . $facade->buildUrlToSource('LIBS.JEXCEL.CSS_JSUITES') . '" rel="stylesheet" media="screen">'
         ];
+        $includes[] = '<script src="' . $facade->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfColorTools.js') . '"></script>';
+        $includes[] = '<script src="' . $facade->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfJExcelDisplayRenderers.js') . '"></script>';
+        $includes[] = '<link href="' . $facade->buildUrlToVendorFile('exface/core/Facades/AbstractAjaxFacade/js/exfJExcelDisplayRenderers.css') . '" rel="stylesheet" media="screen">';
         if ($facade->getConfig()->hasOption('LIBS.JEXCEL.PLUGINS')) {
             foreach ($facade->getConfig()->getOption('LIBS.JEXCEL.PLUGINS') as $path) {
                 $includes[] = '<script type="text/javascript" src="' . $facade->buildUrlToVendorFile($path) . '"></script>';
@@ -735,6 +741,9 @@ JS;
             {$this->buildJsOnUpdateTableRowColors('row', 'cell')} 
         },
         onbeforechange: function(instance, cell, x, y, value) {
+            if (instance.jexcel.options.columns[x].editor?._exfDisplay) {
+                return value;
+            }
             var fnParser = instance.exfWidget.getColumnModel(x).parser;
             var fnFormatter = instance.exfWidget.getColumnModel(x).formatter;
             var mValueParsed, mValidated;
@@ -937,6 +946,10 @@ JS;
             el.exfWidget.validateAll();
         },
         onevent: function(event) {
+            var oWidget = {$this->buildJsJqueryElement()}[0].exfWidget;
+            if (oWidget) {
+                exfJExcelDisplayRenderers.onEvent(oWidget, event, arguments[4]);
+            }
             ({$this->buildJsJqueryElement()}[0].jssPlugins || []).forEach(function(oPlugin) {
                 oPlugin.onevent(event);
             });
@@ -1155,10 +1168,10 @@ JS;
             return this._dom;
         },
         getData: function() {
-            return this.convertArrayToData(this.getJExcel().getData(false));
+            return this.convertArrayToData(this.getJExcel().getData(false, true));
         },
         getDataChanged: function() {
-            return this.convertArrayToData(this.getJExcel().getData(false), true);
+            return this.convertArrayToData(this.getJExcel().getData(false, true), true);
         },
         getChangedRowIndexes: function() {
             // Rows are earmarked cell-wise with the `exf-spreadsheet-change` class in validateCell().
@@ -1929,6 +1942,7 @@ JS;
     };
 
     {$this->buildJsJqueryElement()}[0].exfWidget.initSubsheetEditors();
+    exfJExcelDisplayRenderers.install({$this->buildJsJqueryElement()}[0].exfWidget);
     {$this->buildJsJqueryElement()}[0].exfWidget.refreshConditionalColumnVisibility();
     
     {$this->buildJsInitPlugins()}
@@ -2546,11 +2560,14 @@ JS;
     {
         $cellWidget = $col->getCellWidget();
         $options = '';
+        $align = null;
         switch (true) {
             case $col->isHidden() === true:
             case $cellWidget instanceof InputHidden:
                 $type = "hidden";
                 break;
+            case $this->hasJExcelDisplayRenderer($col):
+                return $this->buildJsJExcelDisplayEditorOptions($col);
             case $cellWidget instanceof InputNumber:
             case $cellWidget instanceof Display && $cellWidget->getValueDataType() instanceof NumberDataType:
                 $numberType = $cellWidget->getValueDataType();
@@ -2596,6 +2613,115 @@ JS;
                 type: "$type",
                 $options
                 $align
+
+JS;
+    }
+
+    /**
+     * Only visible, non-editable display widgets opt into the custom column lifecycle.
+     *
+     * @param DataColumn $col
+     * @return bool
+     */
+    protected function hasJExcelDisplayRenderer(DataColumn $col) : bool
+    {
+        return $col->isHidden() === false && $col->isEditable() === false
+            && ($col->getCellWidget() instanceof ColorIndicator || $col->getCellWidget() instanceof ProgressBar);
+    }
+
+    /**
+     * Emits configuration and display-only formatters for the external v4 column adapters.
+     * Ingestion and action-data parsers remain identity functions for these columns.
+     *
+     * @param DataColumn $col
+     * @return string
+     */
+    protected function buildJsJExcelDisplayEditorOptions(DataColumn $col) : string
+    {
+        $widget = $col->getCellWidget();
+        $isProgress = $widget instanceof ProgressBar;
+        if ($isProgress && (! is_numeric($widget->getMin()) || ! is_numeric($widget->getMax())
+            || ! is_finite((float) $widget->getMin()) || ! is_finite((float) $widget->getMax())
+            || $widget->getMax() <= $widget->getMin())) {
+            throw new WidgetConfigurationError($widget, 'Spreadsheet ProgressBar requires finite min < max.');
+        }
+        $dataType = $widget->getValueDataType();
+        $hintScale = $widget->getHintScale();
+        $toPairs = static function (array $scale) : array {
+            $pairs = [];
+            foreach ($scale as $key => $value) {
+                $pairs[] = [$key, $value];
+            }
+            return $pairs;
+        };
+        $config = [
+            'numeric' => $dataType instanceof NumberDataType,
+            'formatNumeric' => ! $widget->getDisableFormatting() && $dataType instanceof NumberDataType
+                && ! ($dataType instanceof \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface),
+            'decimalSeparator' => $dataType instanceof NumberDataType ? $dataType->getDecimalSeparator() : null,
+            'groupSeparator' => $dataType instanceof NumberDataType ? $dataType->getGroupSeparator() : null,
+            'color' => null,
+            'colorColumn' => null,
+            'colorNumeric' => $dataType instanceof NumberDataType,
+            'colorScale' => $toPairs($widget->getColorScale()),
+            'colorRange' => $isProgress || $widget->isColorScaleRangeBased(),
+            'semanticColors' => $this->getFacade()->getSemanticColors(),
+            'textColorPreference' => $this->getFacade()->getConfig()->hasOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE')
+                ? (float) $this->getFacade()->getConfig()->getOption('WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE') : 0.5,
+            'hint' => $widget->getHint(false) ?? '',
+            'hintScale' => $toPairs($hintScale->getScaleValues()),
+            'hintRange' => $hintScale->isRangeBased()
+        ];
+        $formatter = $this->getFacade()->getDataTypeFormatter($dataType);
+        $formatJs = $widget->getDisableFormatting() ? 'value' :
+            ($formatter instanceof JsBooleanFormatter ? $formatter->buildJsFormatter('value', false) : $formatter->buildJsFormatter('value'));
+        $textFormatterJs = '';
+        if ($isProgress) {
+            $config['min'] = $widget->getMin();
+            $config['max'] = $widget->getMax();
+            $config['color'] = $widget->getColor();
+            $config['text'] = $widget->getText();
+            $config['textScale'] = $toPairs($widget->getTextScale());
+            $config['textColumn'] = $widget->isTextBoundToAttribute() ? $widget->getTextDataColumnName() : null;
+            if ($widget->isTextBoundToAttribute()) {
+                $textType = $widget->getTextAttribute()->getDataType();
+                $config['textNumeric'] = ! $widget->getDisableFormatting() && $textType instanceof NumberDataType
+                    && ! ($textType instanceof \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface);
+                $config['textDecimalSeparator'] = $textType instanceof NumberDataType ? $textType->getDecimalSeparator() : null;
+                $config['textGroupSeparator'] = $textType instanceof NumberDataType ? $textType->getGroupSeparator() : null;
+                $textFormatter = $this->getFacade()->getDataTypeFormatter($textType);
+                $textFormatJs = $widget->getDisableFormatting() ? 'value' :
+                    ($textFormatter instanceof JsBooleanFormatter ? $textFormatter->buildJsFormatter('value', false) : $textFormatter->buildJsFormatter('value'));
+                $textFormatterJs = ", formatText: function(value) { return {$textFormatJs}; }";
+            }
+        } else {
+            $binding = $widget->getColorBinding();
+            $colorType = $binding->getDataType();
+            $config['colorNumeric'] = $colorType instanceof NumberDataType;
+            $config['colorDecimalSeparator'] = $colorType instanceof NumberDataType ? $colorType->getDecimalSeparator() : null;
+            $config['colorGroupSeparator'] = $colorType instanceof NumberDataType ? $colorType->getGroupSeparator() : null;
+            $config['colorColumn'] = $binding->isBoundToDataColumn() ? $binding->getDataColumnName() : null;
+            $config['color'] = $binding->isBoundToDataColumn() === false && $binding->hasValue() ? $binding->getValue() : null;
+            $config['fill'] = $widget->getFill();
+            $config['colorOnly'] = $widget->getColorOnly();
+        }
+        $align = $col->getAlign();
+        if ($align === EXF_ALIGN_DEFAULT || $align === EXF_ALIGN_OPPOSITE || ! $align) {
+            $defaultAlign = $this->getFacade()->getConfig()->getOption('WIDGET.ALL.DEFAULT_ALIGNMENT');
+            $align = $align === EXF_ALIGN_OPPOSITE ?
+                ($defaultAlign === EXF_ALIGN_LEFT ? EXF_ALIGN_RIGHT : EXF_ALIGN_LEFT) : $defaultAlign;
+        }
+        $configJs = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $factory = $isProgress ? 'createProgressBar' : 'createColorIndicator';
+        $type = $dataType instanceof NumberDataType ? 'numeric' :
+            ($dataType instanceof BooleanDataType ? 'checkbox' : 'text');
+        return <<<JS
+                type: "{$type}",
+                align: {$this->escapeString($align)},
+                editor: exfJExcelDisplayRenderers.{$factory}(
+                    Object.assign({$configJs}, {format: function(value) { return {$formatJs}; } {$textFormatterJs}}),
+                    function() { return {$this->buildJsJqueryElement()}[0].exfWidget; }
+                ),
 
 JS;
     }
@@ -3142,7 +3268,7 @@ JS;
             aData.push([]);
         }
     }
-    jqCtrl.jspreadsheet('setData', aData);
+    exfJExcelDisplayRenderers.setData(jqCtrl[0].exfWidget, aData, oData ? oData.rows : null);
     jqCtrl[0].exfWidget.refreshConditionalColumnVisibility(true);
     {$this->buildJsResetSelection('jqCtrl')};
 
@@ -3195,6 +3321,8 @@ JS;
     protected function needsDataFormatting(DataColumn $col) : bool
     {
         switch (true) {
+            case $this->hasJExcelDisplayRenderer($col):
+                return false;
             // No formatting if explicitly disabled
             case $col->getCellWidget() instanceof Display && $col->getCellWidget()->getDisableFormatting():
                 return false;
