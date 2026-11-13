@@ -129,7 +129,7 @@ class LdapAuthenticator extends AbstractAuthenticator
         if (! $token instanceof DomainUsernamePasswordAuthToken) {
             throw new InvalidArgumentException('Invalid token type!');
         }
-        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
+        $this->checkUserDisabledFlag($token->getUsername());
         
         $ldappass = $token->getPassword();
         $placeholders = [];
