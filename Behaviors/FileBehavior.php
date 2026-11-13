@@ -27,6 +27,8 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     private $folderAttributeAlias = null;
     
     private $contentsAttributeAlias = null;
+
+    private $contentsAreUrls = false;
     
     private $mimeTypeAttributeAlias = null;
     
@@ -97,6 +99,37 @@ class FileBehavior extends AbstractBehavior implements FileBehaviorInterface
     protected function setContentsAttribute(string $value) : FileBehavior
     {
         $this->contentsAttributeAlias = $value;
+        return $this;
+    }
+
+    /**
+     * Whether contents_attribute contains a download URL instead of file bytes.
+     *
+     * @return bool
+     */
+    public function getContentsAreUrls() : bool
+    {
+        return $this->contentsAreUrls;
+    }
+
+    /**
+     * Download contents_attribute through the object's authenticated HTTP connection.
+     *
+     * Requires UrlDataConnector and a URL within the connection's configured base
+     * address. Redirects are not followed. The file MIME type is checked against
+     * the downloaded bytes. max_file_size_in_mb applies, with a default of 5 MiB.
+     * Normal attribute contents remain unchanged when this option is false.
+     *
+     * @uxon-property contents_are_urls
+     * @uxon-type boolean
+     * @uxon-default false
+     *
+     * @param bool $value
+     * @return FileBehavior
+     */
+    protected function setContentsAreUrls(bool $value) : FileBehavior
+    {
+        $this->contentsAreUrls = $value;
         return $this;
     }
     
