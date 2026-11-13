@@ -10,6 +10,7 @@ use exface\Core\DataTypes\TextDataType;
 use exface\Core\Factories\DataSheetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\AppExporterInterface;
+use exface\Core\Interfaces\DataSheets\DataColumnListInterface;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Behaviors\TimeStampingBehavior;
 use exface\Core\CommonLogic\Filemanager;
@@ -1128,11 +1129,11 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
         }
         
         // For each object, combine it's UXONs into a single data sheet
-        foreach ($uxons as $type => $array) {
-            $cnt = count($array);
+        foreach ($uxons as $type => $arrayOfDataSheetUxons) {
+            $cnt = count($arrayOfDataSheetUxons);
             // Init the data sheet from the first UXON, but without any rows. We will preprocess
             // the rows later and transform expanded UXON values into strings.
-            $baseUxon = $array[0];
+            $baseUxon = $arrayOfDataSheetUxons[0];
             
             $objAlias = $baseUxon->getProperty('object_alias');
             if ($objAlias === null || ($this->hasInstallableObjects() && ! $this->isInstallableObject($objAlias))) {
@@ -1148,18 +1149,12 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             // Add rows from all the other UXONs
             if ($cnt > 1) {
                 for ($i = 1; $i < $cnt; $i++) {
-                    $partUxon = $array[$i];
+                    $partUxon = $arrayOfDataSheetUxons[$i];
                     $partRows = $partUxon->hasProperty('rows') ? $partUxon->getProperty('rows')->toArray() : [];
                     $partUxon->unsetProperty('rows');
                     // Instantiate an empty data sheet to check, if it's compatible!
-                    $sheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $partUxon);
-                    if (! $baseSheet->getMetaObject()->isExactly($sheet->getMetaObject())) {
-                        throw new InstallerRuntimeError($this, 'Model sheet type mismatch: model sheets with same name must have the same structure in all subfolders of the model!');
-                    }
-                    if ($sheet->getColumns()->count() !== $baseColCount) {
-                        throw new InstallerRuntimeError($this, 'Corrupted model data in "' . $files[$type][$i] . '": all model sheets of the same type must have the same columns!');
-                    }
-                    $rows = array_merge($rows, $partRows);
+                    $partSheet = DataSheetFactory::createFromUxon($this->getWorkbench(), $partUxon);
+                    $rows = $this->mergeModelSheetRows($rows, $partRows, $baseSheet->getColumns(), $partSheet->getColumns(), $files[$type][$i]);
                 }
             }
             
@@ -1226,6 +1221,104 @@ class DataInstaller extends AbstractAppInstaller implements AppExporterInterface
             $baseSheet = $this->applyCompatibilityFixesToDataSheet($baseSheet);
             
             yield $baseSheet;
+        }
+    }
+    
+    /**
+     * Appends the rows of a model sheet part to the base rows, reconciling different column sets.
+     * 
+     * Normally all model files of the same type have the same columns and their rows are simply
+     * concatenated. Older files may lack columns added later (or vice versa). In this case:
+     * 
+     * - base columns missing in the part get NULL values in every part row
+     * - part columns missing in the base get NULL values in every base row and are added to the
+     * base column list, so they are installed too.
+     * 
+     * Only column names are compared - not aliases, expressions or data types.
+     * 
+     * If a missing column is bound to a required attribute without a default value, an error is
+     * thrown right away: the NULL values would cause a less understandable error when writing.
+     * 
+     * @param array $baseRows
+     * @param array $partRows
+     * @param DataColumnListInterface $baseCols Columns of the base sheet - new columns are added here!
+     * @param DataColumnListInterface $partCols Columns of the (empty) part sheet
+     * @param string|null $partFile Name of the part file for error messages
+     * @return array
+     */
+    protected function mergeModelSheetRows(array $baseRows, array $partRows, DataColumnListInterface $baseCols, DataColumnListInterface $partCols, ?string $partFile = null) : array
+    {
+        if (! $baseCols->getParent()->getMetaObject()->isExactly($partCols->getParent()->getMetaObject())) {
+            throw new InstallerRuntimeError($this, 'Model sheet type mismatch: model sheets with same name must have the same structure in all subfolders of the model!');
+        }
+        
+        if (empty($partRows)) {
+            return $baseRows;
+        }
+        
+        $baseNames = array_keys($baseCols->getAll());
+        $partNames = array_keys($partCols->getAll());
+        $missingInPart = array_diff($baseNames, $partNames);
+        $missingInBase = array_diff($partNames, $baseNames);
+        
+        // Regular case: same columns in both - just concatenate the rows
+        if (empty($missingInPart) && empty($missingInBase)) {
+            return array_merge($baseRows, $partRows);
+        }
+        
+        // The part is older (or newer) than the base: fill its missing cells with NULL
+        if (! empty($missingInPart)) {
+            $this->checkModelSheetColumnsCanBeEmpty($baseCols, $missingInPart, 'model file "' . ($partFile ?? '') . '"');
+            $emptyCells = array_fill_keys($missingInPart, null);
+            foreach ($partRows as $i => $row) {
+                $partRows[$i] = $row + $emptyCells;
+            }
+        }
+        
+        // The part has columns unknown to the base: add them to the base and fill NULL into base rows
+        if (! empty($missingInBase)) {
+            if (! empty($baseRows)) {
+                $this->checkModelSheetColumnsCanBeEmpty($partCols, $missingInBase, 'model files read before "' . ($partFile ?? '') . '"');
+            }
+            $emptyCells = array_fill_keys($missingInBase, null);
+            foreach ($baseRows as $i => $row) {
+                $baseRows[$i] = $row + $emptyCells;
+            }
+            foreach ($missingInBase as $name) {
+                $baseCols->add($partCols->get($name), $name, false);
+            }
+        }
+        
+        return array_merge($baseRows, $partRows);
+    }
+    
+    /**
+     * Throws an error if any of the given columns is bound to a required attribute without a default value.
+     * 
+     * Used when merging model files with different columns: the rows of files lacking these columns
+     * would get NULL values, which cannot be written into required attributes.
+     * 
+     * @param DataColumnListInterface $cols Column list containing the missing columns
+     * @param string[] $missingNames Names of the columns missing in some rows
+     * @param string $missingIn Description of where the columns are missing - for the error message
+     * @throws InstallerRuntimeError
+     * @return void
+     */
+    protected function checkModelSheetColumnsCanBeEmpty(DataColumnListInterface $cols, array $missingNames, string $missingIn) : void
+    {
+        foreach ($missingNames as $name) {
+            // The export summary is display-only and never written
+            if ($name === '_EXPORT_SUMMARY') {
+                continue;
+            }
+            $col = $cols->get($name);
+            if (! $col->isAttribute() || ! $col->getMetaObject()->hasAttribute($col->getAttributeAlias())) {
+                continue;
+            }
+            $attr = $col->getAttribute();
+            if ($attr->isRequired() && ! $attr->hasDefaultValue()) {
+                throw new InstallerRuntimeError($this, 'Cannot install model data: column "' . $name . '" is missing in ' . $missingIn . ', but it is bound to the required attribute "' . $attr->getAliasWithRelationPath() . '" without a default value. Re-export the affected apps to include this column in all model files!');
+            }
         }
     }
     
