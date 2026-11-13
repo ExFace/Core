@@ -125,6 +125,20 @@ Use `focus_css_query` to highlight a specific descendant of `widget_to_focus`:
 
 In the UI5 facade, `.sapFDynamicPageHeader` targets the filter header and `.sapFDynamicPageContent` targets the main content area.
 
+Dashboards with filters include the header in their DOM target. To focus the highlighted
+search button without relying on its translated caption or generated ID, give the dashboard
+an explicit ID (for example `progressDashboard`) and use:
+
+```json
+{
+    "title": "Search",
+    "widget_to_focus": "progressDashboard",
+    "focus_css_query": ".sapFDynamicPageTitleActionsBar button:has(.sapMBtnEmphasized)"
+}
+```
+
+This selector assumes the search button is the only highlighted action in the dashboard header.
+
 The query is evaluated when the step is displayed, inside the widget's DOM element:
 
 - If multiple elements match, the first in DOM order is used.
@@ -268,6 +282,54 @@ The tour remains available through `autostart_tour_id`, its URL parameter and `a
 
 In UI5 lookup dialogs (`DataLookupDialog`), visible tour menus are added separately to the standard footer toolbar, between the left and right button groups, matching the order in other dialogs. Normal buttons remain in the dialog's `buttons` aggregation and are available through `getButtons()`. The automatically generated table and header filters remain unchanged.
 
+## Subroutes - generated steps for complex widgets (`subroute`)
+
+Some widgets need several steps to explain - e.g. an `InputComboTable` with its lookup dialog. Instead of writing a separate dialog tour and chaining it via `autostart_tour_id`, add a `subroute` to the step focusing the widget. The facade generates the remaining steps automatically and continues the original tour afterwards.
+
+```json
+{
+    "title": "Filter",
+    "id": "my_filter_tour",
+    "steps": [
+        {
+            "title": "App",
+            "body": "Filter by app here",
+            "widget_to_focus": "app_filter",
+            "subroute": {
+                "lookup_button": "Click here to see the full list",
+                "lookup_header": "Use these filters to search for apps",
+                "lookup_search_button": "Press search",
+                "lookup_table": "Select the desired apps",
+                "lookup_selection": "Selected apps are shown here",
+                "lookup_apply_button": "Apply the selection"
+            }
+        },
+        {
+            "title": "Done",
+            "body": "This step is shown after the lookup dialog closes."
+        }
+    ]
+}
+```
+
+For an `InputComboTable` the following steps are inserted after the step with the subroute:
+
+1. `lookup_button` - focuses the lookup icon and clicks it to open the lookup dialog.
+2. In the dialog: `lookup_header` (filters), `lookup_search_button`, `lookup_table`, `lookup_selection` (only for multi-select) and `lookup_apply_button`, which clicks "Apply".
+3. The original tour continues with its next step on the page underneath.
+
+Rules:
+
+- Every text is optional. Omitted texts use translated defaults; an empty string `""` skips that step. Without `lookup_button` the dialog cannot be reached; without `lookup_apply_button` the tour ends in the dialog.
+- The tour with the subroute needs an `id` - otherwise it cannot be continued after the dialog.
+- In story steps the subroute applies to the widget in `widget_to_focus`; in `tour_steps` to the widget itself. For filters, the input widget of the filter is used.
+
+For developers - to add subroutes to more widgets:
+
+1. Create a subroute class extending `AbstractSubroute` with the texts as UXON properties.
+2. Implement `AjaxFacadeElementTourSubrouteInterface::getTourSubrouteSteps()` in the facade element of the widget. It returns the steps in the current view. A step leading to another view (e.g. a dialog) auto-starts the tour `$subroute->getTourId()` and is marked via `TourSubrouteStep::setLeavingTour()`.
+3. If the subroute continues in another view, use the `JsTourSubrouteHostTrait` in the facade element of that view: implement `buildTourSubrouteSteps()` and call `addTourSubrouteTours($subrouteWidget)` in `init()`. Mark the last step via `TourSubrouteStep::setReturningToTour()`.
+
 ## Starting tours automatically
 
 - `autorun: true` on the tour - starts when the view is shown.
@@ -323,7 +385,7 @@ classDiagram
 
 Closing a popup dialog also notifies visible tour hosts to check for a pending tour. This allows a dialog's last step to close the dialog and continue with a tour on the underlying page. This check does not repeat the page's view lifecycle, reload data, process URL triggers or restart unconditional `autorun` tours. Listeners are removed when their view is destroyed; hidden or closed tour hosts do not consume pending intents.
 
-DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. Explicit links to individual column or filter widgets still target those elements. Column and row references within a widget link are not yet used to select tour targets.
+DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. UI5 dashboards likewise use their dynamic-page wrapper when rendered, otherwise their own control. Explicit links to individual column or filter widgets still target those elements. Column and row references within a widget link are not yet used to select tour targets.
 
 When `focus_css_query` is configured, the tour driver applies `querySelector()` to this DOM target and uses the first match, falling back to the target itself if the query returns no match. Facade DOM getters do not need to implement CSS targeting separately.
 

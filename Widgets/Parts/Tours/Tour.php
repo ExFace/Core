@@ -300,12 +300,28 @@ class Tour implements TourInterface, iHaveIcon
      */
     public function getTourStorySteps() : ?array
     {
-        if ($this->tourStorySteps === null) {
+        if ($this->tourStorySteps === null && $this->tourStoryStepsUxon !== null) {
+            $this->tourStorySteps = [];
             foreach ($this->tourStoryStepsUxon as $uxon) {
                 $this->tourStorySteps[] = new TourStoryStep($this, $uxon);
             }
         }
         return $this->tourStorySteps;
+    }
+
+    /**
+     * Appends a step to the ordered steps of this tour.
+     * 
+     * This is mainly used to build tours programmatically - e.g. for tour subroutes in dialogs.
+     * 
+     * @param TourStepInterface $step
+     * @return TourInterface
+     */
+    public function addStep(TourStepInterface $step) : TourInterface
+    {
+        $this->getTourStorySteps();
+        $this->tourStorySteps[] = $step;
+        return $this;
     }
 
     /**

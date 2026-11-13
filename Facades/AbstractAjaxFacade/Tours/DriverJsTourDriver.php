@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Tours;
 
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementTourSubrouteInterface;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
@@ -8,6 +9,7 @@ use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Filter;
 use exface\Core\Widgets\Parts\Tours\TourStoryStep;
+use exface\Core\Widgets\Parts\Tours\TourSubrouteStep;
 
 /**
  * This class is a tour driver that uses the driver.js library to create interactive tours on the UI.
@@ -105,7 +107,35 @@ class DriverJsTourDriver implements TourDriverInterface
             $steps = array_merge($steps, $tourStorySteps);
         }
         
-        return $steps;
+        return $this->addSubrouteSteps($steps);
+    }
+
+    /**
+     * Inserts the steps of tour subroutes right after the steps, that configure them.
+     * 
+     * The subroute steps are provided by the facade element of the subroute widget because
+     * they depend on its rendered structure.
+     * 
+     * @param TourStepInterface[] $steps
+     * @return TourStepInterface[]
+     */
+    protected function addSubrouteSteps(array $steps) : array
+    {
+        $result = [];
+        foreach ($steps as $step) {
+            $result[] = $step;
+            if (! $step->hasSubroute()) {
+                continue;
+            }
+            $subroute = $step->getSubroute();
+            $element = $this->getFacade()->getElement($subroute->getWidget());
+            if ($element instanceof AjaxFacadeElementTourSubrouteInterface) {
+                foreach ($element->getTourSubrouteSteps($subroute) as $subrouteStep) {
+                    $result[] = $subrouteStep;
+                }
+            }
+        }
+        return $result;
     }
 
     /**
@@ -153,9 +183,10 @@ class DriverJsTourDriver implements TourDriverInterface
      * 
      * @param TourInterface $tour
      * @param bool $isStandalone True for a manual menu start; skips actions marked skip_if_standalone.
+     * @param string|null $startIndexJs JS expression with the index of the first step to show
      * @return string
      */
-    public function buildJsStartTour(TourInterface $tour, bool $isStandalone = false) : string
+    public function buildJsStartTour(TourInterface $tour, bool $isStandalone = false, ?string $startIndexJs = null) : string
     {
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $aStepsJs = '';
@@ -174,7 +205,9 @@ JS;
                 // A step that continues with another tour is not the end of the user's walkthrough.
                 // Skipped actions do not continue, so their final button keeps the "Done" label.
                 $onNextStep = $step->getOnNextStep();
-                $doneBtnTextJs = !($isStandalone && $onNextStep->getSkipIfStandalone()) && $onNextStep->getAutostartTourId()
+                $continuesTour = ! ($isStandalone && $onNextStep->getSkipIfStandalone()) && $onNextStep->getAutostartTourId();
+                $continuesTour = $continuesTour || ($step instanceof TourSubrouteStep && $step->isReturningToTour());
+                $doneBtnTextJs = $continuesTour
                     ? 'doneBtnText: ' . $this->escapeString($translator->translate('TOUR.STEP.ACTION.NEXT')) . ','
                     : '';
                 $aStepsJs .= <<<JS
@@ -186,7 +219,7 @@ JS;
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
                       {$doneBtnTextJs}
-                      {$this->buildJsOnNextClick($step, $isStandalone)}
+                      {$this->buildJsOnNextClick($step, $isStandalone, $tour)}
                     }
                 },
 JS;
@@ -205,7 +238,7 @@ JS;
                 steps: {$aStepsJs}
             });
     
-            driverObj.drive();
+            driverObj.drive({$startIndexJs});
             
 JS;
 
@@ -218,9 +251,10 @@ JS;
      * 
      * @param TourStepInterface $step
      * @param bool $isStandalone True for a manual menu start.
+     * @param TourInterface|null $tour The tour containing the step
      * @return string
      */
-    protected function buildJsOnNextClick(TourStepInterface $step, bool $isStandalone = false) :string
+    protected function buildJsOnNextClick(TourStepInterface $step, bool $isStandalone = false, ?TourInterface $tour = null) :string
     {
         $onNextStep = $step->getOnNextStep();
         // Skip the entire action, not the step: the default handler still advances or ends the tour.
@@ -251,15 +285,38 @@ JS;
 JS;
         }
         
+        // Subroutes leaving the tour remember where to continue it. The step returning
+        // to the tour turns this return point into a pending tour start.
+        $returnPointJs = '';
+        $endsTour = (bool) $autostartTourId;
+        if ($step instanceof TourSubrouteStep) {
+            if ($step->isLeavingTour() && $tour !== null && $tour->getId() !== null) {
+                $returnPointJs = <<<JS
+                window.exfTourContext.setReturnPoint({
+                    tourId: {$this->escapeString($tour->getId())},
+                    stepIndex: driver.getActiveIndex() + 1
+                });
+JS;
+            }
+            if ($step->isReturningToTour()) {
+                $returnPointJs = 'window.exfTourContext.resumeReturnPoint();';
+                $endsTour = true;
+            }
+        }
+        
+        // If another tour is started, end this one instead of moving on in the background.
+        $moveJs = $endsTour ? 'if (element) { driver.destroy(); } else { driver.moveNext(); }' : 'driver.moveNext();';
+        
         return <<<JS
 
           onNextClick: (element, step, { driver }) => {
               if (element) {
+                  {$returnPointJs}
                   {$pendingDialogTourJs}
 
                   {$callFunctionJs}
               }
-              driver.moveNext();
+              {$moveJs}
           }
 JS;
     }
