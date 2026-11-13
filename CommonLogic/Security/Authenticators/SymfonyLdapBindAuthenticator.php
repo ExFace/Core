@@ -17,6 +17,7 @@ namespace exface\Core\CommonLogic\Security\Authenticators;
  * of the `LdapAuthenticator`).
  * 
  * @deprecated use \exface\Core\CommonLogic\Security\Authenticators\LdapAuthenticator
+ * @see \exface\Core\CommonLogic\Security\Authenticators\SymfonyAuthenticator
  * 
  * @author Andrej Kabachnik
  *
