@@ -58,6 +58,7 @@
         "robthree/twofactorauth": "^3.0",
         "npm-asset/eruda": "^2",
         "npm-asset/github-markdown-css": "^5.9",
+        "npm-asset/pele": "^1.13",
         "justinrainbow/json-schema": "^5.2",
         "composer/semver": "^3",
         "softcreatr/jsonpath": "~0.7",

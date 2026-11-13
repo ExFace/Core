@@ -54,8 +54,8 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * 
  * If the widget enables Mermaid, configure `LIBS.MARKIAN.MERMAID.JS` and
  * `LIBS.MARKIAN.MERMAID.CSS` as `axenox/markian/dist/extensions/mermaid.min.js` and
- * `axenox/markian/dist/extensions/mermaid.css`. Configure `LIBS.MERMAID.JS` with the
- * host's Mermaid runtime URL. The adapter passes that URL as a `source` string;
+ * `axenox/markian/dist/extensions/mermaid.css`. Configure `LIBS.PELE.JS` with the
+ * host's Pele global runtime URL. The adapter passes that URL as a `source` string;
  * no runtime version setting or former `asset` object is required.
  * 
  * ## Adapter ownership and display widgets
@@ -159,7 +159,7 @@ JS;
         $optionsJs = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
         $optionsJs = 'Object.assign(' . $optionsJs . ', {tags: MarkianAdapter.buildTags(' . $this->buildJsMarkdownMentions() . '), extensions: {code: {enabled: true, config: MarkianAdapter.buildCodeConfig(' . $this->buildJsMarkdownCodeSettings() . ')}}})';
         $mermaidJs = $widget->hasRenderMermaidDiagrams()
-            ? $this->escapeMarkdownForInlineJavaScript($this->getFacade()->buildUrlToSource('LIBS.MERMAID.JS'))
+            ? $this->escapeMarkdownForInlineJavaScript($this->getFacade()->buildUrlToSource('LIBS.PELE.JS'))
             : 'null';
         $allowImagesJs = $widget->getAllowImages() ? 'true' : 'false';
         return 'MarkianAdapter.mount(document.getElementById(' . json_encode($this->getId()) . '), ' . $optionsJs . ', false, ' . $mermaidJs . ', ' . $allowImagesJs . ')';
