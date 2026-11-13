@@ -41,6 +41,36 @@ adapters in its `AbstractAjaxFacade`.  It includes a collection of
 - JS formatters for out DataType system
 - Reusable PSR-7 middlewares to use in facade APIs.
 
+### Colored backgrounds and readable text
+
+Every new or changed colored renderer must preserve the existing ColorIndicator/
+ObjectStatus contrast behavior, including integrations with third-party grids.
+After resolving bindings, color scales and semantic colors, use
+`exfColorTools.pickTextColorForBackgroundColor(background, preference, backdrop)`
+from `AbstractAjaxFacade/js/exfColorTools.js` to choose black or white text.
+Register the helper in each consuming facade's asset/module loader; do not copy
+its luminance calculation or hard-code a foreground color.
+
+Use the facade's `WIDGET.OBJECT_STATUS.TEXT_COLOR_PREFERENCE` when configured.
+Both JEasyUI and UI5 ship with `0.35`, favoring white; installations can override
+this key in the respective facade configuration. Do not hard-code that preference
+in a renderer. If a facade does not define the option, the helper's neutral default
+is `0.5`. The helper supports CSS color names and alpha blending, defaulting
+to the theme background (or white). Unfilled, colored text must retain its configured
+foreground color. For partially filled progress bars, render separately clipped
+foregrounds for the filled and remaining portions so both stay readable.
+
+Check dark/light and transparent backgrounds, semantic and row-bound color changes,
+and zero/partial/full progress. Keep labels safely text-based, respect cell padding
+and wrapping, and use facade-scoped styling for native corner shapes. Rendering
+must never change the underlying value or its type.
+
+The shared `HtmlColorIndicatorTrait` and `HtmlProgressBarTrait` apply this policy
+to EasyUI DataTable cells and standalone displays as well. They register the helper
+in their head tags, so the table itself needs no special handling. HTML progress
+bars overlay two identically aligned, full-width labels and clip the fill's label
+with `clip-path`; the decorative copy is hidden from assistive technology.
+
 ### Common AJAX facade principles
 
 <!-- BEGIN SubPageList:depth=2 -->
