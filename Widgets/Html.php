@@ -405,12 +405,29 @@ class Html extends Display
         return null;
     }
     
+    /**
+     * Reads file-bound HTML only from approved roots so UXON cannot expose arbitrary installation files.
+     *
+     * @return string|null
+     */
     public function getFileContents() : ?string
     {
         if ($absPath = $this->getFilePathAbsolute()) {
-            return file_get_contents($absPath);
+            return $this->getWorkbench()->filemanager()->readFileSecure($absPath, $this->getAllowedBasePaths());
         }
         return null;
+    }
+
+    /**
+     * Resolves FILES.UXON_ALLOWED_BASE_PATHS for file-backed HTML while allowing apps to override this policy.
+     *
+     * The shared default deliberately excludes data so installation-owned files require an explicit configuration.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        return $this->getWorkbench()->filemanager()->resolveAllowedBasePaths('FILES.UXON_ALLOWED_BASE_PATHS');
     }
     
     /**

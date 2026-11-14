@@ -2,16 +2,20 @@
 namespace exface\Core\Actions;
 
 use exface\Core\CommonLogic\DataSheets\DataCollector;
-use exface\Core\Exceptions\FileNotFoundError;
 use exface\Core\Exceptions\Actions\ActionInputMissingError;
+use exface\Core\Exceptions\Actions\ActionInputError;
+use exface\Core\Exceptions\FileNotFoundError;
+use exface\Core\Exceptions\FilePathNotAllowedError;
 use exface\Core\CommonLogic\Filemanager;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Interfaces\DataSources\DataTransactionInterface;
 use exface\Core\Interfaces\Tasks\ResultInterface;
-use exface\Core\Exceptions\FileNotReadableError;
 use exface\Core\Factories\DataSheetFactory;
+use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
  * This creates and displays a widget from a JSON file containing some UXON description of the widget.
@@ -120,7 +124,14 @@ class ShowDialogFromFile extends ShowDialog
     }
 
     /**
-     * 
+     * Reads input-selected UXON only after constraining it to the configured folder.
+     *
+     * The extension is appended before validation so task data cannot use traversal, absolute paths, wrappers, or
+     * symlinks to load and instantiate widgets from outside that folder. Filesystem failures are wrapped here so
+     * user-facing errors cannot disclose the resolved installation or configured folder path, inject HTML through
+     * Markdown error widgets, or inherit an internal-error response. Traversal attempts remain persistently logged,
+     * while ordinary missing files stay below the configured error persistence threshold.
+     *
      * {@inheritDoc}
      * @see \exface\Core\Actions\ShowWidget::perform()
      */
@@ -140,23 +151,59 @@ class ShowDialogFromFile extends ShowDialog
             }
         }
         $completeFilename = $basePath . '/' . $filePath . ($this->getFileExtension() ? '.' . ltrim($this->getFileExtension(), ".") : '');
-        if (file_exists($completeFilename)) {
-            $json = file_get_contents($completeFilename);
-            if ($json === false) {
-                throw new FileNotReadableError('Cannot read file "' . $completeFilename . '"!');
-            }
-            $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
-        } else {
-            throw new FileNotFoundError('File "' . $completeFilename . '" not found!');
+        $filename = FilePathDataType::findFileName($filePath, false);
+        try {
+            $json = $this->getWorkbench()->filemanager()->readFileSecure($completeFilename, $this->getAllowedBasePaths());
+        } catch (FilePathNotAllowedError | FileNotFoundError $e) {
+            $error = new ActionInputError(
+                $this,
+                'Cannot open file "' . MarkdownDataType::escapeString($filename) . '".',
+                null,
+                $e
+            );
+            $error->setStatusCode(400);
+            $error->setLogLevel(
+                $e instanceof FilePathNotAllowedError
+                    ? LoggerInterface::ERROR
+                    : LoggerInterface::WARNING
+            );
+            $error->setUseExceptionMessageAsTitle(true);
+            $message = $error->getMessageModel($this->getWorkbench());
+            $message->setDescription('');
+            $message->setHint('');
+            throw $error;
         }
+        $this->getDialogWidget()->addWidget(WidgetFactory::createFromUxon($this->getDialogWidget()->getPage(), UxonObject::fromJson($json), $this->getDialogWidget()));
         
         if (! $this->getWidget()->getCaption()) {
-            $this->getWidget()->setCaption($completeFilename);
+            $this->getWidget()->setCaption($filename);
         }
         
         $this->getWidget()->setCacheable(false);
         
         return parent::perform($task, $transaction);
+    }
+
+    /**
+     * Returns the proposed default dialog file root, pending team decision.
+     *
+     * A configured folder becomes the sole boundary for task-controlled filenames. If no folder is configured,
+     * the installation folder remains the compatibility default and is intentionally surfaced as a decision point.
+     *
+     * @return string[]
+     */
+    protected function getAllowedBasePaths() : array
+    {
+        $basePath = Filemanager::pathNormalize($this->getWorkbench()->filemanager()->getPathToBaseFolder());
+        $folderPath = $this->getFolderPath();
+        if ($folderPath === null || $folderPath === '') {
+            return [$basePath];
+        }
+        return [
+            Filemanager::pathIsAbsolute($folderPath)
+                ? $folderPath
+                : Filemanager::pathJoin([$basePath, $folderPath])
+        ];
     }
     
     protected function getFilePath(TaskInterface $task) : string
