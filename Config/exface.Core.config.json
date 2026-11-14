@@ -6,6 +6,8 @@
     
 	"LIBS.MERMAID.JS": "exface/core/Facades/AbstractAjaxFacade/js/mermaid/mermaid.min.js",
 	"LIBS.PELE.JS": "npm-asset/pele/dist/pele.global.js",
+	"LIBS.PELE.ADAPTER.JS": "exface/core/Facades/AbstractAjaxFacade/js/exfMermaid.js",
+	"LIBS.PELE.CSS": "exface/core/Facades/AbstractAjaxFacade/css/exfMermaid.css",
 	
 	"WIDGET.BUTTON.HIDDEN_IF_ACCESS_DENIED": false,
 	
