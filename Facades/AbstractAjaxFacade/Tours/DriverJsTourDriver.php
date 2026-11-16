@@ -240,6 +240,7 @@ JS;
                 nextBtnText: '{$translator->translate('TOUR.STEP.ACTION.NEXT')}',
                 prevBtnText: '{$translator->translate('TOUR.STEP.ACTION.PREVIOUS')}',
                 doneBtnText: '{$translator->translate('TOUR.STEP.ACTION.DONE')}',
+                onDestroyed: () => { {$this->buildJsCleanupFocusHelpers()} },
                 steps: {$aStepsJs}
             });
     
@@ -248,6 +249,30 @@ JS;
 JS;
 
      return $driverJs;
+    }
+
+    /**
+     * Builds JS to remove helper elements, that facade elements added to the DOM to highlight tour targets.
+     * 
+     * Column highlights use invisible overlays with the CSS class `exf-tour-column-focus`. If an element had
+     * to change the `position` style of a container for its overlay, it saves the original inline value in the
+     * `data-exf-tour-position` attribute. This code removes all overlays and restores all saved positions.
+     * It runs whenever a tour ends - also if it is closed or continues with another tour.
+     * 
+     * @return string
+     */
+    protected function buildJsCleanupFocusHelpers() : string
+    {
+        return <<<JS
+
+                    document.querySelectorAll('.exf-tour-column-focus').forEach(function(domBox) {
+                        domBox.remove();
+                    });
+                    document.querySelectorAll('[data-exf-tour-position]').forEach(function(domParent) {
+                        domParent.style.position = domParent.getAttribute('data-exf-tour-position');
+                        domParent.removeAttribute('data-exf-tour-position');
+                    });
+JS;
     }
 
     /**
@@ -269,6 +294,9 @@ JS;
         $browserClick = $onNextStep->getBrowserClick();
         $functionName = $onNextStep->getWidgetFunction();
         if ($browserClick === null && $functionName === null) {
+            if (null !== $autostartTourId = $onNextStep->getAutostartTourId()) {
+                return $this->buildJsOnNextClickAutostartOnly($autostartTourId);
+            }
             return '';
         }
         
@@ -328,6 +356,31 @@ JS;
                   {$callFunctionJs}
               }
               {$moveJs}
+          }
+JS;
+    }
+
+    /**
+     * Builds the onNextClick handler for steps, that only start another tour without any action.
+     * 
+     * Without an action, no dialog or view is shown, that would check for the pending tour request.
+     * The handler therefore ends the current tour and notifies the visible views via the `exf-tour-resume`
+     * event, so a tour on the current page starts right away. If the target tour belongs to a view, that
+     * is not shown yet, the request remains pending until that view is shown.
+     * 
+     * @param string $autostartTourId
+     * @return string
+     */
+    protected function buildJsOnNextClickAutostartOnly(string $autostartTourId) : string
+    {
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              window.exfTourContext.setPendingTour({
+                  targetTourId: {$this->escapeString($autostartTourId)}
+              });
+              driver.destroy();
+              window.dispatchEvent(new Event('exf-tour-resume'));
           }
 JS;
     }
@@ -526,7 +579,21 @@ JS;
         if ($widget === null) {
             return 'null';
         }
-        $elementJs = $this->getFacade()->getElement($widget)->buildJsDomElementGetter();
+        $element = $this->getFacade()->getElement($widget);
+        // A widget link with a column (`widget!column`) highlights that column and a link with a column and
+        // a row (`widget!column$row`) a single cell - if the element supports it
+        $columnName = $this->getFocusedColumnName($step);
+        $rowNumber = $this->getFocusedRowNumber($step);
+        switch (true) {
+            case $columnName === null || ! $element instanceof AbstractJqueryElement:
+                $elementJs = $element->buildJsDomElementGetter();
+                break;
+            case $rowNumber !== null:
+                $elementJs = $element->buildJsDomElementGetterForCell($columnName, $rowNumber);
+                break;
+            default:
+                $elementJs = $element->buildJsDomElementGetterForColumn($columnName);
+        }
         $query = $step->getFocusCssQuery();
         if ($query === null) {
             return $elementJs;
@@ -553,6 +620,28 @@ JS;
         } else {
             return $this->getFacade()->getElement($focusedWidget)->getId();
         }
+    }
+
+    /**
+     * Returns the column name of a widget link like `widget_id!column_name` in `widget_to_focus`.
+     * 
+     * @param TourStepInterface $step
+     * @return string|null
+     */
+    protected function getFocusedColumnName(TourStepInterface $step) : ?string
+    {
+        return $step instanceof TourStoryStep ? $step->getWidgetToFocus()?->getTargetColumnId() : null;
+    }
+    
+    /**
+     * Returns the 1-based row number of a widget link like `widget_id!column_name$1` in `widget_to_focus`.
+     * 
+     * @param TourStepInterface $step
+     * @return int|null
+     */
+    protected function getFocusedRowNumber(TourStepInterface $step) : ?int
+    {
+        return $step instanceof TourStoryStep ? $step->getWidgetToFocus()?->getTargetRowNumber() : null;
     }
 
     /**

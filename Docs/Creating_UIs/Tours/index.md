@@ -150,6 +150,22 @@ The query does not search the whole document. A story step without `widget_to_fo
 
 Selectors depend on the facade's HTML structure. Hidden or virtualized rows must already be visible and rendered to be highlighted; a CSS query does not load data, expand headers or scroll to an unrendered row. `on_next_step` still calls a function on the linked widget, not on the element found by CSS.
 
+### Focusing a column or cell of a table
+
+To highlight a single column of a data widget, append the column name to the widget id in `widget_to_focus`: `<widget_id>!<column_name>`. The column name is the data column name - normally the `attribute_alias` of the column.
+
+```json
+{
+    "title": "Location",
+    "body": "This column shows the location of each section.",
+    "widget_to_focus": "verortungId!Verortung__LABEL"
+}
+```
+
+The header and all currently rendered cells of the column are highlighted. Only the visible part of the column is highlighted - e.g. if the table is too narrow and the column is partially scrolled out of view. Currently supported by `DataTable` in the UI5 facade (`sap.ui.table`, not responsive tables) and by spreadsheet widgets based on jExcel (e.g. `DataSpreadSheet`, `DataImporter`). Other widgets and unknown or hidden columns fall back to highlighting the whole widget. A `focus_css_query` is applied inside the column highlight, so it can only match the highlight element itself.
+
+To highlight a single cell, add a row number: `<widget_id>!<column_name>$<row_number>` - e.g. `"widget_to_focus": "verortungId!Verortung__LABEL$1"`. The row number is 1-based and refers to the data rows of the table counted from the top of the current page - regardless of the scroll position: `15` is always the 15th row, not the 15th currently visible one. The table is scrolled automatically to make the row visible. If the row does not exist (e.g. the page has fewer rows), the whole column is highlighted instead. Supported by the same widgets as column highlighting.
+
 ### Story steps (`steps` in the tour)
 
 Additional property: `widget_to_focus` - a widget link to the widget to highlight. If omitted, the popover is shown in the center without highlighting.
@@ -227,6 +243,14 @@ Inside `on_next_step`, rename `function` to `widget_function` as well.
 ```
 
 When the user clicks "Next", the dialog opens and the dialog tour starts automatically. The pending tour intent expires after 60 seconds.
+
+`autostart_tour_id` also works without `widget_function` or `browser_click`. In this case, "Next" ends the current tour and starts the target tour right away if it belongs to a widget on the visible page - e.g. to chain several tours of the same page:
+
+```json
+"on_next_step": {
+    "autostart_tour_id": "second_tour_on_this_page"
+}
+```
 
 Steps with `autostart_tour_id` keep the translated "Next" button label even at the end of a tour, because the walkthrough continues with another tour. Without a continuation, the last step uses the translated "Done" label.
 
@@ -381,11 +405,11 @@ classDiagram
 1. `UI5AbstractElement` registers the `tour_steps` of every widget as waypoint steps at the driver when the element is created.
 2. `UI5Container`, `UI5Dashboard`, `UI5Dialog` and `UI5DataElementTrait` add the menu to their toolbars via `buildJsTourGuideDropdown()`. This shared integration initializes `window.exfTourContext` when the controller is initialized, including pages without data widgets.
 3. Clicking a menu item makes the driver generate the JS (`driver.js.driver({...}).drive()`).
-4. With `autostart_tour_id` the driver calls `window.exfTourContext.setPendingTour()` before invoking the widget function, so even a synchronously opened dialog can find the intent. The target view consumes the intent via `consumePendingTour()` and starts the tour after 500 ms.
+4. With `autostart_tour_id` the driver calls `window.exfTourContext.setPendingTour()` before invoking the widget function, so even a synchronously opened dialog can find the intent. The target view consumes the intent via `consumePendingTour()` and starts the tour after 500 ms. Without a widget function or browser click, the driver ends the current tour and dispatches `exf-tour-resume` itself, so visible tour hosts check for the intent (see below).
 
 Closing a popup dialog also notifies visible tour hosts to check for a pending tour. This allows a dialog's last step to close the dialog and continue with a tour on the underlying page. This check does not repeat the page's view lifecycle, reload data, process URL triggers or restart unconditional `autorun` tours. Listeners are removed when their view is destroyed; hidden or closed tour hosts do not consume pending intents.
 
-DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. UI5 dashboards likewise use their dynamic-page wrapper when rendered, otherwise their own control. Explicit links to individual column or filter widgets still target those elements. Column and row references within a widget link are not yet used to select tour targets.
+DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. UI5 dashboards likewise use their dynamic-page wrapper when rendered, otherwise their own control. Explicit links to individual column or filter widgets still target those elements. A column reference within a widget link (`widget!column`) makes the driver call `buildJsDomElementGetterForColumn()` of the facade element instead. The default implementation in `AbstractJqueryElement` returns the whole widget; tables override it to return an invisible overlay element covering the column (UI5: absolutely positioned inside `.sapUiTableCnt`, clipped to the visible column area; jExcel: inside `.jexcel_content`). A row reference (`widget!column$row`) makes the driver call `buildJsDomElementGetterForCell()` instead, which returns the cell element itself (no overlay needed) and scrolls the row into view if necessary (UI5: `setFirstVisibleRow()` of the virtualized table, jExcel: `scrollIntoView()`). Its default implementation falls back to the column getter. When the tour ends (closed, finished or continued with another tour), the driver removes all overlays (CSS class `exf-tour-column-focus`) and restores container `position` styles, that elements saved in the `data-exf-tour-position` attribute before changing them.
 
 When `focus_css_query` is configured, the tour driver applies `querySelector()` to this DOM target and uses the first match, falling back to the target itself if the query returns no match. Facade DOM getters do not need to implement CSS targeting separately.
 
