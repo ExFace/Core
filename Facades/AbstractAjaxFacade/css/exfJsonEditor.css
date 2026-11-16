@@ -1,0 +1,202 @@
+.jsoneditor-modal .jsoneditor table td {
+    padding: 0;
+    margin-top: 5px !important;
+}
+.jsoneditor .active-button{
+    opacity: 1.0 !important;
+}
+.deactivate-button{
+    opacity: 0.3 !important;
+}
+.jsoneditor-modal.jsoneditor-modal-maximized {
+    width: 100% !important;
+    height: 95%;
+}
+.jsoneditor-modal.jsoneditor-modal-nopadding {
+    padding: 30px 0 0 0 !important;
+}
+.jsoneditor-modal.jsoneditor-modal-nopadding iframe{
+    width: calc(100% - 16px) !important;
+    height: calc(100% - 11px);
+    border: 0;
+    padding: 5px 0 0 15px;
+    text-shadow: 2px;
+    
+}
+
+.jsoneditor-modal
+.pico-modal-contents {height: 100%; width: 100%;}
+
+.jsoneditor-modal .uxoneditor-input,
+.jsoneditor-modal .spinner-wrapper {
+    font-family: "dejavu sans mono", "droid sans mono", consolas,
+    monaco, "lucida console", "courier new", courier, monospace,
+    sans-serif;
+    font-size: 10pt;
+    width: 100%;
+    box-sizing: border-box;
+}
+.jsoneditor-modal .uxoneditor-input,
+.jsoneditor-modal .uxoneditor-btn,
+.jsoneditor-modal .spinner-wrapper {
+    height: 35px;
+    margin-bottom: 4px;
+}
+.jsoneditor-modal /*:not(.jsoneditor-modal button)*/ button.uxoneditor-input {
+    width: initial;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 10pt;
+    box-sizing: border-box;
+    box-shadow: none;
+    border: 1px solid #d3d3d3;
+    color: #4d4d4d;
+    border-radius: 3px;
+    vertical-align: top;
+}
+.jsoneditor-modal div.uxoneditor-input {
+    width: initial;
+    font-size: 10pt;
+    box-sizing: border-box;
+    box-shadow: none;
+    border: 1px solid #d3d3d3;
+    color: #4d4d4d;
+    border-radius: 3px;
+    vertical-align: top;
+    line-height: 27px;
+    font-family: inherit;
+    background-color: #f5f5f5;
+    display: inline-block;
+}
+.jsoneditor-modal .uxoneditor-input:not([type]),
+.jsoneditor-modal input.uxoneditor-input[type=text] {
+    height: 35px !important;
+    border: 1px solid #d3d3d3;
+    color: #4d4d4d;
+    border-radius: 3px;
+    padding: 4px;
+    box-sizing: border-box;
+}
+.jsoneditor-modal .jsoneditor input {
+    padding: inherit;
+}
+.jsoneditor-modal.jsonPathView textarea {
+    width: 300px;
+    height: 100px;
+}
+.jsoneditor-modal input:read-only,
+.jsoneditor-modal textarea:read-only {
+    background-color:  #f5f5f5;
+}
+.jsoneditor-modal input[type="submit"],
+.jsoneditor-modal input[type="button"]
+.jsoneditor-model button {
+    width: auto;
+    font-family: inherit;
+}
+.jsoneditor-modal .action-buttons {
+    float: right;
+}
+
+.uxoneditor-btn-group {display: inline-block; vertical-align: top}
+.uxoneditor-btn-group > input,
+.uxoneditor-btn-group > button,
+.uxoneditor-btn-group > div.uxoneditor-input {
+    border-radius: 0 !important;
+    margin-left: 0;
+    margin-right: 0;
+    width: initial;
+    border-right-width: 0;
+}
+.uxoneditor-btn-group > *:last-child {
+    border-top-right-radius: 3px !important;
+    border-bottom-right-radius: 3px !important;
+    border-right-width: 1px;
+}
+.uxoneditor-btn-group > *:first-child {
+    border-top-left-radius: 3px !important;
+    border-bottom-left-radius: 3px !important;
+}
+
+.jsoneditor-modal table.jsoneditor-values {width: initial;}
+
+.jsoneditor-fa-menuicon .jsoneditor-icon {display: none;}
+.jsoneditor-fa-menuicon .jsoneditor-text {padding-left: 0px !important;}
+.jsoneditor-fa-menuicon:before {
+    float: left;
+    padding: 2px; margin: 4px;
+    background-color: #4C4C4C;
+    color: white;
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.jsoneditor-modal .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 3px solid lightgray;
+    border-radius: 50%;
+    border-top-color: gray;
+    animation: spin 1s ease-in-out infinite;
+    -webkit-animation: spin 1s ease-in-out infinite;
+}
+@keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+}
+@-webkit-keyframes spin {
+    to { -webkit-transform: rotate(360deg); }
+}
+
+.uxoneditor-preset-hint {
+    font-size: initial;
+    padding: 4px;
+    margin: 10px;
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
+.uxoneditor-preset-hint a:hover {color: #1a1a1a;}
+.uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
+.uxoneditor-preset-cards {width: 100%; height: calc(100% - 28px); overflow-y: auto;}
+.uxoneditor-preset-card {width: 221px; height: calc(136px + 7px + 2.3rem); border: 1px dashed gray; margin: 5px 10px 5px 0; padding: 3px; float: left; overflow: hidden; cursor: pointer;}
+.uxoneditor-preset-card:hover, .uxoneditor-preset-card.selected {border-style: solid; border-color: #3883fa; border-width: 4px; padding: 0;}
+.uxoneditor-preset-name {text-align: center; padding: 0 10px 7px 10px; height: 2.3rem}
+.uxoneditor-preset-card.text-only {position: relative;}
+.uxoneditor-preset-card.text-only .uxoneditor-preset-name {padding: 0 10px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 20px);}
+
+.uxoneditor-checkbox {-webkit-appearance: checkbox; -moz-appearance: checkbox;}
+.uxoneditor-table {margin-bottom: 20px}
+.uxoneditor-table-selectable tr:hover {background-color: #3883fa;}
+.uxoneditor-table-selectable tr {cursor: pointer;}
+.uxoneditor-table th {font-weight: bold !important; padding: 3px !important; border-bottom: 1px solid #3883fa}
+.uxoneditor-table td {padding: 3px !important;}
+.uxoneditor-table tr.selected {background-color: #3883fa;}
+.uxoneditor-table tr.selected > td {color: white;}
+.uxoneditor-table tr.row-details > td:first-of-type {border-left: 1px solid #3883fa}
+.uxoneditor-table p {margin: 0.3em 0 0.7em 0;}
+.uxoneditor-object-details-title {margin: 0.3em 0 0.7em 0;}
+.uxoneditor-object-details-description {padding: 0.7em 0 0.7em 0; margin-bottom: 0.7em; border-width: 2px 0 2px 0; border-color: #3883fa; border-style: solid;}
+.jsoneditor-modal .uxoneditor-model-error {
+    color: #a00000;
+    background: #fff0f0;
+    border: 1px solid #a00000;
+    padding: 12px;
+    margin: 8px 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.jsoneditor-modal .uxoneditor-search-info {
+    color: #174b7a;
+    background: #eef6ff;
+    border: 1px solid #8bb8df;
+    padding: 12px;
+    margin: 8px 0;
+}

@@ -41,6 +41,45 @@ adapters in its `AbstractAjaxFacade`.  It includes a collection of
 - JS formatters for out DataType system
 - Reusable PSR-7 middlewares to use in facade APIs.
 
+### Shared JSON and UXON editor
+
+`JsonEditorTrait` configures the facade-independent `exfJsonEditor` adapter.
+The adapter owns JSONEditor, UXON autosuggest, templates, presets, property
+details, the model browser, clipboard tools and validation indicators.
+It evaluates schema, prototype and object getters for each request, so widget
+links remain live. Values are JSON text; empty objects and arrays read as an
+empty widget value. Invalid text remains editable in code mode.
+Model-browser request errors appear inside the search dialog, including server
+messages, hints and log IDs when available. A new search clears the previous
+error and retries the request. HTML error widgets are also passed intact to the
+facade's `onAjaxError` callback for its native error dialog. jEasyUI uses
+`buildJsShowErrorAjax()` and places this dialog above the editor popup; UI5 uses
+its component's error-dialog renderer.
+Object responses without `ATTRIBUTES` are valid empty suggestion lists.
+Model-search and UXON-preset dialogs show an inline information message when
+there are no results, including when the current search filters out all entries.
+
+HTML facades use `buildHtmlJsonEditor()` and `buildJsJsonEditor()`, and merge
+`buildHtmlHeadTagsForJsonEditor()` into their head tags. The adapter is stored on
+the editor host as `exfJsonEditor`, not in generated global variables.
+Call its `destroy()` method before removing or replacing the host; it releases
+editor instances, handlers, timers, requests and popups.
+
+UI5 uses `exface.ui5Custom.JsonEditor` with a native `value` property. Standard
+UI5 binding modes, named models and relative contexts apply. Model changes do
+not fire user change events; edits update the property and fire `change`.
+The control recreates its editor from the current property on rerender and
+destroys it on exit. UXON popups participate in UI5 dialog focus handling.
+
+Browser regressions can be run on a local static server with `vendor/` as its
+document root (do not expose this server publicly):
+
+- Open [the shared editor fixture](../../../../Tests/JavaScript/Fixtures/JsonEditor.html)
+  and run `await (await import('../JsonEditor.mjs')).runJsonEditorRegression()`
+  in the browser console.
+- UI5Facade has a corresponding `Tests/JavaScript/JsonEditor.html` fixture;
+  run `await (await import('./UI5JsonEditor.mjs')).runUI5JsonEditorRegression()`.
+
 ### Common AJAX facade principles
 
 <!-- BEGIN SubPageList:depth=2 -->
