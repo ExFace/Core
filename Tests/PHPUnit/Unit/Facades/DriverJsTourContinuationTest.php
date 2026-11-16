@@ -7,6 +7,8 @@ use exface\Core\CommonLogic\Workbench;
 use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Tours\DriverJsTourDriver;
+use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Widgets\Button;
 use exface\Core\Widgets\Input;
 use exface\Core\Widgets\Parts\Tours\TourWaypointStep;
 use PHPUnit\Framework\TestCase;
@@ -42,20 +44,40 @@ class DriverJsTourContinuationTest extends TestCase
     }
 
     /**
+     * Pressing a button with an action must wait for its success event before moving on.
+     */
+    public function testActionButtonWaitsForActionPerformed() : void
+    {
+        $js = $this->buildHandler(['widget_function' => 'press'], true);
+
+        self::assertStringContainsString('actionperformed.exfTourNextStep', $js);
+        self::assertLessThan(strpos($js, 'openDialog()'), strpos($js, '.on(sEvent'));
+        self::assertGreaterThan(strpos($js, '.on(sEvent'), strrpos($js, 'driver.moveNext()'));
+    }
+
+    /**
      * Builds the real handler while substituting only the widget rendering boundary.
      *
      * @param array $configuration
+     * @param bool $actionButton
      * @return string
      */
-    private function buildHandler(array $configuration) : string
+    private function buildHandler(array $configuration, bool $actionButton = false) : string
     {
         $workbench = new Workbench([
             'SERVER.INSTALLATION_NAME' => 'TourContinuationTest',
             'DEBUG.LIVE_CLASS_AUTOLOADER' => false
         ]);
-        $widget = $this->getMockBuilder(Input::class)->disableOriginalConstructor()
-            ->onlyMethods(['getWorkbench'])->getMock();
+        $widget = $this->getMockBuilder($actionButton ? Button::class : Input::class)->disableOriginalConstructor()
+            ->onlyMethods($actionButton ? ['getWorkbench', 'hasAction', 'getPage', 'getId'] : ['getWorkbench'])->getMock();
         $widget->method('getWorkbench')->willReturn($workbench);
+        if ($actionButton) {
+            $page = $this->createMock(UiPageInterface::class);
+            $page->method('getAliasWithNamespace')->willReturn('test.Page');
+            $widget->method('hasAction')->willReturn(true);
+            $widget->method('getPage')->willReturn($page);
+            $widget->method('getId')->willReturn('TestButton');
+        }
         $step = new TourWaypointStep($widget, new UxonObject(['on_next_step' => $configuration]));
         $element = $this->createMock(AjaxFacadeElementInterface::class);
         $element->method('buildJsCallFunction')->with('press')->willReturn('openDialog();');

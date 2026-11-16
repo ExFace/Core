@@ -1,7 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Tours;
 
+use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementTourSubrouteInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
@@ -213,6 +216,8 @@ JS;
                 $aStepsJs .= <<<JS
                 {
                     element: () => {$this->buildJsStepElementGetter($step)},
+                    // Custom flag (ignored by driver.js): only steps with a widget have an element to wait for
+                    exfExpectsElement: {$this->escapeBool($this->getFocusedWidget($step) !== null)},
                     popover: {
                       title: {$this->escapeString($step->getTitle())},
                       description: {$this->escapeString($step->getBody())},
@@ -307,6 +312,12 @@ JS;
         // If another tour is started, end this one instead of moving on in the background.
         $moveJs = $endsTour ? 'if (element) { driver.destroy(); } else { driver.moveNext(); }' : 'driver.moveNext();';
         
+        // Pressing a button with an action may navigate asynchronously (e.g. a wizard step).
+        // In this case the tour must not move on right away.
+        if ($browserClick === null && ! $endsTour && $this->isPressOfActionButton($step, $functionName)) {
+            return $this->buildJsOnNextClickAfterAction($step, $callFunctionJs, $returnPointJs, $pendingDialogTourJs);
+        }
+        
         return <<<JS
 
           onNextClick: (element, step, { driver }) => {
@@ -319,6 +330,114 @@ JS;
               {$moveJs}
           }
 JS;
+    }
+
+    /**
+     * Builds the onNextClick handler for steps, that press a button with an action.
+     *
+     * Problem: a button like "Next" in a wizard validates its step, performs its action and only then
+     * switches to the next wizard step. The tour must not move to the next popover before that happened:
+     * the element of the next tour step would still be hidden and driver.js would show the popover
+     * in the top left corner of the screen.
+     *
+     * Solution: the handler works in three phases:
+     *
+     * 1. Listen for the `actionperformed` event of the pressed button. It is fired only if the action
+     * succeeded. If the validation or the action fails, no event comes and the tour stays on this step.
+     * 2. Once the event arrives, wait until the element of the next step is visible (the wizard
+     * needs a moment to show its next step).
+     * 3. Move to the next step. If the element does not show up within 3 seconds, move on anyway.
+     *
+     * @param TourStepInterface $step
+     * @param string $callFunctionJs JS that presses the button
+     * @param string $returnPointJs JS to remember or resume the return point of subroute steps
+     * @param string $pendingDialogTourJs JS to register a tour to be started in the next dialog
+     * @return string
+     */
+    protected function buildJsOnNextClickAfterAction(
+        TourStepInterface $step,
+        string $callFunctionJs,
+        string $returnPointJs,
+        string $pendingDialogTourJs
+    ) : string {
+        $triggerWidget = $this->getFocusedWidget($step);
+        $pageAliasJs = $this->escapeString($triggerWidget->getPage()->getAliasWithNamespace());
+        $widgetIdJs = $this->escapeString($triggerWidget->getId());
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              // Nothing to press if the step has no element - just continue
+              if (! element) {
+                  driver.moveNext();
+                  return;
+              }
+              {$returnPointJs}
+              {$pendingDialogTourJs}
+
+              var iStepIdx = driver.getActiveIndex();
+              // Fixed event namespace: a listener left from a previous click is replaced, not duplicated
+              var sEvent = "{$actionperformed}.exfTourNextStep";
+              
+              // Phase 1: wait for the action of the button to succeed
+              $(document).off(sEvent).on(sEvent, function(oEvent, oParams) {
+                  // Ignore actions of other buttons
+                  if (! oParams || oParams.page_alias !== {$pageAliasJs} || oParams.trigger_widget_id !== {$widgetIdJs}) {
+                      return;
+                  }
+                  $(document).off(sEvent);
+                  
+                  // Move on only if the user did not close or change the tour in the meantime
+                  var fnMove = function() {
+                      if (driver.isActive() && driver.getActiveIndex() === iStepIdx) {
+                          driver.moveNext();
+                      }
+                  };
+                  
+                  // Next step without a widget to focus: there is no element to wait for
+                  var oNextStep = driver.getConfig().steps[iStepIdx + 1];
+                  if (! oNextStep || ! oNextStep.exfExpectsElement || typeof oNextStep.element !== 'function') {
+                      fnMove();
+                      return;
+                  }
+                  
+                  // Phase 2: poll every 100 ms until the next element is rendered and visible
+                  var iWaited = 0;
+                  var iTimer = setInterval(function() {
+                      var oNextEl = null;
+                      try {
+                          oNextEl = oNextStep.element();
+                      } catch (e) {
+                          // Element is not rendered yet - try again on the next tick
+                      }
+                      iWaited += 100;
+                      // Phase 3: continue once visible or after 3 seconds at the latest
+                      if ((oNextEl && oNextEl.getClientRects().length > 0) || iWaited >= 3000) {
+                          clearInterval(iTimer);
+                          fnMove();
+                      }
+                  }, 100);
+              });
+
+              {$callFunctionJs}
+          }
+JS;
+    }
+
+    /**
+     * Returns TRUE if the step presses a button, that performs an action and thus fires the action-performed event
+     *
+     * @param TourStepInterface $step
+     * @param string $functionName
+     * @return bool
+     */
+    protected function isPressOfActionButton(TourStepInterface $step, string $functionName) : bool
+    {
+        $widget = $this->getFocusedWidget($step);
+        return $functionName === Button::FUNCTION_PRESS
+            && $widget instanceof iTriggerAction
+            && $widget->hasAction();
     }
 
     /**
@@ -384,6 +503,15 @@ JS;
     protected function escapeString($value) : string
     {
         return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * @param bool $value
+     * @return string
+     */
+    protected function escapeBool(bool $value) : string
+    {
+        return $value ? 'true' : 'false';
     }
 
     /**
