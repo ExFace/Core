@@ -143,29 +143,16 @@ entry it lazily builds a Monolog 3 stack. If building the stack fails, it logs t
    `CsvHandler` is used directly. It handles one record at a time, also inside a flushed batch:
    1. `DebugMessageMonologHandler` renders the details with `DebugWidgetRenderer` and writes
       `logs/details/<date>/<log-id>.json`. If that file already exists, nothing is rendered or written.
-      Otherwise the file is published in three steps:
-      1. The JSON is written to a temp file (`tmp*.tmp`) in the **same** details folder.
-      2. The JSON is validated.
-      3. `link()` creates a hard link: the final name `<log-id>.json` now points to the same data on disk as
-         the temp file. The temp file name is then deleted, so only `<log-id>.json` remains.
-
-      Why this matters:
-      - **No half-written files.** The final name only appears once the content is complete. If PHP is killed
-        mid-write, at most a `tmp*.tmp` file is left behind (removed by retention), never a broken
-        `<log-id>.json`.
-      - **No overwriting.** `link()` fails if `<log-id>.json` already exists, e.g. because another process
-        wrote the same entry a moment earlier. That file is then kept as is, since it describes the same entry.
-      - The temp file must be in the same folder, because hard links only work within one file system.
-        The handler checks this and fails if the temp file ended up elsewhere.
-      - Exception: on file systems without hard links (e.g. FAT or some network shares), `rename()` is used
-        instead. It also never shows a half-written file, but it replaces an existing target. So two processes
-        writing the same ID at the same moment could replace each other's file. Both files describe the same
-        entry, so nothing is lost.
-      - Log IDs that are not plain tokens are rejected, to prevent path traversal.
-   2. **Only if step 1 succeeded**, `CsvHandler` appends the CSV row. If the detail file fails, only that row
-      is skipped and the failure is reported via `error_log()`.
-   - Result: no CSV row ever points to a missing detail file. A detail file without a row is acceptable and
-     is removed by retention.
+      Otherwise the JSON is validated and written using `$workbench->filemanager()->dumpFile()`.
+      This standard helper handles directory creation, atomic replacement and temporary-file cleanup.
+      Concurrent writers for the same ID may replace the file with equivalent details.
+      Log IDs that are not plain tokens are rejected, to prevent path traversal.
+   2. `CsvHandler` appends the CSV row even if the detail file fails. In that case the original message
+      gets a short failure note. A separate CSV error entry contains the original log ID, failure reason,
+      OS username (also in the username column) and PHP SAPI. It bypasses details to avoid recursion.
+      The failure is also reported via `error_log()`.
+   - Result: failed details do not hide the original log entry. Such rows and the diagnostic entries
+     intentionally have no detail file. A detail file without a row is removed by retention.
    - Both inner handlers must use the same level. Otherwise the constructor throws.
 3. **`CsvHandler` + `CsvFormatter`** (new, replace `femtopixel/monolog-csvhandler`):
    - The formatter writes the columns explicitly, as defined in `CsvLogConfig`.

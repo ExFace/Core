@@ -2,20 +2,23 @@
 namespace exface\Core\CommonLogic\Log\Handlers;
 
 use exface\Core\CommonLogic\Log\CsvLogConfig;
+use exface\Core\CommonLogic\Log\Logger;
+use exface\Core\DataTypes\ServerSoftwareDataType;
 use Monolog\Handler\AbstractHandler;
 use Monolog\Handler\Handler;
 use Monolog\Handler\HandlerInterface;
 use Monolog\Handler\ProcessableHandlerInterface;
 use Monolog\Handler\ProcessableHandlerTrait;
 use Monolog\LogRecord;
+use Monolog\Level;
 use Monolog\ResettableInterface;
 
 /**
- * Writes the detail file of a record first and appends its CSV row only after the detail file was published.
+ * Writes the detail file of a record first, then its CSV row, preserving the row if details fail.
  * 
  * Used instead of a Monolog `GroupHandler`, where both handlers are run independently. Unlike the `GroupHandler`, this handler guarantees that:
- * - The detail file is published before the CSV row is written.
- * - A CSV row without its detail file is never written. (A detail file without a CSV row is acceptable: retention cleans it up)
+ * - Detail publication is attempted before the CSV row is written.
+ * - Failed details are noted on the original CSV row and reported in a separate CSV error entry.
  * 
  * ### Batches
  * 
@@ -29,8 +32,9 @@ use Monolog\ResettableInterface;
  * 
  * ### Failures
  * 
- * - Detail file fails: only this record is affected. Its CSV row is skipped and the record is reported via
- *   `error_log()`. The remaining records (e.g. of a `FingersCrossedHandler` flush) are still written.
+ * - Detail file fails: the original CSV row is kept with a short note. A separate CSV error entry includes
+ *   the original log ID, the failure reason and the operating system user. It bypasses detail generation
+ *   to avoid recursion. The failure is also reported via `error_log()`.
  * - CSV row fails: the exception propagates as before, because a broken CSV file affects all records. The
  *   already published detail file stays as an orphan.
  * 
@@ -75,8 +79,7 @@ class CsvWithDetailsHandler extends Handler implements ProcessableHandlerInterfa
     }
 
     /**
-     * Records are only handled if both handlers accept them: a CSV row must never be written without its
-     * detail file, and a detail file without a row would be an orphan.
+     * Records are only handled if both handlers accept their level.
      * 
      * {@inheritDoc}
      * @see HandlerInterface::isHandling()
@@ -101,35 +104,49 @@ class CsvWithDetailsHandler extends Handler implements ProcessableHandlerInterfa
             $record = $this->processRecord($record);
         }
         
+        $detailsError = null;
         try {
             $this->detailHandler->handle(clone $record);
         } catch (\Throwable $e) {
-            $this->reportSkippedRow($record, $e);
-            return false === $this->bubble;
+            $detailsError = $e;
+            $record = $record->with(message: $record->message . ' [Writing log details failed.]');
         }
         
         $this->csvHandler->handle(clone $record);
+        if ($detailsError !== null) {
+            $this->reportDetailsFailure($record, $detailsError);
+        }
         
         return false === $this->bubble;
     }
     
     /**
-     * Reports a record, whose CSV row was skipped, to the PHP error log, so the entry is not lost entirely.
+     * Reports failed details directly to CSV and the PHP error log without attempting more details.
      * 
-     * Uses `error_log()` directly instead of the workbench logger: logging from within a log handler could
-     * recurse into this handler. The message is included because it is not persisted anywhere else.
+     * The diagnostic has its own ID and shows the OS account rather than the application user.
+     * Request and action identifiers are retained to link it to the original operation.
      * 
      * @param LogRecord $record
      * @param \Throwable $e
      * @return void
      */
-    private function reportSkippedRow(LogRecord $record, \Throwable $e): void
+    private function reportDetailsFailure(LogRecord $record, \Throwable $e): void
     {
-        error_log(
-            'CsvWithDetailsHandler: skipped CSV row of log entry ' . ($record->extra[CsvLogConfig::KEY_ID] ?? '(no id)')
-            . ', because its detail file could not be written: ' . $e->getMessage()
-            . ' Original entry: ' . $record->level->getName() . ' "' . $record->message . '"'
-        );
+        $originalId = $record->extra[CsvLogConfig::KEY_ID] ?? '(no id)';
+        $osUser = ServerSoftwareDataType::getOsUser() ?? '(unknown OS user)';
+        $message = 'Cannot write details for log entry ' . $originalId
+            . ' as OS user "' . $osUser . '" (PHP SAPI: ' . PHP_SAPI . '): ' . $e->getMessage();
+        $extra = $record->extra;
+        $extra[CsvLogConfig::KEY_ID] = Logger::generateLogId();
+        $extra[CsvLogConfig::KEY_USER_NAME] = $osUser;
+        error_log('CsvWithDetailsHandler: ' . $message . ' Original entry: '
+            . $record->level->getName() . ' "' . $record->message . '"');
+        $this->csvHandler->handle($record->with(
+            level: Level::Error,
+            message: $message,
+            context: [],
+            extra: $extra
+        ));
     }
     
     /**

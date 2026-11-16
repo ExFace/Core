@@ -2,6 +2,7 @@
 namespace exface\Core\CommonLogic\Log\Monolog;
 
 use exface\Core\CommonLogic\Debugger\DebugWidgetRenderer;
+use exface\Core\CommonLogic\Filemanager;
 use exface\Core\CommonLogic\Log\CsvLogConfig;
 use exface\Core\Interfaces\Log\LogEntryInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -12,9 +13,8 @@ use Monolog\LogRecord;
 /**
  * Monolog handler to save debug widgets as JSON files: one file per log entry, named after its log ID.
  * 
- * Each file is published atomically: the JSON is written to a temp file in the target folder first and
- * then linked to its final name. Readers never see a partial file, and an existing file is never
- * overwritten or appended to.
+ * Files are written atomically using the workbench file manager. Existing files are skipped before
+ * rendering; concurrent writers for the same log ID may replace the file with equivalent details.
  * 
  * Failures throw a plain `\RuntimeException` - not an exface exception, because those generate log
  * entries and debug widgets themselves and could recurse into this handler.
@@ -27,8 +27,6 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
     // Log IDs end up in a file path - only allow characters that cannot traverse folders.
     private const LOG_ID_PATTERN = '/^[A-Za-z0-9_-]+$/';
     
-    private const TEMP_FILE_PREFIX = 'tmp';
-    
     private string $dir;
 
     private string $fileSuffix;
@@ -36,6 +34,8 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
     private string $logEntryContextKey;
     
     private DebugWidgetRenderer $renderer;
+
+    private Filemanager $filemanager;
 
     /**
      * 
@@ -58,6 +58,7 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
         $this->fileSuffix = $fileSuffix;
         $this->logEntryContextKey = $logEntryContextKey;
         $this->renderer = new DebugWidgetRenderer($workbench);
+        $this->filemanager = $workbench->filemanager();
     }
     
     /**
@@ -139,15 +140,7 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
     }
     
     /**
-     * Validates the JSON and publishes it atomically under `$filePath`.
-     * 
-     * Atomicity: the file is either complete or absent, even if the PHP process crashes mid-write. The content
-     * only appears under its final name after it was fully written to the temp file.
-     * 
-     * Durability (not guaranteed): after a power loss or OS crash, the published file may be empty or
-     * truncated, because the OS may not have flushed its write cache to disk yet. Only `fsync()` before
-     * publishing would prevent this. It is skipped on purpose: `fsync()` blocks until the disk confirms the
-     * write, and flushing one log buffer can publish hundreds of detail files.
+     * Validates the JSON and writes it atomically using the standard file manager.
      * 
      * @param string $filePath
      * @param string $json
@@ -160,92 +153,7 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
             throw new \RuntimeException('Cannot save debug widget "' . $filePath . '": rendered content is not valid JSON.');
         }
         
-        $this->ensureDirectoryExists();
-        $tempPath = $this->createTempFile();
-        try {
-            if (@file_put_contents($tempPath, $json) !== strlen($json)) {
-                throw new \RuntimeException('Cannot write temp file "' . $tempPath . '"' . $this->getLastErrorSuffix());
-            }
-            $this->moveIntoPlace($tempPath, $filePath);
-        } finally {
-            // After link() the temp file is just a second name for the published file, so removing it is safe.
-            if (is_file($tempPath)) {
-                @unlink($tempPath);
-            }
-        }
-    }
-    
-    /**
-     * Moves the temp file to its final name without ever replacing an existing file.
-     * 
-     * `link()` is atomic and fails if the target exists. `rename()` is only a fallback for filesystems
-     * without hard links (e.g. FAT or some network shares), because it replaces an existing target.
-     * 
-     * @param string $tempPath
-     * @param string $filePath
-     * @return void
-     * @throws \RuntimeException
-     */
-    private function moveIntoPlace(string $tempPath, string $filePath): void
-    {
-        if (@link($tempPath, $filePath)) {
-            return;
-        }
-        
-        // Another process published the same log ID first - its content describes the same entry.
-        if (is_file($filePath)) {
-            return;
-        }
-        
-        if (@rename($tempPath, $filePath)) {
-            return;
-        }
-        
-        throw new \RuntimeException('Cannot publish debug widget "' . $filePath . '"' . $this->getLastErrorSuffix());
-    }
-    
-    /**
-     * Creates an empty temp file inside the target folder.
-     * 
-     * The temp file must be on the same filesystem as the target: otherwise `link()` fails and `rename()`
-     * is no longer atomic. `tempnam()` silently falls back to the system temp folder, hence the check.
-     * 
-     * @return string
-     * @throws \RuntimeException
-     */
-    private function createTempFile(): string
-    {
-        $tempPath = @tempnam($this->dir, self::TEMP_FILE_PREFIX);
-        if ($tempPath === false) {
-            throw new \RuntimeException('Cannot create temp file in "' . $this->dir . '"' . $this->getLastErrorSuffix());
-        }
-        
-        if (realpath(dirname($tempPath)) !== realpath($this->dir)) {
-            @unlink($tempPath);
-            throw new \RuntimeException('Cannot create temp file in "' . $this->dir . '": folder not writable.');
-        }
-        
-        return $tempPath;
-    }
-    
-    /**
-     * Creates the target folder if needed.
-     * 
-     * Concurrent requests may create the same folder, so a failed `mkdir()` is only an error if the folder
-     * still does not exist afterward. Permissions match the former Monolog `StreamHandler` (0777 minus umask).
-     * 
-     * @return void
-     * @throws \RuntimeException
-     */
-    private function ensureDirectoryExists(): void
-    {
-        if (is_dir($this->dir)) {
-            return;
-        }
-        
-        if (! @mkdir($this->dir, 0777, true) && ! is_dir($this->dir)) {
-            throw new \RuntimeException('Cannot create folder "' . $this->dir . '"' . $this->getLastErrorSuffix());
-        }
+        $this->filemanager->dumpFile($filePath, $json);
     }
     
     /**
@@ -267,16 +175,5 @@ class DebugMessageMonologHandler extends AbstractProcessingHandler
         } catch (\JsonException) {
             return false;
         }
-    }
-    
-    /**
-     * Returns the last suppressed PHP warning as message suffix to explain filesystem failures.
-     * 
-     * @return string
-     */
-    private function getLastErrorSuffix(): string
-    {
-        $error = error_get_last();
-        return $error === null ? '.' : ': ' . $error['message'];
     }
 }
