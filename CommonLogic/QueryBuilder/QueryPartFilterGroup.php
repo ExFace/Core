@@ -207,7 +207,10 @@ class QueryPartFilterGroup extends QueryPart implements iCanBeCopied
         foreach ($group->getConditions() as $c) {
             $conditionObj = $c->getExpression()->getMetaObject();
             // If the objects do not match, see if we can make them match by rebasing
-            if ($conditionObj !== null && $conditionObj !== $targetObj) {
+            // IMPORTANT: matching is done on model level. We cannot rely on equal object instances! For example, when 
+            // multiple apps are installed using separate workbenches per app, the object instances will differ. This 
+            // has lead to unexpected app deletes in the dataReplaceByFilters()
+            if ($conditionObj !== null && ! $conditionObj->isExactly($targetObj)) {
                 switch (true) {
                     // E.g. a query based on my.App.ConstructionReport is filtered via my.App.Report and ConstructionReport
                     // extends from Report. In this case we can use the condition from Report on ConstructionReport
