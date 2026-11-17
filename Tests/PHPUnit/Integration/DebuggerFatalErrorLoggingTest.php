@@ -64,9 +64,9 @@ $secondLogger->appendHandler(new class implements \exface\Core\Interfaces\Log\Lo
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
      */
-    public function handle($level, $message, array $context = [], \exface\Core\Interfaces\iCanGenerateDebugWidgets $sender = null): void
+    public function handle(\exface\Core\Interfaces\Log\LogEntryInterface $entry): void
     {
-        echo 'SECOND_LOG:' . $message . PHP_EOL;
+        echo 'SECOND_LOG:' . $entry->getMessage() . PHP_EOL;
     }
 });
 PHP;
@@ -181,12 +181,13 @@ $logger->appendHandler(new class implements \exface\Core\Interfaces\Log\LogHandl
      * {@inheritDoc}
      * @see \exface\Core\Interfaces\Log\LogHandlerInterface::handle()
      */
-    public function handle($level, $message, array $context = [], \exface\Core\Interfaces\iCanGenerateDebugWidgets $sender = null): void
+    public function handle(\exface\Core\Interfaces\Log\LogEntryInterface $entry): void
     {
-        $exception = $context['exception'] ?? null;
+        $context = $entry->getContext();
+        $exception = $entry->getException();
         echo 'CORE_LOG:' . json_encode([
-            'level' => $level,
-            'message' => $message,
+            'level' => $entry->getLevel(),
+            'message' => $entry->getMessage(),
             'code' => $context['code'] ?? ($exception instanceof \Symfony\Component\ErrorHandler\Error\FatalError ? $exception->getError()['type'] : null),
             'file' => $context['file'] ?? ($exception !== null ? $exception->getFile() : null),
             'line' => $context['line'] ?? ($exception !== null ? $exception->getLine() : null)

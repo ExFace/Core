@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\CommonLogic\DataTypes\EnumStaticDataTypeTrait;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use Monolog\Level;
 use Monolog\Logger;
 
 /**
@@ -79,7 +80,7 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
     */
     public static function compareLogLevels(string $level1, string $level2) : int
     {
-        return Logger::toMonologLevel($level1) - Logger::toMonologLevel($level2);
+        return Logger::toMonologLevel($level1)->value - Logger::toMonologLevel($level2)->value;
     }
     
     /**
@@ -89,7 +90,7 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function convertToMonologLevel(string $psrLevel) : int
     {
-        return Logger::toMonologLevel($psrLevel);
+        return Logger::toMonologLevel($psrLevel)->value;
     }
     
     /**
@@ -99,7 +100,7 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function convertToPsrLevel(int $monologLevel) : string
     {
-        return strtolower(Logger::getLevelName($monologLevel));
+        return Logger::toMonologLevel($monologLevel)->toPsrLogLevel();
     }
     
     /**
@@ -108,7 +109,11 @@ class LogLevelDataType extends StringDataType implements EnumDataTypeInterface
      */
     public static function getValuesOfMonologLevels() : array
     {
-        return array_flip(logger::getLevels());
+        $values = [];
+        foreach (Level::cases() as $level) {
+            $values[$level->value] = $level->getName();
+        }
+        return $values;
     }
     
     public function setUseNumericLevels(bool $trueOrFalse) : LogLevelDataType

@@ -45,6 +45,41 @@ trait CsvBuilderTrait
     abstract protected function getHeaderRowsNumber(MetaObjectInterface $object) : int;
     
     /**
+     * Returns the escape character for the reader or NULL to keep the default of the PHP League CSV reader (`\`).
+     * 
+     * @param MetaObjectInterface $object
+     * @return string|NULL
+     */
+    protected function getEscape(MetaObjectInterface $object) : ?string
+    {
+        return null;
+    }
+    
+    /**
+     * Returns the column names to key the records by, or an empty array to key them by column index.
+     * 
+     * If not empty, data addresses, filters and sorters refer to these names instead of column indexes. Names
+     * beyond the number of columns in the file are filled with NULL.
+     * 
+     * @return string[]
+     */
+    protected function getCsvHeader() : array
+    {
+        return [];
+    }
+    
+    /**
+     * Returns TRUE if the data address refers to a column of the CSV records (by default: a column index).
+     * 
+     * @param string $dataAddress
+     * @return bool
+     */
+    protected function isCsvColumnAddress(string $dataAddress) : bool
+    {
+        return is_numeric($dataAddress);
+    }
+    
+    /**
      * 
      * @param DataQueryInterface $query
      * @param array $static_values
@@ -96,14 +131,14 @@ trait CsvBuilderTrait
         
         $result_rows = [];
         $hasMoreRows = false;
-        $records = $statement->process($csvReader);
+        $records = $statement->process($csvReader, $this->getCsvHeader());
         $maxRow = $this->getLimit() > 0 ? $this->getLimit() + $this->getOffset() + $headerRows : null;
         try {
             foreach ($this->getAttributes() as $qpart) {
                 $colKey = $qpart->getColumnKey();
                 $dataAddr = $qpart->getDataAddress();
                 $isRowNo = trim($dataAddr) === '~row_number'; 
-                if (! $isRowNo && is_numeric($dataAddr) === false) {
+                if (! $isRowNo && $this->isCsvColumnAddress($dataAddr) === false) {
                     continue;
                 }
                 $rowNr = 0;
@@ -183,6 +218,9 @@ trait CsvBuilderTrait
         }
         $csvReader->setDelimiter($this->getDelimiter($this->getMainObject()));
         $csvReader->setEnclosure($this->getEnclosure($this->getMainObject()));
+        if (null !== $escape = $this->getEscape($this->getMainObject())) {
+            $csvReader->setEscape($escape);
+        }
         
         return $csvReader;
     }
@@ -219,7 +257,7 @@ trait CsvBuilderTrait
             ));
         });
         
-        $records = $statement->process($csvReader);
+        $records = $statement->process($csvReader, $this->getCsvHeader());
         return count($records);
     }
 }

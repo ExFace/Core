@@ -26,6 +26,7 @@ use exface\Core\Interfaces\DataSheets\DataColumnInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Exceptions\DataSheets\DataSheetReadError;
+use exface\Core\Interfaces\DataSources\FileDownloadConnectionInterface;
 
 /**
  * Allows to work with files stored in data sources if the meta object has the `FileBehavior`.
@@ -284,13 +285,35 @@ class DataSourceFileInfo implements FileInfoInterface, FileStreamInterface
     }
     
     /**
-     * 
+     * Loads file contents on demand, downloading URL-backed contents or decoding stored binary data.
+     *
      * @return mixed|NULL
      */
     public function getContent()
     {
-        if (null !== $attr = $this->getFileBehavior()->getContentsAttribute()) {
+        $behavior = $this->getFileBehavior();
+        if (null !== $attr = $behavior->getContentsAttribute()) {
             $val = $this->getFileDataColumn($attr)->getValue(0);
+
+            // if we have a URL-backed file, download its contents instead of using the stored value
+            if ($behavior instanceof FileBehavior && $behavior->getContentsAreUrls()) {
+                // The stored value is a download URL, not the file payload.
+                if (! is_string($val) || trim($val) === '') {
+                    throw new FileNotReadableError('URL-backed file contents require a nonempty download URL.');
+                }
+                $connection = $this->getMetaObject()->getDataConnection();
+                if (! $connection instanceof FileDownloadConnectionInterface) {
+                    throw new FileNotReadableError('URL-backed file contents require a data connection that supports file downloads.');
+                }
+                $mimeType = $this->getMimetype();
+                if ($mimeType === null || $mimeType === '') {
+                    throw new FileNotReadableError('URL-backed file contents require a MIME type.');
+                }
+                $maxBytes = (int) floor(($behavior->getMaxFileSizeInMb() ?? 5) * 1024 * 1024);
+                return $connection->downloadFile($val, $this->getFilename(), $mimeType, $maxBytes)->read();
+            }
+            
+            // Return raw bytes rather than the attribute's base64 or hexadecimal storage representation.
             $dataType = $attr->getDataType();
             switch (true) {
                 case ($dataType instanceof BinaryDataType) && $dataType->getEncoding() === BinaryDataType::ENCODING_BASE64:

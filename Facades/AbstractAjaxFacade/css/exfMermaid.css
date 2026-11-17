@@ -1,0 +1,34 @@
+/* Core-owned copy of the Markian/Codiware diagram palette. No editor dependency. */
+.exf-diagram {
+    --pele-bg: #fff;
+    --pele-fg: #262c2b;
+    --pele-muted: #59645f;
+    --pele-line: #262c2b;
+    --pele-surface: #f1f3f4;
+    --pele-surface-alt: #dce3df;
+    --pele-border: #59645f;
+    --pele-accent: #227761;
+    --exf-diagram-note: #fff4cc;
+    --exf-diagram-note-fold: #e6cf7a;
+    display: block;
+    background: var(--pele-bg);
+    white-space: normal;
+}
+[data-theme='dark'] .exf-diagram {
+    --pele-bg: #202524;
+    --pele-fg: #e5ece8;
+    --pele-muted: #a7b5ae;
+    --pele-line: #e5ece8;
+    --pele-surface: #2b3330;
+    --pele-surface-alt: #414c46;
+    --pele-border: #a7b5ae;
+    --pele-accent: #8bd7b7;
+    --exf-diagram-note: #494123;
+    --exf-diagram-note-fold: #736333;
+}
+.exf-diagram > svg { max-width: 100%; height: auto; }
+.exf-diagram .pele-notes { fill: var(--exf-diagram-note); }
+.exf-diagram .pele-shape-note { --_s: var(--exf-diagram-note); }
+.exf-diagram .pele-note > path[fill='var(--_bg)'] { fill: var(--exf-diagram-note); }
+.exf-diagram .pele-note > path[fill='none'] { fill: var(--exf-diagram-note-fold); }
+.exf-diagram-error { display: block; padding: 8px; border: 1px solid #a82736; color: #a82736; white-space: pre-wrap; }

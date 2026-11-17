@@ -12,6 +12,12 @@ files in the `Model` folder of every app. When an app is exported, the
 repaired, its model in the database is completely replaced by the data in
 the exported JSON files.
 
+Page exports keep the existing JSON file unchanged when only creation or
+modification timestamps or users differ. Page templates are local to the
+installation and are not exported. Real page changes write the full current
+page definition, including its audit metadata; deleted or renamed pages have
+their obsolete export files removed.
+
 Users should only edit the model via GUI in `Administration > Metamodel` and
 other administration pages. When a feature or a similar work item is
 completed, the models of the respective apps should be exported in

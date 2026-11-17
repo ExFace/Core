@@ -6,15 +6,24 @@ The component registry in `<installation_root>/config/ComponentRegistry.config.j
 
 Each top-level key is a component type. Common properties include:
 
-| Property                 | Purpose                                                                      |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| `name` and `description` | Human-readable component metadata.                                           |
-| `uxon_properties`        | UXON properties that reference this component type.                          |
-| `selector`               | Selector class and factory used to instantiate components.                   |
-| `documentation`          | Component documentation configuration.                                       |
-| `search_selector_data`   | One DataSheet or a list of DataSheets for finding saved component instances. |
-| `search_prototype_data`  | DataSheet used to find PHP-backed component prototypes.                      |
-| `save_component_data`    | Optional allowlisted DataSheet template for creating component model data.   |
+| Property | Purpose | Example |
+| -------- | ------- | ------- |
+| `name` | Human-readable component name. | `Action` |
+| `description` | Description of the component type and its responsibilities. | `Objects in the metamodel` |
+| `uxon_properties` | List of UXON property names that reference this component type. | `[action_alias]` |
+| `selector` | Selector class and factory used to instantiate components. | |
+| &nbsp;&nbsp;&nbsp;&nbsp;`class` | Fully qualified selector class name. | `\exface\Core\CommonLogic\Selectors\ActionSelector` |
+| &nbsp;&nbsp;&nbsp;&nbsp;`factory` | Factory method to construct the component from the selector only - in `\namespace\Class::method` notation. | `\exface\Core\Factories\ActionFactory::create` |
+| `prototypes` | Configuration of PHP-backed component prototypes. | |
+| &nbsp;&nbsp;&nbsp;&nbsp;`app_subfolder` | App subfolder containing prototype classes, for example `Actions`. | `Actions` |
+| &nbsp;&nbsp;&nbsp;&nbsp;`class_suffix` | Suffix for prototype class names, for example `Action`. | `Action` |
+| `documentation` | Component documentation configuration. | |
+| &nbsp;&nbsp;&nbsp;&nbsp;`app_docs` | App documentation reference; currently `null` in Core's registry. | `null` |
+| &nbsp;&nbsp;&nbsp;&nbsp;`ai_instructions` | AI instruction reference; currently `null` in Core's registry. | `null` |
+| &nbsp;&nbsp;&nbsp;&nbsp;`markdown_printer_class` | Fully qualified class name of a specialized Markdown printer to be used to print markdown docs for instance of the component. The class must implement the `MarkdownInstancePrinterInterface`. | `\exface\...\ActionMarkdownPrinter` |
+| `search_selector_data` | [DataSheet](../UXON/UXON_prototypes.md?selector=%5Cexface%5CCore%5CCommonLogic%5CDataSheets%5CDataSheet) or list of DataSheets for finding saved component instances. | See template examples below |
+| `search_prototype_data` | [DataSheet](../UXON/UXON_prototypes.md?selector=%5Cexface%5CCore%5CCommonLogic%5CDataSheets%5CDataSheet) for finding PHP-backed component prototypes . | See template examples below |
+| `save_component_data` | [DataSheet](../UXON/UXON_prototypes.md?selector=%5Cexface%5CCore%5CCommonLogic%5CDataSheets%5CDataSheet) template for saving component model data. | See the [save template example](#component-save-data-templates) below. |
 
 ## Data templates
 
@@ -61,6 +70,26 @@ Use the DataColumn property `nested_data` for child DataSheets. `nested_data_tem
 Include the UID column when a consumer supports editing existing components. `DataSheet::dataSave()` creates rows when no UID column is present and updates rows when a UID is supplied. The UID must remain nullable so the same template can support creation without allowing arbitrary filters as update selectors. Technical optimistic-lock values do not belong in the template; consumers should enrich them from the current data before saving rows with a UID.
 
 Core supplies defaults, fixed values, relation keys for nested children, context values, behaviors, authorization checks, and required-value validation during DataSheet writes. Schema consumers may expose configured attributes with defaults or fixed values as nullable so Core can supply their values. Core does not invent missing business values. Every required writable attribute without a Core-provided value must therefore be included in the template.
+
+## How to add a new component type
+
+Each component must have a system-wide unique key. Use something specific to your app to avoid conflicts: e.g. all data flow related components in the `axenox.GenAI` app start with `dataflow_`. 
+
+The top-level properties `name` and `description` help other people understand the purpose of the component. Give your
+component a precise description explaining its responsibilities.
+
+### Components with selectors
+
+Components, that need to be referenced (typically in UXON) must have [selectors](Using_metamodel_components_in_the_code_via_selectors.md): aliases, UIDs, etc. If your component needs an alias, create selector classes and write a factory method to instantiate the component from the selector only. If the component does not need a selector, omit the `selector` property. 
+
+```json
+{
+  "selector": {
+    "class": "my.App\\Common\\Selectors\\MyComponentSelector",
+    "factory": "myApp\\Factories\\MyComponentSelectorFactory::createFromSelector"
+  }
+}
+```
 
 ## App fragments and the registry installer
 

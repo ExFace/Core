@@ -213,9 +213,9 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
      */
     public function getSelectableOptions() : array
     {
-        // If there are no selectable options set explicitly, try to determine them from the meta model. Otherwise the select box would be empty.
-        if (empty($this->selectable_options) && $this->isBoundToAttribute()) {
-            $data_type = $this->getAttribute()->getDataType();
+        // If there are no selectable options set explicitly, try to determine them from the value data type
+        if (empty($this->selectable_options)) {
+            $data_type = $this->getValueDataType();
             if ($data_type instanceof BooleanDataType) {
                 $this->setSelectableOptions(array(
                     1,

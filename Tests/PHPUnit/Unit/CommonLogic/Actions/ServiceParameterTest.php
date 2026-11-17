@@ -2,6 +2,7 @@
 namespace exface\Core\Tests\PHPUnit\Unit\CommonLogic\Actions;
 
 use exface\Core\CommonLogic\Actions\ServiceParameter;
+use exface\Core\CommonLogic\Tasks\GenericTask;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Exceptions\UnexpectedValueException;
@@ -24,7 +25,7 @@ class ServiceParameterTest extends TestCase
     #[DataProvider('parsedValues')]
     public function testPreservesParsedValueType(string $dataType, mixed $input, mixed $expected) : void
     {
-        $parameter = new ServiceParameter(new Workbench());
+        $parameter = new ServiceParameter(new GenericTask(new Workbench()));
         $parameter->setName('value')->setDataType(new UxonObject(['alias' => $dataType]));
 
         self::assertSame($expected, $parameter->parseValue($input));
@@ -53,7 +54,7 @@ class ServiceParameterTest extends TestCase
      */
     public function testRejectsEmptyRequiredValue() : void
     {
-        $parameter = new ServiceParameter(new Workbench());
+        $parameter = new ServiceParameter(new GenericTask(new Workbench()));
         $parameter->setName('value')->setRequired(true);
 
         $this->expectException(UnexpectedValueException::class);

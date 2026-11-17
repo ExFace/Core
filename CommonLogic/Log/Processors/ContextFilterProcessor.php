@@ -2,17 +2,15 @@
 namespace exface\Core\CommonLogic\Log\Processors;
 
 /**
- * Removes provided keys from `$record['context']`
+ * Removes the specified context keys from the log record.
  * 
- * @author andrej.kabachnik
- *
+ * @author Georg Bieger
  */
-class ContextFilterProcessor 
+class ContextFilterProcessor extends AbstractContextProcessor
 {
-    private $removeContextKeys = [];
+    private array $removeContextKeys;
     
     /**
-     * 
      * @param array $removeContextKeys
      */
     public function __construct(array $removeContextKeys)
@@ -21,17 +19,12 @@ class ContextFilterProcessor
     }
     
     /**
-     * 
-     * @param array $record
-     * @return array
+     * @inheritDoc
      */
-    public function __invoke(array $record)
+    protected function invokeInternal(array &$context, array &$extra): void
     {
-        if (is_array($record['context'])) {
-            foreach ($this->removeContextKeys as $key) {
-                unset($record['context'][$key]);
-            }
+        foreach ($this->removeContextKeys as $key) {
+            unset($context[$key]);
         }
-        return $record;
     }
 }

@@ -336,7 +336,7 @@ trait JqueryDataTransposerTrait {
                         }
 
                         // default: return single scalar key/value { "key": value } 
-                        return oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld]) : newColVals[fld];
+                        return oColOrig.fnFormatter ? oColOrig.fnFormatter(newColVals[fld], oRow) : newColVals[fld];
                     })();
                 oRowKeys[sRowKey][newColGroup+'_subtitle'] = oResult.oColModelsOriginal[fld].sCaption;
     			if (oDataColsTotals[fld] != undefined){

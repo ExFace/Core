@@ -73,8 +73,7 @@ class CsvBuilder extends FileContentsBuilder
      */
     public function read(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $query = $this->buildQuery();        
-        $query = $data_connection->query($query);
+        $query = $this->queryFile($data_connection);
         
         // Compute static values (not depending on the contents of the CSV)
         $static_values = array();
@@ -101,7 +100,7 @@ class CsvBuilder extends FileContentsBuilder
         $readerFiltering = false;
         foreach ($this->getFilters()->getFilters() as $qpart) {
             if ($this->isFileProperty($qpart->getDataAddress()) === false) {
-                $qpart->setAlias($qpart->getDataAddress()); // use numeric alias since league/csv filter on arrays with numeric indexes
+                $qpart->setAlias($qpart->getDataAddress()); // use the data address as alias since filters run on the raw records (keyed by column index or CSV header)
                 $qpart->setApplyAfterReading(true);
                 $readerFiltering = true;
             } else {
@@ -118,10 +117,23 @@ class CsvBuilder extends FileContentsBuilder
      */
     public function count(DataConnectionInterface $data_connection) : DataQueryResultDataInterface
     {
-        $query = $data_connection->query($this->buildQuery());
+        $query = $this->queryFile($data_connection);
         $this->prepareFilters($query);
         $rowCount = $this->countCsvRows($query);
         return new DataQueryResultData([], $rowCount, false, $rowCount);
+    }
+    
+    /**
+     * Builds the file query and performs it on the connection.
+     * 
+     * Extension point for subclasses that need to choose the file at runtime (e.g. `LogCsvBuilder`).
+     * 
+     * @param DataConnectionInterface $data_connection
+     * @return FileContentsDataQuery
+     */
+    protected function queryFile(DataConnectionInterface $data_connection) : FileContentsDataQuery
+    {
+        return $data_connection->query($this->buildQuery());
     }
     
     /**

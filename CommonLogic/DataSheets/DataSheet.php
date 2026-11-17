@@ -75,6 +75,7 @@ use exface\Core\DataTypes\AggregatorFunctionsDataType;
 use exface\Core\Exceptions\Contexts\ContextAccessDeniedError;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\DataSheets\DataNotFoundError;
+use exface\Core\Exceptions\UxonParserError;
 
 /**
  * Default implementation of DataSheetInterface
@@ -3057,13 +3058,17 @@ class DataSheet implements DataSheetInterface
      */
     public function importUxonObject(UxonObject $uxon)
     {
-        
         // Columns
         if ($uxon->hasProperty('columns')) {
             foreach ($uxon->getProperty('columns') as $col) {
                 if ($col instanceof UxonObject) {
-                    $column = DataColumnFactory::createFromUxon($this, $col);
-                    $this->getColumns()->add($column);
+                    $definitions = $col->hasProperty('attribute_group_alias')
+                        ? $this->expandColumnAttributeGroup($col)
+                        : [$col];
+                    foreach ($definitions as $definition) {
+                        $column = DataColumnFactory::createFromUxon($this, $definition);
+                        $this->getColumns()->add($column);
+                    }
                 } else {
                     $this->getColumns()->addFromExpression($col);
                 }
@@ -3131,6 +3136,68 @@ class DataSheet implements DataSheetInterface
             $val = BooleanDataType::cast($val);
             $this->setAutoCount($val);
         }
+    }
+
+    /**
+     * Expands a sheet column template without modifying its source UXON or model group.
+     *
+     * @param UxonObject $uxon
+     * @return UxonObject[]
+     */
+    private function expandColumnAttributeGroup(UxonObject $uxon) : array
+    {
+        // Require an explicit group selector before resolving attributes.
+        $groupAlias = $uxon->getProperty('attribute_group_alias');
+        if (! is_string($groupAlias) || trim($groupAlias) === '') {
+            throw new UxonParserError($uxon, 'Data sheet column attribute_group_alias must be a non-empty string');
+        }
+        // A group selects multiple attributes, so single-column identities would be ambiguous.
+        foreach (['attribute_alias', 'expression', 'name'] as $property) {
+            if ($uxon->hasProperty($property)) {
+                throw new UxonParserError($uxon, 'Cannot combine attribute_group_alias with "' . $property . '" in a data sheet column');
+            }
+        }
+
+        // Only a colon outside group modifiers and relation brackets starts an aggregator.
+        $bracketDepth = 0;
+        $aggregatorStart = false;
+        for ($i = 0, $length = strlen($groupAlias); $i < $length; $i++) {
+            if ($groupAlias[$i] === '[') {
+                // Ignore separators inside sort modifiers or qualified relation segments.
+                $bracketDepth++;
+            } elseif ($groupAlias[$i] === ']') {
+                // Resume looking for an aggregator after leaving the brackets.
+                $bracketDepth--;
+            } elseif ($groupAlias[$i] === DataAggregation::AGGREGATION_SEPARATOR && $bracketDepth === 0) {
+                // The first unbracketed separator starts the suffix for every generated column.
+                $aggregatorStart = $i;
+                break;
+            }
+        }
+        // Resolve the group without its aggregator; apply the suffix to individual attributes later.
+        $aggregator = null;
+        if ($aggregatorStart !== false) {
+            $aggregator = substr($groupAlias, $aggregatorStart + 1);
+            $groupAlias = substr($groupAlias, 0, $aggregatorStart);
+        }
+
+        // Let the metamodel resolve built-in, named, combined and related groups in their own order.
+        $group = $this->getMetaObject()->getAttributeGroup($groupAlias);
+        // Keep shared column properties, but remove the shorthand rejected by ordinary columns.
+        $template = $uxon->copy()->unsetProperty('attribute_group_alias');
+        $definitions = [];
+        foreach ($group->getAttributes() as $attribute) {
+            // Preserve full relation paths and raw attribute identities rather than display labels.
+            $alias = $attribute->getAliasWithRelationPath();
+            if ($aggregator !== null) {
+                // Aggregate each attribute separately, not the group selector.
+                $alias = DataAggregation::addAggregatorToAlias($alias, $aggregator);
+            }
+            // Give each column its own template copy without changing the caller's UXON.
+            $definitions[] = $template->copy()->setProperty('attribute_alias', $alias);
+        }
+        // A valid empty group naturally yields no column definitions.
+        return $definitions;
     }
 
     /**

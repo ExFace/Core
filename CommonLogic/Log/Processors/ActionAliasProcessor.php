@@ -3,46 +3,55 @@
 namespace exface\Core\CommonLogic\Log\Processors;
 
 
-class ActionAliasProcessor extends AbstractColumnPositionProcessor
+use exface\Core\CommonLogic\Log\CsvLogConfig;
+use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\WorkbenchInterface;
+
+/**
+ * Adds the action alias to the extra field of the log record.
+ * 
+ * @author Georg Bieger
+ */
+class ActionAliasProcessor extends AbstractContextProcessor
 {
-    protected function getContentId()
+    const KEY_ACTION_ALIAS = CsvLogConfig::KEY_ACTION_ALIAS;
+    
+    private WorkbenchInterface $workbench;
+
+    public function __construct(WorkbenchInterface $workbench)
     {
-        return 'actionAlias';
+        $this->workbench = $workbench;
     }
 
-    protected function getContent()
+    /**
+     * Never throws: this runs inside logging, where an exception would break or loop the logger.
+     */
+    protected function getCurrentAction() : ?ActionInterface
     {
-        $currentAction = $this->getCurrentAction();
-        if ($currentAction) {
-            return $currentAction->getAliasWithNamespace();
+        if (! $this->workbench->isStarted()) {
+            return null;
         }
-
-        return "";
+        
+        try {
+            return $this->workbench
+                ->getContext()
+                ->getScopeWindow()
+                ->getActionContext()
+                ->getCurrentAction();
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
-    protected function getIndexColumns()
+    /**
+     * @inheritDoc
+     */
+    protected function invokeInternal(array &$context, array &$extra): void
     {
-        return array('actionAlias', 'requestId', 'id');
-    }
-
-    protected function getCurrentAction()
-    {
-        $wb = $this->getWorkbench();
-        if (!$wb)
-            return false;
-
-        $ctx = $wb->getContext();
-        if (!$ctx)
-            return false;
-
-        $sw = $ctx->getScopeWindow();
-        if (!$sw)
-            return false;
-
-        $aCtx = $sw->getActionContext();
-        if (!$aCtx)
-            return false;
-
-        return $aCtx->getCurrentAction();
+        $this->setValue(
+            $extra,
+            self::KEY_ACTION_ALIAS,
+            $this->getCurrentAction()?->getAliasWithNamespace() ?? ''
+        );
     }
 }

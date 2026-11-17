@@ -60,7 +60,15 @@ class DateDataType extends AbstractDataType implements ComparableDataTypeInterfa
     const PERIOD_WEEK = 'W';
     
     const PERIOD_DAY = 'D';
-    
+
+    const WEEKDAY_SUNDAY = 0;
+    const WEEKDAY_MONDAY = 1;
+    const WEEKDAY_TUESDAY = 2;
+    const WEEKDAY_WEDNESDAY = 3;
+    const WEEKDAY_THURSDAY = 4;
+    const WEEKDAY_FRIDAY = 5;
+    const WEEKDAY_SATURDAY = 6;
+
     private $format = null;
     
     private $timeZone = null;
@@ -70,6 +78,7 @@ class DateDataType extends AbstractDataType implements ComparableDataTypeInterfa
     private $min = null;
     
     private $max = null;
+
     
     /**
      * 

@@ -34,6 +34,9 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * All pages are stored in a single folder. The path to that folder can be passed to the
  * installer's constructor.
  * 
+ * Existing exports are kept unchanged when only creation/modification timestamps or users
+ * differ. Page templates are installation-local and are not exported.
+ *
  * NOTE: The `TimeStampingBehavior` of the model objects is disabled before install, so the
  * create/update stamps of the exported model are saved correctly.
  * 
@@ -418,14 +421,6 @@ class PageInstaller extends AbstractAppInstaller
         $idt = $this->getOutputIndentation();
         $path = $this->getPagesPathAbsolute($destination_absolute_path);
         
-        // Empty pages folder in case it is an update
-        try {
-            if (is_dir($path)) {
-                $fileManager::emptyDir($this->getPagesPathAbsolute($destination_absolute_path));
-            }
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-        }
         if (is_dir($this->getPagesPathOld($destination_absolute_path))) {
             $fileManager::deleteDir(FilePathDataType::findFolderPath($this->getPagesPathOld($destination_absolute_path)));
         }
@@ -447,7 +442,28 @@ class PageInstaller extends AbstractAppInstaller
         
         // Dann alle Dialoge der App als Dateien in den Ordner schreiben.
         $pages = $this->getPagesForApp($exportApp);
+        $this->exportPages($pages, $path, $fileManager);
         
+        yield $idt . 'Exported ' . count($pages) . ' pages successfully.' . PHP_EOL;
+    }
+
+    /**
+     * Writes changed pages and removes obsolete exports only after all pages were exported.
+     *
+     * @param UiPageInterface[] $pages
+     * @param string $path
+     * @param Filemanager $fileManager
+     * @return void
+     */
+    protected function exportPages(array $pages, string $path, Filemanager $fileManager) : void
+    {
+        $previousFiles = [];
+        if (is_dir($path)) {
+            foreach (new \FilesystemIterator($path, \FilesystemIterator::SKIP_DOTS) as $file) {
+                $previousFiles[$file->getFilename()] = $file->getPathname();
+            }
+        }
+
         if (! empty($pages)) {
             $fileManager->pathConstruct($path);
         }
@@ -461,15 +477,36 @@ class PageInstaller extends AbstractAppInstaller
                     throw new UiPageIdMissingError('The UiPage "' . $page->getAliasWithNamespace() . '" has no UID.');
                 }
                 
-                // Exportieren der Seite
-                $contents = $page->exportUxonObject()->toJson(true);
-                $fileManager->dumpFile($path . DIRECTORY_SEPARATOR . $page->getAliasWithNamespace() . '.json', $contents);
+                $fileName = $page->getAliasWithNamespace() . '.json';
+                $filePath = $path . DIRECTORY_SEPARATOR . $fileName;
+                $uxon = $page->exportUxonObject();
+                if (! is_file($filePath) || $this->hasPageChanges($uxon, UxonObject::fromJson(file_get_contents($filePath)))) {
+                    $fileManager->dumpFile($filePath, $uxon->toJson(true));
+                }
+                unset($previousFiles[$fileName]);
             } catch (\Throwable $e) {
                 throw new InstallerRuntimeError($this, 'Unknown error while backing up page "' . $page->getAliasWithNamespace() . '"!', null, $e);
             }
         }
         
-        yield $idt . 'Exported ' . count($pages) . ' pages successfully.' . PHP_EOL;
+        $fileManager->remove($previousFiles);
+    }
+
+    /**
+     * Compares page definitions without installation-specific audit metadata.
+     *
+     * @param UxonObject $current
+     * @param UxonObject $previous
+     * @return bool
+     */
+    protected function hasPageChanges(UxonObject $current, UxonObject $previous) : bool
+    {
+        $current = $current->toArray();
+        $previous = $previous->toArray();
+        foreach (['created_on', 'created_by_user_selector', 'modified_on', 'modified_by_user_selector'] as $property) {
+            unset($current[$property], $previous[$property]);
+        }
+        return $current !== $previous;
     }
 
     /**

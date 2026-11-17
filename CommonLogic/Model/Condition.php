@@ -938,4 +938,28 @@ class Condition implements ConditionInterface
         $new_condition->setApplyToAggregates($this->willApplyToAggregatedValues());
         return $new_condition;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see ConditionInterface::rebaseOnChild()
+     */
+    public function rebaseOnChild(MetaObjectInterface $childObject) : ConditionInterface
+    {
+        $newExpression = $this->getExpression()->rebaseOnChild($childObject);
+        $newCondition = ConditionFactory::createFromExpression($this->exface, $newExpression, $this->getValue(), $this->getComparator(), $this->willIgnoreEmptyValues());
+        $newCondition->setApplyToAggregates($this->willApplyToAggregatedValues());
+        return $newCondition;
+    }
+    
+    /**
+     * {@inheritDoc}
+     * @see ConditionInterface::rebaseOnParent()
+     */
+    public function rebaseOnParent(MetaObjectInterface $parentObject) : ConditionInterface
+    {
+        $newExpression = $this->getExpression()->rebaseOnParent($parentObject);
+        $newCondition = ConditionFactory::createFromExpression($this->exface, $newExpression, $this->getValue(), $this->getComparator(), $this->willIgnoreEmptyValues());
+        $newCondition->setApplyToAggregates($this->willApplyToAggregatedValues());
+        return $newCondition;
+    }
 }
