@@ -238,7 +238,7 @@ class Monitor extends Profiler
         }
         $exception->setLogLevel($this->longRunnersLogLevel);
 
-        $entry = new LogEntry($this->longRunnersLogLevel, $msg, [], $exception);
+        $entry = new LogEntry($this->longRunnersLogLevel, $msg, ['id' => $exception->getId()], $exception);
         $this->getLongRunningActionsHandler()->handle($entry);
     }
 
