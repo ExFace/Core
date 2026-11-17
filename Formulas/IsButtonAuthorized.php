@@ -114,9 +114,14 @@ class IsButtonAuthorized extends Formula
         }
 
         // Create fake input data for a single row
-        $row = $mappedData->getRow($this->getCurrentRowNumber());
-        $mappedData->getSorters()->removeAll();
-        $currentRowData = $mappedData->copy()->removeRows()->addRow($row, false, false);
+        // Use original rows if batch mapping did not preserve the row count.
+        $rowSource = $mapByRow ? $allData : $mappedData;
+        $row = $rowSource->getRow($this->getCurrentRowNumber());
+
+        $currentRowData = $rowSource->copy()->removeRows();
+        $currentRowData->getSorters()->removeAll();
+        $currentRowData->addRow($row, false, false);
+
         if ($mapByRow === true) {
             $currentRowData = $mapper->map($currentRowData);
         }
