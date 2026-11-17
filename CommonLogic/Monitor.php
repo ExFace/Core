@@ -5,7 +5,7 @@ use exface\Core\Actions\ReadData;
 use exface\Core\Actions\UxonValidate;
 use exface\Core\CommonLogic\Debugger\ActionDebugger;
 use exface\Core\CommonLogic\Debugger\Profiler;
-use exface\Core\CommonLogic\Debugger\WidgetDebugger;
+use exface\Core\CommonLogic\Log\LogEntry;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\TimeDataType;
 use exface\Core\Events\Action\OnBeforeActionPerformedEvent;
@@ -22,13 +22,9 @@ use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Interfaces\Tasks\TaskInterface;
 use exface\Core\Events\Workbench\OnBeforeStopEvent;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Widgets\Button;
 use exface\Core\DataTypes\DateTimeDataType;
 use exface\Core\Actions\UxonAutosuggest;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\ContextBarApi;
-use exface\Core\Interfaces\Widgets\iUseInputWidget;
-use exface\Core\Widgets\Dialog;
-use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Actions\ShowContextPopup;
 use exface\Core\DataTypes\DateDataType;
 use exface\Core\DataTypes\ComparatorDataType;
@@ -242,12 +238,8 @@ class Monitor extends Profiler
         }
         $exception->setLogLevel($this->longRunnersLogLevel);
 
-        $this->getLongRunningActionsHandler()->handle(
-            $this->longRunnersLogLevel,
-            $msg,
-            ['id' => $exception->getId()],
-            $exception
-        );
+        $entry = new LogEntry($this->longRunnersLogLevel, $msg, ['id' => $exception->getId()], $exception);
+        $this->getLongRunningActionsHandler()->handle($entry);
     }
 
     /**
