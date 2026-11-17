@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Actions\ActionInterface;
@@ -971,7 +972,7 @@ JS;
             // https://github.com/jspreadsheet/ce/issues/1139
             // https://github.com/jspreadsheet/ce/issues/176 (exactly the same use case/issue)
             // this works as a workaround, but might cause other issues?
-            //  data = data.replace(/"{1,3}/g, '″');
+            //  data = data.replace(/"{1,3}/g, 'â€³');
 
             // OLD PARSING
             // el.jspreadsheet.parseCSV(data, "\\n").forEach(function(aRow){
@@ -1534,6 +1535,10 @@ JS;
 
             // value is invalid if it does not match any id or name in the filtered source 
             // (check name, in case inital value is passed as parameter (label))
+            // values that were loaded but are not selectable (see _exfKeep) stay valid
+            if (oJExcel.getColumnOptions(iCol).source.some(entry => entry._exfKeep && entry.id == mCellValue)) {
+                return true;
+            }
             if (!aFilteredSrc.some(entry => entry.id == mCellValue || entry.name == mCellValue)) {
                 return false;
             }
@@ -2665,6 +2670,7 @@ JS;
             throw new FacadeLogicError('Dropdowns that are used in a DataSpreadSheet must be bound to an attribute.');
         }
         $filterJs = '';
+        $keepUnknownJs = '';
 
         // only use lazy loading is it is explicitly set (e.g. in uxon)
         if (! ($cellWidget instanceof InputCombo) || $cellWidget->getLazyLoading(null) !== true) {
@@ -2777,7 +2783,14 @@ JS;
                     foreach ($cellWidget->getSelectableOptions() as $key => $val) {
                         $srcData[] = ['id' => $key, 'name' => $val]; 
                     } 
-                }         
+                }
+                $keepUnknownJs = 'exfKeepUnknownValues: true,';
+                $valueType = $cellWidget->getValueDataType();
+                if ($valueType instanceof EnumDataTypeInterface) {
+                    // Labels of all enum values: used to display loaded values, that are not selectable
+                    $keepUnknownJs .= 'exfAllLabels: ' . json_encode((object) $valueType->getLabels()) . ',';
+                }
+                $filterJs = 'filter: function(instance, cell, x, y, source) { return source.filter(function(oOpt) { return ! oOpt._exfKeep; }); },';
             }
             $srcJson = json_encode($srcData);
         } else {
@@ -2853,7 +2866,7 @@ JS;
             $this->addOnInitScript($refreshDropdownJs);
         }
         
-        return "options: {newOptions: false}, source: {$srcJson}, {$filterJs}";
+        return "options: {newOptions: false}, source: {$srcJson}, {$keepUnknownJs} {$filterJs}";
     }
     
     /**
@@ -3142,6 +3155,24 @@ JS;
             aData.push([]);
         }
     }
+    // Make sure values missing in the static dropdown options are still displayed.
+    // They are marked as `_exfKeep` and hidden from the dropdown list by the column filter.
+    jqCtrl[0].exfWidget.getJExcel().getConfig().columns.forEach(function(oColCfg, iColIdx) {
+        if (! oColCfg.exfKeepUnknownValues || ! Array.isArray(oColCfg.source)) {
+            return;
+        }
+        var aKnown = {};
+        oColCfg.source.forEach(function(oOpt) { aKnown[String(oOpt.id)] = true; });
+        aData.forEach(function(aRow) {
+            var mVal = aRow[iColIdx];
+            if (mVal === undefined || mVal === null || mVal === '' || aKnown[String(mVal)]) {
+                return;
+            }
+            aKnown[String(mVal)] = true;
+            var sLabel = (oColCfg.exfAllLabels || {})[String(mVal)];
+            oColCfg.source.push({id: String(mVal), name: sLabel !== undefined && sLabel !== null ? String(sLabel) : String(mVal), _exfKeep: true});
+        });
+    });
     jqCtrl.jspreadsheet('setData', aData);
     jqCtrl[0].exfWidget.refreshConditionalColumnVisibility(true);
     {$this->buildJsResetSelection('jqCtrl')};
