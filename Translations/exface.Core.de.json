@@ -574,6 +574,7 @@
     "WIDGET.TEXTMENTION.COLLISION": "Mention Widget Kollision: Die aktuelle Eingabe hat mehrere Mention-Widgets mit folgenden Aktivierungszeichen gleichzeitig aktiviert:",
     "WIDGET.TEXTMENTION.AJAX_CALL_ERROR": "Die Daten konnten nicht geladen werden. Weitere Informationen finden Sie in den Logs.",
     "WIDGET.UXONEDITOR.HELP": "Hilfe",
+    "WIDGET.UXONEDITOR.SERVER_UNAVAILABLE": "Autovervollst\u00e4ndigung, Modellsuche, Vorlagen und Servervalidierung sind offline oder mit diesem Serveradapter nicht verf\u00fcgbar. JSON kann weiterhin bearbeitet werden.",
     "WIDGET.UXONEDITOR.JSON_PATH": "JSON-Pfad",
     "WIDGET.UXONEDITOR.JSON_PATH_HINT": "JSON-Pfad zu diesem Knoten",
     "WIDGET.UXONEDITOR.CONTEXT_MENU.PRESETS": "Presets",

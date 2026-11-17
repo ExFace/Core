@@ -90,6 +90,7 @@ trait JsonEditorTrait
     required: {$this->escapeBool($widget->isRequired())},
     name: {$this->escapeString($widget->getCaption(), true, false)},
     ajaxUrl: {$this->escapeString($this->getAjaxUrl(), true, false)},
+    serverAvailable: {$this->buildJsJsonEditorServerAvailable()},
     helpUrl: {$this->escapeString($helpUrl, true, false)},
     translations: {$this->escapeString(static::getTranslations($this->getWorkbench()), true, false)},
     schema: function() { return {$this->buildJsSchemaGetter()}; },
@@ -106,6 +107,15 @@ trait JsonEditorTrait
     }
 }
 JS;
+    }
+
+    /**
+     * Facades may restrict the custom editor endpoints to a compatible backend.
+     * Connectivity is checked separately by the shared adapter on every request.
+     */
+    protected function buildJsJsonEditorServerAvailable() : string
+    {
+        return 'function() { return true; }';
     }
 
     /**

@@ -36,6 +36,7 @@
         var aTimers = [];
         var jqEditor = $(domEditor);
         var jqHint;
+        var jqUnavailable;
         var oAbort = new AbortController();
 
         function t(sKey) {
@@ -44,6 +45,40 @@
 
         function createNoResultsMessage() {
             return $('<div class="uxoneditor-search-info" role="status"></div>').text(t('SEARCH.NO_RESULTS'));
+        }
+
+        function isServerAvailable() {
+            return oGlobal.navigator.onLine !== false &&
+                (!oGlobal.exfLauncher || oGlobal.exfLauncher.isOnline()) &&
+                (!oConfig.serverAvailable || oConfig.serverAvailable());
+        }
+
+        function refreshServerAvailability() {
+            if (bDestroyed) {
+                return false;
+            }
+            var bAvailable = isServerAvailable();
+            if (oEditor && oConfig.uxon && (oConfig.autosuggest || oConfig.validate !== false)) {
+                if (!jqUnavailable) {
+                    jqUnavailable = $('<span class="exf-jsoneditor-unavailable" role="status" tabindex="0"></span>')
+                        .text('\u26a0')
+                        .attr('title', t('SERVER_UNAVAILABLE'))
+                        .attr('aria-label', t('SERVER_UNAVAILABLE'));
+                }
+                var jqMenu = jqEditor.find('.jsoneditor-menu');
+                var jqParent = jqMenu.length ? jqMenu : jqEditor;
+                if (jqUnavailable.parent()[0] !== jqParent[0]) {
+                    jqUnavailable.appendTo(jqParent);
+                }
+                jqUnavailable.toggleClass('exf-jsoneditor-unavailable-floating', jqMenu.length === 0)
+                    .prop('hidden', bAvailable);
+                if (!bAvailable) {
+                    delete oEditor._autosuggestLastResult;
+                    jqEditor.find('[id$="_warning"]').remove();
+                }
+                updatePresetHint();
+            }
+            return bAvailable;
         }
 
         function reportError(oError) {
@@ -110,7 +145,7 @@
             if (!jqHint || !oEditor) {
                 return;
             }
-            jqHint.toggle(!bDisabled && oEditor.getMode() === 'tree' && emptyValue(oEditor.getText()) === '');
+            jqHint.toggle(isServerAvailable() && !bDisabled && oEditor.getMode() === 'tree' && emptyValue(oEditor.getText()) === '');
         }
 
         function applyDisabled() {
@@ -144,6 +179,11 @@
         }
 
         function request(oData, oModal) {
+            if (!refreshServerAvailability()) {
+                showServerUnavailable(oModal);
+                return $.Deferred().reject({}, 'abort', 'unavailable').promise();
+            }
+            $(oModal.modalElem()).find('.uxoneditor-server-unavailable').remove();
             var oRequest = $.ajax({
                 type: 'POST',
                 url: oConfig.ajaxUrl,
@@ -156,6 +196,16 @@
             });
             oModal.afterClose(function () { oRequest.abort(); });
             return oRequest;
+        }
+
+        function showServerUnavailable(oModal) {
+            if (bDestroyed || oModal._exfClosed) return;
+            var jqModal = $(oModal.modalElem());
+            jqModal.find('.spinner').hide();
+            if (jqModal.find('.uxoneditor-server-unavailable').length === 0) {
+                $('<div class="uxoneditor-search-info uxoneditor-server-unavailable" role="status"></div>')
+                    .text(t('SERVER_UNAVAILABLE')).insertAfter(jqModal.find('.pico-modal-header'));
+            }
         }
 
         function exf_fetchAutosuggest(text, path, input, uxon){
@@ -562,6 +612,7 @@
         }
 
         function exf_openPresetsModal(node){
+            if (!refreshServerAvailability()) return;
             return exf_openModal(
                 t("PRESETS.TITLE"),
                 exf_getPresetsBtnContent(),
@@ -574,6 +625,7 @@
         }
 
         function exf_openDetailsModal(node){
+            if (!refreshServerAvailability()) return;
             return exf_openModal(
                 t("WIDGET_DETAILS"),
                 exf_getDetailsBtnContent(),
@@ -797,6 +849,10 @@
 
             }) // done
             .fail( function (jqXHR, textStatus, errorThrown) {
+                if (!refreshServerAvailability()) {
+                    showServerUnavailable(modal);
+                    return;
+                }
                 if (textStatus !== "abort" && !bDestroyed && !modal._exfClosed) {
                     modal.modalElem().querySelector('.spinner').style.display = 'none';
                     if (!reportAjaxError(jqXHR, modal)) {
@@ -994,6 +1050,10 @@
 
             }) // done
             .fail( function (jqXHR, textStatus, errorThrown) {
+                if (!refreshServerAvailability()) {
+                    showServerUnavailable(modal);
+                    return;
+                }
                 if (textStatus !== "abort" && !bDestroyed && !modal._exfClosed &&
                     !reportAjaxError(jqXHR, modal)) {
                     reportError(new Error(t("ERROR.SERVER_ERROR") + ": " + errorThrown));
@@ -1027,6 +1087,7 @@
         }
 
         function exf_openModelModal(node){
+            if (!refreshServerAvailability()) return;
             return exf_openModal(
                 t("MODELBROWSER.TITLE"),
                 '   <div class="uxoneditor-btn-group">' +
@@ -1161,6 +1222,10 @@
                     return aRows;
                 }) // done
                 .fail( function (jqXHR, textStatus, errorThrown) {
+                    if (!refreshServerAvailability()) {
+                        showServerUnavailable(modal);
+                        return;
+                    }
                     if (textStatus === "abort") return;
                     var sStatus = [jqXHR.status, errorThrown || jqXHR.statusText || textStatus].filter(Boolean).join(' ');
                     showError(responseError(jqXHR.responseJSON, sStatus), jqXHR);
@@ -1523,6 +1588,7 @@
             if (oConfig.uxon && oConfig.helpUrl && jqEditor.find('.exf-jsoneditor-help').length === 0) {
                 exf_addHelpButton($, domEditor.id, oConfig.helpUrl, t('HELP'));
             }
+            refreshServerAvailability();
         }
 
         if (oConfig.uxon && oConfig.autosuggest) {
@@ -1542,14 +1608,19 @@
                         return !sToken.trim() || sMatch.toLowerCase().indexOf(sToken.toLowerCase()) !== -1;
                     },
                     getOptions: function (sText, aPath, sInput, oJsonEditor) {
+                        if (!refreshServerAvailability()) {
+                            return Promise.resolve([]);
+                        }
                         return exf_fetchAutosuggest(sText, aPath, sInput, JSON.stringify(oJsonEditor.get()))
                             .then(function (oResponse) {
                                 if (!oResponse || !Array.isArray(oResponse.values)) {
                                     throw new Error(t('ERROR.MALFORMED_RESPONSE'));
                                 }
+                                if (!refreshServerAvailability()) return [];
                                 oJsonEditor._autosuggestLastResult = oResponse;
                                 return exf_filterAutosuggest(oResponse.values, sText);
                             }).catch(function (oError) {
+                                if (!refreshServerAvailability()) return [];
                                 reportError(oError);
                                 throw oError;
                             });
@@ -1559,7 +1630,11 @@
         }
         if (oConfig.uxon && oConfig.validate !== false) {
             oOptions.onValidate = function (oJson) {
+                if (!refreshServerAvailability()) {
+                    return Promise.resolve([]);
+                }
                 return exf_performValidation('', JSON.stringify(oJson)).then(function (aErrors) {
+                    if (!refreshServerAvailability()) return [];
                     if (!Array.isArray(aErrors)) {
                         throw new Error(t('ERROR.MALFORMED_RESPONSE'));
                     }
@@ -1568,6 +1643,7 @@
                     }
                     return aErrors;
                 }).catch(function (oError) {
+                    if (!refreshServerAvailability()) return [];
                     reportError(oError);
                     throw oError;
                 });
@@ -1616,11 +1692,14 @@
             setRequired: function (bValue) { oConfig.required = bValue; return oApi; },
             getRequired: function () { return oConfig.required === true; },
             restoreScroll: restoreScroll,
+            refreshServerAvailability: refreshServerAvailability,
             destroy: function () {
                 if (bDestroyed) {
                     return;
                 }
                 bDestroyed = true;
+                oGlobal.removeEventListener('online', refreshServerAvailability);
+                oGlobal.removeEventListener('offline', refreshServerAvailability);
                 oAbort.abort();
                 aTimers.forEach(clearTimeout);
                 aRequests.slice().forEach(function (oRequest) { oRequest.abort(); });
@@ -1629,6 +1708,9 @@
                 jqEditor.find('.jsoneditor-tree').off('.exfJsonEditor');
                 if (jqHint) {
                     jqHint.remove();
+                }
+                if (jqUnavailable) {
+                    jqUnavailable.remove();
                 }
                 oEditor.destroy();
                 if (domEditor.exfJsonEditor === oApi) {
@@ -1667,7 +1749,7 @@
         }
         if (oConfig.uxon && oConfig.autosuggest) {
             jqEditor.on('blur.exfJsonEditor', 'div.jsoneditor-field[contenteditable="true"]', function (oEvent) {
-                if (!bDisabled) {
+                if (!bDisabled && refreshServerAvailability()) {
                     oEvent.data = {jsonEditor: oEditor};
                     exf_onBlur.call(this, oEvent);
                     notifyChange();
@@ -1688,6 +1770,11 @@
         }
         applyDisabled();
         addToolbar();
+        oGlobal.addEventListener('online', refreshServerAvailability);
+        oGlobal.addEventListener('offline', refreshServerAvailability);
+        jqEditor.on('focusin.exfJsonEditor pointerdown.exfJsonEditor', function () {
+            refreshServerAvailability();
+        });
         restoreScroll();
         return oApi;
     }

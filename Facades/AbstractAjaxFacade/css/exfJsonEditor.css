@@ -163,6 +163,20 @@
     transform: translate(-50%, -50%);
 }
 .uxoneditor-preset-hint a {color: #ccc; text-decoration: none;}
+.exf-jsoneditor-unavailable {
+    display: inline-block;
+    color: #b57900;
+    padding: 5px 8px;
+    cursor: help;
+}
+.exf-jsoneditor-unavailable[hidden] {display: none;}
+.exf-jsoneditor-unavailable-floating {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 1;
+    background: white;
+}
 .uxoneditor-preset-hint a:hover {color: #1a1a1a;}
 .uxoneditor-preset-hint i {display: block; font-size: 400%; margin-bottom: 15px;}
 .uxoneditor-preset-cards {width: 100%; height: calc(100% - 28px); overflow-y: auto;}

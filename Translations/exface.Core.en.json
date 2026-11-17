@@ -588,6 +588,7 @@
     "WIDGET.TEXTMENTION.COLLISION": "Mention widget collision: The current input has activated multiple mention widgets with the following activation characters:",
     "WIDGET.TEXTMENTION.AJAX_CALL_ERROR": "The data could not be loaded. See logs for more information.",
     "WIDGET.UXONEDITOR.HELP": "Help",
+    "WIDGET.UXONEDITOR.SERVER_UNAVAILABLE": "Autosuggest, model search, presets and server validation are unavailable offline or with this server adapter. You can still edit JSON.",
     "WIDGET.UXONEDITOR.JSON_PATH": "JSON Path",
     "WIDGET.UXONEDITOR.JSON_PATH_HINT": "JSON Path to Current Node",
     "WIDGET.UXONEDITOR.CONTEXT_MENU.PRESETS": "Presets",
