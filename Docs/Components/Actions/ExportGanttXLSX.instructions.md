@@ -65,7 +65,9 @@ applyTo: "Actions/ExportGanttXLSX.php,CommonLogic/Utils/GanttXlsxBuilder.php,Doc
 - Do not silently invent values for missing source columns. Missing mapped values remain empty.
 - Complete a task with only one valid date using the Gantt task configuration's default duration:
   missing end equals start plus the duration, and missing start equals end minus the duration.
-  Ignore tasks only when both dates are missing. Mark every cell of a completed interval with a
+  Ignore tasks when both dates are missing or the end precedes the start. Keep their business data
+  rows, but do not draw their bars or include them in the timeline bounds. Equal dates remain valid.
+  Mark every cell of a completed interval with a
   thin diagonal border from bottom-left to top-right.
 
 ## Workbook stability
