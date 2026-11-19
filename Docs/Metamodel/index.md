@@ -8,5 +8,5 @@
   - [Behaviors of objects](Behaviors_of_meta_objects.md) - customizing the 
     logic of an object's lifecycle: e.g. timestamping or making it behave as 
     a state machine.
-- [Widgets and UI principles](Global_UI_principles/index.md) - the building 
+- [Widgets](../Widgets/index.md) - the building 
   blocks of the user interface

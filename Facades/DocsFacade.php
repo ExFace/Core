@@ -224,7 +224,7 @@ class DocsFacade extends AbstractHttpFacade
         $handler->add(new AppUrlRewriterMiddleware($this));
         $handler->add(new UxonPrototypePrinterMiddleware($this, $baseUrl, 'exface/core/Docs/UXON/UXON_prototypes.md', $reader, 'selector'));
         $handler->add(new MetaObjectPrinterMiddleware($this, $baseUrl, 'exface/core/Docs/creating_metamodels/Available_metaobjects.md', $reader, 'selector'));
-        $handler->add(new ComponentPrinterMiddleware($this, $baseUrl, 'exface/core/Docs/understanding_the_metamodel/Model_components.md', $reader));
+        $handler->add(new ComponentPrinterMiddleware($this, $baseUrl, 'exface/core/Docs/Metamodel/Model_components.md', $reader));
         
         return $handler;
     }

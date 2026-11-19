@@ -24,6 +24,6 @@ If you stick to the guidelines below, your docs will be fully accessible in the 
 
 ## In-code documentation (PHPDoc)
 
-[Prototypes](../understanding_the_metamodel/prototypes.md) of model entities (e.g. query and model builders, connectors, actions, etc.), widgets, events and other important elements of the platform support special PHPDoc tags, that allow to generate documentation automatically right from the source code.
+[Prototypes](../Metamodel/prototypes.md) of model entities (e.g. query and model builders, connectors, actions, etc.), widgets, events and other important elements of the platform support special PHPDoc tags, that allow to generate documentation automatically right from the source code.
 
 TODO
