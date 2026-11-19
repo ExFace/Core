@@ -52,12 +52,12 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
         if ($alias !== null) {
             $instance->setAlias($alias, $namespace);
         }
-        
+
         if ($name !== null) {
             $instance->setName($name);
         }
         
-        return $instance;
+        return self::applyDefaultConfiguration($instance);
     }
     
     /**
@@ -78,8 +78,9 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
         }
         
         // Otherwise it's a connector prototype selector
-        // Check if it's the model loader connection and return it if so. Otherwise create a blank
-        // connection from the prototype using the default logic.
+        // Check if it's the model loader connection and return it if so. Otherwise, create a blank
+        // connection from the prototype using the default logic. No need to enforce the defaul UXON
+        // configuration here because we are explicitly creating an unconfigured empty connector.
         if (self::isMetamodelConnector($connectorSelector)) {
             return $connectorSelector->getWorkbench()->model()->getModelLoader()->getDataConnection();
         } else {
@@ -136,15 +137,44 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
             $selector = new DataConnectionSelector($workbench, $uidOrAliasOrSelector);
         }
         switch (true) {
-            case $selector->isAlias() && strcasecmp($uidOrAliasOrSelector, DataConnectionSelector::findNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS) . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . DataConnectionSelector::stripNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS)) === 0:
-            case $selector->isUid() && strcasecmp($uidOrAliasOrSelector, DataConnectionSelector::METAMODEL_CONNECTION_UID) === 0:
+            case self::isMetamodelConnection($selector):
                 return $workbench->model()->getModelLoader()->getDataConnection();
             default:
-                return $workbench->model()->getModelLoader()->loadDataConnection($selector);
+                $connection = $workbench->model()->getModelLoader()->loadDataConnection($selector);
+                return self::applyDefaultConfiguration($connection);
         }
+    }
+
+    /**
+     * Ensures important core connections always have their default configuration even if accidentally deleted from the
+     * model.
+     * 
+     * There are rare situations where connections cannot be loaded from the model anymore. For example, if the sodium
+     * key in data/.contexts.json is missing or has changed all connections appear empty when loaded (because their
+     * config cannot be decrypted).
+     * 
+     * The following defaults are applied:
+     * 
+     * - `exface.Core.LOCAL_VENDOR_FOLDERS` gets `useVendorFolderAsBase` set to `true`
+     *
+     * @param DataConnectionInterface $connection
+     * @return DataConnectionInterface
+     */
+    private static function applyDefaultConfiguration(DataConnectionInterface $connection) : DataConnectionInterface
+    {
+        switch (true) {
+            case $connection instanceof LocalFileConnector
+                && strcasecmp($connection->getAliasWithNamespace(), 'exface.Core.LOCAL_VENDOR_FOLDERS') === 0
+                && $connection->exportUxonObject()->isEmpty():
+                    $connection->setUseVendorFolderAsBase(true);
+                    break;
+        }
+
+        return $connection;
     }
     
     /**
+     * Returns TRUE if the given selector points to the special `ModelLoaderConnector` prototype
      * 
      * @param DataConnectorSelectorInterface $selector
      * @return bool
@@ -154,6 +184,23 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
         switch (true) {
             case $selector->isClassname() && strcasecmp($selector->toString(), '\\' . ModelLoaderConnector::class) === 0:
             case $selector->isFilepath() && strcasecmp(Filemanager::pathNormalize($selector->toString()), Filemanager::pathNormalize(ModelLoaderConnector::class) . '.php') === 0:
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns TRUE if the given selector points to the `exface.Core.METAMODEL_DB` data connection
+     * 
+     * @param DataConnectorSelectorInterface $selector
+     * @return bool
+     */
+    protected static function isMetamodelConnection(DataConnectorSelectorInterface $selector) : bool
+    {
+        $selectorStr = $selector->toString();
+        switch (true) {
+            case $selector->isAlias() && strcasecmp($selectorStr, DataConnectionSelector::findNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS) . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . DataConnectionSelector::stripNamespace(DataConnectionSelector::METAMODEL_CONNECTION_ALIAS)) === 0:
+            case $selector->isUid() && strcasecmp($selectorStr, DataConnectionSelector::METAMODEL_CONNECTION_UID) === 0:
                 return true;
         }
         return false;
