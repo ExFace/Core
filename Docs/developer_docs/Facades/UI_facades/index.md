@@ -58,6 +58,12 @@ its component's error-dialog renderer.
 Object responses without `ATTRIBUTES` are valid empty suggestion lists.
 Model-search and UXON-preset dialogs show an inline information message when
 there are no results, including when the current search filters out all entries.
+Custom editor requests require an online browser and respect the launcher's
+forced-offline state when present. UI5 additionally requires a configured
+`UI5FacadeServerAdapter` backend (or subclass), including behind a PWA's offline
+wrapper. A small warning badge explains when server assistance is unavailable;
+local JSON editing and syntax checks still work. Availability is checked again
+for every server operation, so reconnecting does not require recreating the editor.
 
 HTML facades use `buildHtmlJsonEditor()` and `buildJsJsonEditor()`, and merge
 `buildHtmlHeadTagsForJsonEditor()` into their head tags. The adapter is stored on
@@ -76,9 +82,11 @@ document root (do not expose this server publicly):
 
 - Open [the shared editor fixture](../../../../Tests/JavaScript/Fixtures/JsonEditor.html)
   and run `await (await import('../JsonEditor.mjs')).runJsonEditorRegression()`
-  in the browser console.
+  in the browser console. Connectivity and backend gating are covered by
+  `await (await import('../JsonEditorAvailability.mjs')).runJsonEditorAvailabilityRegression()`.
 - UI5Facade has a corresponding `Tests/JavaScript/JsonEditor.html` fixture;
-  run `await (await import('./UI5JsonEditor.mjs')).runUI5JsonEditorRegression()`.
+  run `await (await import('./UI5JsonEditor.mjs')).runUI5JsonEditorRegression()`
+  and `await (await import('./UI5JsonEditorAvailability.mjs')).runUI5JsonEditorAvailabilityRegression()`.
 
 ### Common AJAX facade principles
 

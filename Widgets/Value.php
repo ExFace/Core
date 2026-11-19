@@ -750,7 +750,8 @@ class Value extends AbstractWidget implements iShowSingleAttribute, iHaveValue, 
      * The calculation is only performed if the widget has no explicit value. In contrast to a formula
      * or widget link in `value`, the widget will still get prefilled by actions, it will show its
      * attribute if it has an `attribute_alias`, etc. However, if none of this applies, the calculation
-     * will be used instead of leaving the widget empty.
+     * will be used instead of leaving the widget empty. An important exception to this rule is that 
+     * a live reference here will always be resolved, regardless of the widget having a value or not.
      *
      * NOTE: `calculation` can be used without an `attribute_alias` producing a calculated column,
      * that does not affect subsequent actions or in addition to an `attribute_alias`, which will place

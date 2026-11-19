@@ -24,6 +24,8 @@ A screen consists of the surrounding launcher UI (global header and footer, main
 <!-- BEGIN SubPageList:depth=2 -->
   - Common principles
     - [Captions and hints in widgets](Common_principles/Captions_and_hints.md)
+  - Input widgets
+    - [Input widgets for JSON and UXON](Input_widgets/InputJSON_InputUXON.md)
   - [Data widgets](Data_widgets/index.md)
     - [Data configurators and widget setups](Data_widgets/Data_configurators_and_setups.md)
     - [Table\_widgets](Data_widgets/Table_widgets.md)

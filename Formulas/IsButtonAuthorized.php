@@ -81,6 +81,11 @@ class IsButtonAuthorized extends Formula
         }
         $this->inProgressFor[$cacheKey] = true;
 
+        // Determine the data we will use for authorization. If the action has an input_mapper, we need to apply this
+        // mapper to the input data and check action permissions relative to that $mappedData. If there are no mappers,
+        // we can use the original input directly - but it is still called $mappedData for consistency.
+        // Since applying mappings can be expensive, we cache $mappedData if possible. The static cache will allow
+        // other instances of this formula to reuse the result of mappings without re-applying them.
         $dataCache = static::$dataCache[$cacheKey] ?? null;
         if ($dataCache === null) {
             // See if the action has an input_mapper for the object of our data. If so, try to apply the mapper.
@@ -96,9 +101,14 @@ class IsButtonAuthorized extends Formula
                   
                 $mappedData = $mapper->map($allData);
                 // We can cache the mapped data if we only have a single row OR the number of rows did not
-                // change after the mapping.
+                // change after the mapping. Note: the number of rows can change not only when using pivot-type
+                // mappings, but also when `invalid_if` mappings remove invalid rows. 
                 $mapByRow = $allData->countRows() > 1 && $mappedData->countRows() !== $allData->countRows();
+                if ($mapByRow === true) {
+                    $mappedData = null;
+                }
             } else {
+                // If there is no mapper to apply, we can cache the original input data and use it for all rows
                 $mappedData = $allData;
                 $mapByRow = false;
             }
@@ -112,17 +122,36 @@ class IsButtonAuthorized extends Formula
             $mapByRow = $dataCache['mapByRow'] ?? false;
             $mapper = $dataCache['mapper'] ?? null;
         }
+        // At this point:
+        // - `$mapByRow` - shows if we need to apply the mapper for every row separately (true) or if we can use the
+        // cached `$mappedData` for all rows (false)
+        // - $mapper - the mapper instance applicable to the input data
+        // - $mappedData - the result of the mapping.
+        
+        // Create fake input data to test if the action is authorized for the row we are currently calculating.
+        // Basically, we simulate, what would happen if the user actually selected this row and pressed the button. 
+        // - If we were able to apply the mapper and cache the result, we can use this result here. The action will not
+        // apply its mappers anymore, and we will see, if it is allowed for the result of the mapper or not.
+        // - If we could NOT cache mapper results, we take each row of the original data the formula is called on and
+        // pass that to the action. The action will then apply its mappers regularly and - again - we will see,
+        // if the action is allowed for the result of the mapper or not.
+        // TODO having $mapByRow AND $mappedData both makes the code very hard to read - improve readability!
+        // We could leave $mappedData only and set it to NULL if we need to map by row. Or we could rename vairables in
+        // a way, that each DataSheet represents a processing stage: $formulaData > $mappedData > $inputData and use
+        // $mapByRow to explicitly select one of them.
+        $dataToCheck = $mapByRow ? $allData : ($mappedData ?? $allData);
+        $rowToCheck = $dataToCheck->getRow($this->getCurrentRowNumber());
+        $fakeInputData = $dataToCheck->copy()->removeRows();
+        $fakeInputData->getSorters()->removeAll();
+        $fakeInputData->addRow($rowToCheck, false, false);
 
-        // Create fake input data for a single row
-        $row = $mappedData->getRow($this->getCurrentRowNumber());
-        $mappedData->getSorters()->removeAll();
-        $currentRowData = $mappedData->copy()->removeRows()->addRow($row, false, false);
+        // TODO do we need to map data here? Wouldn't the action authorization point map it too???
         if ($mapByRow === true) {
-            $currentRowData = $mapper->map($currentRowData);
+            $fakeInputData = $mapper->map($fakeInputData);
         }
 
         // Create a fake task
-        $task = TaskFactory::createFromDataSheet($currentRowData);
+        $task = TaskFactory::createFromDataSheet($fakeInputData);
         
         // Listen to data reads on the object of the data sheet we are filling and remember read column, that were
         // not there yet. The observer will add these column to the $mappedData and fill them for ALL rows when they
@@ -131,7 +160,7 @@ class IsButtonAuthorized extends Formula
         /* TODO test #DataReadPrefetcher here
         $observer = new DataReadPrefetcher($mappedData->getMetaObject(), $mappedData);
         $observer->setPrefetchOnEveryRead(true);
-        $observer->addDataSheetToEnrich($currentRowData);
+        $observer->addDataSheetToEnrich($fakeInputData);
         $observer->start();
         */
 
