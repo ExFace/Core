@@ -705,7 +705,7 @@ class StringDataType extends AbstractDataType
      * 
      * @param string $string
      * @param int $length
-     * @param bool $stickToWords prevents words getting cut in the middle
+     * @param bool $stickToWords prevents words getting cut in the middle unless the first word exceeds the available length
      * @param bool $ellipsis adds `...` at the end if the string is really shortened
      * @param bool $endHint adds `[truncated <original length> characters]` if the string is really shortened (usefull
      *     for debug output)
@@ -723,7 +723,8 @@ class StringDataType extends AbstractDataType
                 $string = mb_substr($string, 0, $length);
             } else {
                 $string = wordwrap($string, $length);
-                $string = mb_substr($string, 0, mb_strpos($string, "\n"));
+                $firstLineLength = mb_strpos($string, "\n");
+                $string = mb_substr($string, 0, $firstLineLength === false ? $length : min($length, $firstLineLength));
             }
             if ($ellipsis) {
                 $string .= '...';
