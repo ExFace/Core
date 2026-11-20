@@ -25,6 +25,15 @@ Each top-level key is a component type. Common properties include:
 | `search_prototype_data` | [DataSheet](../UXON/UXON_prototypes.md?selector=%5Cexface%5CCore%5CCommonLogic%5CDataSheets%5CDataSheet) for finding PHP-backed component prototypes . | See template examples below |
 | `save_component_data` | [DataSheet](../UXON/UXON_prototypes.md?selector=%5Cexface%5CCore%5CCommonLogic%5CDataSheets%5CDataSheet) template for saving component model data. | See the [save template example](#component-save-data-templates) below. |
 
+## Component selector enumeration
+
+`ModelComponentDataType` uses installed registry keys as allowed values and
+component names as labels. Schema generation and runtime parsing use the same
+value-label map, so registered app components such as `ai_tool` are valid
+selectors even when their labels differ from their keys. The inherited `values`
+configuration can replace this map to restrict a selector to a subset of
+components.
+
 ## Data templates
 
 Most components will have configuration DB tables (or other type of configuration data sources), that should be discribed in the registry to let external tools properly read and write these components.

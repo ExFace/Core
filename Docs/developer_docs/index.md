@@ -75,7 +75,7 @@ Once the caller passes some valid input data (e.g. an HTTP request or a CLI comm
 
 The task is then passed to the workbench to find a suitable handler. The workbench is comparable to a command bus at this point: it inspects the task data to find an app, that is capable of handling it. Once the handler-app is determiend, the task is passed on to it. 
 
-The app now uses it's internal logic actually perform the required action and return a result-object (another type of internal DTO). The default app implementation will load the action specified in the task and let it compute the result. In principle, app developers can implementy any logic for task handling - there are no restrictions. The default logic with handlers built into action [prototype classes](../understanding_the_metamodel/prototypes.md) has proven to be very versatile and really easy to extend, though.
+The app now uses it's internal logic actually perform the required action and return a result-object (another type of internal DTO). The default app implementation will load the action specified in the task and let it compute the result. In principle, app developers can implementy any logic for task handling - there are no restrictions. The default logic with handlers built into action [prototype classes](../Metamodel/prototypes.md) has proven to be very versatile and really easy to extend, though.
 
 In result object is now passed all the way back to the facade, which can now render a response that is understandable to caller (e.g. an HTTP response or CLI output) and finally return it to the caller.
 

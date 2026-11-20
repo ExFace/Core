@@ -12,7 +12,6 @@ use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
 use Monolog\Handler\FingersCrossed\ErrorLevelActivationStrategy;
 use Monolog\Handler\FingersCrossedHandler;
-use Monolog\Handler\ProcessableHandlerInterface;
 use Monolog\Logger;
 use exface\Core\CommonLogic\Log\Monolog\DebugMessageMonologHandler;
 use exface\Core\Interfaces\Log\UniqueLogHandlerInterface;
@@ -195,13 +194,18 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
                 } else {
                     $writer = $csvHandler;
                 }
+
+                // Resolve identity at write time, after request negotiation and authentication.
+                $writer->pushProcessor(new IdProcessor(self::CONTEXT_KEY_LOG_ENTRY));
+                $writer->pushProcessor(new RequestIdProcessor($this->workbench));
+                $writer->pushProcessor(new UsernameProcessor($this->workbench));
                 
                 if ($this->persistLevel === LoggerInterface::DEBUG) {
                     // Without buffering, every record is written immediately, so processors on the writer run at
                     // log time. Processors are applied in reverse order (LIFO stack): if the writer is the
                     // CsvHandler itself, the context filter pushed above still runs last - after the IdProcessor
                     // read the log entry.
-                    $this->pushContextProcessors($writer);
+                    $writer->pushProcessor(new ActionAliasProcessor($this->workbench));
                     
                     // If all messages should be persisted, register the writer as is.
                     $this->monolog->pushHandler($writer);
@@ -218,12 +222,8 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
                         Logger::toMonologLevel($this->passthroughLevel)
                     );
                     
-                    // Timing: processors on the FingersCrossedHandler run at log time, when the record enters the
-                    // buffer. Processors on the inner handlers only run when the buffer is flushed, which may be
-                    // much later (e.g. after the user or the current action changed). Time-sensitive values
-                    // (request ID, user, action) are therefore captured on the FingersCrossedHandler.
-                    // TODO geb 2026-10-26: This means these processors run on ALL logged records above the logging level. If performance becomes an issue, consider caching.
-                    $this->pushContextProcessors($fcHandler);
+                    // Capture the action when the record enters the buffer; resolve IDs and user at flush time.
+                    $fcHandler->pushProcessor(new ActionAliasProcessor($this->workbench));
                     // Timing: the context filter on the CsvHandler runs at flush time, NOT on the
                     // FingersCrossedHandler, because the DebugMessageMonologHandler still needs the log entry.
                     // Side effect: buffered records keep references to the entries (incl. exceptions and senders)
@@ -239,21 +239,6 @@ class MonologCsvFileHandler implements UniqueLogHandlerInterface
         }
             
         return $this->monolog;
-    }
-
-    /**
-     * Pushes `IdProcessor`, `RequestIdProcessor`, `UsernameProcessor`, `ActionAliasProcessor` onto the
-     * stack of the provided handler (in that order).
-     * 
-     * @param ProcessableHandlerInterface $handler
-     * @return void
-     */
-    private function pushContextProcessors(ProcessableHandlerInterface $handler) : void
-    {
-        $handler->pushProcessor(new IdProcessor(self::CONTEXT_KEY_LOG_ENTRY));
-        $handler->pushProcessor(new RequestIdProcessor($this->workbench));
-        $handler->pushProcessor(new UsernameProcessor($this->workbench));
-        $handler->pushProcessor(new ActionAliasProcessor($this->workbench));
     }
 
     /**

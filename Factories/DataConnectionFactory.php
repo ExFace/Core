@@ -191,11 +191,11 @@ abstract class DataConnectionFactory extends AbstractSelectableComponentFactory
 
     /**
      * Returns TRUE if the given selector points to the `exface.Core.METAMODEL_DB` data connection
-     * 
-     * @param DataConnectorSelectorInterface $selector
+     *
+     * @param DataConnectionSelectorInterface $selector
      * @return bool
      */
-    protected static function isMetamodelConnection(DataConnectorSelectorInterface $selector) : bool
+    protected static function isMetamodelConnection(DataConnectionSelectorInterface $selector) : bool
     {
         $selectorStr = $selector->toString();
         switch (true) {

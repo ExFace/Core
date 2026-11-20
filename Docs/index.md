@@ -4,8 +4,7 @@
 2. [Walkthrough Tutorial](Tutorials/BookClub_walkthrough/index.md)
 3. [Cookbook](Cookbook/index.md) - best recipes for common tasks
 4. [UXON syntax](UXON/index.md) - our "User eXpericnce Object Notation"
-5. [Understanding the meta model](understanding_the_metamodel/index.md)
-   1. [Widgets and UI principles](understanding_the_metamodel/Global_UI_principles/index.md)
+5. [Understanding the meta model](Metamodel/index.md)
 6. [Creating your own models](creating_metamodels/index.md)
 7. [Creating UIs](Creating_UIs/index.md)
 8. [Administration & configuration of the workbench](Administration/index.md)

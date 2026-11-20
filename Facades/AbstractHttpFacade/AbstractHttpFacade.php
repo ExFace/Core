@@ -9,7 +9,6 @@ use GuzzleHttp\Psr7\Response;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\CommonLogic\Debugger\HttpMessageDebugger;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestIdNegotiator;
-use exface\Core\Facades\AbstractHttpFacade\Middleware\RequestContextReader;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\AuthenticationMiddleware;
 use Psr\Http\Server\MiddlewareInterface;
 use exface\Core\Events\Facades\OnHttpRequestReceivedEvent;
@@ -153,8 +152,7 @@ abstract class AbstractHttpFacade extends AbstractFacade implements HttpFacadeIn
     protected function getMiddleware() : array
     {
         return [
-            new RequestIdNegotiator(), // make sure, there is a X-Request-ID header
-            new RequestContextReader($this->getWorkbench()->getContext()), // Pass request data to the request context
+            new RequestIdNegotiator(RequestIdNegotiator::X_REQUEST_ID, $this->getWorkbench()->getContext()->getScopeRequest()),
             new AuthenticationMiddleware($this)
         ];
     }

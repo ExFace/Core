@@ -4,7 +4,7 @@ So-called combo-widgets like `InputCombo` or `InputComboTable` have dropdowns wi
 
 **Use** these widgets if you need to select one or more values from a data source (typically an id of a related object).
 
-**Don't use** these widgets, if you need to select one or more values from a static set of values (enumeration) - use [InputSelect](Select-Inputs.md) instead.
+**Don't use** these widgets, if you need to select one or more values from a static set of values (enumeration) - use [InputSelect](InputSelect.md) instead.
 
 ## Autosuggest based on related Objects
 

@@ -220,7 +220,9 @@ horizontal groups use white and vertical groups use neutral gray.
 If a task supplies only a valid start date, its end is calculated by adding the task configuration's
 `default_duration_hours`, rounded up to full days. If it supplies only an end date, the same duration
 is subtracted to calculate its start. Every cell in such an inferred task bar has a thin diagonal
-line from bottom-left to top-right. Tasks without either date are not drawn. If no task in the
+line from bottom-left to top-right. Tasks without either date or with an end before their start
+are not drawn and do not extend the timeline. Their exported business data rows remain present.
+Tasks whose start and end are equal are still drawn. If no task in the
 complete result provides or yields a valid date range, the export still contains the grouped column
 table but does not add weekly timeline columns.
 
