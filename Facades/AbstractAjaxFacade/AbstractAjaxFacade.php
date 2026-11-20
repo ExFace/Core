@@ -8,7 +8,9 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\FacadeResolver;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
+use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
@@ -1214,5 +1216,47 @@ HTML;
         $uri = is_string($url) ? new Uri($url) : $url;
         $resolver = new FacadeResolver($this->getWorkbench(), $uri);
         return $resolver->getPage()->getWidgetRoot();
+    }
+    
+    /**
+     * Returns a CSS selector for a focusable area.
+     * 
+     * Examples
+     * - Widget links:
+     *  - myTableId!Column1
+     *  - myTableId!Column1$2
+     * - Areas:
+     *  - myTableId~column.Column1
+     *  - myTableId~header
+     *  - myTableId~table
+     *  - myTableId~button
+     *  - myTableId~row$3
+     *  - myGanttId~table
+     *  - myGanttId~chart
+     *  - myGanttId~chart$3
+     *  - myChartId~axisX
+     *  - myInputComboTable~lookupButton
+     *  - ContextBar
+     *  - ContextBar~user
+     * 
+     * @param string $area
+     * @param UiScreenInterface $screen
+     * @return string
+     */
+    public function getFocusAreaSelector(string $area, UiScreenInterface $screen) : string
+    {
+        // Parse area selector
+        $page = $screen instanceof UiPageInterface ? $screen : $screen->getPage();
+        if (stripos($area, '!') !== false) {
+            $link = WidgetLinkFactory::createFromPage($page, $area);
+            $widget = $link->getTargetWidget();
+        } else {
+            $widgetId = StringDataType::substringBefore($area, '~');
+            // TODO parse further
+        }
+        
+        // Resolve area using the facade element
+        $facadeEl = $this->getElement($widget);
+        return $facadeEl->buildCssFocusAreaSelector($area);
     }
 }

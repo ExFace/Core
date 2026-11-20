@@ -1174,4 +1174,19 @@ JS;
     {
         return $this->buildJsDomElementGetterForColumn($columnName);
     }
+
+    /**
+     * Returns the CSS selector for the given focusable UI area of this widget or for the widget itself if no area is provided
+     * 
+     * What areas a widget has depends on the widget structure (facade independent) and sometimes on specific facade 
+     * element implementation. Areas are visible to users, but typically are not used by the logic of the elements
+     * themselves.
+     * 
+     * @param string|null $area
+     * @return string
+     */
+    public function buildCssFocusAreaSelector(string $area = null) : string
+    {
+        return '#' . $this->getId();
+    }
 }
