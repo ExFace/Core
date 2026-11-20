@@ -59,6 +59,7 @@
         "npm-asset/eruda": "^2",
         "npm-asset/github-markdown-css": "^5.9",
         "npm-asset/pele": "^1.13",
+        "npm-asset/svg-pan-zoom": "^3.6.2",
         "justinrainbow/json-schema": "^5.2",
         "composer/semver": "^3",
         "softcreatr/jsonpath": "~0.7",

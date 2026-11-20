@@ -16,7 +16,8 @@ order, resolving these keys through their facade. Call
 `exfMermaid.renderAll(hostElement)` after placing Markdown HTML in the host.
 It recognizes `.language-mermaid` and `code[data-language="mermaid"]`, skips
 already rendered diagrams and scopes changes to that host. Optional
-`{panZoom: true}` requires Core's `svg-pan-zoom.min.js`. A failed diagram retains
+`{panZoom: true}` requires `npm-asset/svg-pan-zoom/dist/svg-pan-zoom.min.js`,
+installed through Core's Composer dependency `npm-asset/svg-pan-zoom`. A failed diagram retains
 its source, displays a diagnostic and logs the error to the browser console.
 
 The Core-owned stylesheet copies the Codiware/Markian palette without loading
