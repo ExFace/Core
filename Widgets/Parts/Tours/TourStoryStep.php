@@ -9,6 +9,7 @@ use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
 use exface\Core\Interfaces\Widgets\WidgetPartInterface;
+use exface\Core\Widgets\Filter;
 
 /**
  *
@@ -61,6 +62,21 @@ class TourStoryStep extends AbstractTourStep implements WidgetPartInterface
     public function getWorkbench(): Workbench
     {
         return $this->tour->getWorkbench();
+    }
+
+    /**
+     * Story steps describe the widget in `widget_to_focus` - not the widget, that holds the tour.
+     * 
+     * {@inheritDoc}
+     * @see AbstractTourStep::getSubrouteWidget()
+     */
+    protected function getSubrouteWidget() : ?WidgetInterface
+    {
+        $widget = $this->getWidgetToFocus()?->getTargetWidget();
+        if ($widget instanceof Filter) {
+            $widget = $widget->getInputWidget();
+        }
+        return $widget;
     }
 
     /**

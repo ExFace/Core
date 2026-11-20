@@ -1,6 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Tours;
 
+use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
+use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementTourSubrouteInterface;
+use exface\Core\Interfaces\Widgets\iTriggerAction;
+use exface\Core\Widgets\Button;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
@@ -8,6 +12,7 @@ use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Filter;
 use exface\Core\Widgets\Parts\Tours\TourStoryStep;
+use exface\Core\Widgets\Parts\Tours\TourSubrouteStep;
 
 /**
  * This class is a tour driver that uses the driver.js library to create interactive tours on the UI.
@@ -105,7 +110,35 @@ class DriverJsTourDriver implements TourDriverInterface
             $steps = array_merge($steps, $tourStorySteps);
         }
         
-        return $steps;
+        return $this->addSubrouteSteps($steps);
+    }
+
+    /**
+     * Inserts the steps of tour subroutes right after the steps, that configure them.
+     * 
+     * The subroute steps are provided by the facade element of the subroute widget because
+     * they depend on its rendered structure.
+     * 
+     * @param TourStepInterface[] $steps
+     * @return TourStepInterface[]
+     */
+    protected function addSubrouteSteps(array $steps) : array
+    {
+        $result = [];
+        foreach ($steps as $step) {
+            $result[] = $step;
+            if (! $step->hasSubroute()) {
+                continue;
+            }
+            $subroute = $step->getSubroute();
+            $element = $this->getFacade()->getElement($subroute->getWidget());
+            if ($element instanceof AjaxFacadeElementTourSubrouteInterface) {
+                foreach ($element->getTourSubrouteSteps($subroute) as $subrouteStep) {
+                    $result[] = $subrouteStep;
+                }
+            }
+        }
+        return $result;
     }
 
     /**
@@ -152,9 +185,11 @@ class DriverJsTourDriver implements TourDriverInterface
      * based on the steps of the given tour.
      * 
      * @param TourInterface $tour
+     * @param bool $isStandalone True for a manual menu start; skips actions marked skip_if_standalone.
+     * @param string|null $startIndexJs JS expression with the index of the first step to show
      * @return string
      */
-    public function buildJsStartTour(TourInterface $tour) : string
+    public function buildJsStartTour(TourInterface $tour, bool $isStandalone = false, ?string $startIndexJs = null) : string
     {
         $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
         $aStepsJs = '';
@@ -170,15 +205,26 @@ class DriverJsTourDriver implements TourDriverInterface
 JS;
         } else {
             foreach ($steps as $step) {
+                // A step that continues with another tour is not the end of the user's walkthrough.
+                // Skipped actions do not continue, so their final button keeps the "Done" label.
+                $onNextStep = $step->getOnNextStep();
+                $continuesTour = ! ($isStandalone && $onNextStep->getSkipIfStandalone()) && $onNextStep->getAutostartTourId();
+                $continuesTour = $continuesTour || ($step instanceof TourSubrouteStep && $step->isReturningToTour());
+                $doneBtnTextJs = $continuesTour
+                    ? 'doneBtnText: ' . $this->escapeString($translator->translate('TOUR.STEP.ACTION.NEXT')) . ','
+                    : '';
                 $aStepsJs .= <<<JS
                 {
-                    element: '#{$this->getStepHighlightedElementId($step)}',
+                    element: () => {$this->buildJsStepElementGetter($step)},
+                    // Custom flag (ignored by driver.js): only steps with a widget have an element to wait for
+                    exfExpectsElement: {$this->escapeBool($this->getFocusedWidget($step) !== null)},
                     popover: {
                       title: {$this->escapeString($step->getTitle())},
                       description: {$this->escapeString($step->getBody())},
                       side: '{$step->getSide()}',
                       align: '{$step->getAlign()}',
-                      {$this->buildJsOnNextClick($step)}
+                      {$doneBtnTextJs}
+                      {$this->buildJsOnNextClick($step, $isStandalone, $tour)}
                     }
                 },
 JS;
@@ -194,10 +240,11 @@ JS;
                 nextBtnText: '{$translator->translate('TOUR.STEP.ACTION.NEXT')}',
                 prevBtnText: '{$translator->translate('TOUR.STEP.ACTION.PREVIOUS')}',
                 doneBtnText: '{$translator->translate('TOUR.STEP.ACTION.DONE')}',
+                onDestroyed: () => { {$this->buildJsCleanupFocusHelpers()} },
                 steps: {$aStepsJs}
             });
     
-            driverObj.drive();
+            driverObj.drive({$startIndexJs});
             
 JS;
 
@@ -205,22 +252,294 @@ JS;
     }
 
     /**
+     * Builds JS to remove helper elements, that facade elements added to the DOM to highlight tour targets.
+     * 
+     * Column highlights use invisible overlays with the CSS class `exf-tour-column-focus`. If an element had
+     * to change the `position` style of a container for its overlay, it saves the original inline value in the
+     * `data-exf-tour-position` attribute. This code removes all overlays and restores all saved positions.
+     * It runs whenever a tour ends - also if it is closed or continues with another tour.
+     * 
+     * @return string
+     */
+    protected function buildJsCleanupFocusHelpers() : string
+    {
+        return <<<JS
+
+                    document.querySelectorAll('.exf-tour-column-focus').forEach(function(domBox) {
+                        domBox.remove();
+                    });
+                    document.querySelectorAll('[data-exf-tour-position]').forEach(function(domParent) {
+                        domParent.style.position = domParent.getAttribute('data-exf-tour-position');
+                        domParent.removeAttribute('data-exf-tour-position');
+                    });
+JS;
+    }
+
+    /**
      * Builds the JavaScript code for the onNextClick event of a tour step, 
      * which will be executed when the user clicks the "Next" button in the popover of that step.
      * 
      * @param TourStepInterface $step
+     * @param bool $isStandalone True for a manual menu start.
+     * @param TourInterface|null $tour The tour containing the step
      * @return string
      */
-    protected function buildJsOnNextClick(TourStepInterface $step) :string
+    protected function buildJsOnNextClick(TourStepInterface $step, bool $isStandalone = false, ?TourInterface $tour = null) :string
     {
-        $onNextStepFunction = $step->getOnNextStepFunction();
-        if (($functionName = $onNextStepFunction->getFunctionName()) === null) {
+        $onNextStep = $step->getOnNextStep();
+        // Skip the entire action, not the step: the default handler still advances or ends the tour.
+        if ($isStandalone && $onNextStep->getSkipIfStandalone()) {
+            return '';
+        }
+        $browserClick = $onNextStep->getBrowserClick();
+        $functionName = $onNextStep->getWidgetFunction();
+        if ($browserClick === null && $functionName === null) {
+            if (null !== $autostartTourId = $onNextStep->getAutostartTourId()) {
+                return $this->buildJsOnNextClickAutostartOnly($autostartTourId);
+            }
             return '';
         }
         
+        if ($browserClick !== null) {
+            $callFunctionJs = $this->buildJsBrowserClick($browserClick);
+        } else {
+            $callFunctionJs = $this->buildJsWidgetFunctionCall($step, $functionName);
+        }
+        
+        // Register the intent before acting: a cached dialog may open synchronously.
+        $pendingDialogTourJs = '';
+        $autostartTourId = $onNextStep->getAutostartTourId();
+        
+        if ($autostartTourId) {
+            $pendingDialogTourJs = <<<JS
+                window.exfTourContext.setPendingTour({
+                    targetTourId: {$this->escapeString($autostartTourId)}
+                });
+JS;
+        }
+        
+        // Subroutes leaving the tour remember where to continue it. The step returning
+        // to the tour turns this return point into a pending tour start.
+        $returnPointJs = '';
+        $endsTour = (bool) $autostartTourId;
+        if ($step instanceof TourSubrouteStep) {
+            if ($step->isLeavingTour() && $tour !== null && $tour->getId() !== null) {
+                $returnPointJs = <<<JS
+                window.exfTourContext.setReturnPoint({
+                    tourId: {$this->escapeString($tour->getId())},
+                    stepIndex: driver.getActiveIndex() + 1
+                });
+JS;
+            }
+            if ($step->isReturningToTour()) {
+                $returnPointJs = 'window.exfTourContext.resumeReturnPoint();';
+                $endsTour = true;
+            }
+        }
+        
+        // If another tour is started, end this one instead of moving on in the background.
+        $moveJs = $endsTour ? 'if (element) { driver.destroy(); } else { driver.moveNext(); }' : 'driver.moveNext();';
+        
+        // Pressing a button with an action may navigate asynchronously (e.g. a wizard step).
+        // In this case the tour must not move on right away.
+        if ($browserClick === null && ! $endsTour && $this->isPressOfActionButton($step, $functionName)) {
+            return $this->buildJsOnNextClickAfterAction($step, $callFunctionJs, $returnPointJs, $pendingDialogTourJs);
+        }
+        
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              if (element) {
+                  {$returnPointJs}
+                  {$pendingDialogTourJs}
+
+                  {$callFunctionJs}
+              }
+              {$moveJs}
+          }
+JS;
+    }
+
+    /**
+     * Builds the onNextClick handler for steps, that only start another tour without any action.
+     * 
+     * Without an action, no dialog or view is shown, that would check for the pending tour request.
+     * The handler therefore ends the current tour and notifies the visible views via the `exf-tour-resume`
+     * event, so a tour on the current page starts right away. If the target tour belongs to a view, that
+     * is not shown yet, the request remains pending until that view is shown.
+     * 
+     * @param string $autostartTourId
+     * @return string
+     */
+    protected function buildJsOnNextClickAutostartOnly(string $autostartTourId) : string
+    {
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              window.exfTourContext.setPendingTour({
+                  targetTourId: {$this->escapeString($autostartTourId)}
+              });
+              driver.destroy();
+              window.dispatchEvent(new Event('exf-tour-resume'));
+          }
+JS;
+    }
+
+    /**
+     * Builds the onNextClick handler for steps, that press a button with an action.
+     *
+     * Problem: a button like "Next" in a wizard validates its step, performs its action and only then
+     * switches to the next wizard step. The tour must not move to the next popover before that happened:
+     * the element of the next tour step would still be hidden and driver.js would show the popover
+     * in the top left corner of the screen.
+     *
+     * Solution: the handler works in three phases:
+     *
+     * 1. Listen for the `actionperformed` event of the pressed button. It is fired only if the action
+     * succeeded. If the validation or the action fails, no event comes and the tour stays on this step.
+     * 2. Once the event arrives, wait until the element of the next step is visible (the wizard
+     * needs a moment to show its next step).
+     * 3. Move to the next step. If the element does not show up within 3 seconds, move on anyway.
+     *
+     * @param TourStepInterface $step
+     * @param string $callFunctionJs JS that presses the button
+     * @param string $returnPointJs JS to remember or resume the return point of subroute steps
+     * @param string $pendingDialogTourJs JS to register a tour to be started in the next dialog
+     * @return string
+     */
+    protected function buildJsOnNextClickAfterAction(
+        TourStepInterface $step,
+        string $callFunctionJs,
+        string $returnPointJs,
+        string $pendingDialogTourJs
+    ) : string {
+        $triggerWidget = $this->getFocusedWidget($step);
+        $pageAliasJs = $this->escapeString($triggerWidget->getPage()->getAliasWithNamespace());
+        $widgetIdJs = $this->escapeString($triggerWidget->getId());
+        $actionperformed = AbstractJqueryElement::EVENT_NAME_ACTIONPERFORMED;
+
+        return <<<JS
+
+          onNextClick: (element, step, { driver }) => {
+              // Nothing to press if the step has no element - just continue
+              if (! element) {
+                  driver.moveNext();
+                  return;
+              }
+              {$returnPointJs}
+              {$pendingDialogTourJs}
+
+              var iStepIdx = driver.getActiveIndex();
+              // Fixed event namespace: a listener left from a previous click is replaced, not duplicated
+              var sEvent = "{$actionperformed}.exfTourNextStep";
+              
+              // Phase 1: wait for the action of the button to succeed
+              $(document).off(sEvent).on(sEvent, function(oEvent, oParams) {
+                  // Ignore actions of other buttons
+                  if (! oParams || oParams.page_alias !== {$pageAliasJs} || oParams.trigger_widget_id !== {$widgetIdJs}) {
+                      return;
+                  }
+                  $(document).off(sEvent);
+                  
+                  // Move on only if the user did not close or change the tour in the meantime
+                  var fnMove = function() {
+                      if (driver.isActive() && driver.getActiveIndex() === iStepIdx) {
+                          driver.moveNext();
+                      }
+                  };
+                  
+                  // Next step without a widget to focus: there is no element to wait for
+                  var oNextStep = driver.getConfig().steps[iStepIdx + 1];
+                  if (! oNextStep || ! oNextStep.exfExpectsElement || typeof oNextStep.element !== 'function') {
+                      fnMove();
+                      return;
+                  }
+                  
+                  // Phase 2: poll every 100 ms until the next element is rendered and visible
+                  var iWaited = 0;
+                  var iTimer = setInterval(function() {
+                      var oNextEl = null;
+                      try {
+                          oNextEl = oNextStep.element();
+                      } catch (e) {
+                          // Element is not rendered yet - try again on the next tick
+                      }
+                      iWaited += 100;
+                      // Phase 3: continue once visible or after 3 seconds at the latest
+                      if ((oNextEl && oNextEl.getClientRects().length > 0) || iWaited >= 3000) {
+                          clearInterval(iTimer);
+                          fnMove();
+                      }
+                  }, 100);
+              });
+
+              {$callFunctionJs}
+          }
+JS;
+    }
+
+    /**
+     * Returns TRUE if the step presses a button, that performs an action and thus fires the action-performed event
+     *
+     * @param TourStepInterface $step
+     * @param string $functionName
+     * @return bool
+     */
+    protected function isPressOfActionButton(TourStepInterface $step, string $functionName) : bool
+    {
+        $widget = $this->getFocusedWidget($step);
+        return $functionName === Button::FUNCTION_PRESS
+            && $widget instanceof iTriggerAction
+            && $widget->hasAction();
+    }
+
+    /**
+     * Builds JS dispatching the mouse event(s) on the highlighted `element` variable.
+     *
+     * @param string $browserClick
+     * @return string
+     */
+    protected function buildJsBrowserClick(string $browserClick) : string
+    {
+        // Events in the same order a real browser fires them.
+        // UI5 needs mouse-down and mouse-up to recognize a button press.
+        $leftClick = ['mousedown', 'mouseup', 'click'];
+        $events = [
+            'left_click' => $leftClick,
+            'right_click' => ['mousedown', 'mouseup', 'contextmenu'],
+            'double_click' => array_merge($leftClick, $leftClick, ['dblclick'])
+        ][$browserClick];
+        $eventsJs = json_encode($events);
+        $button = $browserClick === 'right_click' ? 2 : 0;
+        $buttons = $browserClick === 'right_click' ? 2 : 1;
+
+        return <<<JS
+                  if (!element.matches(':disabled')) {
+                      var iClick = 0;
+                      {$eventsJs}.forEach(function(sType) {
+                          // Every mouse-down starts a new click: detail is the click count.
+                          if (sType === 'mousedown') iClick++;
+                          element.dispatchEvent(new MouseEvent(sType, {
+                              bubbles: true, cancelable: true, view: window,
+                              button: {$button}, buttons: sType === 'mousedown' ? {$buttons} : 0,
+                              detail: iClick
+                          }));
+                      });
+                  }
+JS;
+    }
+
+    /**
+     * Builds JS calling the given function on the focused widget.
+     *
+     * @param TourStepInterface $step
+     * @param string $functionName
+     * @return string
+     */
+    protected function buildJsWidgetFunctionCall(TourStepInterface $step, string $functionName) : string
+    {
         $focusedWidget = $this->getFocusedWidget($step);
         
-        //function call:
         try {
             //TODO: If this is in a dialog, it currently gets one step from the called page and tries to click on it.
             // At this case the controller of the called page is not found and we getting an error here.
@@ -231,34 +550,56 @@ JS;
             $callFunctionJs = 'console.warn(' . $this->escapeString($e->getMessage()) . ');';
         }
         
-        //set the tour of that step to pending, so it will autostart if the view with that tour is loaded:
-        $pendingDialogTourJs = '';
-        $autostartTourId = $onNextStepFunction->getAutostartTourId();
-        
-        if ($autostartTourId) {
-            $pendingDialogTourJs = <<<JS
-                window.exfTourContext.setPendingTour({
-                    targetTourId: {$this->escapeString($autostartTourId)}
-                });
-JS;
-        }
-        
-        return <<<JS
-
-          onNextClick: (element, step, { driver }) => {
-              if (element) {
-                  {$callFunctionJs}
-                
-                  {$pendingDialogTourJs}
-              }
-              driver.moveNext();
-          }
-JS;
+        return (string) $callFunctionJs;
     }
     
     protected function escapeString($value) : string
     {
         return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * @param bool $value
+     * @return string
+     */
+    protected function escapeBool(bool $value) : string
+    {
+        return $value ? 'true' : 'false';
+    }
+
+    /**
+     * Resolves the first CSS match within the target widget, falling back to the widget.
+     *
+     * @param TourStepInterface $step
+     * @return string
+     */
+    public function buildJsStepElementGetter(TourStepInterface $step) : string
+    {
+        $widget = $this->getFocusedWidget($step);
+        if ($widget === null) {
+            return 'null';
+        }
+        $element = $this->getFacade()->getElement($widget);
+        // A widget link with a column (`widget!column`) highlights that column and a link with a column and
+        // a row (`widget!column$row`) a single cell - if the element supports it
+        $columnName = $this->getFocusedColumnName($step);
+        $rowNumber = $this->getFocusedRowNumber($step);
+        switch (true) {
+            case $columnName === null || ! $element instanceof AbstractJqueryElement:
+                $elementJs = $element->buildJsDomElementGetter();
+                break;
+            case $rowNumber !== null:
+                $elementJs = $element->buildJsDomElementGetterForCell($columnName, $rowNumber);
+                break;
+            default:
+                $elementJs = $element->buildJsDomElementGetterForColumn($columnName);
+        }
+        $query = $step->getFocusCssQuery();
+        if ($query === null) {
+            return $elementJs;
+        }
+        return '((element) => element ? (element.querySelector(' . $this->escapeString($query)
+            . ') || element) : null)(' . $elementJs . ')';
     }
 
     /**
@@ -279,6 +620,28 @@ JS;
         } else {
             return $this->getFacade()->getElement($focusedWidget)->getId();
         }
+    }
+
+    /**
+     * Returns the column name of a widget link like `widget_id!column_name` in `widget_to_focus`.
+     * 
+     * @param TourStepInterface $step
+     * @return string|null
+     */
+    protected function getFocusedColumnName(TourStepInterface $step) : ?string
+    {
+        return $step instanceof TourStoryStep ? $step->getWidgetToFocus()?->getTargetColumnId() : null;
+    }
+    
+    /**
+     * Returns the 1-based row number of a widget link like `widget_id!column_name$1` in `widget_to_focus`.
+     * 
+     * @param TourStepInterface $step
+     * @return int|null
+     */
+    protected function getFocusedRowNumber(TourStepInterface $step) : ?int
+    {
+        return $step instanceof TourStoryStep ? $step->getWidgetToFocus()?->getTargetRowNumber() : null;
     }
 
     /**

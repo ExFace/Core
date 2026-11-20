@@ -50,6 +50,7 @@ class Tour implements TourInterface, iHaveIcon
     private bool $showProgress = true;
     private bool $disableActiveInteraction = false;
     private bool $autorun = false;
+    private bool $hideInMenu = false;
     private ?array $tourStorySteps = null;
     private ?UxonObject $tourStoryStepsUxon = null;
     
@@ -87,7 +88,7 @@ class Tour implements TourInterface, iHaveIcon
     
     /** 
      * The id of the tour.
-     * It can be used with tour_steps.on_next_step_function to automatically start this tour.
+     * It can be used with tour_steps.on_next_step to automatically start this tour.
      * 
      * @uxon-property id
      * @uxon-type string
@@ -266,18 +267,61 @@ class Tour implements TourInterface, iHaveIcon
     }
 
     /**
+     * {@inheritDoc}
+     * @see TourInterface::getHideInMenu()
+     */
+    public function getHideInMenu() : bool
+    {
+        return $this->hideInMenu;
+    }
+
+    /**
+     * Hide this tour from the menu for manual selection.
+     *
+     * Set this to true for a partial tour that should only be started as part of a longer walkthrough.
+     * The tour can still start through `autostart_tour_id`, a URL or `autorun`.
+     *
+     * @uxon-property hide_in_menu
+     * @uxon-type boolean
+     * @uxon-default false
+     * @param bool $hide
+     * @return TourInterface
+     */
+    protected function setHideInMenu(bool $hide) : TourInterface
+    {
+        $this->hideInMenu = $hide;
+        return $this;
+    }
+
+    /**
      * Gets the story tour steps that are defined for this tour.
      * 
      * @return array|null
      */
     public function getTourStorySteps() : ?array
     {
-        if ($this->tourStorySteps === null) {
+        if ($this->tourStorySteps === null && $this->tourStoryStepsUxon !== null) {
+            $this->tourStorySteps = [];
             foreach ($this->tourStoryStepsUxon as $uxon) {
                 $this->tourStorySteps[] = new TourStoryStep($this, $uxon);
             }
         }
         return $this->tourStorySteps;
+    }
+
+    /**
+     * Appends a step to the ordered steps of this tour.
+     * 
+     * This is mainly used to build tours programmatically - e.g. for tour subroutes in dialogs.
+     * 
+     * @param TourStepInterface $step
+     * @return TourInterface
+     */
+    public function addStep(TourStepInterface $step) : TourInterface
+    {
+        $this->getTourStorySteps();
+        $this->tourStorySteps[] = $step;
+        return $this;
     }
 
     /**

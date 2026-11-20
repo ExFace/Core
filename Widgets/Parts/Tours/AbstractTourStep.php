@@ -5,10 +5,12 @@ namespace exface\Core\Widgets\Parts\Tours;
 use Error;
 use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\Tours\TourSubrouteInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Widgets\IHaveTourSubrouteInterface;
+use exface\Core\Widgets\Filter;
 
 /**
  * Represents a single step in a tour. 
@@ -28,9 +30,8 @@ use exface\Core\Interfaces\Widgets\IHaveTourSubrouteInterface;
  *          "body": "This text will appear in the popover when the step is active.",
  *          "side": "bottom",
  *          "align": "center",
- *          "$click_on_next_step": true
- *          "$on_next_step": {
- *              "function": "press",
+ *          "on_next_step": {
+ *              "widget_function": "press",
  *              "autostart_tour_id" : "news"
  *          }
  *     },
@@ -52,12 +53,14 @@ abstract class AbstractTourStep implements TourStepInterface
 
     private WidgetInterface $widget;
     private ?TourSubrouteInterface $subroute = null;
+    private ?UxonObject $subrouteUxon = null;
     private ?string $title = null;
     private ?string $body = "";
     private ?string $side = null;
     private ?string $align = null;
-    private $onNextStepFunction = null;
-    private $onNextStepFunctionUxon = null;
+    private ?string $focusCssQuery = null;
+    private $onNextStep = null;
+    private $onNextStepUxon = null;
 
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
@@ -173,62 +176,131 @@ abstract class AbstractTourStep implements TourStepInterface
     }
 
     /**
-     * @return TourOnNextStepFunction
+     * {@inheritDoc}
+     * @see TourStepInterface::getFocusCssQuery()
      */
-    public function getOnNextStepFunction() : TourOnNextStepFunction
+    public function getFocusCssQuery() : ?string
     {
-        if ($this->onNextStepFunction === null) {
-            $this->onNextStepFunction = new TourOnNextStepFunction($this, $this->onNextStepFunctionUxon);
+        return $this->focusCssQuery;
+    }
+
+    /**
+     * Highlight the first element matching this CSS query inside the target widget.
+     * If no element matches, highlight the target widget itself instead.
+     * Omit this property or leave it empty to highlight the whole widget.
+     * For story steps, set `widget_to_focus` to define the target widget.
+     * Queries depend on the facade's HTML structure; invalid CSS syntax causes a browser error.
+     * @uxon-property focus_css_query
+     * @uxon-type string
+     * @param string $query
+     * @return TourStepInterface
+     */
+    protected function setFocusCssQuery(string $query) : TourStepInterface
+    {
+        $query = trim($query);
+        $this->focusCssQuery = $query === '' ? null : $query;
+        return $this;
+    }
+
+    /**
+     * @return TourOnNextStep
+     */
+    public function getOnNextStep() : TourOnNextStep
+    {
+        if ($this->onNextStep === null) {
+            $this->onNextStep = new TourOnNextStep($this, $this->onNextStepUxon);
         }
-        return $this->onNextStepFunction;
+        return $this->onNextStep;
     }
 
     /**
      * It defines a function that will be executed when the user clicks on the "next" button in the popover of this step.
      * 
-     * @uxon-property on_next_step_function
-     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourOnNextStepFunction
-     * @uxon-template {"function": "press"}
+     * @uxon-property on_next_step
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\TourOnNextStep
+     * @uxon-template {"widget_function": "press"}
      * 
-     * @param UxonObject $onNextStepFunctionUxon
+     * @param UxonObject $onNextStepUxon
      * @return TourStepInterface
      */
-    protected function setOnNextStepFunction(UxonObject $onNextStepFunctionUxon) : TourStepInterface
+    protected function setOnNextStep(UxonObject $onNextStepUxon) : TourStepInterface
     {
-        $this->onNextStepFunctionUxon = $onNextStepFunctionUxon;
-        $this->onNextStepFunction = null;
+        $this->onNextStepUxon = $onNextStepUxon;
+        $this->onNextStep = null;
         return $this;
     }
 
     /**
+     * Returns TRUE if this step has a `subroute` configured.
+     * 
+     * @return bool
+     */
+    public function hasSubroute() : bool
+    {
+        return $this->subrouteUxon !== null;
+    }
+
+    /**
+     * Returns the subroute of this step or NULL if none is configured.
+     * 
+     * The subroute is created lazily for the widget returned by `getSubrouteWidget()`. This
+     * makes it independent of the order of UXON properties (e.g. `widget_to_focus` of story steps).
+     * 
+     * @throws WidgetConfigurationError if the widget of the step does not support subroutes
      * @return TourSubrouteInterface|null
      */
     public function getSubroute() : ?TourSubrouteInterface
     {
-        // TODO maybe get the subroute completely from the widget?
+        if ($this->subroute === null && $this->subrouteUxon !== null) {
+            $widget = $this->getSubrouteWidget();
+            if (! $widget instanceof IHaveTourSubrouteInterface) {
+                $errorWidget = $widget ?? $this->getWidget();
+                $type = $widget === null ? 'none' : $widget->getWidgetType();
+                throw new WidgetConfigurationError($errorWidget, 'Cannot use a tour step subroute with widget "' . $type . '": this widget does not support tour subroutes.');
+            }
+            $this->subroute = $widget->getTourSubroute($this->subrouteUxon);
+        }
         return $this->subroute;
     }
 
     /**
-     * Customize the widget-specific tour subroute (only if widget supports it!)
+     * Returns the widget, that the subroute of this step describes.
+     * 
+     * By default, this is the widget of the step. Filters are unwrapped to their input widget
+     * because they only render that input.
+     * 
+     * @return WidgetInterface|null
+     */
+    protected function getSubrouteWidget() : ?WidgetInterface
+    {
+        $widget = $this->getWidget();
+        if ($widget instanceof Filter) {
+            $widget = $widget->getInputWidget();
+        }
+        return $widget;
+    }
+
+    /**
+     * Add an auto-generated subroute explaining how to use the widget of this step (only if widget supports it!)
+     * 
+     * The subroute steps are shown right after this step. For story steps, the subroute describes the
+     * widget in `widget_to_focus`. Currently `InputComboTable` widgets support subroutes, that explain
+     * their lookup dialog. See `InputComboTableSubroute` for available texts.
+     * 
+     * If the subroute opens a dialog, the tour will continue after it was completed. This requires
+     * the tour to have an `id`.
      * 
      * @uxon-property subroute
-     * @uxon-type \exface\Core\Widgets\Parts\Tours\AbstractSubroute
-     * 
-     * TODO how to we generate a good template?
-     * Probably need an extra exface\Core\Uxon\TourStepSchema, that will call Subroute::getUxonTemplate() to
-     * generate the subroute part of the template.
+     * @uxon-type \exface\Core\Widgets\Parts\Tours\InputComboTableSubroute
+     * @uxon-template {"lookup_button": "", "lookup_header": "", "lookup_search_button": "", "lookup_table": "", "lookup_selection": "", "lookup_apply_button": ""}
      * 
      * @param UxonObject $uxon
      * @return TourStepInterface
      */
     protected function setSubroute(UxonObject $uxon) : TourStepInterface
     {
-        $widget = $this->getWidget();
-        if (! $widget instanceof IHaveTourSubrouteInterface) {
-            // TODO
-        }
-        $this->subroute = $widget->getTourSubroute($uxon);
+        $this->subrouteUxon = $uxon;
+        $this->subroute = null;
         return $this;
     }
 }

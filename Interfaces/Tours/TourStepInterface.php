@@ -19,4 +19,25 @@ interface TourStepInterface extends WidgetPartInterface
     public function getSide() : string;
     
     public function getAlign() : string;
+
+    /**
+     * Returns an optional CSS query within the target widget.
+     *
+     * @return string|null
+     */
+    public function getFocusCssQuery() : ?string;
+
+    /**
+     * Returns TRUE if the step has a subroute configured.
+     *
+     * @return bool
+     */
+    public function hasSubroute() : bool;
+
+    /**
+     * Returns the subroute of the step or NULL if there is none.
+     *
+     * @return TourSubrouteInterface|null
+     */
+    public function getSubroute() : ?TourSubrouteInterface;
 }
