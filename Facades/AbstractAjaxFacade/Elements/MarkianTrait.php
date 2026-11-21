@@ -10,7 +10,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * Shared value and lifecycle contract for independently adopted Markian editors.
  * 
  * Facades own asset loading, framework bindings and layout. This trait never
- * changes the legacy Toast UI integration or constructs a display viewer.
+ * constructs a display viewer.
  * 
  * ## How to use
  * 
@@ -144,6 +144,22 @@ JS;
     protected function buildJsMarkdownInitEditor(bool $isViewer = false) : string
     {
         $widget = $this->getWidget();
+        $optionsJs = $this->buildJsMarkdownEditorOptions();
+        $mermaidJs = $widget->hasRenderMermaidDiagrams()
+            ? $this->escapeMarkdownForInlineJavaScript($this->getFacade()->buildUrlToSource('LIBS.PELE.JS'))
+            : 'null';
+        $allowImagesJs = $widget->getAllowImages() ? 'true' : 'false';
+        return 'MarkianAdapter.mount(document.getElementById(' . json_encode($this->getId()) . '), ' . $optionsJs . ', false, ' . $mermaidJs . ', ' . $allowImagesJs . ')';
+    }
+
+    /**
+     * Shares widget configuration with facades that mount through a native control.
+     *
+     * @return string
+     */
+    protected function buildJsMarkdownEditorOptions() : string
+    {
+        $widget = $this->getWidget();
         $type = $widget->getValueDataType();
         $options = [
             'markdown' => (string) ($widget->getValueWithDefaults() ?? ''),
@@ -158,11 +174,7 @@ JS;
         ];
         $optionsJs = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
         $optionsJs = 'Object.assign(' . $optionsJs . ', {tags: MarkianAdapter.buildTags(' . $this->buildJsMarkdownMentions() . '), extensions: {code: {enabled: true, config: MarkianAdapter.buildCodeConfig(' . $this->buildJsMarkdownCodeSettings() . ')}}})';
-        $mermaidJs = $widget->hasRenderMermaidDiagrams()
-            ? $this->escapeMarkdownForInlineJavaScript($this->getFacade()->buildUrlToSource('LIBS.PELE.JS'))
-            : 'null';
-        $allowImagesJs = $widget->getAllowImages() ? 'true' : 'false';
-        return 'MarkianAdapter.mount(document.getElementById(' . json_encode($this->getId()) . '), ' . $optionsJs . ', false, ' . $mermaidJs . ', ' . $allowImagesJs . ')';
+        return $optionsJs;
     }
 
     /**
