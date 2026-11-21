@@ -2,6 +2,8 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\DataTypes\ColorDataType;
+use exface\Core\DataTypes\FilePathDataType;
+use exface\Core\DataTypes\LocaleDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -24,6 +26,7 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * {
  *     "LIBS.MARKIAN.EDITOR.JS": "axenox/markian/dist/markian.min.js",
  *     "LIBS.MARKIAN.EDITOR.CSS": "axenox/markian/dist/markian.css",
+ *     "LIBS.MARKIAN.TRANSLATIONS": "axenox/markian/Translations/",
  *     "LIBS.MARKIAN.MARKDOWN.CSS": "npm-asset/github-markdown-css/github-markdown-light.css",
  *     "LIBS.MARKIAN.MARKDOWN.CSS_CLASSES": ["markdown-body"],
  *     "LIBS.MARKIAN.CODE.JS": "axenox/markian/dist/extensions/code.min.js",
@@ -161,20 +164,48 @@ JS;
     {
         $widget = $this->getWidget();
         $type = $widget->getValueDataType();
+        $facade = $this->getFacade();
+        $translationsPath = $facade->getConfig()->getOption('LIBS.MARKIAN.TRANSLATIONS');
+        $translationsFolder = FilePathDataType::join([$facade->getWorkbench()->filemanager()->getPathToVendorFolder(), $translationsPath]);
+        $translations = [];
+        foreach ($this->findMarkdownTranslationFiles($this->getWorkbench()->getContext()->getScopeSession()->getSessionLocale(), $translationsFolder) as $filename) {
+            $translations[] = $facade->buildUrlToVendorFile(rtrim($translationsPath, '/\\') . '/' . $filename);
+        }
         $options = [
             'markdown' => (string) ($widget->getValueWithDefaults() ?? ''),
+            'translations' => $translations,
             'markdownCssUrls' => [$this->getFacade()->buildUrlToSource('LIBS.MARKIAN.MARKDOWN.CSS')],
             'markdownCssClasses' => $this->getFacade()->getConfig()->getOption('LIBS.MARKIAN.MARKDOWN.CSS_CLASSES')->toArray(),
             'initialMode' => 'visual',
             'disabled' => $widget->isDisabled(),
             'readOnly' => $widget->isReadonly(),
-            'label' => $widget->getCaption() ?: 'Markdown editor',
+            'label' => $widget->getCaption() ?: 'EDITOR.LABEL',
             'softbreaks' => $type instanceof MarkdownDataType ? $type->getEnableNewlines() : true,
             'sidebarVisible' => false
         ];
         $optionsJs = json_encode($options, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_THROW_ON_ERROR);
         $optionsJs = 'Object.assign(' . $optionsJs . ', {tags: MarkianAdapter.buildTags(' . $this->buildJsMarkdownMentions() . '), extensions: {code: {enabled: true, config: MarkianAdapter.buildCodeConfig(' . $this->buildJsMarkdownCodeSettings() . ')}}})';
         return $optionsJs;
+    }
+
+    /**
+     * Selects only the installed dictionary for the session language.
+     *
+     * English is embedded in Markian. Unsupported locales retain that base without
+     * requesting missing files; failures loading selected files remain visible.
+     *
+     * @param string $locale
+     * @param string $folder Local translation directory.
+     * @return string[]
+     */
+    protected function findMarkdownTranslationFiles(string $locale, string $folder) : array
+    {
+        $language = LocaleDataType::findLanguage($locale);
+        if ($language === 'en' || ! preg_match('/^[a-z]{2,3}$/D', $language ?? '')) {
+            return [];
+        }
+        $filename = $language . '.json';
+        return is_file(FilePathDataType::join([$folder, $filename])) ? [$filename] : [];
     }
 
     /**
