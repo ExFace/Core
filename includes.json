@@ -44,13 +44,5 @@
         ],
         "description": "Lightweight XLSX Excel Spreadsheet Writer in PHP",
         "homepage": "https://github.com/mk-j/PHP_XLSXWriter"
-    }, 
-    {
-        "name": "npm-asset/mermaid",
-        "version": "12.2.0",
-        "license": ["MIT"],
-        "license_file": "exface/ui5facade/Facades/js/mermaid/LICENSE.txt",
-        "description": "Generation of diagrams like flowcharts or sequence diagrams from text in a similar manner as markdown",
-        "homepage": "https://mermaid.js.org/"
     }
 ]

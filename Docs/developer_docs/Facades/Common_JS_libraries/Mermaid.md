@@ -32,9 +32,7 @@ Source is limited to 20,000 characters, 500 lines and 500 edges; generated SVG i
 limited to 2 MB and 10,000 elements. Source-defined links and images are disabled.
 The adapter preserves SVG IDs and styling rather than restyling custom colors.
 
-UI5 and jEasyUI Markdown widgets use Markian's Pele extensions. Other UI5
-integrations still use Mermaid.js and `LIBS.MERMAID.JS`.
-Do not point that key at Pele: their runtime APIs differ.
+Integrating the original mermaid.js is discouraged as its drop-in Javascript file is very large and includes a lot of unnecessary dependencies. 
 
 ### Focused browser validation
 
