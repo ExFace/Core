@@ -59,6 +59,7 @@ abstract class AbstractTourStep implements TourStepInterface
     private ?string $side = null;
     private ?string $align = null;
     private ?string $focusCssQuery = null;
+    private ?string $focusArea = null;
     private $onNextStep = null;
     private $onNextStepUxon = null;
 
@@ -199,6 +200,49 @@ abstract class AbstractTourStep implements TourStepInterface
     {
         $query = trim($query);
         $this->focusCssQuery = $query === '' ? null : $query;
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see TourStepInterface::getFocusArea()
+     */
+    public function getFocusArea() : ?string
+    {
+        return $this->focusArea;
+    }
+
+    /**
+     * Highlight a specific area of a widget - e.g. a column or a single cell of a table.
+     * 
+     * The value consists of the id of the widget and the area, separated by `~`: `<widget_id>~<area>`.
+     * A `$` followed by a number selects a specific item of an area: e.g. `$2` is the second row.
+     * Rows are counted from the top of the data starting with 1 - regardless of the current scroll 
+     * position. The table is scrolled automatically if the row is not visible.
+     * 
+     * Supported areas depend on the widget and the facade. Currently available for tables:
+     * 
+     * - `myTableId~column.Column1` - the entire column with the data column name `Column1`
+     * - `myTableId~column.Column1$2` - the cell of `Column1` in the second row
+     * - `myTableId~row$3` - the third row (UI5 only)
+     * - `myTableId~row_selector$3` - selection checkbox of the third row (UI5 only)
+     * - `myTableId~header` - the column headers (UI5 only)
+     * - `myTableId~table` - the table without toolbars
+     * 
+     * If the widget does not support the area, the whole widget is highlighted. If `widget_to_focus`
+     * is set too, it takes precedence. A `focus_css_query` is applied within the focused area.
+     * 
+     * @uxon-property focus_area
+     * @uxon-type string
+     * @uxon-template myTableId~column.
+     * 
+     * @param string $area
+     * @return TourStepInterface
+     */
+    protected function setFocusArea(string $area) : TourStepInterface
+    {
+        $area = trim($area);
+        $this->focusArea = $area === '' ? null : $area;
         return $this;
     }
 

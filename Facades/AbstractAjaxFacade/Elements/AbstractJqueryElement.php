@@ -1144,43 +1144,17 @@ JS;
     {
         return "$('#{$this->getId()}')[0]";
     }
-    
-    /**
-     * Returns a JS expression for the DOM element to highlight for a column of this widget in a tour.
-     * 
-     * Elements without column support highlight the whole widget. Override in widgets with columns.
-     * 
-     * @param string $columnName
-     * @return string
-     */
-    public function buildJsDomElementGetterForColumn(string $columnName) : string
-    {
-        return $this->buildJsDomElementGetter();
-    }
-    
-    /**
-     * Returns a JS expression for the DOM element to highlight for a single cell of this widget in a tour.
-     * 
-     * The row number is 1-based and refers to the displayed data rows counted from the top (current
-     * page) - regardless of the scroll position. Implementations should scroll the row into view if
-     * needed. Elements without cell support highlight the column instead. Override in widgets
-     * with rows and columns.
-     * 
-     * @param string $columnName
-     * @param int $rowNumber
-     * @return string
-     */
-    public function buildJsDomElementGetterForCell(string $columnName, int $rowNumber) : string
-    {
-        return $this->buildJsDomElementGetterForColumn($columnName);
-    }
 
     /**
      * Returns the CSS selector for the given focusable UI area of this widget or for the widget itself if no area is provided
      * 
      * What areas a widget has depends on the widget structure (facade independent) and sometimes on specific facade 
      * element implementation. Areas are visible to users, but typically are not used by the logic of the elements
-     * themselves.
+     * themselves. The selector may match multiple DOM elements - e.g. all cells of a column.
+     * 
+     * Elements, that do not know the requested area, should return the selector of the whole widget.
+     * 
+     * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::getFocusAreaSelector() for examples
      * 
      * @param string|null $area
      * @return string
@@ -1188,5 +1162,19 @@ JS;
     public function buildCssFocusAreaSelector(string $area = null) : string
     {
         return '#' . $this->getId();
+    }
+    
+    /**
+     * Returns JS code to make the DOM elements of the given area available before they are searched by selector
+     * 
+     * For example, tables with virtual scrolling need to scroll to a row before its cells are rendered. Returns
+     * an empty string by default.
+     * 
+     * @param string $area
+     * @return string
+     */
+    public function buildJsFocusAreaPreparer(string $area) : string
+    {
+        return '';
     }
 }

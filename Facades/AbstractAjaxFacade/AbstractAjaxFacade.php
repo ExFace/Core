@@ -15,6 +15,7 @@ use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Widgets\Filter;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -1221,8 +1222,16 @@ HTML;
     /**
      * Returns a CSS selector for a focusable area.
      * 
+     * The area consists of the widget id and the name of an area of that widget, separated by `~`. What areas
+     * are available, depends on the facade element of the widget - see `buildCssFocusAreaSelector()` of the
+     * element. If the element does not know the area, it returns the selector of the whole widget.
+     * 
+     * Widget links (e.g. `myTableId!Column1`) currently only resolve the widget - use `widget_to_focus` for them.
+     * 
+     * The resulting selector may match multiple DOM elements - e.g. all cells of a column.
+     * 
      * Examples
-     * - Widget links:
+     * - Widget links: (currently not supported here)
      *  - myTableId!Column1
      *  - myTableId!Column1$2
      * - Areas:
@@ -1240,23 +1249,98 @@ HTML;
      *  - ContextBar~user
      * 
      * @param string $area
-     * @param UiScreenInterface $screen
+     * @param WidgetInterface|UiScreenInterface $context
      * @return string
      */
-    public function getFocusAreaSelector(string $area, UiScreenInterface $screen) : string
+    public function getFocusAreaSelector(string $area, WidgetInterface|UiScreenInterface $context) : string
     {
-        // Parse area selector
-        $page = $screen instanceof UiPageInterface ? $screen : $screen->getPage();
+        list($widget, $widgetArea) = $this->parseFocusArea($area, $context);
+        $facadeEl = $this->getElement($widget);
+        if (! $facadeEl instanceof AbstractJqueryElement) {
+            return '#' . $facadeEl->getId();
+        }
+        return $facadeEl->buildCssFocusAreaSelector($widgetArea);
+    }
+    
+    /**
+     * Returns the widget, that contains the given focus area
+     * 
+     * @see AbstractAjaxFacade::getFocusAreaSelector() for examples
+     * 
+     * @param string $area
+     * @param WidgetInterface|UiScreenInterface $context
+     * @return WidgetInterface
+     */
+    public function getFocusAreaWidget(string $area, WidgetInterface|UiScreenInterface $context) : WidgetInterface
+    {
+        return $this->parseFocusArea($area, $context)[0];
+    }
+    
+    /**
+     * Returns JS to run before the selector of the focus area is evaluated or an empty string if not needed
+     * 
+     * Lets the facade element make the area available first - e.g. scroll a lazy table to the required row.
+     * 
+     * TODO: 23.11.2026 getFocusAreaSelector() just returns the selector and can not call the preparer logic right now,  
+     *  that is why it needs to be called separately before the selector is evaluated. 
+     * 
+     * @see AbstractAjaxFacade::getFocusAreaSelector() for examples
+     * 
+     * @param string $area
+     * @param WidgetInterface|UiScreenInterface $context
+     * @return string
+     */
+    public function buildJsFocusAreaPreparer(string $area, WidgetInterface|UiScreenInterface $context) : string
+    {
+        list($widget, $widgetArea) = $this->parseFocusArea($area, $context);
+        $facadeEl = $this->getElement($widget);
+        if (! $facadeEl instanceof AbstractJqueryElement) {
+            return '';
+        }
+        return $facadeEl->buildJsFocusAreaPreparer($widgetArea ?? '');
+    }
+    
+    /**
+     * Splits a focus area into the widget and the area within this widget
+     * 
+     * Returns an array with the widget and the area name (or NULL if the entire widget is meant). Widgets are
+     * searched relative to the given context widget (in its id space - e.g. within a dialog) or in the id space
+     * of the given screen. Filters are replaced by their input widgets because they
+     * are rendered by them.
+     * 
+     * @param string $area
+     * @param WidgetInterface|UiScreenInterface $context
+     * @return array [WidgetInterface, string|null]
+     */
+    protected function parseFocusArea(string $area, WidgetInterface|UiScreenInterface $context) : array
+    {
+        $area = trim($area);
+        $page = $context instanceof WidgetInterface ? $context->getPage() : ($context instanceof UiPageInterface ? $context : $context->getPage());
+        
         if (stripos($area, '!') !== false) {
-            $link = WidgetLinkFactory::createFromPage($page, $area);
-            $widget = $link->getTargetWidget();
+            // Widget links: only the widget is resolved, the link itself is not mapped to an area
+            // TODO support widget links if needed. Use `widget_to_focus` for them in the meantime.
+            $linkString = $area;
+            $widgetArea = null;
         } else {
-            $widgetId = StringDataType::substringBefore($area, '~');
-            // TODO parse further
+            // Areas: `myTableId~column.Column1`
+            $linkString = StringDataType::substringBefore($area, '~', $area);
+            $widgetArea = StringDataType::substringAfter($area, '~', null);
+            $widgetArea = $widgetArea === '' ? null : $widgetArea;
         }
         
-        // Resolve area using the facade element
-        $facadeEl = $this->getElement($widget);
-        return $facadeEl->buildCssFocusAreaSelector($area);
+        if ($linkString === 'ContextBar') {
+            return [$page->getContextBar(), $widgetArea];
+        }
+        
+        // Resolve relative to the context widget to search in its id space - e.g. within a dialog
+        $link = $context instanceof WidgetInterface 
+            ? WidgetLinkFactory::createFromWidget($context, $linkString)
+            : WidgetLinkFactory::createFromPage($page, $linkString);
+        $widget = $link->getTargetWidget();
+        if ($widget instanceof Filter) {
+            $widget = $widget->getInputWidget();
+        }
+        return [$widget, $widgetArea];
     }
 }

@@ -176,7 +176,9 @@ class TourOnNextStep implements WidgetPartInterface
     }
 
     /**
-     * The name of the widget function to call.
+     * The name of the widget function to call. 
+     * Only works if "widget_to_focus" property points to a widget that supports the chosen function.
+     * INFO: If "widget_function" : "press" do not work, try "browser_click": "left_click" instead.
      *
      * @uxon-property widget_function
      * @uxon-type string

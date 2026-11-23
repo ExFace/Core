@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Tours;
 
+use exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementTourSubrouteInterface;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
@@ -252,12 +253,12 @@ JS;
     }
 
     /**
-     * Builds JS to remove helper elements, that facade elements added to the DOM to highlight tour targets.
+     * Builds JS to remove helper elements, that were added to the DOM to highlight tour targets.
      * 
-     * Column highlights use invisible overlays with the CSS class `exf-tour-column-focus`. If an element had
-     * to change the `position` style of a container for its overlay, it saves the original inline value in the
-     * `data-exf-tour-position` attribute. This code removes all overlays and restores all saved positions.
-     * It runs whenever a tour ends - also if it is closed or continues with another tour.
+     * Focus areas matching multiple DOM elements are highlighted by an invisible overlay with the CSS class
+     * `exf-tour-focus-area` - see `buildJsFocusAreaGetter()`. This code removes it and the CSS class
+     * `exf-tour-focus-area-target` of the matched elements whenever a tour ends - also
+     * if it is closed or continues with another tour.
      * 
      * @return string
      */
@@ -265,12 +266,11 @@ JS;
     {
         return <<<JS
 
-                    document.querySelectorAll('.exf-tour-column-focus').forEach(function(domBox) {
+                    document.querySelectorAll('.exf-tour-focus-area').forEach(function(domBox) {
                         domBox.remove();
                     });
-                    document.querySelectorAll('[data-exf-tour-position]').forEach(function(domParent) {
-                        domParent.style.position = domParent.getAttribute('data-exf-tour-position');
-                        domParent.removeAttribute('data-exf-tour-position');
+                    document.querySelectorAll('.exf-tour-focus-area-target').forEach(function(domEl) {
+                        domEl.classList.remove('exf-tour-focus-area-target');
                     });
 JS;
     }
@@ -568,7 +568,11 @@ JS;
     }
 
     /**
-     * Resolves the first CSS match within the target widget, falling back to the widget.
+     * Returns JS resolving the DOM element to highlight in the given step.
+     * 
+     * If the step has a `focus_area`, the element of the area is used. Otherwise the DOM element of the focused
+     * widget. A `focus_css_query` is applied within the resolved element in both cases - the first match is
+     * highlighted, falling back to the element itself.
      *
      * @param TourStepInterface $step
      * @return string
@@ -579,27 +583,126 @@ JS;
         if ($widget === null) {
             return 'null';
         }
-        $element = $this->getFacade()->getElement($widget);
-        // A widget link with a column (`widget!column`) highlights that column and a link with a column and
-        // a row (`widget!column$row`) a single cell - if the element supports it
-        $columnName = $this->getFocusedColumnName($step);
-        $rowNumber = $this->getFocusedRowNumber($step);
-        switch (true) {
-            case $columnName === null || ! $element instanceof AbstractJqueryElement:
-                $elementJs = $element->buildJsDomElementGetter();
-                break;
-            case $rowNumber !== null:
-                $elementJs = $element->buildJsDomElementGetterForCell($columnName, $rowNumber);
-                break;
-            default:
-                $elementJs = $element->buildJsDomElementGetterForColumn($columnName);
-        }
+        $elementJs = $this->buildJsFocusAreaGetter($step) ?? $this->getFacade()->getElement($widget)->buildJsDomElementGetter();
         $query = $step->getFocusCssQuery();
         if ($query === null) {
             return $elementJs;
         }
         return '((element) => element ? (element.querySelector(' . $this->escapeString($query)
             . ') || element) : null)(' . $elementJs . ')';
+    }
+    
+    /**
+     * Returns JS resolving the DOM element for the `focus_area` of the step or NULL if the step has no focus area
+     * 
+     * The facade translates the area into a CSS selector, that may match multiple DOM elements - e.g. all cells
+     * of a table column. Before searching, the preparer JS of the facade element runs - e.g. to scroll a lazy
+     * table to the required row.
+     * 
+     * - If nothing visible matches, the DOM element of the widget is returned.
+     * - A single match is scrolled into view and returned as-is.
+     * - Multiple matches are covered by an invisible overlay `div.exf-tour-focus-area` spanning all of them. The
+     * overlay is clipped to the visible part of each match, so it does not reach beyond scroll containers.
+     * The matches get the CSS class `exf-tour-focus-area-target`, which keeps them clickable while the overlay is
+     * highlighted - unless `disable_active_interaction` is set for the tour.
+     * 
+     * The overlay is removed when the tour is destroyed - see `buildJsCleanupFocusHelpers()`.
+     * 
+     * @param TourStepInterface $step
+     * @return string|null
+     */
+    protected function buildJsFocusAreaGetter(TourStepInterface $step) : ?string
+    {
+        $area = $step->getFocusArea();
+        $facade = $this->getFacade();
+        if ($area === null || ! $facade instanceof AbstractAjaxFacade) {
+            return null;
+        }
+        // Resolve the area relative to the tour widget like `widget_to_focus` does - e.g. within a dialog
+        $context = $step->getWidget();
+        $widget = $facade->getFocusAreaWidget($area, $context);
+        $selectorJs = $this->escapeString($facade->getFocusAreaSelector($area, $context));
+        // Let the element make its area available first - e.g. scroll a lazy table to the required row
+        $preparerJs = $facade->buildJsFocusAreaPreparer($area, $context);
+        $fallbackJs = $facade->getElement($widget)->buildJsDomElementGetter();
+        return <<<JS
+
+                    (function() {
+                        try {
+                            {$preparerJs}
+                        } catch (e) {
+                            console.warn('Cannot prepare tour focus area', e);
+                        }
+                        var aDoms = Array.prototype.filter.call(document.querySelectorAll({$selectorJs}), function(domEl) {
+                            return domEl.getClientRects().length > 0;
+                        });
+                        if (aDoms.length === 0) {
+                            return {$fallbackJs};
+                        }
+                        aDoms[0].scrollIntoView({block: 'center', inline: 'nearest'});
+                        if (aDoms.length === 1) {
+                            return aDoms[0];
+                        }
+                        // Clip every match to the viewport and to its scrolling containers, then unite them
+                        var oBox = null;
+                        aDoms.forEach(function(domEl) {
+                            var oRect = domEl.getBoundingClientRect();
+                            var iLeft = Math.max(oRect.left, 0), iTop = Math.max(oRect.top, 0);
+                            var iRight = Math.min(oRect.right, window.innerWidth), iBottom = Math.min(oRect.bottom, window.innerHeight);
+                            for (var domParent = domEl.parentElement; domParent && domParent !== document.body; domParent = domParent.parentElement) {
+                                var oStyle = window.getComputedStyle(domParent);
+                                if (oStyle.overflowX === 'visible' && oStyle.overflowY === 'visible') {
+                                    continue;
+                                }
+                                var oParentRect = domParent.getBoundingClientRect();
+                                iLeft = Math.max(iLeft, oParentRect.left);
+                                iTop = Math.max(iTop, oParentRect.top);
+                                iRight = Math.min(iRight, oParentRect.right);
+                                iBottom = Math.min(iBottom, oParentRect.bottom);
+                            }
+                            if (iRight <= iLeft || iBottom <= iTop) {
+                                return;
+                            }
+                            oBox = oBox === null ? {left: iLeft, top: iTop, right: iRight, bottom: iBottom} : {
+                                left: Math.min(oBox.left, iLeft), 
+                                top: Math.min(oBox.top, iTop), 
+                                right: Math.max(oBox.right, iRight), 
+                                bottom: Math.max(oBox.bottom, iBottom)
+                            };
+                        });
+                        if (oBox === null) {
+                            return aDoms[0];
+                        }
+                        // driver.js only lets clicks through to the active element (our overlay), so make the
+                        // matches clickable while the overlay is active and interaction is not disabled
+                        if (! document.getElementById('exf-tour-focus-area-style')) {
+                            var domStyle = document.createElement('style');
+                            domStyle.id = 'exf-tour-focus-area-style';
+                            domStyle.textContent = 'body:has(> .exf-tour-focus-area.driver-active-element:not(.driver-no-interaction)) .exf-tour-focus-area-target, '
+                                + 'body:has(> .exf-tour-focus-area.driver-active-element:not(.driver-no-interaction)) .exf-tour-focus-area-target * {pointer-events: auto}';
+                            document.head.appendChild(domStyle);
+                        }
+                        document.querySelectorAll('.exf-tour-focus-area-target').forEach(function(domEl) {
+                            domEl.classList.remove('exf-tour-focus-area-target');
+                        });
+                        aDoms.forEach(function(domEl) {
+                            domEl.classList.add('exf-tour-focus-area-target');
+                        });
+                        var domBox = document.querySelector('body > .exf-tour-focus-area');
+                        if (! domBox) {
+                            domBox = document.createElement('div');
+                            domBox.className = 'exf-tour-focus-area';
+                            domBox.style.position = 'absolute';
+                            domBox.style.pointerEvents = 'none';
+                            document.body.appendChild(domBox);
+                        }
+                        domBox.style.left = (oBox.left + window.scrollX) + 'px';
+                        domBox.style.top = (oBox.top + window.scrollY) + 'px';
+                        domBox.style.width = (oBox.right - oBox.left) + 'px';
+                        domBox.style.height = (oBox.bottom - oBox.top) + 'px';
+                        return domBox;
+                    })()
+JS;
     }
 
     /**
@@ -623,39 +726,25 @@ JS;
     }
 
     /**
-     * Returns the column name of a widget link like `widget_id!column_name` in `widget_to_focus`.
-     * 
-     * @param TourStepInterface $step
-     * @return string|null
-     */
-    protected function getFocusedColumnName(TourStepInterface $step) : ?string
-    {
-        return $step instanceof TourStoryStep ? $step->getWidgetToFocus()?->getTargetColumnId() : null;
-    }
-    
-    /**
-     * Returns the 1-based row number of a widget link like `widget_id!column_name$1` in `widget_to_focus`.
-     * 
-     * @param TourStepInterface $step
-     * @return int|null
-     */
-    protected function getFocusedRowNumber(TourStepInterface $step) : ?int
-    {
-        return $step instanceof TourStoryStep ? $step->getWidgetToFocus()?->getTargetRowNumber() : null;
-    }
-
-    /**
      * Returns the widget that should be focused (highlighted) in the given step.
+     * 
+     * The widget of the `focus_area` takes precedence over `widget_to_focus` because the area is more specific.
      * 
      * @param TourStepInterface $step
      * @return WidgetInterface|null
      */
     protected function getFocusedWidget(TourStepInterface $step) : ?WidgetInterface
     {
-        if ($step instanceof TourStoryStep) {
-            $widget = $step->getWidgetToFocus() ? $step->getWidgetToFocus()->getTargetWidget() : null;
-        } else {
-            $widget = $step->getWidget();
+        $area = $step->getFocusArea();
+        $facade = $this->getFacade();
+        switch (true) {
+            case $area !== null && $facade instanceof AbstractAjaxFacade:
+                return $facade->getFocusAreaWidget($area, $step->getWidget());
+            case $step instanceof TourStoryStep:
+                $widget = $step->getWidgetToFocus() ? $step->getWidgetToFocus()->getTargetWidget() : null;
+                break;
+            default:
+                $widget = $step->getWidget();
         }
 
         // Filters will mostly not have any id - they just render their input_widget, so we take that

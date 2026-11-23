@@ -107,6 +107,7 @@ Both step types share these properties (`AbstractTourStep`):
 | `side` | `top`, `right`, `bottom`, `left` | `bottom` | Side of the popover relative to the highlighted element |
 | `align` | `start`, `center`, `end` | `start` | Alignment of the popover relative to the element |
 | `focus_css_query` | string | - | CSS query within the target widget. Highlights the first match; without a match, highlights the widget itself |
+| `focus_area` | string | - | Logical area of a widget to highlight - e.g. `myTable~column.NAME$2`. See below |
 | `on_next_step` | object | - | Action when the user clicks "Next" |
 
 Invalid values for `side` and `align` cause an error.
@@ -150,21 +151,34 @@ The query does not search the whole document. A story step without `widget_to_fo
 
 Selectors depend on the facade's HTML structure. Hidden or virtualized rows must already be visible and rendered to be highlighted; a CSS query does not load data, expand headers or scroll to an unrendered row. `on_next_step` still calls a function on the linked widget, not on the element found by CSS.
 
-### Focusing a column or cell of a table
+### Focusing an area of a widget (`focus_area`)
 
-To highlight a single column of a data widget, append the column name to the widget id in `widget_to_focus`: `<widget_id>!<column_name>`. The column name is the data column name - normally the `attribute_alias` of the column.
+Use `focus_area` to highlight a logical part of a widget - e.g. a column or a single cell of a table. The value has the form `<widget_id>~<area>`. The widget id is resolved like a widget link relative to the widget of the tour - just like `widget_to_focus` - so ids inside dialogs work too. Areas are defined by the facade element of the widget, so the same area works regardless of the facade's HTML structure.
 
 ```json
 {
     "title": "Location",
     "body": "This column shows the location of each section.",
-    "widget_to_focus": "verortungId!Verortung__LABEL"
+    "focus_area": "verortungId~column.Verortung__LABEL"
 }
 ```
 
-The header and all currently rendered cells of the column are highlighted. Only the visible part of the column is highlighted - e.g. if the table is too narrow and the column is partially scrolled out of view. Currently supported by `DataTable` in the UI5 facade (`sap.ui.table`, not responsive tables) and by spreadsheet widgets based on jExcel (e.g. `DataSpreadSheet`, `DataImporter`). Other widgets and unknown or hidden columns fall back to highlighting the whole widget. A `focus_css_query` is applied inside the column highlight, so it can only match the highlight element itself.
+Areas supported by tables:
 
-To highlight a single cell, add a row number: `<widget_id>!<column_name>$<row_number>` - e.g. `"widget_to_focus": "verortungId!Verortung__LABEL$1"`. The row number is 1-based and refers to the data rows of the table counted from the top of the current page - regardless of the scroll position: `15` is always the 15th row, not the 15th currently visible one. The table is scrolled automatically to make the row visible. If the row does not exist (e.g. the page has fewer rows), the whole column is highlighted instead. Supported by the same widgets as column highlighting.
+| Area | Highlights |
+|------|------------|
+| `column.<column_name>` | Header and all rendered cells of the column |
+| `column.<column_name>$<n>` | The cell of the column in the n-th row |
+| `row$<n>` | The n-th row (UI5 only) |
+| `row_selector$<n>` | The selection checkbox of the n-th row - e.g. to select it via `on_next_step.browser_click`. Tables without checkboxes resolve to the row (UI5 only) |
+| `header` | The column headers (UI5 only) |
+| `table` | The table content (headers and rows) |
+
+The column name is the data column name - normally the `attribute_alias` of the column. The row number is 1-based and refers to the data rows counted from the top of the current page - regardless of the scroll position: `15` is always the 15th row, not the 15th currently visible one. The table is scrolled automatically to make it visible.
+
+Currently supported by `DataTable` in the UI5 facade (`sap.ui.table`, not responsive tables) and by spreadsheet widgets based on jExcel (e.g. `DataSpreadSheet`, `DataImporter`). Other widgets, unknown areas and unknown columns fall back to highlighting the whole widget. If the area is not rendered (e.g. the row does not exist), the whole widget is highlighted too.
+
+`focus_area` takes precedence over `widget_to_focus`, but `on_next_step` and `subroute` still use the widget of the area. If the area consists of multiple elements (e.g. a column), the visible part of their union is highlighted and its elements remain clickable (unless `disable_active_interaction` is set). A `focus_css_query` is applied inside the area element.
 
 ### Story steps (`steps` in the tour)
 
@@ -409,7 +423,7 @@ classDiagram
 
 Closing a popup dialog also notifies visible tour hosts to check for a pending tour. This allows a dialog's last step to close the dialog and continue with a tour on the underlying page. This check does not repeat the page's view lifecycle, reload data, process URL triggers or restart unconditional `autorun` tours. Listeners are removed when their view is destroyed; hidden or closed tour hosts do not consume pending intents.
 
-DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. UI5 dashboards likewise use their dynamic-page wrapper when rendered, otherwise their own control. Explicit links to individual column or filter widgets still target those elements. A column reference within a widget link (`widget!column`) makes the driver call `buildJsDomElementGetterForColumn()` of the facade element instead. The default implementation in `AbstractJqueryElement` returns the whole widget; tables override it to return an invisible overlay element covering the column (UI5: absolutely positioned inside `.sapUiTableCnt`, clipped to the visible column area; jExcel: inside `.jexcel_content`). A row reference (`widget!column$row`) makes the driver call `buildJsDomElementGetterForCell()` instead, which returns the cell element itself (no overlay needed) and scrolls the row into view if necessary (UI5: `setFirstVisibleRow()` of the virtualized table, jExcel: `scrollIntoView()`). Its default implementation falls back to the column getter. When the tour ends (closed, finished or continued with another tour), the driver removes all overlays (CSS class `exf-tour-column-focus`) and restores container `position` styles, that elements saved in the `data-exf-tour-position` attribute before changing them.
+DOM targets are resolved when each step is displayed. For UI5 data widgets, the DOM getter returns the outer dynamic-page wrapper (including filters), otherwise the panel wrapper, or the control itself if neither wrapper exists. UI5 dashboards likewise use their dynamic-page wrapper when rendered, otherwise their own control. Explicit links to individual column or filter widgets still target those elements. A `focus_area` is resolved by `AbstractAjaxFacade::getFocusAreaSelector()`: it parses `<widget_id>~<area>` and asks the facade element of the widget for a CSS selector via `buildCssFocusAreaSelector()`. The default implementation in `AbstractJqueryElement` selects the whole widget; tables override it (`UI5DataTable`, `JExcelTrait`). Elements can also provide `buildJsFocusAreaPreparer()` - JS, that the driver runs before the selector is evaluated, e.g. to scroll a virtualized UI5 table to an unrendered row via `setFirstVisibleRow()`. The driver evaluates the selector on the whole document, ignores invisible matches and scrolls the first match into view. A single match is highlighted directly; for multiple matches (e.g. a column), the driver highlights an absolutely positioned helper element (`body > .exf-tour-focus-area`) covering the visible union of all matches. Since driver.js only lets clicks through to the highlighted element, the matches get the CSS class `exf-tour-focus-area-target`, which keeps them clickable while the helper is highlighted - unless `disable_active_interaction` is set. Without visible matches the whole widget is highlighted. The helper element and the CSS classes are removed when the tour ends.
 
 When `focus_css_query` is configured, the tour driver applies `querySelector()` to this DOM target and uses the first match, falling back to the target itself if the query returns no match. Facade DOM getters do not need to implement CSS targeting separately.
 

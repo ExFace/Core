@@ -74,4 +74,66 @@ class DriverJsTourTargetTest extends TestCase
 
         self::assertSame('getFilterInput()', (new DriverJsTourDriver($facade))->buildJsStepElementGetter($step));
     }
+
+    /**
+     * A `focus_area` takes precedence over `widget_to_focus`: the facade getter of the area is used and
+     * the DOM getter of the area widget serves as fallback. The area is resolved relative to the tour widget.
+     */
+    public function testFocusAreaTakesPrecedenceOverWidgetToFocus() : void
+    {
+        $tourWidget = $this->getMockBuilder(DataTable::class)->disableOriginalConstructor()->getMock();
+        $areaWidget = $this->getMockBuilder(DataTable::class)->disableOriginalConstructor()->getMock();
+        $step = $this->getMockBuilder(TourStoryStep::class)->disableOriginalConstructor()
+            ->onlyMethods(['getFocusArea', 'getWidget', 'getWidgetToFocus'])->getMock();
+        $step->method('getFocusArea')->willReturn('myTable~column.COL$2');
+        $step->method('getWidget')->willReturn($tourWidget);
+        $step->expects(self::never())->method('getWidgetToFocus');
+
+        $element = $this->createMock(AjaxFacadeElementInterface::class);
+        $element->method('buildJsDomElementGetter')->willReturn('getTableWrapper()');
+        $facade = $this->getMockBuilder(AbstractAjaxFacade::class)->disableOriginalConstructor()
+            ->onlyMethods(['getElement', 'buildResponseData', 'getPageTemplateFilePathDefault', 'getFocusAreaWidget', 'getFocusAreaSelector', 'buildJsFocusAreaPreparer'])
+            ->getMock();
+        $facade->method('getFocusAreaWidget')->with('myTable~column.COL$2', $tourWidget)->willReturn($areaWidget);
+        $facade->method('getFocusAreaSelector')->with('myTable~column.COL$2', $tourWidget)->willReturn('#myTable td[data-x="1"]');
+        $facade->expects(self::once())->method('buildJsFocusAreaPreparer')->with('myTable~column.COL$2', $tourWidget)->willReturn('scrollMyTable();');
+        $facade->method('getElement')->with($areaWidget)->willReturn($element);
+
+        $js = (new DriverJsTourDriver($facade))->buildJsStepElementGetter($step);
+
+        self::assertStringContainsString('scrollMyTable();', $js);
+        self::assertStringContainsString('document.querySelectorAll(' . json_encode('#myTable td[data-x="1"]') . ')', $js);
+        self::assertStringContainsString('return getTableWrapper();', $js);
+        // Multiple matches stay clickable through the driver.js overlay
+        self::assertStringContainsString("domEl.classList.add('exf-tour-focus-area-target')", $js);
+        self::assertStringContainsString('.exf-tour-focus-area.driver-active-element:not(.driver-no-interaction)', $js);
+    }
+
+    /**
+     * A `focus_css_query` is still applied within the element resolved from the `focus_area`.
+     */
+    public function testFocusCssQueryIsAppliedWithinFocusArea() : void
+    {
+        $widget = $this->getMockBuilder(DataTable::class)->disableOriginalConstructor()->getMock();
+        $step = $this->getMockBuilder(TourStoryStep::class)->disableOriginalConstructor()
+            ->onlyMethods(['getFocusArea', 'getWidget', 'getFocusCssQuery'])->getMock();
+        $step->method('getFocusArea')->willReturn('myTable~header');
+        $step->method('getWidget')->willReturn($widget);
+        $step->method('getFocusCssQuery')->willReturn('.target');
+
+        $element = $this->createMock(AjaxFacadeElementInterface::class);
+        $element->method('buildJsDomElementGetter')->willReturn('getTableWrapper()');
+        $facade = $this->getMockBuilder(AbstractAjaxFacade::class)->disableOriginalConstructor()
+            ->onlyMethods(['getElement', 'buildResponseData', 'getPageTemplateFilePathDefault', 'getFocusAreaWidget', 'getFocusAreaSelector', 'buildJsFocusAreaPreparer'])
+            ->getMock();
+        $facade->method('getFocusAreaWidget')->willReturn($widget);
+        $facade->method('getFocusAreaSelector')->willReturn('#myTable .header');
+        $facade->method('buildJsFocusAreaPreparer')->willReturn('');
+        $facade->method('getElement')->willReturn($element);
+
+        $js = (new DriverJsTourDriver($facade))->buildJsStepElementGetter($step);
+
+        self::assertMatchesRegularExpression('/^' . preg_quote('((element) => element ? (element.querySelector(".target") || element) : null)(', '/') . '\s*\(function\(\) \{/', $js);
+        self::assertStringContainsString('document.querySelectorAll(' . json_encode('#myTable .header') . ')', $js);
+    }
 }
