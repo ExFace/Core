@@ -3195,6 +3195,21 @@
             "HINT": "",
             "TYPE": "ERROR",
             "DOCS": ""
+        },
+        {
+            "_EXPORT_SUMMARY": "88RY4GT The account for this username has been disabled! Contact your support to reactivate the account.",
+            "CREATED_ON": "2026-11-12 16:40:23",
+            "MODIFIED_ON": "2026-11-12 16:40:23",
+            "CREATED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "MODIFIED_BY_USER": "0x11e8fe1c902c8ebea23ee4b318306b9a",
+            "UID": "0x11f1a4fe5fb6a874a4fe29f3a9af29fb",
+            "APP": "0x31000000000000000000000000000000",
+            "CODE": "88RY4GT",
+            "TITLE": "The account for this username has been disabled! Contact your support to reactivate the account.",
+            "DESCRIPTION": "Accounts can be flagged as temporary, for example to grant demo access or ensure regular verification checkups. When the preset expiration date has passed, a temporary account no longer has access to this application. Likewise, accounts can be manually disabled for any number of reasons. Contact your support to receive further details and request account reactivation.",
+            "HINT": "",
+            "TYPE": "ERROR",
+            "DOCS": ""
         }
     ],
     "totals_rows": [],

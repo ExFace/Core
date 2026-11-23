@@ -270,14 +270,14 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
     }
     
     /**
-     * Checks if the authenticator is flagged as disabled for the given username.
+     * Checks if the user is flagged as disabled.
      * Throws exception if it is flagged as disabled.
      *
      * @param string $username
      * @throws AuthenticationFailedError
      * @return AbstractAuthenticator
      */
-    protected function checkAuthenticatorDisabledForUsername(string $username) : AbstractAuthenticator
+    protected function checkUserDisabledFlag(string $username) : AbstractAuthenticator
     {
         $dataSheet = $this->getAuthenticatorData($username);
         if ($dataSheet->isEmpty() === true) {
@@ -285,7 +285,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
         }
         foreach ($dataSheet->getRows() as $row) {
             if (BooleanDataType::cast($row['DISABLED_FLAG']) === true) {
-                throw new AuthenticationFailedError($this, "Authentication failed. Authenticator '{$this->getName()}' disabled for username '$username'!", '7AL3J9X');
+                throw new AuthenticationFailedError($this, "Authentication failed. Account for '$username' has been disabled!", '88RY4GT');
             }
         }
         return $this;
@@ -378,7 +378,7 @@ abstract class AbstractAuthenticator implements AuthenticatorInterface, iCanBeCo
                 throw new UserNotFoundError("No user found matching the username '{$token->getUsername()}'!");
             }
             if (BooleanDataType::cast($userDataSheet->getRow(0)['DISABLED_FLAG']) === true) {
-                throw new UserDisabledError("User with the username '{$this->getUsernameInWorkbench($token)}' is disabled!");
+                throw new UserDisabledError("User with the username '{$this->getUsernameInWorkbench($token)}' is disabled!", '88RY4GT');
             }
             $this->userData[$token->getUsername()] = $userDataSheet;
         }

@@ -47,7 +47,9 @@ class MetamodelAuthenticator extends AbstractAuthenticator
         if (! $token instanceof PasswordAuthenticationTokenInterface) {
             throw new AuthenticationFailedError($this, 'Bad credentials.', self::ERROR_CODE);
         }
-        $this->checkAuthenticatorDisabledForUsername($token->getUsername());
+        
+        // Check if the user is flagged as disabled and throw an exception if so.
+        $this->checkUserDisabledFlag($token->getUsername());
         
         $password = $token->getPassword() ?? '';
         if ($password === '') {

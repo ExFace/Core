@@ -75,7 +75,7 @@ class ApiKeyAuthenticator extends AbstractAuthenticator
     	}
     	
     	$authenticatedToken = new ApiKeyAuthToken($token->getApiKey(), $usernameVerified, $token->getFacade());
-    	$this->checkAuthenticatorDisabledForUsername($authenticatedToken->getUsername());
+    	$this->checkUserDisabledFlag($authenticatedToken->getUsername());
     	$this->authenticatedToken = $authenticatedToken;
         return $authenticatedToken;
     }
