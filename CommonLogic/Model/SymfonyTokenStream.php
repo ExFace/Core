@@ -167,7 +167,7 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
         $all = $this->getArguments();
         $topLevel = array_filter($all, fn(array $arg) => $arg['parentIndex'] === null);
         if (count($topLevel) === 1 && reset($topLevel)['type'] === 'formula') {
-            $this->rootIndex = reset($topLevel)['formulaIndex'];
+            $this->rootIndex = reset($topLevel)['formulaIndices'][0];
         }
         
         return $this->rootIndex;
@@ -219,6 +219,14 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
         $slots = [];
 
         foreach ($tokens as $token) {
+            // The first token after a delimiter marks where the source text of an argument starts. Grouping
+            // brackets count too, so that the source text stays balanced. Delimiters never start an argument.
+            $punctuation = $token['punctuation'] ?? null;
+            $isDelimiter = $punctuation === ',' || ($punctuation === ')' && ($openBrackets[$bracketDepth] ?? null) !== null);
+            if (! $isDelimiter) {
+                $this->markArgumentStart($token['cursor'], $openBrackets, $slots);
+            }
+
             // Extract string or number arguments.
             $arg = match (true) {
                 isset($token['string']) => $token['string'],
@@ -243,7 +251,6 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
             }
 
             // Next, we see if the token is a punctuation and handle it accordingly.
-            $punctuation = $token['punctuation'] ?? null;
             if ($punctuation !== null) {
                 // We do not expect double buffered punctuations.
                 $this->checkTrailingPunctuation($hasTrailingPunctuation, $buffer, $punctuation);
@@ -275,7 +282,7 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
                         if ($bracketDepth > 0) {
                             // Conclude the last argument of the formula, if this bracket belongs to one.
                             if ($openBrackets[$bracketDepth] !== null) {
-                                $this->closeArgument($openBrackets[$bracketDepth], $slots);
+                                $this->closeArgument($openBrackets[$bracketDepth], $slots, $token['cursor']);
                             }
                             // Conclude formula.
                             unset($openBrackets[$bracketDepth]);
@@ -292,7 +299,7 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
                         // A comma concludes the current argument of the enclosing formula.
                         $this->addPart($buffer, 'attribute', $openBrackets, $slots);
                         $buffer = null;
-                        $this->closeArgument($this->getEnclosingFormulaIndex($openBrackets), $slots);
+                        $this->closeArgument($this->getEnclosingFormulaIndex($openBrackets), $slots, $token['cursor']);
                         break;
                     default:
                         // Treat any other punctuation as terminal and flush buffer as attribute.
@@ -343,7 +350,7 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
         // Flush the last buffered argument, e.g. for bare expressions like "Status".
         $this->addPart($buffer, 'attribute', $openBrackets, $slots);
         // Conclude the top-level argument.
-        $this->closeArgument(null, $slots);
+        $this->closeArgument(null, $slots, strlen($this->tokenStream->getExpression()));
     }
 
     /**
@@ -406,25 +413,43 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
         }
         
         $key = $this->getEnclosingFormulaIndex($openBrackets) ?? -1;
-        $slots[$key][] = ['value' => $value, 'type' => $type, 'nested' => $nestedFormulaIndex];
+        $slots[$key]['parts'][] = ['value' => $value, 'type' => $type, 'nested' => $nestedFormulaIndex];
+    }
+
+    /**
+     * Remembers where the source text of the argument currently being read starts.
+     * 
+     * Only the first call after the previous argument was concluded has an effect.
+     *
+     * @param int              $cursor 0-based offset of the token in the expression
+     * @param array<int, ?int> $openBrackets
+     * @param array            $slots
+     * @return void
+     */
+    protected function markArgumentStart(int $cursor, array $openBrackets, array &$slots) : void
+    {
+        $key = $this->getEnclosingFormulaIndex($openBrackets) ?? -1;
+        $slots[$key]['start'] ??= $cursor;
     }
 
     /**
      * Concludes the argument that is currently collected for a formula and appends it to `$mappedArguments`.
      * 
-     * A single token is stored as it is. Several tokens form an expression, which is stored as one argument,
-     * so the position of an argument always equals its position between the commas.
+     * A single token is stored as it is. Several tokens form an expression, which is stored as one argument
+     * with its original source text, so the position of an argument always equals its position between the commas.
      *
      * @param int|null $formulaIndex
      * @param array    $slots
+     * @param int      $end 0-based offset in the expression where the argument ends (the delimiter)
      * @return void
      */
-    protected function closeArgument(?int $formulaIndex, array &$slots) : void
+    protected function closeArgument(?int $formulaIndex, array &$slots, int $end) : void
     {
         // Top-level tokens (no enclosing formula) are collected under the key -1.
         $key = $formulaIndex ?? -1;
         // Take the collected tokens and reset the slot, so the next argument starts empty.
-        $parts = $slots[$key] ?? [];
+        $parts = $slots[$key]['parts'] ?? [];
+        $start = $slots[$key]['start'] ?? 0;
         unset($slots[$key]);
         
         // Nothing collected, e.g. for an empty argument list "Foo()".
@@ -432,34 +457,29 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
             return;
         }
         
+        // The formulas written directly inside this argument, in source order. Their own nested formulas
+        // are reachable via their parentIndex. The property is empty for arguments that are attributes and literals.
+        $formulaIndices = array_values(array_map(
+            fn(array $part) => $part['nested'],
+            array_filter($parts, fn(array $part) => $part['type'] === 'formula')
+        ));
+        
         if (count($parts) === 1) {
             // A single token is stored as it is: an attribute, a literal or a nested formula.
             $arg = [
                 'value' => $parts[0]['value'],
                 'type' => $parts[0]['type'],
-                'formulaIndex' => $parts[0]['nested']
             ];
         } else {
-            // Several tokens form an expression, which we store as one argument with its source text.
-            $texts = [];
-            foreach ($parts as $part) {
-                $isString = $part['type'] === 'literal' && is_string($part['value']);
-                // TRUE, FALSE and NULL are keywords and must not be quoted like strings.
-                $isKeyword = $isString && preg_match('/^(TRUE|FALSE|NULL)$/i', $part['value']);
-                
-                if ($isString && ! $isKeyword) {
-                    $texts[] = "'" . addcslashes($part['value'], "'\\") . "'";
-                } else {
-                    $texts[] = (string) $part['value'];
-                }
-            }
+            // Several tokens form an expression. We cut its source text out of the original expression, so
+            // brackets, quoting and nested formulas stay exactly as written.
             $arg = [
-                'value' => implode(' ', $texts),
+                'value' => trim(substr($this->tokenStream->getExpression(), $start, $end - $start)),
                 'type' => 'expression',
-                'formulaIndex' => null
             ];
         }
         
+        $arg['formulaIndices'] = $formulaIndices;        
         // Attach the argument to the formula it belongs to (NULL at top level).
         $arg['parentIndex'] = $formulaIndex;
         $this->mappedArguments[] = $arg;
