@@ -34,6 +34,15 @@ interface FormulaTokenStreamInterface
     public function getArguments() : array;
 
     /**
+     * Returns a flat array of all scalar arguments (strings, numbers, booleans)
+     * including formula calls and those from nested formulas. The arguments are
+     * associative arrays with ['']
+     *
+     * @return string[]
+     */
+    public function getArgumentsAll() : array;
+
+    /**
      * Returns the string provided as an argument at the given positione (starting with 0)
      * 
      * @param int $index

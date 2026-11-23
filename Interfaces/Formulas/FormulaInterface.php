@@ -101,4 +101,6 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return FormulaInterface
      */
     public function setDataContext(DataSheetInterface $dataSheet = null, int $rowIdx = null) : FormulaInterface;
+    
+    public function getTokenStream() : ?FormulaTokenStreamInterface;
 }

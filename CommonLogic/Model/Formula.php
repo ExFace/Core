@@ -6,6 +6,7 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
+use exface\Core\Interfaces\Model\MetaAttributeInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
 use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Exceptions\FormulaError;
@@ -270,7 +271,7 @@ abstract class Formula implements FormulaInterface
      * 
      * @return FormulaTokenStreamInterface|NULL
      */
-    protected function getTokenStream() : ?FormulaTokenStreamInterface
+    public function getTokenStream() : ?FormulaTokenStreamInterface
     {
         return $this->tokenStream;
     }

@@ -3,6 +3,7 @@
 namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
+use function AdminNeo\number;
 
 /**
  * Empty token stream class for formula token streams.
@@ -11,17 +12,24 @@ use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
  * @author ralf.mulansky
  *
  */
-class EmptyTokenStream implements FormulaTokenStreamInterface
+class NestedTokenStream implements FormulaTokenStreamInterface
 {
-    private $formulaName = null;
-    
+    private int $index;
+    private string $formulaName;
+    private ?SymfonyTokenStream $parentStream;
+    private ?array $argumentsNormalized = null;
+
     /**
-     * 
-     * @param string $formulaName
+     *
+     * @param int                              $index
+     * @param string                           $formulaName
+     * @param FormulaTokenStreamInterface|null $parentStream
      */
-    public function __construct(string $formulaName)
+    public function __construct(int $index, string $formulaName, ?FormulaTokenStreamInterface $parentStream)
     {
+        $this->index = $index;
         $this->formulaName = $formulaName;
+        $this->parentStream = $parentStream;
     }
     
     /**
@@ -51,7 +59,11 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
      */
     public function getAttributes() : array
     {
-        return [];
+        if(!$this->parentStream instanceof SymfonyTokenStream) {
+            return [];
+        }
+        
+        
     }
     
     /**
@@ -61,7 +73,11 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
      */
     public function getArguments(): array
     {
-        return [];
+        if(!$this->parentStream instanceof SymfonyTokenStream) {
+            return [];
+        }
+        
+        return $this->getArgumentsNormalized();
     }
 
     /**
@@ -71,7 +87,12 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
      */
     public function getArgument(int $index) : ?string
     {
-        return null;
+        if(!$this->parentStream instanceof SymfonyTokenStream) {
+            return null;
+        }
+        
+        $index = $this->normalizeIndex($index);
+        return $index !== null ? $this->getArgumentsNormalized()[$index] : null;
     }
 
     /**
@@ -81,7 +102,11 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
      */
     public function isArgumentAttribute(int $index) : bool
     {
-        return false;
+        if(!$this->parentStream instanceof SymfonyTokenStream) {
+            return false;
+        }
+        
+        return $this->parentStream->isArgumentAttribute($index);
     }
     
     /**
@@ -91,6 +116,12 @@ class EmptyTokenStream implements FormulaTokenStreamInterface
      */
     public function __toString() : string
     {
-        return '';
+        if(!$this->parentStream instanceof SymfonyTokenStream) {
+            return '';
+        }
+        
+        return $this->parentStream->__toString();
     }
+    
+    
 }
