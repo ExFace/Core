@@ -271,6 +271,11 @@ class UxonAutosuggest extends AbstractAction
     
     protected function suggestPropertyValues(UxonSchemaInterface $schema, UxonObject $uxon, array $path, string $valueText, string $rootPrototypeClass = null, MetaObjectInterface $rootObject = null) : array
     {
-        return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
+        try {
+            return ['values' => $schema->getValidValues($uxon, $path, $valueText, $rootPrototypeClass, $rootObject)];
+        } catch (\Throwable $e) {
+            // Auto-suggest should not throw, so we just catch all errors and return empty.
+            return ['values' => []];
+        }
     }
 }
