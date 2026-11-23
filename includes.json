@@ -10,6 +10,30 @@
         "homepage": "https://echarts.apache.org/"
     },
     {
+        "name": "npm-asset/turf--helpers",
+        "version": "6.5.0",
+        "license": ["MIT"],
+        "license_file": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/LICENSE.txt",
+        "description": "Turf.js GeoJSON constructors and utility helpers bundled in the custom Leaflet turf.min.js.",
+        "homepage": "https://turfjs.org/"
+    },
+    {
+        "name": "npm-asset/turf--invariant",
+        "version": "6.5.0",
+        "license": ["MIT"],
+        "license_file": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/LICENSE.txt",
+        "description": "Turf.js GeoJSON validation and coordinate/geometry accessors bundled in the custom Leaflet turf.min.js.",
+        "homepage": "https://turfjs.org/"
+    },
+    {
+        "name": "npm-asset/turf--boolean-point-in-polygon",
+        "version": "6.5.0",
+        "license": ["MIT"],
+        "license_file": "exface/core/Facades/AbstractAjaxFacade/js/leaflet/LICENSE.txt",
+        "description": "Turf.js point-in-polygon detection bundled in the custom Leaflet turf.min.js for drag-and-drop hit testing.",
+        "homepage": "https://turfjs.org/"
+    },
+    {
         "name": "mk-j/php_xlsxwriter",
         "version": "0.37",
         "license": [
@@ -20,13 +44,5 @@
         ],
         "description": "Lightweight XLSX Excel Spreadsheet Writer in PHP",
         "homepage": "https://github.com/mk-j/PHP_XLSXWriter"
-    }, 
-    {
-        "name": "npm-asset/mermaid",
-        "version": "12.2.0",
-        "license": ["MIT"],
-        "license_file": "exface/ui5facade/Facades/js/mermaid/LICENSE.txt",
-        "description": "Generation of diagrams like flowcharts or sequence diagrams from text in a similar manner as markdown",
-        "homepage": "https://mermaid.js.org/"
     }
 ]

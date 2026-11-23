@@ -16,7 +16,8 @@ order, resolving these keys through their facade. Call
 `exfMermaid.renderAll(hostElement)` after placing Markdown HTML in the host.
 It recognizes `.language-mermaid` and `code[data-language="mermaid"]`, skips
 already rendered diagrams and scopes changes to that host. Optional
-`{panZoom: true}` requires Core's `svg-pan-zoom.min.js`. A failed diagram retains
+`{panZoom: true}` requires `npm-asset/svg-pan-zoom/dist/svg-pan-zoom.min.js`,
+installed through Core's Composer dependency `npm-asset/svg-pan-zoom`. A failed diagram retains
 its source, displays a diagnostic and logs the error to the browser console.
 
 The Core-owned stylesheet copies the Codiware/Markian palette without loading
@@ -31,8 +32,7 @@ Source is limited to 20,000 characters, 500 lines and 500 edges; generated SVG i
 limited to 2 MB and 10,000 elements. Source-defined links and images are disabled.
 The adapter preserves SVG IDs and styling rather than restyling custom colors.
 
-Toast UI and UI5 continue using Mermaid.js and `LIBS.MERMAID.JS` unchanged.
-Do not point that legacy key at Pele: their runtime APIs differ.
+Integrating the original mermaid.js is discouraged as its drop-in Javascript file is very large and includes a lot of unnecessary dependencies. 
 
 ### Focused browser validation
 
