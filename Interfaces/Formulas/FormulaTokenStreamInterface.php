@@ -28,9 +28,6 @@ interface FormulaTokenStreamInterface
     public function getAttributes() : array;
     
     /**
-     * Returns a flat array of all arguments for THIS formula, i.e. strings, numbers, booleans 
-     * and nested formulas.
-     * 
      * @return SymfonyArgument[]
      */
     public function getArguments() : array;

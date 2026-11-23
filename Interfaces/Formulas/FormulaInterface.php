@@ -94,6 +94,11 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return FormulaInterface
      */
     public function setDataContext(DataSheetInterface $dataSheet = null, int $rowIdx = null) : FormulaInterface;
-    
+
+    /**
+     * Returns the token stream that extracted this formula.
+     * 
+     * @return FormulaTokenStreamInterface|null
+     */
     public function getTokenStream() : ?FormulaTokenStreamInterface;
 }

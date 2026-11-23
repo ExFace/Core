@@ -6,10 +6,12 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 
 /**
- * Empty token stream class for formula token streams.
- * An EmptyTokenStream has no expression, attributes or nested formulas.
+ * A wrapper for `SymfonyTokenStream`, meant to give nested formulas easy access to their unparsed arguments and metadata.
  * 
- * @author ralf.mulansky
+ * This wrapper only works with a limited subset of its parent stream.
+ * The subset is defined by its `$formulaIndex`, which identifies the formula this stream belongs to.
+ * 
+ * @author Georg Bieger
  *
  */
 class NestedTokenStream implements FormulaTokenStreamInterface
@@ -22,17 +24,17 @@ class NestedTokenStream implements FormulaTokenStreamInterface
 
     /**
      *
-     * @param int                         $index
+     * @param int                         $formulaIndex
      * @param string                      $formulaName
      * @param FormulaTokenStreamInterface $parentStream
      */
-    public function __construct(int $index, string $formulaName, FormulaTokenStreamInterface $parentStream)
+    public function __construct(int $formulaIndex, string $formulaName, FormulaTokenStreamInterface $parentStream)
     {
         if(!$parentStream instanceof SymfonyTokenStream) {
             throw new InvalidArgumentException('Invalid argument: Received "' . $parentStream::class . '", expected "SymfonyTokenStream".');
         }
         
-        $this->index = $index;
+        $this->index = $formulaIndex;
         $this->formulaName = $formulaName;
         $this->parentStream = $parentStream;
     }
@@ -70,7 +72,9 @@ class NestedTokenStream implements FormulaTokenStreamInterface
     }
 
     /**
-     * @inheritDoc
+     * Returns the arguments of the formula identified by `$parentIndex`, in the order they were written.
+     *  
+     * @return array|SymfonyArgument[]
      */
     public function getArguments(): array
     {
