@@ -86,7 +86,7 @@ class Lookup extends Formula
         if ($this->placeholders === null) {
             $phs = [];
             foreach ($this->getTokenStream()->getArguments() as $arg) {
-                $phs = array_merge($phs, StringDataType::findPlaceholders($arg));
+                $phs = array_merge($phs, StringDataType::findPlaceholders($arg->getValue()));
             }
             $this->placeholders = array_unique($phs);
         }
@@ -100,8 +100,8 @@ class Lookup extends Formula
      */
     public function getDataType()
     {
-        $attrAlias = $this->getTokenStream()->getArguments()[0];
-        $objAlias = $this->getTokenStream()->getArguments()[1];
+        $attrAlias = $this->getTokenStream()->getArguments()[0]->getValue();
+        $objAlias = $this->getTokenStream()->getArguments()[1]->getValue();
         if (! empty(StringDataType::findPlaceholders($objAlias))) {
             return DataTypeFactory::createBaseDataType($this->getWorkbench());
         }

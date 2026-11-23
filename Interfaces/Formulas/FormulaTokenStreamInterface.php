@@ -2,6 +2,8 @@
 
 namespace exface\Core\Interfaces\Formulas;
 
+use exface\Core\CommonLogic\Model\SymfonyArgument;
+
 interface FormulaTokenStreamInterface
 {    
     /**
@@ -12,46 +14,50 @@ interface FormulaTokenStreamInterface
     public function getFormulaName() : ?string;
     
     /**
-     * Returns the nested formula names as array.
+     * Returns the names of ALL formulas, except for the root formula, as a flat array.
      * 
      * @return string[]
      */
     public function getNestedFormulas() : array;
     
     /**
-     * Returns the attribute aliases (with aggregators if given).
+     * Returns ALL attribute aliases (with aggregators if given) for this token stream.
      *
      * @return string[]
      */
     public function getAttributes() : array;
     
     /**
-     * Returns a flat array of all scalar arguments (strings, numbers, booleans) 
-     * including those from nested formulas
+     * Returns a flat array of all arguments for THIS formula, i.e. strings, numbers, booleans 
+     * and nested formulas.
      * 
-     * @return string[]
+     * @return SymfonyArgument[]
      */
     public function getArguments() : array;
 
     /**
      * Returns a flat array of all scalar arguments (strings, numbers, booleans)
-     * including formula calls and those from nested formulas. The arguments are
-     * associative arrays with ['']
+     * including formula calls and those from nested formulas.
      *
-     * @return string[]
+     * @return SymfonyArgument[]
      */
     public function getArgumentsAll() : array;
 
     /**
-     * Returns the string provided as an argument at the given positione (starting with 0)
+     * Returns the argument at the given position in the list of arguments for THIS formula (starting with 0).
+     * 
+     * NOTE: The index is relative to the formula that this token stream belongs to. 
+     * For `=Concatenate(Round(Attribute, 2), ' Value')` it would be:
+     * - `Concatenate`: [0 => Round, 1 => ' Value']
+     * - `Round`: [0 => Attribute, 1 => 2] 
      * 
      * @param int $index
-     * @return string|null
+     * @return SymfonyArgument|null
      */
-    public function getArgument(int $index) : ?string;
+    public function getArgument(int $index) : ?SymfonyArgument;
 
     /**
-     * Returns TRUE if the 
+     * Returns TRUE if the argument at the given position is an attribute alias.
      * 
      * @param int $index
      * @return bool

@@ -2,8 +2,8 @@
 
 namespace exface\Core\CommonLogic\Model;
 
+use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
-use function AdminNeo\number;
 
 /**
  * Empty token stream class for formula token streams.
@@ -16,112 +16,92 @@ class NestedTokenStream implements FormulaTokenStreamInterface
 {
     private int $index;
     private string $formulaName;
-    private ?SymfonyTokenStream $parentStream;
-    private ?array $argumentsNormalized = null;
+    private SymfonyTokenStream $parentStream;
+    
+    private ?array $arguments = null;
 
     /**
      *
-     * @param int                              $index
-     * @param string                           $formulaName
-     * @param FormulaTokenStreamInterface|null $parentStream
+     * @param int                         $index
+     * @param string                      $formulaName
+     * @param FormulaTokenStreamInterface $parentStream
      */
-    public function __construct(int $index, string $formulaName, ?FormulaTokenStreamInterface $parentStream)
+    public function __construct(int $index, string $formulaName, FormulaTokenStreamInterface $parentStream)
     {
+        if(!$parentStream instanceof SymfonyTokenStream) {
+            throw new InvalidArgumentException('Invalid argument: Received "' . $parentStream::class . '", expected "SymfonyTokenStream".');
+        }
+        
         $this->index = $index;
         $this->formulaName = $formulaName;
         $this->parentStream = $parentStream;
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getFormulaName()
+     * @inheritDoc
      */
     public function getFormulaName() : ?string
     {
         return $this->formulaName;
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getNestedFormulas()
+     * @inheritDoc
      */
     public function getNestedFormulas() : array
     {
-        return [];
+        return $this->parentStream->getNestedFormulas();
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getAttributes()
+     * @inheritDoc
      */
     public function getAttributes() : array
     {
-        if(!$this->parentStream instanceof SymfonyTokenStream) {
-            return [];
-        }
-        
-        
+        return $this->parentStream->getAttributes();
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::getArguments()
+     * @inheritDoc
+     */
+    public function getArgumentsAll(): array
+    {
+        return $this->parentStream->getArgumentsAll();
+    }
+
+    /**
+     * @inheritDoc
      */
     public function getArguments(): array
     {
-        if(!$this->parentStream instanceof SymfonyTokenStream) {
-            return [];
+        if($this->arguments === null) {
+            $this->arguments = $this->parentStream->getArguments($this->index);
         }
         
-        return $this->getArgumentsNormalized();
+        return $this->arguments;
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::isArgumentAttribute()
+     * @inheritDoc
      */
-    public function getArgument(int $index) : ?string
+    public function getArgument(int $index) : ?SymfonyArgument
     {
-        if(!$this->parentStream instanceof SymfonyTokenStream) {
-            return null;
-        }
-        
-        $index = $this->normalizeIndex($index);
-        return $index !== null ? $this->getArgumentsNormalized()[$index] : null;
+        return $this->getArguments()[$index] ?? null;
     }
 
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::isArgumentAttribute()
+     * @inheritDoc
      */
     public function isArgumentAttribute(int $index) : bool
     {
-        if(!$this->parentStream instanceof SymfonyTokenStream) {
-            return false;
-        }
-        
-        return $this->parentStream->isArgumentAttribute($index);
+        return $this->getArguments()[$index]?->isAttribute() ?? false;
     }
-    
+
     /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface::__toString()
+     * @inheritDoc
      */
     public function __toString() : string
     {
-        if(!$this->parentStream instanceof SymfonyTokenStream) {
-            return '';
-        }
-        
         return $this->parentStream->__toString();
     }
-    
-    
 }

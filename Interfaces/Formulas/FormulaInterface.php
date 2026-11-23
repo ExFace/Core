@@ -61,13 +61,6 @@ interface FormulaInterface extends WorkbenchDependantInterface
     public function getFormulaName() : string;
     
     /**
-     * Get formula names of formulas that are nested in this formula
-     * 
-     * @return string[]
-     */
-    public function getNestedFormulas() : array;
-    
-    /**
      * Get the expression used to instiantiate this formula
      * 
      * @return string

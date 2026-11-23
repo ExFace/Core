@@ -70,8 +70,9 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         $expression = str_replace($name, $fixedName, $expression);
         $this->addFormulaToExpressionLanguage($expressionLanguage, $fixedName, $formula);
         $tokenStream = $formula->getTokenStream();
+        $nestedFormulas = $tokenStream?->getNestedFormulas() ?? [];
         
-        foreach ($formula->getNestedFormulas() as $index => $funcName) {
+        foreach ($nestedFormulas as $index => $funcName) {
             $fixedName = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '_', $funcName);
             $expression = str_replace($funcName, $fixedName, $expression);
             // Use dummy classes as nested formulas (without a token stream as all tokens were already
