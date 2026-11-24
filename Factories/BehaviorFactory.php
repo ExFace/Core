@@ -69,7 +69,7 @@ abstract class BehaviorFactory extends AbstractSelectableComponentFactory
      */
     public static function createFromModel(WorkbenchInterface $workbench, string $uid) : BehaviorInterface
     {
-        $sheet = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.OBJECT_BEHAVIOR');
+        $sheet = DataSheetFactory::createFromObjectIdOrAlias($workbench, 'exface.Core.OBJECT_BEHAVIORS');
         $sheet->getColumns()->addMultiple([
             'OBJECT'
         ]);
