@@ -1072,7 +1072,7 @@ class GanttXlsxBuilder
         $styleHash = md5(serialize($style));
         for ($column = $startColumn; $column <= $endColumn; $column++) {
             for ($row = $startRow; $row <= $endRow; $row++) {
-                $cell = $sheet->getCellByColumnAndRow($column, $row);
+                $cell = $sheet->getCell([$column, $row]);
                 $baseStyleIndex = $cell->getXfIndex();
                 $cacheKey = $baseStyleIndex . ':' . $styleHash;
                 if (! isset($this->styleIndexCache[$cacheKey])) {
