@@ -4,7 +4,6 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
-use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
@@ -1197,14 +1196,12 @@ JS;
      *
      * Elements, that do not know the requested area, should return the selector of the whole widget.
      *
-     * The area id relative to this widget is available via `$area->getIdRelativeToWidget()`.
-     *
-     * @param FocusArea|null $area
+     * @param string|null $areaId area id relative to this widget (e.g. `column.MY_COL`) or NULL for the whole widget
      * @return string
      * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::getFocusAreaSelector() for examples
      *
      */
-    public function buildCssFocusAreaSelector(?FocusArea $area = null) : string
+    public function buildCssFocusAreaSelector(?string $areaId = null) : string
     {
         return '#' . $this->getId();
     }
@@ -1216,13 +1213,13 @@ JS;
      * `buildCssFocusAreaSelector()`. Elements should override it if their areas are not always rendered - e.g.
      * tables with virtual scrolling need to scroll to a row before its cells exist in the DOM.
      * 
-     * @param FocusArea|null $area
+     * @param string|null $areaId area id relative to this widget (e.g. `column.MY_COL`) or NULL for the whole widget
      * @param string $cssClass CSS class to add to the focused DOM elements - pass an empty string for none
      * @return string
      */
-    public function buildJsFocus(?FocusArea $area, string $cssClass = 'focus') : string
+    public function buildJsFocus(?string $areaId, string $cssClass = 'focus') : string
     {
         // TODO scroll the element into view if it is not visible (e.g. in a scrolled container or tab)
-        return "$('" . $this->buildCssFocusAreaSelector($area) . "').focus()" . ($cssClass !== '' ? ".addClass('{$cssClass}')" : '') . ";";
+        return "$('" . $this->buildCssFocusAreaSelector($areaId) . "').focus()" . ($cssClass !== '' ? ".addClass('{$cssClass}')" : '') . ";";
     }
 }

@@ -29,6 +29,8 @@ class DriverJsTourDriver implements TourDriverInterface
 {
     private HttpFacadeInterface $facade;
     private array $waypointSteps = [];
+    // Parsed focus areas per step - see getFocusArea()
+    private ?\WeakMap $focusAreaCache = null;
     
     public function __construct(HttpFacadeInterface $httpFacade)
     {
@@ -623,10 +625,11 @@ JS;
         }
         $element = $facade->getElement($focusArea->getWidget());
         if ($element instanceof AbstractJqueryElement) {
-            $selectorJs = $this->escapeString($element->buildCssFocusAreaSelector($focusArea));
+            $areaId = $focusArea->getIdRelativeToWidget();
+            $selectorJs = $this->escapeString($element->buildCssFocusAreaSelector($areaId));
             // 1. Give the area regular focus - this also makes it available, e.g. scrolls a lazy table to the
             // required row. No CSS class here as the highlighting is done by the driver itself (step 2)
-            $focusJs = $element->buildJsFocus($focusArea, '');
+            $focusJs = $element->buildJsFocus($areaId, '');
         } else {
             $selectorJs = $this->escapeString('#' . $element->getId());
             $focusJs = '';
@@ -767,17 +770,28 @@ JS;
      * The widget id of the area is resolved within the UI screen of the tour widget - i.e. within the
      * dialog the tour belongs to or the page.
      * 
+     * The result is cached per step because it is needed multiple times while rendering a step and resolving
+     * the area requires a widget lookup.
+     * 
      * @param TourStepInterface $step
      * @return FocusArea|null
      */
     protected function getFocusArea(TourStepInterface $step) : ?FocusArea
     {
+        // Steps without a focus area are cached as FALSE because WeakMap::offsetExists() ignores NULL values
+        $this->focusAreaCache ??= new \WeakMap();
+        if ($this->focusAreaCache->offsetExists($step)) {
+            return $this->focusAreaCache[$step] ?: null;
+        }
         $area = $step->getFocusArea();
         if ($area === null) {
-            return null;
+            $focusArea = null;
+        } else {
+            $widget = $step->getWidget();
+            $screen = $widget instanceof UiScreenInterface ? $widget : $widget->getUiScreen();
+            $focusArea = new FocusArea($screen, $area);
         }
-        $widget = $step->getWidget();
-        $screen = $widget instanceof UiScreenInterface ? $widget : $widget->getUiScreen();
-        return new FocusArea($screen, $area);
+        $this->focusAreaCache[$step] = $focusArea ?? false;
+        return $focusArea;
     }
 }

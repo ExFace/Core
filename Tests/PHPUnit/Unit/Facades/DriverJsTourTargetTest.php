@@ -94,8 +94,8 @@ class DriverJsTourTargetTest extends TestCase
         $focusArea = $this->createFocusAreaMock($areaWidget, 'column.COL$2');
 
         $element = $this->getMockBuilder(AbstractJqueryElement::class)->disableOriginalConstructor()->getMock();
-        $element->expects(self::once())->method('buildCssFocusAreaSelector')->with($focusArea)->willReturn('#myTable td[data-x="1"]');
-        $element->expects(self::once())->method('buildJsFocus')->with($focusArea, '')->willReturn('scrollMyTable();');
+        $element->expects(self::once())->method('buildCssFocusAreaSelector')->with('column.COL$2')->willReturn('#myTable td[data-x="1"]');
+        $element->expects(self::once())->method('buildJsFocus')->with('column.COL$2', '')->willReturn('scrollMyTable();');
         $element->method('buildJsDomElementGetter')->willReturn('getTableWrapper()');
         $facade = $this->getMockBuilder(AbstractAjaxFacade::class)->disableOriginalConstructor()
             ->onlyMethods(['getElement', 'buildResponseData', 'getPageTemplateFilePathDefault'])->getMock();
@@ -126,7 +126,7 @@ class DriverJsTourTargetTest extends TestCase
 
         $element = $this->getMockBuilder(AbstractJqueryElement::class)->disableOriginalConstructor()->getMock();
         $element->method('buildCssFocusAreaSelector')->willReturn('#myTable .header');
-        $element->expects(self::once())->method('buildJsFocus')->with($focusArea, '')->willReturn('');
+        $element->expects(self::once())->method('buildJsFocus')->with('header', '')->willReturn('');
         $element->method('buildJsDomElementGetter')->willReturn('getTableWrapper()');
         $facade = $this->getMockBuilder(AbstractAjaxFacade::class)->disableOriginalConstructor()
             ->onlyMethods(['getElement', 'buildResponseData', 'getPageTemplateFilePathDefault'])->getMock();
@@ -136,6 +136,25 @@ class DriverJsTourTargetTest extends TestCase
 
         self::assertMatchesRegularExpression('/^' . preg_quote('((element) => element ? (element.querySelector(".target") || element) : null)(', '/') . '\s*\(function\(\) \{/', $js);
         self::assertStringContainsString('document.querySelectorAll(' . json_encode('#myTable .header') . ')', $js);
+    }
+
+    /**
+     * The `focus_area` of a step is parsed only once, but separately for every step.
+     */
+    public function testFocusAreaIsCachedPerStep() : void
+    {
+        $facade = $this->getMockBuilder(AbstractAjaxFacade::class)->disableOriginalConstructor()
+            ->onlyMethods(['buildResponseData', 'getPageTemplateFilePathDefault'])->getMock();
+        $driver = new DriverJsTourDriver($facade);
+        $getFocusArea = new \ReflectionMethod(DriverJsTourDriver::class, 'getFocusArea');
+
+        foreach ([1, 2] as $i) {
+            $step = $this->getMockBuilder(TourStoryStep::class)->disableOriginalConstructor()
+                ->onlyMethods(['getFocusArea'])->getMock();
+            $step->expects(self::once())->method('getFocusArea')->willReturn(null);
+            self::assertNull($getFocusArea->invoke($driver, $step));
+            self::assertNull($getFocusArea->invoke($driver, $step));
+        }
     }
 
     /**

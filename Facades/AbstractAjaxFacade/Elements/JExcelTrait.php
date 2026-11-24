@@ -5,7 +5,6 @@ use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
 
 use exface\Core\DataTypes\NumberEnumDataType;
-use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\Data;
@@ -305,17 +304,16 @@ JS;
      * 
      * @see AbstractJqueryElement::buildCssFocusAreaSelector()
      */
-    public function buildCssFocusAreaSelector(?FocusArea $focusArea = null) : string
+    public function buildCssFocusAreaSelector(?string $areaId = null) : string
     {
-        $area = $focusArea?->getIdRelativeToWidget();
         $sheetSelector = '#' . $this->getId();
-        if ($area === null || $area === 'table') {
+        if ($areaId === null || $areaId === 'table') {
             return $sheetSelector;
         }
-        if (! StringDataType::startsWith($area, 'column.')) {
+        if (! StringDataType::startsWith($areaId, 'column.')) {
             return $sheetSelector;
         }
-        $columnName = StringDataType::substringAfter($area, 'column.');
+        $columnName = StringDataType::substringAfter($areaId, 'column.');
         $rowNumber = null;
         if (strpos($columnName, '$') !== false) {
             $rowNumber = StringDataType::substringAfter($columnName, '$', false, false, true);

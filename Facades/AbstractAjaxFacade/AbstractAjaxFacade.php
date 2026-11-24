@@ -1260,6 +1260,6 @@ HTML;
         if (! $facadeEl instanceof AbstractJqueryElement) {
             return '#' . $facadeEl->getId();
         }
-        return $facadeEl->buildCssFocusAreaSelector($area);
+        return $facadeEl->buildCssFocusAreaSelector($area->getIdRelativeToWidget());
     }
 }
