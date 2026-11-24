@@ -205,7 +205,8 @@ trait JqueryButtonTrait {
                         $expr = ExpressionFactory::createForObject($customData->getMetaObject(), $val);
                         switch (true) {
                             case $expr->isReference():
-                                $jsRow .= $colName . ': ' . $this->getFacade()->getElement($expr->getWidgetLink($this->getWidget())->getTargetWidget())->buildJsValueGetter() . ',';
+                                $link = $expr->getWidgetLink($this->getWidget());
+                                $jsRow .= $colName . ': ' . $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetCoordinate()) . ',';
                                 break;
                             case $expr->isConstant():
                                 $jsRow .= $colName . ': ' . $expr->__toString() . ',';
@@ -888,7 +889,7 @@ JS;
                 /* @var $widgetLink \exface\Core\CommonLogic\WidgetLink */
                 $prefix = $this->getFacade()->getUrlFilterPrefix();
                 foreach ($action->getTakeAlongFilters() as $attributeAlias => $widgetLink){
-                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getFacade()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetColumnId(), null)}+'";
+                    $filters_param .= "&{$prefix}{$attributeAlias}='+{$this->getFacade()->getElement($widgetLink->getTargetWidget())->buildJsValueGetter($widgetLink->getTargetCoordinate())}+'";
                 }
                 $newWindow = $action->getOpenInNewWindow();
             } else {
@@ -926,7 +927,7 @@ JS;
             if ($formula->isReference()) {
                 $link = $formula->getWidgetLink($this->getWidget());
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
-                $colsJs .= $col->getAttributeAlias() . ': ' . $linkedEl->buildJsValueGetter($link->getTargetColumnId()) . ',';
+                $colsJs .= $col->getAttributeAlias() . ': ' . $linkedEl->buildJsValueGetter($link->getTargetCoordinate()) . ',';
             } else {
                 throw new WidgetConfigurationError($this->getWidget(), 'Only columns with widget links as `formula` currently supported in manually defined prefill data!');
             }

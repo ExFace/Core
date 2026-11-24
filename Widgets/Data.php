@@ -87,6 +87,8 @@ class Data
         iCanPreloadData,
         iCanAutoloadData
 {
+    const COORDINATE_ROWCOUNT = '~rowcount';
+    
     use iHaveColumnsAndColumnGroupsTrait;
     use iHaveButtonsAndToolbarsTrait {
         prepareDataSheetToPreload as prepareDataSheetToPreloadViaTrait;

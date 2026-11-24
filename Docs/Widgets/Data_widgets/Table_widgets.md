@@ -1,4 +1,24 @@
+# Table widgets
+
 DataTable is one of the most important widgets, but there are also other table-like widgets. As all [data widgets](index.md), they follow the same general structure, but offer table-specific featurs in. 
+
+## Referencing column values
+
+Widget links can reference a column by its data column name or attribute alias:
+
+- `=myTable!Col1` uses the widget's default row context, normally the selection.
+- `=myTable!Col1$2` reads row index 2 (row indexes start with zero).
+- `=myTable!Col1$~loaded:LIST` concatenates the column values from all currently loaded rows.
+- `=myTable!Col1$~selected:LIST` concatenates the values from selected rows.
+- `=myTable!Col2$~loaded:SUM` sums the values from all currently loaded rows.
+
+`~loaded` does not fetch unloaded pages. `~selected` uses the widget's logical selection,
+including saved selections from other pages where the facade supports them.
+Spreadsheet self-references without an explicit row selector retain their current-row context.
+
+Supported aggregators are `LIST`, `LIST_DISTINCT`, `SUM`, `AVG`, `MIN`, `MAX`,
+`COUNT` and `COUNT_DISTINCT`. Lists use the column attribute's value list delimiter,
+or the platform's default delimiter for columns not bound to an attribute.
 
 ## Table features
 ### Columns and column groups

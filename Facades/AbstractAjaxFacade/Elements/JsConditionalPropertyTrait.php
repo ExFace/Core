@@ -87,7 +87,7 @@ trait JsConditionalPropertyTrait {
             case $expr->isReference() === true:
                 $link = $expr->getWidgetLink($conditionalProperty->getWidget());
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetCoordinate());
                 }
                 break;
             // If it is a constant (string, number or boolean), take the unquoted value and quote properly
@@ -135,13 +135,15 @@ trait JsConditionalPropertyTrait {
             if ($condition->getValueLeftExpression()->isReference() === true) {
                 $link = $condition->getValueLeftExpression()->getWidgetLink($condition->getWidget());
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $linked_element->addOnChangeScript($this->buildJsConditionalProperty($conditionalProperty, $ifJs, $elseJs));
+                    $script = $this->buildJsConditionalProperty($conditionalProperty, $ifJs, $elseJs);
+                    $linked_element->addOnChangeAtCoordinateScript($script, $link->getTargetCoordinate());
                 }
             }
             if ($condition->getValueRightExpression()->isReference() === true) {
                 $link = $condition->getValueRightExpression()->getWidgetLink($condition->getWidget());
                 if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                    $linked_element->addOnChangeScript($this->buildJsConditionalProperty($conditionalProperty, $ifJs, $elseJs));
+                    $script = $this->buildJsConditionalProperty($conditionalProperty, $ifJs, $elseJs);
+                    $linked_element->addOnChangeAtCoordinateScript($script, $link->getTargetCoordinate());
                 }
             }
         }

@@ -121,7 +121,7 @@ trait JqueryDataConfiguratorTrait
                 if ($unrendered === true) {
                     if ($link = $filter->getValueWidgetLink()) {
                         $linked_element = $this->getFacade()->getElement($link->getTargetWidget());
-                        $filter_value = $linked_element->buildJsValueGetter($link->getTargetColumnId());
+                        $filter_value = $linked_element->buildJsValueGetter($link->getTargetCoordinate());
                     } else {
                         // RangeFilter needs special handling in unrendered mode:
                         // getValue() concatenates "from..to", resulting in ".." when both are empty,

@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Widgets\DataCarousel;
 use exface\Core\Factories\ActionFactory;
 use exface\Core\Actions\ShowObjectInfoDialog;
@@ -48,9 +50,9 @@ JS;
      * {@inheritDoc}
      * @see AbstractJqueryElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter($dataColumnName = null)
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
-        return $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsValueGetter();
+        return $this->getFacade()->getElement($this->getWidget()->getDataWidget())->buildJsValueGetter($coord);
     }
     
     /**

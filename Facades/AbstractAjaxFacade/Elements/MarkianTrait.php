@@ -1,6 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\DataTypes\ColorDataType;
 use exface\Core\DataTypes\FilePathDataType;
 use exface\Core\DataTypes\LocaleDataType;
@@ -106,8 +110,10 @@ trait MarkianTrait
      *
      * @return string
      */
-    public function buildJsValueGetter()
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
         return '(function(){var e = ' . $this->buildJsMarkdownVar() . '; return e ? e.get() : "";})()';
     }
 

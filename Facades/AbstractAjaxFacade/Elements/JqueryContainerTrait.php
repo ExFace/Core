@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 use exface\Core\CommonLogic\DataSheets\DataColumn;
@@ -104,10 +107,24 @@ trait JqueryContainerTrait {
     /**
      *
      * {@inheritDoc}
-     * @see \exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement::buildJsValueGetter()
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
      */
-    public function buildJsValueGetter($dataColumnName = null)
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
+        if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
+            throw new \exface\Core\Exceptions\Facades\FacadeRuntimeError('Row coordinates are not supported by this container!');
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
+    {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
+        $dataColumnName = $coord->getColumnCoordinate();
         if ($dataColumnName === null) {
             if ($this->getMetaObject()->hasUidAttribute()) {
                 $dataColumnName = DataColumn::sanitizeColumnName($this->getMetaObject()->getUidAttributeAlias());

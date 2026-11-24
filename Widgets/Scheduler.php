@@ -20,11 +20,11 @@ class Scheduler extends Data implements iFillEntireContainer, iCanEditData
 {
     use iCanEditDataTrait;
     
-    const VALUE_START_DATE = '~start_date';
+    const COORDINATE_START_DATE = '~start_date';
 
-    const VALUE_END_DATE = '~end_date';
+    const COORDINATE_END_DATE = '~end_date';
 
-    const VALUE_RESOUCES_TITLE = '~resources_title';
+    const COORDINATE_RESOURCES_TITLE = '~resources_title';
     
     private $timelinePart = null;
     

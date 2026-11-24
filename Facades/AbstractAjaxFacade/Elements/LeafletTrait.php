@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Contexts\DebugContext;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Interfaces\Widgets\iCanBlink;
@@ -112,6 +115,8 @@ use exface\Core\Widgets\Parts\Maps\Interfaces\GeoJsonWidgetLinkMapLayerInterface
  */
 trait LeafletTrait
 {
+    use JsDataValueTrait;
+
     use JsValueScaleTrait;
 
     private $layerRenderers = [];
@@ -2280,38 +2285,35 @@ JS;
     }
 
     /**
-     * build function to get value of a selected data row
+     * Restricts map value coordinates to selected features.
      *
-     * @param string $column
-     * @param int $row
-     * @throws FacadeOutputError
-     * @return string
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
      */
-    public function buildJsValueGetter($column = null, $row = null) : string
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
-        if ($column != null) {
-            $key = $column;
-        } else {
-            if ($this->getWidget()->getData()->hasUidColumn() === true) {
-                $column = $this->getWidget()->getData()->getUidColumn();
-                $key = $column->getDataColumnName();
-            } else {
-                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
-            }
+        if ($coord->getRowCoordinate() !== null && $coord->isTargetingSelection() !== true) {
+            throw new FacadeOutputError('Map value getters support selected features only, not "' . $coord->getRowCoordinate() . '"!');
         }
-        if ($row != null) {
-            throw new FacadeOutputError('Unsupported function ');
-        }
+    }
 
-        return <<<JS
-function(){
-                    var aSelected = {$this->buildJsLeafletGetSelectedRows()};
-                    return aSelected.map(function(oRow){
-                        return oRow['$key'];
-                    }).join(',');
-                }()
-                
-JS;
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
+    {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
+        $column = $coord->findColumn($this->getWidget()->getData());
+        if ($column === null) {
+            throw new FacadeOutputError('Cannot get map value: column "' . $coord->getColumnCoordinate() . '" not found!');
+        }
+        if ($coord->getRowCoordinate() === null && ! $coord->hasAggregator()) {
+            $nameJs = json_encode($column->getDataColumnName(), JSON_THROW_ON_ERROR);
+            return "exfTools.data.aggregateColumnValues({$this->buildJsLeafletGetSelectedRows()}, {$nameJs}, null, ',')";
+        }
+        return $this->buildJsAggregateColumnValues($this->buildJsLeafletGetSelectedRows(), $column, $coord);
     }
 
     /**
