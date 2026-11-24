@@ -1,10 +1,14 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ButtonGroup;
+use exface\Core\Widgets\Data;
 use exface\Core\Widgets\DataColumn;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Widgets\InputSelect;
@@ -140,6 +144,8 @@ use exface\Core\CommonLogic\UxonObject;
  */
 trait JExcelTrait 
 {
+    use JsDataValueTrait;
+
     use JsConditionalPropertyTrait;
     
     private $onInitScripts = [];
@@ -182,7 +188,7 @@ trait JExcelTrait
         }
         
         var oFirstRow = {$this->buildJsDataGetter()}.rows[0] || {};
-        oFirstRow["{$columnName}"] = {$linked_element->buildJsValueGetter($link->getTargetColumnId())};
+        oFirstRow["{$columnName}"] = {$linked_element->buildJsValueGetter($link->getTargetCoordinate())};
         {$this->buildJsDataSetter('{rows: [oFirstRow]}')};
         {$this->buildJsFixedFootersSpread()}
     }();
@@ -219,7 +225,7 @@ JS;
         var oData = {
             footer: [
                 {
-                    {$col->getDataColumnName()}: {$linked_element->buildJsValueGetter($link->getTargetColumnId())}
+                    {$col->getDataColumnName()}: {$linked_element->buildJsValueGetter($link->getTargetCoordinate())}
                 }
             ]
         }
@@ -2386,7 +2392,7 @@ JS;
                         if ($linked_element) {
                             $js .= <<<JS
                     
-             jqFooter.find('td[data-x="{$colIdx}"]').text({$linked_element->buildJsValueGetter($link->getTargetColumnId())});
+             jqFooter.find('td[data-x="{$colIdx}"]').text({$linked_element->buildJsValueGetter($link->getTargetCoordinate())});
     
 JS;
                     }
@@ -3397,7 +3403,7 @@ JS;
                 $link = $valueExpr->getWidgetLink($cellWidget);
                 $linkedEl = $this->getFacade()->getElement($link->getTargetWidget());
                 $addLocalValuesToRowJs .= <<<JS
-                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter($link->getTargetColumnId())}, true);
+                $oExcelElJs.jspreadsheet.setValueFromCoords({$colIdx}, parseInt({$iRowJs}), {$linkedEl->buildJsValueGetter($link->getTargetCoordinate())}, true);
 
 JS;
             } 
@@ -3414,33 +3420,75 @@ JS;
     }
     
     /**
+     * Supports the spreadsheet row-count coordinate and standard data coordinates.
      *
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
+     */
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
+    {
+        $column = $coord->getColumnCoordinate();
+        if ($column !== null && mb_strtolower($column) === Data::COORDINATE_ROWCOUNT) {
+            return;
+        }
+        $this->validateDataValueGetterCoordinate($coord);
+    }
+
+    /**
+     * {@inheritDoc}
      * @see AbstractJqueryElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter($columnName = null, $row = null, bool $filterTargetIsSpreadsheet = false) : string
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
-        if (is_null($columnName)) {
-            if ($this->getWidget()->hasUidColumn() === true) {
-                $col = $this->getWidget()->getUidColumn();
-            } else {
-                throw new FacadeRuntimeError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
-            }
-        } else {
-            if (! $col = $this->getWidget()->getColumnByDataColumnName($columnName)) {
-                $col = $this->getWidget()->getColumnByAttributeAlias($columnName);
-            }
-        }
+        return $this->buildJsSpreadsheetValueGetter(WidgetLinkFactory::createCoordinateFromAnything($coord));
+    }
 
+    /**
+     * Keeps current-row spreadsheet filter evaluation separate from explicit link coordinates.
+     *
+     * @param \exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface $coord
+     * @param bool $filterTargetIsSpreadsheet
+     * @return string
+     */
+    protected function buildJsSpreadsheetValueGetter(WidgetLinkCoordinateInterface $coord, bool $filterTargetIsSpreadsheet = false) : string
+    {
+        $this->validateValueGetterCoordinate($coord);
+        $columnName = $coord->getColumnCoordinate();
         // handle rowcount col for ui5 facade
-        if (mb_strtolower($columnName) === '~rowcount') {
+        if ($columnName !== null && mb_strtolower($columnName) === Data::COORDINATE_ROWCOUNT) {
                 return $this->buildJsCountRows();
         }
-
+        $col = $coord->findColumn($this->getWidget());
         if ($col === null) {
             throw new WidgetConfigurationError($this->getWidget(), 'Cannot create a filter for column "' . $columnName . '" in the spreadsheet widget "' . $this->getWidget()->getId() . '": column does not exist!');
         }
 
         $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
+        $row = $coord->getRowCoordinate();
+        if ($row !== null) {
+            if ($coord->isTargetingRowNumber()) {
+                $rowsJs = "rows[{$row}] === undefined ? [] : [rows[{$row}]]";
+            } elseif ($coord->isTargetingLoadedRows() === true) {
+                $rowsJs = 'rows';
+            } else {
+                $rowsJs = "jqEl.jspreadsheet('getSelectedRows', true).map(function(index){ return rows[index]; }).filter(function(row){ return row !== undefined; })";
+            }
+            $nameJs = json_encode($col->getDataColumnName(), JSON_THROW_ON_ERROR);
+            $valueJs = $coord->isTargetingRowNumber() && ! $coord->hasAggregator()
+                ? "(selected[0] === undefined ? '' : (selected[0][{$nameJs}] ?? ''))"
+                : $this->buildJsAggregateColumnValues('selected', $col, $coord);
+            return <<<JS
+(function(jqEl){
+    var widget = jqEl[0]?.exfWidget;
+    if (! widget || widget.bLoaded !== true) {
+        return '';
+    }
+    var rows = widget.getData() || [];
+    var selected = {$rowsJs};
+    return {$valueJs};
+})({$this->buildJsJqueryElement()})
+JS;
+        }
 
         // check if requested data is for filter, or conditionize (disabled if/required if)
         // -> if it is for a self-referencing filter, use value from the current row
@@ -3687,7 +3735,9 @@ JS;
                     $targetWidget = $expr->getWidgetLink($cellWidget)->getTargetWidget()->getId(); 
                     $isTargetWidget = ($targetWidget === $this->getWidget()->getId(true)) ? true : false;
 
-                    $valueJs = $linked_element->buildJsValueGetter($link->getTargetColumnId(), null, $isTargetWidget);
+                    $valueJs = $isTargetWidget
+                        ? $this->buildJsSpreadsheetValueGetter(WidgetLinkFactory::createCoordinateFromAnything($link->getTargetCoordinate()), true)
+                        : $linked_element->buildJsValueGetter($link->getTargetCoordinate());
                 }
                 break;
             case $expr->isFormula() === false && $expr->isMetaAttribute() === false:

@@ -44,7 +44,8 @@ class SymfonyLexer
             $tokens = [];
             do {
                 $tok = $this->tokenStream->current;
-                $tokens[] = [$tok->type => $tok->value];
+                // Symfony cursors are 1-based. We store the 0-based offset of the token start in the expression.
+                $tokens[] = [$tok->type => $tok->value, 'cursor' => $tok->cursor - 1];
                 $this->tokenStream->next();
             } while (! $this->tokenStream->isEOF());
             $this->tokens = $tokens;

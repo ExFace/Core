@@ -632,7 +632,7 @@ class UxonSchema implements UxonSchemaInterface
                 return MetaObjectFactory::createFromString($this->getWorkbench(), 'exface.Core.DUMMY');
             }
         }
-        return $this->getWorkbench()->model()->getObject($objectAlias);
+        return  MetaObjectFactory::create($this->getWorkbench(), $objectAlias);
     }
     
     /**

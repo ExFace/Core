@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Interfaces;
 
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
@@ -111,11 +113,22 @@ interface AjaxFacadeElementInterface
      * This snippet can be used to build interaction scripts between widgets.
      * NOTE: the result does not end with a semicolon!
      *
-     * TODO add row and column to select a single value from the widgets data, which is generally represented by a DataSheet
+     * Data elements accept a coordinate such as "NAME$2" or "AMOUNT$~loaded:SUM".
+     * Omit the coordinate to use the widget's default value and evaluation context.
      *
+     * @param string|\exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface|null $coord
      * @return string
      */
-    public function buildJsValueGetter();
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string;
+
+    /**
+     * Registers updates for the value addressed by a widget coordinate.
+     *
+     * @param string $scriptJs
+     * @param \exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface|null $coord
+     * @return AjaxFacadeElementInterface
+     */
+    public function addOnChangeAtCoordinateScript(string $scriptJs, ?WidgetLinkCoordinateInterface $coord);
 
     /**
      * Returns inline JS to set the current value of the widget: e.g.  $('#id').val(value).

@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Interfaces\Actions\iReadData;
@@ -81,6 +84,8 @@ use exface\Core\Widgets\DataButton;
  */
 trait SlickGalleryTrait
 {
+    use JsDataValueTrait;
+
     use JsUploaderTrait;
     
     private $btnZoom = null;
@@ -389,35 +394,46 @@ JS
     }
     
     /**
-     * 
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
+     */
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
+    {
+        $this->validateDataValueGetterCoordinate($coord);
+    }
+
+    /**
+     * {@inheritDoc}
      * @see AbstractJqueryElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter($columnName = null, $row = null)
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
-       if (is_null($columnName)) {
-            if ($this->getWidget()->hasUidColumn() === true) {
-                $col = $this->getWidget()->getUidColumn();
-            } else {
-                throw new FacadeRuntimeError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
-            }
-        } else {
-            if (! $col = $this->getWidget()->getColumnByDataColumnName($columnName)) {
-                $col = $this->getWidget()->getColumnByAttributeAlias($columnName);
-            }
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
+        $col = $coord->findColumn($this->getWidget());
+        if ($col === null) {
+            throw new FacadeRuntimeError('Cannot get gallery value: column "' . $coord->getColumnCoordinate() . '" not found!');
         }
-        
-        $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;
-        
-        return <<<JS
-(function(){
-    var aSelectedRows = {$this->buildJsDataGetter(ActionFactory::createFromString($this->getWorkbench(), SaveData::class))}.rows;
-    var aVals = [];
-    aSelectedRows.forEach(function(oRow){
-        aVals.push(oRow['{$col->getDataColumnName()}']);
-    })
-    return aVals.join('{$delimiter}');
-})()
+        $rowsJs = "(($('#{$this->getIdOfSlick()}').data({$this->getJqDataProperty()}) || {}).rows || [])";
+        $row = $coord->getRowCoordinate();
+        if ($coord->isTargetingRowNumber()) {
+            if (! $coord->hasAggregator()) {
+                $nameJs = json_encode($col->getDataColumnName(), JSON_THROW_ON_ERROR);
+                return "(function(rows){ return rows[{$row}] === undefined ? '' : (rows[{$row}][{$nameJs}] ?? ''); })({$rowsJs})";
+            }
+            $rowsJs = "(function(rows){ return rows[{$row}] === undefined ? [] : [rows[{$row}]]; })({$rowsJs})";
+        } elseif ($coord->isTargetingLoadedRows() !== true) {
+            $rowsJs = <<<JS
+(function(rows){
+    var selected = [];
+    $('#{$this->getIdOfSlick()}').find('.imagecarousel-item.selected').each(function(){
+        selected.push(rows[$(this).index()]);
+    });
+    return selected;
+})({$rowsJs})
 JS;
+        }
+        return $this->buildJsAggregateColumnValues($rowsJs, $col, $coord);
     }
     
     /**

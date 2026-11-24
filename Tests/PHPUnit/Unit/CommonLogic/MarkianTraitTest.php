@@ -2,6 +2,7 @@
 namespace exface\Core\Tests\PHPUnit\Unit\CommonLogic;
 
 use exface\Core\Facades\AbstractAjaxFacade\Elements\MarkianTrait;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -65,6 +66,17 @@ class MarkianTraitTest extends TestCase
     {
         $element = new class {
             use MarkianTrait;
+
+            /**
+             * Checks the default coordinate normally validated by the facade base.
+             *
+             * @param WidgetLinkCoordinateInterface $coord
+             * @return void
+             */
+            protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
+            {
+                TestCase::assertSame('', (string) $coord);
+            }
 
             /**
              * Supplies a stable mount for this pure code-generation fixture.

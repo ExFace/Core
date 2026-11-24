@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Widgets\InlineGroup;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
@@ -87,8 +89,8 @@ trait JsSpinnerFilterTrait
      * 
      * @return string
      */
-    public function buildJsValueGetter(string $column = null)
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
-        return $this->getFacade()->getElement($this->getWidgetInlineGroup()->getInputWidgets()[0])->buildJsValueGetter($column);
+        return $this->getFacade()->getElement($this->getWidgetInlineGroup()->getInputWidgets()[0])->buildJsValueGetter($coord);
     }
 }

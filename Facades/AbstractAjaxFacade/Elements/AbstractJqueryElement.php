@@ -2,6 +2,8 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
 use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\NumberDataType;
@@ -366,13 +368,53 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      * This snippet can be used to build interaction scripts between widgets.
      * NOTE: the result does not end with a semicolon!
      *
-     * TODO add row and column to select a single value from the widgets data, which is generally represented by a DataSheet
+     * Data elements interpret coordinates such as "NAME$2" or "AMOUNT$~loaded:SUM".
+     * Omit the coordinate to use the widget's default value and evaluation context.
      *
+     * @param string|WidgetLinkCoordinateInterface|null $coord
      * @return string
      */
-    public function buildJsValueGetter()
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
         return '$("#' . $this->getId() . '").' . $this->buildJsValueGetterMethod();
+    }
+
+    /**
+     * Validates coordinates supported by this element's value getter.
+     *
+     * The default scalar getter does not support row selectors or aggregators.
+     * Data and custom value getters override this hook for their coordinate systems.
+     *
+     * @param WidgetLinkCoordinateInterface $coord
+     * @return void
+     */
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
+    {
+        if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
+            throw new \exface\Core\Exceptions\Facades\FacadeRuntimeError('Row coordinates are not supported by ' . $this->getWidget()->getWidgetType() . '!');
+        }
+    }
+
+    /**
+     * Updates a binding on data refresh and/or selection changes according to its coordinate.
+     *
+     * Editable data elements can extend this to register updates on cell edits.
+     *
+     * @param string $scriptJs
+     * @param WidgetLinkCoordinateInterface|null $coord
+     * @return AbstractJqueryElement
+     */
+    public function addOnChangeAtCoordinateScript(string $scriptJs, ?WidgetLinkCoordinateInterface $coord)
+    {
+        if ($coord?->getRowCoordinate() !== null) {
+            $this->addOnRefreshScript($scriptJs);
+        }
+        if (! $coord?->isTargetingRowNumber()) {
+            $this->addOnChangeScript($scriptJs);
+        }
+        return $this;
     }
 
     /**

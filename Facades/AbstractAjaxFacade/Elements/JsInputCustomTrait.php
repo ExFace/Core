@@ -1,8 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
-use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\DataTypes\StringDataType;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Templates\BracketHashStringTemplateRenderer;
@@ -32,8 +32,10 @@ trait JsInputCustomTrait {
      * {@inheritDoc}
      * @see \exface\UI5Facade\Facades\Elements\UI5AbstractElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter()
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
         return $this->getWidget()->getScriptToGetValue() ?? $this->buildJsFallbackForEmptyScript('script_to_get_value');
     }
 
@@ -121,23 +123,15 @@ trait JsInputCustomTrait {
             $js = $ref['on_change_script'];
             $link = WidgetLinkFactory::createFromWidget($widget, $linkStr);
             if ($linked_element = $this->getFacade()->getElement($link->getTargetWidget())) {
-                $col = $link->getTargetColumnId();
-                if (! StringDataType::startsWith($col, '~')) {
-                    $col = DataColumn::sanitizeColumnName($col);
-                }
                 $js = $tplRenderer->render($js);
 
                 $callbackJs = <<<JS
                     (function(mValue){
                         {$js}
-                    })({$linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())})
+                    })({$linked_element->buildJsValueGetter($link->getTargetCoordinate())})
 JS;
 
-                if (null !== $link->getTargetRowNumber()) {
-                    $linked_element->addOnRefreshScript($callbackJs);
-                } else {
-                    $linked_element->addOnChangeScript($callbackJs);
-                }
+                $linked_element->addOnChangeAtCoordinateScript($callbackJs, $link->getTargetCoordinate());
             }
         }
     }

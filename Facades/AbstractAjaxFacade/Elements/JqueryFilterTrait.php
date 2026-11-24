@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\CommonLogic\Model\Expression;
 use exface\Core\DataTypes\StringDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
@@ -99,7 +101,7 @@ JS;
             $val = $cond->getValue();
             if (Expression::detectReference($val)) {
                 $valLink = WidgetLinkFactory::createFromWidget($widget, $val);
-                $valueGetterJs = $this->getFacade()->getElement($valLink->getTargetWidget())->buildJsValueGetter();
+                $valueGetterJs = $this->getFacade()->getElement($valLink->getTargetWidget())->buildJsValueGetter($valLink->getTargetCoordinate());
                 $replacements['"' . $val . '"' ] = $valueGetterJs;
             }
         }
@@ -111,9 +113,9 @@ JS;
         return '"' . $this->getWidget()->getComparator() . '"';
     }
 
-    public function buildJsValueGetter()
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
-        return $this->getInputElement()->buildJsValueGetter();
+        return $this->getInputElement()->buildJsValueGetter($coord);
     }
 
     public function buildJsValueGetterMethod()
