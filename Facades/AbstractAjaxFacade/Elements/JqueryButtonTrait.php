@@ -31,6 +31,9 @@ use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Actions\ActionChain;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\Widgets\DataButton;
+use exface\Core\Widgets\DialogButton;
+use exface\Core\Widgets\Container;
+use exface\Core\Interfaces\Widgets\iShowSingleAttribute;
 
 /**
  *
@@ -641,6 +644,47 @@ JS;
     }
     
     /**
+     * Returns JS that writes the response of a successful action back into the dialog, the button belongs to.
+     *
+     * Only applies to dialog buttons that keep the dialog open. Otherwise the dialog keeps the values it was
+     * opened with, e.g. a stale timestamp, and a repeated save would fail with a concurrent write conflict.
+     *
+     * @return string
+     */
+    protected function buildJsDialogInputsFromResponse() : string
+    {
+        $widget = $this->getWidget();
+        if (! ($widget instanceof DialogButton) || $widget->getCloseDialogAfterActionSucceeds() === true) {
+            return '';
+        }
+        $dialog = $widget->getDialog();
+        if (! ($dialog instanceof Container)) {
+            return '';
+        }
+        $setters = '';
+        foreach ($dialog->getWidgetsRecursive() as $child) {
+            if (! ($child instanceof iShowSingleAttribute) || ! $child->isBoundToAttribute()) {
+                continue;
+            }
+            $alias = $child->getAttributeAlias();
+            $valueJs = $this->getFacade()->getElement($child)->buildJsValueSetter('row["' . $alias . '"]');
+            $setters .= "if (row['{$alias}'] !== undefined) { {$valueJs}; }\n";
+        }
+        if ($setters === '') {
+            return '';
+        }
+        return <<<JS
+        (function(oData) {
+            if (! oData || ! Array.isArray(oData.rows) || oData.rows.length === 0) {
+                return;
+            }
+            var row = oData.rows[0];
+            {$setters}
+        })(response);
+JS;
+    }
+
+    /**
      * Returns the JS code triggered by a button without an action.
      * 
      * @return string
@@ -804,6 +848,7 @@ JS;
                                     {$oResultDataJsVar} = response;
 				                   	if (response.success !== undefined){
 										{$this->buildJsCloseDialog()}
+                                        {$this->buildJsDialogInputsFromResponse()}
 				                       	{$this->buildJsBusyIconHide()}
 				                       	{$this->buildJsTriggerActionEffects($action)}
 										if (response.success !== undefined || response.undoURL){
