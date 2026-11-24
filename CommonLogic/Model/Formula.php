@@ -3,7 +3,6 @@ namespace exface\Core\CommonLogic\Model;
 
 use exface\Core\Exceptions\DataSources\DataConnectionFailedError;
 use exface\Core\Factories\DataTypeFactory;
-use exface\Core\CommonLogic\Workbench;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Interfaces\Formulas\FormulaInterface;
 use exface\Core\Interfaces\Selectors\FormulaSelectorInterface;
@@ -186,22 +185,22 @@ abstract class Formula implements FormulaInterface
 
     /**
      * Determine the datatype of the argument with the provided index (starting with 0)
-     * 
+     *
      * NOTE: detection of data types is only possible for arguments, that reference a data column
-     * in a non-static formula. 
-     * 
+     * in a non-static formula.
+     *
      * For other arguments this method will return `null`. If the argument is a data-expression,
      * but the formula is evaluated statically, this method will throw an error
      *
      * @param int $argIdx
-     * @return DataTypeInterface
+     * @return DataTypeInterface|null
      */
     protected function getArgumentType(int $argIdx) : ?DataTypeInterface
     {
         if (! $this->getTokenStream()->isArgumentAttribute($argIdx)) {
             return null;
         } else {
-            $attrAlias = $this->getTokenStream()->getArgument($argIdx);
+            $attrAlias = $this->getTokenStream()->getArgument($argIdx)->getValue();
         }
         $ds = $this->getDataSheet();
         if (! $ds) {
@@ -221,7 +220,9 @@ abstract class Formula implements FormulaInterface
      */
     protected function hasArgument(int $argIdx) : bool
     {
-        return $this->getTokenStream()->getArgument($argIdx) !== null;
+        // An omitted argument, e.g. the middle one in `Foo(a,,b)`, counts as missing. A NULL literal does not.
+        $arg = $this->getTokenStream()->getArgument($argIdx);
+        return $arg !== null && ! $arg->isEmpty();
     }
     
     public function getDataType()
@@ -265,12 +266,11 @@ abstract class Formula implements FormulaInterface
     {
         return $this->getTokenStream() ? $this->getTokenStream()->__toString() : '';
     }
-    
+
     /**
-     * 
-     * @return FormulaTokenStreamInterface|NULL
+     * @inheritDoc
      */
-    protected function getTokenStream() : ?FormulaTokenStreamInterface
+    public function getTokenStream() : ?FormulaTokenStreamInterface
     {
         return $this->tokenStream;
     }
@@ -287,16 +287,6 @@ abstract class Formula implements FormulaInterface
             throw new RuntimeException('Can not extract formula name from token stream. Either no token stream exists for this formula or expression includes no formula!');
         }
         return $name;
-    }
-    
-    /**
-     * 
-     * {@inheritDoc}
-     * @see \exface\Core\Interfaces\Formulas\FormulaInterface::getNestedFormulas()
-     */
-    public function getNestedFormulas() : array
-    {
-        return $this->getTokenStream() ? $this->getTokenStream()->getNestedFormulas() : [];
     }
     
     /**

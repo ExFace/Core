@@ -7,7 +7,7 @@ use exface\Core\Interfaces\WorkbenchInterface;
 use exface\Core\CommonLogic\Selectors\FormulaSelector;
 use exface\Core\Interfaces\Formulas\FormulaTokenStreamInterface;
 use exface\Core\CommonLogic\Model\SymfonyTokenStream;
-use exface\Core\CommonLogic\Model\EmptyTokenStream;
+use exface\Core\CommonLogic\Model\NestedTokenStream;
 
 abstract class FormulaFactory extends AbstractSelectableComponentFactory
 {
@@ -45,7 +45,7 @@ abstract class FormulaFactory extends AbstractSelectableComponentFactory
             throw new FormulaNotFoundError("Can not create formula for expression {$tokenStream->__toString()}. No formula name found.");
         }
         $selector = new FormulaSelector($workbench, $function_name);
-        if ($tokenStream instanceof EmptyTokenStream) {
+        if ($tokenStream instanceof NestedTokenStream) {
             return static::createFromSelector($selector, [$selector, $tokenStream]);
         }
         $str = $tokenStream->__toString();

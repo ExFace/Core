@@ -65,16 +65,20 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
         
         // Add callbacks for nested formulas (just those, that really are used!)
         // ExpressionLanguage does not support formulas with a namespace delimiter(e.g. 'exface.Core.AddDays()')
-        // Therefore we have to replace the namespace delimiter with thesupported character '_'
+        // Therefore we have to replace the namespace delimiter with the supported character '_'
         $fixedName = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '_', $name);
         $expression = str_replace($name, $fixedName, $expression);
         $this->addFormulaToExpressionLanguage($expressionLanguage, $fixedName, $formula);
-        foreach ($formula->getNestedFormulas() as $funcName) {
+        $tokenStream = $formula->getTokenStream();
+        $nestedFormulas = $tokenStream?->getNestedFormulas() ?? [];
+        
+        foreach ($nestedFormulas as $index => $funcName) {
             $fixedName = str_replace(AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, '_', $funcName);
             $expression = str_replace($funcName, $fixedName, $expression);
             // Use dummy classes as nested formulas (without a token stream as all tokens were already
             // evaluated in this formula - this saves us lots of parsing!
-            $nestedFormula = FormulaFactory::createFromTokenStream($exface, new EmptyTokenStream($funcName));
+            $nestedStream = new NestedTokenStream($index, $funcName, $tokenStream);
+            $nestedFormula = FormulaFactory::createFromTokenStream($exface, $nestedStream);
             $this->addFormulaToExpressionLanguage($expressionLanguage, $fixedName, $nestedFormula);
         }
         
@@ -122,14 +126,14 @@ class SymfonyExpressionLanguage implements FormulaExpressionLanguageInterface, W
      * @param ExpressionLanguage $expressionLanguage
      * @param string $funcName
      * @param FormulaInterface $formula
-     * @return Formula
+     * @return FormulaInterface
      */
-    protected function addFormulaToExpressionLanguage(ExpressionLanguage $expressionLanguage, string $funcName, FormulaInterface $formula) : Formula
+    protected function addFormulaToExpressionLanguage(ExpressionLanguage $expressionLanguage, string $funcName, FormulaInterface $formula) : FormulaInterface
     {
         $expressionLanguage->register($funcName, function ($str) {}, function() use ($formula) {
             //get all arguments given to the function
             $args = func_get_args();
-            //cut of the first one as it is the array given to the evalute function call as second argument
+            //cut of the first one as it is the array given to the evaluate function call as second argument
             array_shift($args);
             $formula->setDataContext($this->dataSheet, $this->dataSheetRowIdx);
             $result = call_user_func_array([

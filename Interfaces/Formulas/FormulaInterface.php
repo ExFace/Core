@@ -61,13 +61,6 @@ interface FormulaInterface extends WorkbenchDependantInterface
     public function getFormulaName() : string;
     
     /**
-     * Get formula names of formulas that are nested in this formula
-     * 
-     * @return string[]
-     */
-    public function getNestedFormulas() : array;
-    
-    /**
      * Get the expression used to instiantiate this formula
      * 
      * @return string
@@ -101,4 +94,11 @@ interface FormulaInterface extends WorkbenchDependantInterface
      * @return FormulaInterface
      */
     public function setDataContext(DataSheetInterface $dataSheet = null, int $rowIdx = null) : FormulaInterface;
+
+    /**
+     * Returns the token stream that extracted this formula.
+     * 
+     * @return FormulaTokenStreamInterface|null
+     */
+    public function getTokenStream() : ?FormulaTokenStreamInterface;
 }

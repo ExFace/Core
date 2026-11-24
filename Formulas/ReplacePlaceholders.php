@@ -87,7 +87,7 @@ class ReplacePlaceholders extends \exface\Core\CommonLogic\Model\Formula
     {
         $phs = [];
         foreach ($this->getTokenStream()->getArguments() as $arg) {
-            $phs = array_merge(StringDataType::findPlaceholders($arg), $phs);
+            $phs = array_merge(StringDataType::findPlaceholders($arg->getValue()), $phs);
         }
         return $phs;
     }
