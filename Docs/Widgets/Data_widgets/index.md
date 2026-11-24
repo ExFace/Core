@@ -19,7 +19,7 @@ Data widgets show multiple data rows in contrast to single-value widgets. The da
 <!-- BEGIN SubPageList:depth=2 -->
   - [Data configurators and widget setups](Data_configurators_and_setups.md)
   - [Relation\-bound spreadsheet columns](Subsheet-columns.md)
-  - [Table\_widgets](Table_widgets.md)
+  - [Table widgets](Table_widgets.md)
 
 
 <!-- END SubPageList -->

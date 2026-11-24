@@ -27,14 +27,14 @@ A screen consists of the surrounding launcher UI (global header and footer, main
   - [Data widgets](Data_widgets/index.md)
     - [Data configurators and widget setups](Data_widgets/Data_configurators_and_setups.md)
     - [Relation\-bound spreadsheet columns](Data_widgets/Subsheet-columns.md)
-    - [Table\_widgets](Data_widgets/Table_widgets.md)
-  - Special widgets
-    - [Browser\_widget\_\(IFrame\)](Special_widgets/Browser_widget_(IFrame).md)
-    - [Run CLI commands from the \`Console\` widget](Special_widgets/Console_widget.md)
+    - [Table widgets](Data_widgets/Table_widgets.md)
   - [Input widgets](Input_widgets/index.md)
     - [Combo\-widgets with autosuggest](Input_widgets/InputCombo.md)
     - [Input widgets for JSON and UXON](Input_widgets/InputJSON_InputUXON.md)
     - [Select inputs mit dropdown menu](Input_widgets/InputSelect.md)
+  - Special widgets
+    - [Browser widget \(IFrame\)](Special_widgets/Browser_widget_(IFrame).md)
+    - [Run CLI commands from the \`Console\` widget](Special_widgets/Console_widget.md)
 
 
 <!-- END SubPageList -->
