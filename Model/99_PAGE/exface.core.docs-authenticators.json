@@ -11,7 +11,7 @@
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2023-06-27 13:41:26",
     "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2023-06-27 14:28:54",
+    "modified_on": "2026-11-24 13:31:48",
     "contents": {
         "object_alias": "exface.Core.AUTHENTICATOR_CLASS",
         "widget_type": "SplitHorizontal",
@@ -31,7 +31,7 @@
                 "widgets": [
                     {
                         "widget_type": "Browser",
-                        "object_alias": "exface.Core.Docs",
+                        "object_alias": "exface.Core.DOCS",
                         "base_url": "[#api#]/docs/",
                         "url": "exface/Core/Docs/Security/Authentication/index.md"
                     }
