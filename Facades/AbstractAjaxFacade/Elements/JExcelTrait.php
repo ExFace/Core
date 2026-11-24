@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\DataTypes\NumberEnumDataType;
+use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
 use exface\Core\Widgets\ButtonGroup;
 use exface\Core\Widgets\DataColumn;
@@ -298,8 +299,9 @@ JS;
      * 
      * @see AbstractJqueryElement::buildCssFocusAreaSelector()
      */
-    public function buildCssFocusAreaSelector(string $area = null) : string
+    public function buildCssFocusAreaSelector(?FocusArea $focusArea = null) : string
     {
+        $area = $focusArea?->getIdRelativeToWidget();
         $sheetSelector = '#' . $this->getId();
         if ($area === null || $area === 'table') {
             return $sheetSelector;

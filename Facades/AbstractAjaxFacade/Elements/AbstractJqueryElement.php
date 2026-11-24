@@ -2,6 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\CommonLogic\WidgetDimension;
+use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
@@ -1147,34 +1148,39 @@ JS;
 
     /**
      * Returns the CSS selector for the given focusable UI area of this widget or for the widget itself if no area is provided
-     * 
-     * What areas a widget has depends on the widget structure (facade independent) and sometimes on specific facade 
+     *
+     * What areas a widget has depends on the widget structure (facade independent) and sometimes on specific facade
      * element implementation. Areas are visible to users, but typically are not used by the logic of the elements
      * themselves. The selector may match multiple DOM elements - e.g. all cells of a column.
-     * 
+     *
      * Elements, that do not know the requested area, should return the selector of the whole widget.
-     * 
-     * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::getFocusAreaSelector() for examples
-     * 
-     * @param string|null $area
+     *
+     * The area id relative to this widget is available via `$area->getIdRelativeToWidget()`.
+     *
+     * @param FocusArea|null $area
      * @return string
+     * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::getFocusAreaSelector() for examples
+     *
      */
-    public function buildCssFocusAreaSelector(string $area = null) : string
+    public function buildCssFocusAreaSelector(?FocusArea $area = null) : string
     {
         return '#' . $this->getId();
     }
     
     /**
-     * Returns JS code to make the DOM elements of the given area available before they are searched by selector
+     * Returns JS code to focus the given area of this widget (or the widget itself) and add a CSS class to it
      * 
-     * For example, tables with virtual scrolling need to scroll to a row before its cells are rendered. Returns
-     * an empty string by default.
+     * Tour drivers call this method before they search the DOM elements of the area via 
+     * `buildCssFocusAreaSelector()`. Elements should override it if their areas are not always rendered - e.g.
+     * tables with virtual scrolling need to scroll to a row before its cells exist in the DOM.
      * 
-     * @param string $area
+     * @param FocusArea|null $area
+     * @param string $cssClass CSS class to add to the focused DOM elements - pass an empty string for none
      * @return string
      */
-    public function buildJsFocusAreaPreparer(string $area) : string
+    public function buildJsFocus(?FocusArea $area, string $cssClass = 'focus') : string
     {
-        return '';
+        // TODO scroll the element into view if it is not visible (e.g. in a scrolled container or tab)
+        return "$('" . $this->buildCssFocusAreaSelector($area) . "').focus()" . ($cssClass !== '' ? ".addClass('{$cssClass}')" : '') . ";";
     }
 }

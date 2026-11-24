@@ -8,14 +8,13 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\FacadeResolver;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Model\UiPageInterface;
-use exface\Core\Widgets\Filter;
+use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -1222,19 +1221,15 @@ HTML;
     /**
      * Returns a CSS selector for a focusable area.
      * 
-     * The area consists of the widget id and the name of an area of that widget, separated by `~`. What areas
+     * The area consists of the widget id and the name of an area of that widget, separated by `~`. The widget
+     * id is resolved within the given screen (page or dialog) - see `FocusArea` for details. What areas
      * are available, depends on the facade element of the widget - see `buildCssFocusAreaSelector()` of the
      * element. If the element does not know the area, it returns the selector of the whole widget.
-     * 
-     * Widget links (e.g. `myTableId!Column1`) currently only resolve the widget - use `widget_to_focus` for them.
      * 
      * The resulting selector may match multiple DOM elements - e.g. all cells of a column.
      * 
      * Examples
-     * - Widget links: (currently not supported here)
-     *  - myTableId!Column1
-     *  - myTableId!Column1$2
-     * - Areas:
+     *  - myTableId
      *  - myTableId~column.Column1
      *  - myTableId~header
      *  - myTableId~table
@@ -1248,99 +1243,23 @@ HTML;
      *  - ContextBar
      *  - ContextBar~user
      * 
+     * @see FocusArea
+     * 
      * @param string $area
-     * @param WidgetInterface|UiScreenInterface $context
+     * @param UiScreenInterface $screen
      * @return string
      */
-    public function getFocusAreaSelector(string $area, WidgetInterface|UiScreenInterface $context) : string
+    public function getFocusAreaSelector(string $area, UiScreenInterface $screen) : string
     {
-        list($widget, $widgetArea) = $this->parseFocusArea($area, $context);
+        // Parse area selector
+        $area = new FocusArea($screen, $area);
+        
+        // Resolve area using the facade element
+        $widget = $area->getWidget();
         $facadeEl = $this->getElement($widget);
         if (! $facadeEl instanceof AbstractJqueryElement) {
             return '#' . $facadeEl->getId();
         }
-        return $facadeEl->buildCssFocusAreaSelector($widgetArea);
-    }
-    
-    /**
-     * Returns the widget, that contains the given focus area
-     * 
-     * @see AbstractAjaxFacade::getFocusAreaSelector() for examples
-     * 
-     * @param string $area
-     * @param WidgetInterface|UiScreenInterface $context
-     * @return WidgetInterface
-     */
-    public function getFocusAreaWidget(string $area, WidgetInterface|UiScreenInterface $context) : WidgetInterface
-    {
-        return $this->parseFocusArea($area, $context)[0];
-    }
-    
-    /**
-     * Returns JS to run before the selector of the focus area is evaluated or an empty string if not needed
-     * 
-     * Lets the facade element make the area available first - e.g. scroll a lazy table to the required row.
-     * 
-     * TODO: 23.11.2026 getFocusAreaSelector() just returns the selector and can not call the preparer logic right now,  
-     *  that is why it needs to be called separately before the selector is evaluated. 
-     * 
-     * @see AbstractAjaxFacade::getFocusAreaSelector() for examples
-     * 
-     * @param string $area
-     * @param WidgetInterface|UiScreenInterface $context
-     * @return string
-     */
-    public function buildJsFocusAreaPreparer(string $area, WidgetInterface|UiScreenInterface $context) : string
-    {
-        list($widget, $widgetArea) = $this->parseFocusArea($area, $context);
-        $facadeEl = $this->getElement($widget);
-        if (! $facadeEl instanceof AbstractJqueryElement) {
-            return '';
-        }
-        return $facadeEl->buildJsFocusAreaPreparer($widgetArea ?? '');
-    }
-    
-    /**
-     * Splits a focus area into the widget and the area within this widget
-     * 
-     * Returns an array with the widget and the area name (or NULL if the entire widget is meant). Widgets are
-     * searched relative to the given context widget (in its id space - e.g. within a dialog) or in the id space
-     * of the given screen. Filters are replaced by their input widgets because they
-     * are rendered by them.
-     * 
-     * @param string $area
-     * @param WidgetInterface|UiScreenInterface $context
-     * @return array [WidgetInterface, string|null]
-     */
-    protected function parseFocusArea(string $area, WidgetInterface|UiScreenInterface $context) : array
-    {
-        $area = trim($area);
-        $page = $context instanceof WidgetInterface ? $context->getPage() : ($context instanceof UiPageInterface ? $context : $context->getPage());
-        
-        if (stripos($area, '!') !== false) {
-            // Widget links: only the widget is resolved, the link itself is not mapped to an area
-            // TODO support widget links if needed. Use `widget_to_focus` for them in the meantime.
-            $linkString = $area;
-            $widgetArea = null;
-        } else {
-            // Areas: `myTableId~column.Column1`
-            $linkString = StringDataType::substringBefore($area, '~', $area);
-            $widgetArea = StringDataType::substringAfter($area, '~', null);
-            $widgetArea = $widgetArea === '' ? null : $widgetArea;
-        }
-        
-        if ($linkString === 'ContextBar') {
-            return [$page->getContextBar(), $widgetArea];
-        }
-        
-        // Resolve relative to the context widget to search in its id space - e.g. within a dialog
-        $link = $context instanceof WidgetInterface 
-            ? WidgetLinkFactory::createFromWidget($context, $linkString)
-            : WidgetLinkFactory::createFromPage($page, $linkString);
-        $widget = $link->getTargetWidget();
-        if ($widget instanceof Filter) {
-            $widget = $widget->getInputWidget();
-        }
-        return [$widget, $widgetArea];
+        return $facadeEl->buildCssFocusAreaSelector($area);
     }
 }

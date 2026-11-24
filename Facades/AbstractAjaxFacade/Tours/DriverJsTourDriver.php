@@ -10,8 +10,10 @@ use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Tours\TourDriverInterface;
 use exface\Core\Interfaces\Tours\TourInterface;
 use exface\Core\Interfaces\Tours\TourStepInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\Filter;
+use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Widgets\Parts\Tours\TourStoryStep;
 use exface\Core\Widgets\Parts\Tours\TourSubrouteStep;
 
@@ -595,8 +597,9 @@ JS;
     /**
      * Returns JS resolving the DOM element for the `focus_area` of the step or NULL if the step has no focus area
      * 
-     * The facade translates the area into a CSS selector, that may match multiple DOM elements - e.g. all cells
-     * of a table column. Before searching, the preparer JS of the facade element runs - e.g. to scroll a lazy
+     * The facade element of the widget translates the area into a CSS selector, that may match multiple DOM elements - e.g. all cells
+     * of a table column. Before searching, the area is focused via `buildJsFocus()` of the facade element - e.g. to
+     * scroll a lazy
      * table to the required row.
      * 
      * - If nothing visible matches, the DOM element of the widget is returned.
@@ -613,26 +616,31 @@ JS;
      */
     protected function buildJsFocusAreaGetter(TourStepInterface $step) : ?string
     {
-        $area = $step->getFocusArea();
+        $focusArea = $this->getFocusArea($step);
         $facade = $this->getFacade();
-        if ($area === null || ! $facade instanceof AbstractAjaxFacade) {
+        if ($focusArea === null || ! $facade instanceof AbstractAjaxFacade) {
             return null;
         }
-        // Resolve the area relative to the tour widget like `widget_to_focus` does - e.g. within a dialog
-        $context = $step->getWidget();
-        $widget = $facade->getFocusAreaWidget($area, $context);
-        $selectorJs = $this->escapeString($facade->getFocusAreaSelector($area, $context));
-        // Let the element make its area available first - e.g. scroll a lazy table to the required row
-        $preparerJs = $facade->buildJsFocusAreaPreparer($area, $context);
-        $fallbackJs = $facade->getElement($widget)->buildJsDomElementGetter();
+        $element = $facade->getElement($focusArea->getWidget());
+        if ($element instanceof AbstractJqueryElement) {
+            $selectorJs = $this->escapeString($element->buildCssFocusAreaSelector($focusArea));
+            // 1. Give the area regular focus - this also makes it available, e.g. scrolls a lazy table to the
+            // required row. No CSS class here as the highlighting is done by the driver itself (step 2)
+            $focusJs = $element->buildJsFocus($focusArea, '');
+        } else {
+            $selectorJs = $this->escapeString('#' . $element->getId());
+            $focusJs = '';
+        }
+        $fallbackJs = $element->buildJsDomElementGetter();
         return <<<JS
 
                     (function() {
                         try {
-                            {$preparerJs}
+                            {$focusJs}
                         } catch (e) {
-                            console.warn('Cannot prepare tour focus area', e);
+                            console.warn('Cannot focus tour focus area', e);
                         }
+                        // 2. Find the DOM elements of the area to highlight them
                         var aDoms = Array.prototype.filter.call(document.querySelectorAll({$selectorJs}), function(domEl) {
                             return domEl.getClientRects().length > 0;
                         });
@@ -735,11 +743,10 @@ JS;
      */
     protected function getFocusedWidget(TourStepInterface $step) : ?WidgetInterface
     {
-        $area = $step->getFocusArea();
-        $facade = $this->getFacade();
+        $focusArea = $this->getFocusArea($step);
         switch (true) {
-            case $area !== null && $facade instanceof AbstractAjaxFacade:
-                return $facade->getFocusAreaWidget($area, $step->getWidget());
+            case $focusArea !== null:
+                return $focusArea->getWidget();
             case $step instanceof TourStoryStep:
                 $widget = $step->getWidgetToFocus() ? $step->getWidgetToFocus()->getTargetWidget() : null;
                 break;
@@ -752,5 +759,25 @@ JS;
             $widget = $widget->getInputWidget();
         }
         return $widget;
+    }
+
+    /**
+     * Returns the parsed `focus_area` of the given step or NULL if the step has no focus area
+     * 
+     * The widget id of the area is resolved within the UI screen of the tour widget - i.e. within the
+     * dialog the tour belongs to or the page.
+     * 
+     * @param TourStepInterface $step
+     * @return FocusArea|null
+     */
+    protected function getFocusArea(TourStepInterface $step) : ?FocusArea
+    {
+        $area = $step->getFocusArea();
+        if ($area === null) {
+            return null;
+        }
+        $widget = $step->getWidget();
+        $screen = $widget instanceof UiScreenInterface ? $widget : $widget->getUiScreen();
+        return new FocusArea($screen, $area);
     }
 }
