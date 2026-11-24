@@ -58,20 +58,46 @@ class ShowObjectEditDialog extends ShowObjectInfoDialog
     protected function createDialogWidget(UiPageInterface $page, WidgetInterface $contained_widget = NULL)
     {
         $dialog = parent::createDialogWidget($page, $contained_widget);
-        /* @var $save_button \exface\Core\Widgets\Button */
-        $save_button = $dialog->createButton(new UxonObject(['action' => $this->getSaveActionUxon()]));
-        $save_button
-            ->setCaption($this->getWorkbench()->getCoreApp()->getTranslator()->translate("ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON"))
-            ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
-            ->setAlign(EXF_ALIGN_OPPOSITE);
-        // Make the save button refresh the same widget as the Button showing the dialog would do
+        $translator = $this->getWorkbench()->getCoreApp()->getTranslator();
+
+        // "Save" keeps the dialog open, "Save and Close" closes it after the save succeeds
+        $save_button = $this->createSaveButton($dialog, $translator->translate('ACTION.SHOWOBJECTEDITDIALOG.SAVE_BUTTON'), false);
+        $save_and_close_button = $this->createSaveButton($dialog, $translator->translate('ACTION.SHOWOBJECTEDITDIALOG.SAVE_AND_CLOSE_BUTTON'), true);
+
+        // Make the save buttons refresh the same widget as the Button showing the dialog would do
         if ($this->getWidgetDefinedIn() instanceof Button) {
-            $save_button->setRefreshWidgetIds($this->getWidgetDefinedIn()->getRefreshWidgetIds(false));
-            $save_button->setResetWidgetIds($this->getWidgetDefinedIn()->getResetWidgetIds(false));
+            foreach ([$save_button, $save_and_close_button] as $btn) {
+                $btn->setRefreshWidgetIds($this->getWidgetDefinedIn()->getRefreshWidgetIds(false));
+                $btn->setResetWidgetIds($this->getWidgetDefinedIn()->getResetWidgetIds(false));
+            }
             $this->getWidgetDefinedIn()->setRefreshWidgetLink(null);
         }
-        $dialog->addButton($save_button, 1);
+        $dialog->addButton($save_and_close_button, 1);
+        $dialog->addButton($save_button, 2);
         return $dialog;
+    }
+
+    /**
+     * Creates a save button for the dialog using the configured save action.
+     *
+     * Dialog buttons close the dialog after success by default, so the close flag is set explicitly.
+     * Note: the refresh/reset widget links are set by the caller.
+     *
+     * @param Dialog $dialog
+     * @param string $caption
+     * @param bool $closeDialogAfterSuccess
+     * @return \exface\Core\Widgets\DialogButton
+     */
+    protected function createSaveButton(\exface\Core\Widgets\Dialog $dialog, string $caption, bool $closeDialogAfterSuccess)
+    {
+        /* @var $button \exface\Core\Widgets\DialogButton */
+        $button = $dialog->createButton(new UxonObject(['action' => $this->getSaveActionUxon()->copy()]));
+        $button
+            ->setCaption($caption)
+            ->setVisibility(EXF_WIDGET_VISIBILITY_PROMOTED)
+            ->setAlign(EXF_ALIGN_OPPOSITE)
+            ->setCloseDialogAfterActionSucceeds($closeDialogAfterSuccess);
+        return $button;
     }
 
     public function setDialogWidget(AbstractWidget $widget)
