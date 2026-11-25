@@ -293,6 +293,26 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
                             $bracketDepth--;
                         }
                         break;
+                    case ':':
+                        // A colon directly behind an alias separates the aggregator, e.g. `Amount:SUM`. In any other
+                        // position it is the else-branch of a ternary operator, e.g. `Flag ? 'a' : 'b'`.
+                        if ($buffer !== null && ! $this->isWhitespaceBefore($token['cursor'])) {
+                            $hasTrailingPunctuation = true;
+                            $buffer .= $punctuation;
+                        } else {
+                            $this->addPart($buffer, SymfonyArgument::TYP_ATTRIBUTE, $openBrackets, $slots);
+                            $buffer = null;
+                            $this->addPart($punctuation, 'operator', $openBrackets, $slots);
+                        }
+                        break;
+                    case '?':
+                    case '??':
+                    case '?.':
+                        // Ternary and null-coalescing operators are part of the surrounding expression.
+                        $this->addPart($buffer, SymfonyArgument::TYP_ATTRIBUTE, $openBrackets, $slots);
+                        $buffer = null;
+                        $this->addPart($punctuation, 'operator', $openBrackets, $slots);
+                        break;
                     case ']':
                         // A closing modifier bracket ends the modifier, so no follow-up is expected.
                         $buffer .= $punctuation;
@@ -358,6 +378,19 @@ class SymfonyTokenStream extends SymfonyLexer implements FormulaTokenStreamInter
         $this->addPart($buffer, SymfonyArgument::TYP_ATTRIBUTE, $openBrackets, $slots);
         // Conclude the top-level argument.
         $this->closeArgument(null, $slots, strlen($this->tokenStream->getExpression()));
+    }
+
+    /**
+     * Returns TRUE if the character in front of the given offset is whitespace.
+     * 
+     * Used to tell an aggregator colon (`Amount:SUM`) from a ternary colon (`a ? b : c`).
+     *
+     * @param int $cursor 0-based offset in the expression
+     * @return bool
+     */
+    protected function isWhitespaceBefore(int $cursor) : bool
+    {
+        return $cursor > 0 && ctype_space($this->tokenStream->getExpression()[$cursor - 1]);
     }
 
     /**
