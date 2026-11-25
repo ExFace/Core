@@ -158,7 +158,7 @@ function testDataSpreadSheetSubsheet(source) {
     conditionWidget.isDropdownValueValid = function() { return false; };
     conditionWidget.getJExcel = function() { return {
         getData: function() { return [['X;Y']]; },
-        getConfig: function() { return {columns: [{}]}; },
+        options: {columns: [{}]},
         getColumnOptions: function() { return {type: 'autocomplete', filter: function() { return []; }}; },
         setValueFromCoords: function() { cleared++; }
     }; };
