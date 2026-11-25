@@ -6,8 +6,10 @@ use exface\Core\Factories\DataTypeFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\DataTypes\AbstractDataType;
 use exface\Core\DataTypes\UxonSchemaDataType;
-use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 
 /**
  * UXON-schema class for data types.
@@ -62,9 +64,8 @@ class DatatypeSchema extends UxonSchema
         try {
             $selector = SelectorFactory::createDataTypeSelector($this->getWorkbench(), $selectorString);
             $instance = DataTypeFactory::create($selector);
-        } catch (\Throwable $e) {
-            $ex = new RuntimeException('Error loading data type autosuggest - falling back to "AbstractDataType"!', null, $e);
-            $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::DEBUG);
+        } catch (DataTypeNotFoundError | AppComponentNotFoundError | AppNotFoundError | SelectorInvalidError $e) {
+            $this->handleIncompleteInputError($e);
             return $this->getDefaultPrototypeClass();
         }
         return get_class($instance);

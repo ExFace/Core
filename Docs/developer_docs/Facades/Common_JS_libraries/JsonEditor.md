@@ -129,6 +129,16 @@ shared adapter. jEasyUI delegates to `buildJsShowErrorAjax()` and raises the err
 dialog above the editor popup; UI5 uses its component's error-dialog renderer.
 Empty model/preset searches show an informational message, not an error.
 
+While completing UXON, unresolved object, attribute, relation and prototype
+selectors are expected intermediate input. The server schema logs these at DEBUG
+and returns no suggestions or uses the generic prototype. Errors reading stored
+definitions, including malformed UXON and data-source failures, are logged normally.
+For property-name and value completion, these failures appear as a single
+`// ERROR: ... See Log-ID ...` suggestion, even when it does not match the typed
+text. This is a diagnostic string, not a JSON comment; it should not be selected
+as configuration. Presets, property details, model browsing and transport failures
+keep their existing error handling.
+
 ## Facade integration
 
 ### HTML-based facades
@@ -163,3 +173,6 @@ for the real-browser fixtures and commands. Core covers editor behavior,
 connectivity gates and error delegation; UI5Facade additionally covers model
 binding, rerendering and forced-offline lifecycle behavior. Focused PHPUnit
 generator tests live in each owning app's `Tests/PHPUnit` suite.
+In the shared editor fixture, run
+`await (await import('../JsonEditorAutosuggestError.mjs')).runJsonEditorAutosuggestErrorRegression()`
+to check that diagnostic completions remain visible without opening a popup.

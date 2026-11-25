@@ -1604,6 +1604,7 @@
                     applyTo: ['value'],
                     caseSensitive: false,
                     filter: function (sToken, sMatch) {
+                        if (sMatch.startsWith('// ERROR:')) return true;
                         sToken = sToken.replace(/^\s(?=\S)/, '').replace(/__\s+$/, '__');
                         return !sToken.trim() || sMatch.toLowerCase().indexOf(sToken.toLowerCase()) !== -1;
                     },

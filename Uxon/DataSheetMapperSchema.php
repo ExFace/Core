@@ -4,6 +4,8 @@ namespace exface\Core\Uxon;
 use exface\Core\CommonLogic\DataSheets\DataSheetMapper;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\StringDataType;
+use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 
 /**
  * UXON-schema class for data data sheet mappers.
@@ -15,11 +17,20 @@ use exface\Core\DataTypes\StringDataType;
  */
 class DataSheetMapperSchema extends UxonSchema
 {
+    /**
+     * {@inheritDoc}
+     * @see UxonSchema::getPresets()
+     */
     public function getPresets(UxonObject $uxon, array $path, string $rootPrototypeClass = null) : array
     {
         $presets = [];
         $mappings = [];
-        $objectTo = $this->getParentSchema()->getMetaObject($uxon, $path);
+        try {
+            $objectTo = $this->getParentSchema()->getMetaObject($uxon, $path);
+        } catch (MetaObjectNotFoundError | SelectorInvalidError $e) {
+            $this->handleIncompleteInputError($e);
+            return [];
+        }
         
         // UID attribute
         if ($objectTo->hasUidAttribute()) {

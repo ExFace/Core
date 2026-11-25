@@ -17,6 +17,8 @@ use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\DataTypes\ComparatorDataType;
 use exface\Core\Interfaces\UxonSchemaInterface;
 use exface\Core\Uxon\QueryBuilderSchema;
+use exface\Core\Interfaces\Exceptions\ExceptionInterface;
+use Throwable;
 
 /**
  * Returns autosuggest values for provided UXON objects.
@@ -48,6 +50,9 @@ use exface\Core\Uxon\QueryBuilderSchema;
  * 
  * ```
  * 
+ * Completion failures are logged and returned as a `// ERROR: ...` suggestion
+ * with a Log-ID. Preset, details and model-browser errors keep their normal handling.
+ *
  * @author Andrej Kabachnik
  *
  */
@@ -64,7 +69,38 @@ class UxonAutosuggest extends AbstractAction
     const TYPE_DETAILS = 'details';
     const TYPE_MODEL_BROWSER = 'modelbrowser';
     
+    /**
+     * {@inheritDoc}
+     * @see AbstractAction::perform()
+     */
     protected function perform(TaskInterface $task, DataTransactionInterface $transaction) : ResultInterface
+    {
+        try {
+            $options = $this->getSuggestions($task);
+        } catch (Throwable $e) {
+            $type = strtolower($task->getParameter(self::PARAM_TYPE) ?? '');
+            if (in_array($type, [self::TYPE_PRESET, self::TYPE_DETAILS, self::TYPE_MODEL_BROWSER], true)) {
+                throw $e;
+            }
+            $this->getWorkbench()->getLogger()->logException($e);
+            $logHint = $e instanceof ExceptionInterface ? ' See Log-ID ' . $e->getId() : ' See logs for details';
+            $options = [
+                'values' => ['// ERROR: ' . preg_replace('/\s+/', ' ', $e->getMessage()) . $logHint]
+            ];
+            if ($type === self::TYPE_FIELD) {
+                $options['templates'] = [];
+            }
+        }
+        return ResultFactory::createJSONResult($task, $options);
+    }
+
+    /**
+     * Resolves the requested editor assistance before formatting its task result.
+     *
+     * @param TaskInterface $task
+     * @return array
+     */
+    protected function getSuggestions(TaskInterface $task) : array
     {
         $schemaBase = new UxonObject();
         
@@ -103,7 +139,7 @@ class UxonAutosuggest extends AbstractAction
                 $options = $this->suggestPropertyValues($schema, $uxon, $path, $currentText, $rootPrototypeClass, $rootObject);
                 break;
         }
-        return ResultFactory::createJSONResult($task, $options);
+        return $options;
     }
 
     /**

@@ -2,8 +2,7 @@
 namespace exface\Core\Uxon;
 
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\Exceptions\RuntimeException;
-use exface\Core\Interfaces\Log\LoggerInterface;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 use exface\Core\CommonLogic\Communication\AbstractMessage;
 use exface\Core\Factories\CommunicationFactory;
 use exface\Core\Interfaces\Selectors\CommunicationChannelSelectorInterface;
@@ -68,13 +67,8 @@ class CommunicationMessageSchema extends UxonSchema
         try {
             $selectorString = trim($selectorString);
             $tpl = CommunicationFactory::createTemplatesFromModel($this->getWorkbench(), [$selectorString])[0];
-        } catch (CommunicationTemplateNotFoundError $e) {
-            // No need to worry: this just means, the user is typing the template name and needs an
-            // autosuggest for it
-            return null;
-        } catch (\Throwable $e) {
-            $ex = new RuntimeException('Error loading message autosuggest - falling back to "AbstractMessage"!', null, $e);
-            $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::DEBUG);
+        } catch (CommunicationTemplateNotFoundError | SelectorInvalidError $e) {
+            $this->handleIncompleteInputError($e);
             return null;
         }
         if ($channelSelector = $tpl->getChannelSelector()) {
@@ -97,16 +91,14 @@ class CommunicationMessageSchema extends UxonSchema
             } else {
                 $channel = CommunicationFactory::createChannelFromString($this->getWorkbench(), trim($selectorOrString));
             }
-            $message = CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $channel->getMessagePrototypeSelector());
-        } catch (CommunicationChannelNotFoundError $e) {
-            // No need to worry: this just means, the user is typing the template name and needs an
-            // autosuggest for it
-            return null;
-        } catch (\Throwable $e) {
-            $ex = new RuntimeException('Error loading message autosuggest - falling back to "AbstractMessage"!', null, $e);
-            $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::DEBUG);
+        } catch (CommunicationChannelNotFoundError | SelectorInvalidError $e) {
+            if ($selectorOrString instanceof CommunicationChannelSelectorInterface) {
+                throw $e;
+            }
+            $this->handleIncompleteInputError($e);
             return null;
         }
+        $message = CommunicationFactory::createMessageFromPrototype($this->getWorkbench(), $channel->getMessagePrototypeSelector());
         return get_class($message);
     }
     

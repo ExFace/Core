@@ -6,11 +6,11 @@ use exface\Core\CommonLogic\Uxon\AbstractUxonSnippet;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\JsonDataType;
 use exface\Core\DataTypes\UxonSchemaDataType;
-use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
+use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\UxonSnippetFactory;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Uxon\UxonSnippetInterface;
-use Throwable;
 
 /**
  * UXON-schema class for meta object behaviors.
@@ -27,6 +27,13 @@ class SnippetSchema extends UxonSchema
         return UxonSchemaDataType::SNIPPET;
     }
 
+    /**
+     * Finds the enclosing snippet, allowing its alias to be incomplete while editing.
+     *
+     * @param UxonObject $uxon
+     * @param array $path
+     * @return UxonSnippetInterface|null
+     */
     protected function findSnippet(UxonObject $uxon, array $path) : ?UxonSnippetInterface
     {
         $level = $uxon;
@@ -45,8 +52,8 @@ class SnippetSchema extends UxonSchema
         if ($snippetAlias !== null) {
             try {
                 return UxonSnippetFactory::createFromString($this->getWorkbench(), $snippetAlias);
-            } catch (Throwable $e) {
-                $this->getWorkbench()->getLogger()->logException(new RuntimeException('Autosuggest for UXON snippets failed: ' . $e->getMessage(), null, $e));
+            } catch (UxonSnippetNotFoundError | SelectorInvalidError $e) {
+                $this->handleIncompleteInputError($e);
             }
         }
         return null;
@@ -59,7 +66,7 @@ class SnippetSchema extends UxonSchema
     public function getProperties(string $prototypeClass, UxonObject $uxon, array $path) : array
     {
         $params = [];
-        $lastKey = $path[count($path) - 2];
+        $lastKey = $path[count($path) - 2] ?? null;
         if ($lastKey === 'parameters') {
             $snippet = $this->findSnippet($uxon, $path);
             if ($snippet !== null) {
