@@ -170,7 +170,7 @@ Areas supported by tables:
 | `column.<column_name>` | Header and all rendered cells of the column |
 | `column.<column_name>$<n>` | The cell of the column in the n-th row |
 | `row$<n>` | The n-th row (UI5 only) |
-| `row_selector$<n>` | The selection checkbox of the n-th row - e.g. to select it via `on_next_step.browser_click`. Tables without checkboxes resolve to the row (UI5 only) |
+| `row_checkbox$<n>` | The selection checkbox of the n-th row - e.g. to select it via `on_next_step.browser_click`. Tables without checkboxes resolve to the row (UI5 only) |
 | `header` | The column headers (UI5 only) |
 | `table` | The table content (headers and rows) |
 
