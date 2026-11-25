@@ -213,19 +213,33 @@ class InputSelect extends Input implements iSupportMultiSelect, iHaveValues
      */
     public function getSelectableOptions() : array
     {
-        // If there are no selectable options set explicitly, try to determine them from the value data type
+        // If there are no selectable options set explicitly, see if you can get them from the data type structure:
+        // - the value data type of the widget
+        // - the attribute data type if the widget is bound to an attribute
+        // This cascade of data types is needed because the value can be a string formula (e.g. `=EnumValues()`),
+        // which cannot be used to guess options, while the type of the attribute might still be an enum.
         if (empty($this->selectable_options)) {
-            $data_type = $this->getValueDataType();
-            if ($data_type instanceof BooleanDataType) {
-                $this->setSelectableOptions(array(
-                    1,
-                    0
-                ), array(
-                    $this->translate('WIDGET.SELECT_YES'),
-                    $this->translate('WIDGET.SELECT_NO')
-                ));
-            } elseif ($data_type instanceof EnumDataTypeInterface) {
-                $this->setSelectableOptions($data_type->getLabels());
+            $sourceDataTypes = [$this->getValueDataType()];
+            if ($this->isBoundToAttribute()) {
+                $sourceDataTypes[] = $this->getAttribute()->getDataType();
+            }
+            foreach ($sourceDataTypes as $dataType) {
+                switch (true) {
+                    // Use yes/no as options for booleans
+                    case $dataType instanceof BooleanDataType:
+                        $this->setSelectableOptions(array(
+                            1,
+                            0
+                        ), array(
+                            $this->translate('WIDGET.SELECT_YES'),
+                            $this->translate('WIDGET.SELECT_NO')
+                        ));
+                        break 2;
+                    // Use enum values if there are any
+                    case $dataType instanceof EnumDataTypeInterface:
+                        $this->setSelectableOptions($dataType->getLabels());
+                        break 2;
+                }
             }
         }
         
