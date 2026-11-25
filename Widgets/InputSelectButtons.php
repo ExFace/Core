@@ -4,6 +4,7 @@ namespace exface\Core\Widgets;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Factories\WidgetFactory;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
+use exface\Core\Widgets\Parts\ConditionalProperty;
 
 /**
  * Allows the user to select from a list of values by toggling one or more buttons.
@@ -18,6 +19,23 @@ use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
  * the facade is expected to trigger that button - this allows attaching arbitrary action
  * logic to these otherwise very basic controls. The button derives its input data from the
  * surrounding container (e.g. a dialog), so `input_mapper`s can be used to transform it.
+ * 
+ * ## Hiding the buttons
+ * 
+ * The widget's own `hidden_if` controls whether the buttons are shown at all. In a table, it is evaluated
+ * for every row with the same rules and limitations as described below for `disabled_if`.
+ * 
+ * ## Disabling options
+ * 
+ * A `disabled_if` defined on the `button` of an option does not disable the hidden button, but the
+ * option itself: it cannot be selected while the condition is true. If a disabled option is currently
+ * selected, it remains selected and is shown as selected AND disabled. In a table, the condition is
+ * evaluated for every row - references to columns of the same table use the values of that row.
+ * 
+ * **Limitations in tables:** only references to columns of the same table are evaluated per row (and
+ * re-evaluated when these values change). References to widgets outside the table are evaluated when the
+ * row is (re-)rendered, but changing such a widget does not update the options automatically. Row numbers
+ * and aggregators (e.g. `=tabelle!COL:SUM`) in references are not evaluated per row either.
  * 
  * The keys of `on_option_selected` must match the keys of `selectable_options` (or the
  * generic option keys `` for "none" and `NULL` for "empty"). Every button is forced to be
@@ -70,6 +88,16 @@ class InputSelectButtons extends InputSelect
     private ?array $onOptionSelectedButtons = null;
 
     /**
+     * @var UxonObject[]
+     */
+    private array $optionDisabledIfUxons = [];
+
+    /**
+     * @var ConditionalProperty[]|null
+     */
+    private ?array $optionDisabledIf = null;
+
+    /**
      * Assigns a hidden button to be triggered when the given option is selected.
      * 
      * The keys must match the keys of `selectable_options`. Each value is an object with a
@@ -101,6 +129,10 @@ class InputSelectButtons extends InputSelect
      *  
      * ```
      * 
+     * A `disabled_if` inside a `button` disables the option, not the (hidden) button. In tables, only references
+     * to columns of the same table are evaluated per row - changes of widgets outside the table do not update
+     * the options automatically.
+     * 
      * IMPORTANT: This feature is experimental. Quality of life features, like auto-complete, may not work as expected when using on-option-selected buttons.
      * 
      * @uxon-property on_option_selected
@@ -116,6 +148,8 @@ class InputSelectButtons extends InputSelect
         $this->onOptionSelectedButtons = null;
         $this->onOptionSelectedUxons = [];
         $this->onOptionSelectedLocks = [];
+        $this->optionDisabledIfUxons = [];
+        $this->optionDisabledIf = null;
         foreach ($uxon->getPropertiesAll() as $optionKey => $optionUxon) {
             $optionKey = (string) $optionKey;
             if(strtoupper($optionKey) === EXF_LOGICAL_NULL) {
@@ -131,7 +165,13 @@ class InputSelectButtons extends InputSelect
             if (! in_array($lock, [self::LOCK_NEVER, self::LOCK_UNTIL_SELECTION_CHANGE], true)) {
                 throw new WidgetConfigurationError($this, 'Invalid "lock" value "' . $lock . '" for "on_option_selected" option "' . $optionKey . '" in widget "' . $this->getWidgetType() . '": expecting "' . self::LOCK_NEVER . '" or "' . self::LOCK_UNTIL_SELECTION_CHANGE . '"!');
             }
-            $this->onOptionSelectedUxons[$optionKey] = $optionUxon->getProperty('button');
+            $buttonUxon = $optionUxon->getProperty('button');
+            // The button is hidden, so its disabled_if is repurposed to control the option itself
+            if ($buttonUxon instanceof UxonObject && $buttonUxon->hasProperty('disabled_if')) {
+                $this->optionDisabledIfUxons[$optionKey] = $buttonUxon->getProperty('disabled_if');
+                $buttonUxon->unsetProperty('disabled_if');
+            }
+            $this->onOptionSelectedUxons[$optionKey] = $buttonUxon;
             $this->onOptionSelectedLocks[$optionKey] = $lock;
         }
         return $this;
@@ -171,6 +211,37 @@ class InputSelectButtons extends InputSelect
     public function getOnOptionSelectedButton(string $optionKey): ?Button
     {
         return $this->getOnOptionSelected()[$optionKey] ?? null;
+    }
+
+    /**
+     * Returns the `disabled_if` conditions of the `on_option_selected` buttons keyed by option.
+     * 
+     * These conditions do not disable the (always hidden) buttons, but the options themselves: a disabled
+     * option cannot be selected by the user. If it is currently selected, it stays selected, but is
+     * shown as disabled.
+     * 
+     * @return ConditionalProperty[]
+     */
+    public function getOptionsDisabledIf(): array
+    {
+        if ($this->optionDisabledIf === null) {
+            $this->optionDisabledIf = [];
+            foreach ($this->optionDisabledIfUxons as $optionKey => $uxon) {
+                $this->optionDisabledIf[$optionKey] = new ConditionalProperty($this, 'disabled_if', $uxon);
+            }
+        }
+        return $this->optionDisabledIf;
+    }
+
+    /**
+     * Returns the `disabled_if` condition of the given option or NULL if there is none.
+     * 
+     * @param string $optionKey
+     * @return ConditionalProperty|null
+     */
+    public function getOptionDisabledIf(string $optionKey): ?ConditionalProperty
+    {
+        return $this->getOptionsDisabledIf()[$optionKey] ?? null;
     }
 
     /**
