@@ -13,6 +13,7 @@ use exface\Core\Interfaces\Tours\TourStepInterface;
 use exface\Core\Interfaces\Widgets\iHaveCaption;
 use exface\Core\Interfaces\Widgets\iHaveVisibility;
 use exface\Core\Interfaces\Facades\FacadeInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
 
 /**
  * 
@@ -573,4 +574,14 @@ interface WidgetInterface extends WorkbenchDependantInterface, iCanBeCopied, iCa
      * @return string
      */
     public function getIdInScreen() : string;
+
+    /**
+     * Returns an array of all widget link coordinates available in this widget
+     * 
+     * Coordinates addressing data rows are not included as the widget mostly does not know, what rows will be shown.
+     * 
+     * @see WidgetLinkCoordinateInterface
+     * @return string[]
+     */
+    public function getLinkCoordinates() : array;
 }

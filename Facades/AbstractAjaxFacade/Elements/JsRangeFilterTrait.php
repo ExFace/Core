@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 
 use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -126,7 +127,7 @@ trait JsRangeFilterTrait
     protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
         if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
-            throw new FacadeRuntimeError('Row coordinates are not supported by RangeFilter!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Row coordinates are not supported by RangeFilter!');
         }
     }
 

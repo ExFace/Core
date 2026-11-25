@@ -1035,4 +1035,14 @@ class InputComboTable extends InputCombo implements iTakeInputAsDataSubsheet, IH
     {
         return new InputComboTableSubroute($this, $config);
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getLinkCoordinates()
+     */
+    public function getLinkCoordinates() : array
+    {
+        $coordinates = parent::getLinkCoordinates();
+        return array_merge($coordinates, $this->getTable()->getLinkCoordinates());
+    }
 }

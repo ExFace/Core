@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 
 use exface\Core\DataTypes\NumberEnumDataType;
 use exface\Core\Interfaces\DataTypes\EnumDataTypeInterface;
@@ -3458,7 +3459,7 @@ JS;
         }
         $col = $coord->findColumn($this->getWidget());
         if ($col === null) {
-            throw new WidgetConfigurationError($this->getWidget(), 'Cannot create a filter for column "' . $columnName . '" in the spreadsheet widget "' . $this->getWidget()->getId() . '": column does not exist!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Cannot create a filter for column "' . $columnName . '" in the spreadsheet widget "' . $this->getWidget()->getId() . '": column does not exist!');
         }
 
         $delimiter = $col->isBoundToAttribute() ? $col->getAttribute()->getValueListDelimiter() : EXF_LIST_SEPARATOR;

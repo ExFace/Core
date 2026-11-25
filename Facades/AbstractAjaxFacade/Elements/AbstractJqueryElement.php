@@ -4,6 +4,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 use exface\Core\CommonLogic\WidgetDimension;
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 use exface\Core\DataTypes\ByteSizeDataType;
 use exface\Core\DataTypes\NumberDataType;
 use exface\Core\DataTypes\StringDataType;
@@ -372,6 +373,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
      *
      * @param string|WidgetLinkCoordinateInterface|null $coord
      * @return string
+     * @throws WidgetCoordinateUnresolvableError
      */
     public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
@@ -392,7 +394,7 @@ abstract class AbstractJqueryElement implements WorkbenchDependantInterface, Aja
     protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
         if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
-            throw new \exface\Core\Exceptions\Facades\FacadeRuntimeError('Row coordinates are not supported by ' . $this->getWidget()->getWidgetType() . '!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Row coordinates are not supported by ' . $this->getWidget()->getWidgetType() . '!');
         }
     }
 

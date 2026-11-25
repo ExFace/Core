@@ -3,6 +3,7 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Widgets\ButtonGroup;
@@ -412,7 +413,7 @@ JS
         $this->validateValueGetterCoordinate($coord);
         $col = $coord->findColumn($this->getWidget());
         if ($col === null) {
-            throw new FacadeRuntimeError('Cannot get gallery value: column "' . $coord->getColumnCoordinate() . '" not found!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Cannot get gallery value: column "' . $coord->getColumnCoordinate() . '" not found!');
         }
         $rowsJs = "(($('#{$this->getIdOfSlick()}').data({$this->getJqDataProperty()}) || {}).rows || [])";
         $row = $coord->getRowCoordinate();

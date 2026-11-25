@@ -31,7 +31,7 @@ use exface\Core\Widgets\Parts\Charts\SplineChartSeries;
 use exface\Core\Widgets\Parts\Charts\Interfaces\StackableChartSeriesInterface;
 use exface\Core\Widgets\Parts\Charts\Interfaces\iHaveVisualMapChartPart;
 use exface\Core\Widgets\Parts\Charts\AreaChartSeries;
-use exface\Core\Exceptions\Facades\FacadeOutputError;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 use exface\Core\Widgets\Parts\Charts\GraphChartSeries;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\Parts\Charts\HeatmapChartSeries;
@@ -855,7 +855,7 @@ JS;
     {
         if (in_array($coord->getColumnCoordinate(), [Chart::COORDINATE_LEGEND_ACTIVE, Chart::COORDINATE_LEGEND_INACTIVE], true)) {
             if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
-                throw new FacadeOutputError('Row selectors are not supported for chart legend coordinates!');
+                throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Row selectors are not supported for chart legend coordinates!');
             }
             return;
         }
@@ -885,7 +885,7 @@ JS;
         } else {
             $dataColumn = $coord->findColumn($this->getWidget()->getData());
             if ($dataColumn === null) {
-                throw new FacadeOutputError('Cannot get chart value: column "' . $column . '" not found!');
+                throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Cannot get chart value: column "' . $column . '" not found!');
             }
             $key = $dataColumn->getDataColumnName();
         }

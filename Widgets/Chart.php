@@ -1131,4 +1131,14 @@ class Chart extends AbstractWidget implements
         // be Button[] instead of DataButton[]
         return $this->setButtonsViaTrait($buttons);
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getLinkCoordinates()
+     */
+    public function getLinkCoordinates() : array
+    {
+        $coordinates = parent::getLinkCoordinates();
+        return array_merge($coordinates, $this->getData()->getLinkCoordinates());
+    }
 }

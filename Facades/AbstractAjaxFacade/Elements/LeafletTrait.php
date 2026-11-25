@@ -17,7 +17,7 @@ use exface\Core\Events\Facades\OnFacadeWidgetRendererExtendedEvent;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
-use exface\Core\Exceptions\Facades\FacadeOutputError;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 use exface\Core\DataTypes\WidgetVisibilityDataType;
 use exface\Core\Widgets\Parts\Maps\Interfaces\MarkerMapLayerInterface;
 use exface\Core\Factories\ActionFactory;
@@ -2293,7 +2293,7 @@ JS;
     protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
         if ($coord->getRowCoordinate() !== null && $coord->isTargetingSelection() !== true) {
-            throw new FacadeOutputError('Map value getters support selected features only, not "' . $coord->getRowCoordinate() . '"!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Map value getters support selected features only, not "' . $coord->getRowCoordinate() . '"!');
         }
     }
 
@@ -2307,7 +2307,7 @@ JS;
         $this->validateValueGetterCoordinate($coord);
         $column = $coord->findColumn($this->getWidget()->getData());
         if ($column === null) {
-            throw new FacadeOutputError('Cannot get map value: column "' . $coord->getColumnCoordinate() . '" not found!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Cannot get map value: column "' . $coord->getColumnCoordinate() . '" not found!');
         }
         if ($coord->getRowCoordinate() === null && ! $coord->hasAggregator()) {
             $nameJs = json_encode($column->getDataColumnName(), JSON_THROW_ON_ERROR);

@@ -47,6 +47,7 @@ class WidgetLinkCoordinate implements WidgetLinkCoordinateInterface
 
     const COORDINATE_ROWS_SELECTED = '~selected';
     
+    private string $coordinate;
     private ?string $column = null;
     private null|string|int $row = null;
     private ?string $aggregator = null;
@@ -58,6 +59,8 @@ class WidgetLinkCoordinate implements WidgetLinkCoordinateInterface
      */
     public function __construct(string $coordinate = '')
     {
+        $this->coordinate = $coordinate;
+        
         // Split only at "$": any aggregator on the column itself belongs to its address.
         $parts = explode('$', trim($coordinate), 2);
         $this->column = $parts[0] === '' ? null : $parts[0];
@@ -216,8 +219,6 @@ class WidgetLinkCoordinate implements WidgetLinkCoordinateInterface
      */
     public function __toString() : string
     {
-        return ($this->column ?? '')
-            . ($this->row === null ? '' : '$' . $this->row)
-            . ($this->aggregator === null ? '' : ':' . $this->aggregator);
+        return $this->coordinate;
     }
 }

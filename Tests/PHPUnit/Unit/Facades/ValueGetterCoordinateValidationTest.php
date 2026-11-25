@@ -2,11 +2,11 @@
 namespace exface\Core\Tests\PHPUnit\Unit\Facades;
 
 use exface\Core\CommonLogic\Workbench;
-use exface\Core\Exceptions\Facades\FacadeOutputError;
-use exface\Core\Exceptions\Facades\FacadeRuntimeError;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
 use exface\Core\Widgets\Input;
 use exface\Core\Tests\PHPUnit\Support\ScalarElementWithDataHelpers;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,7 +27,7 @@ class ValueGetterCoordinateValidationTest extends TestCase
     #[DataProvider('scalarRowCoordinates')]
     public function testScalarGetterRejectsRowsEvenWithDataHelpers(string $coordinate) : void
     {
-        $this->expectException(FacadeRuntimeError::class);
+        $this->expectException(WidgetCoordinateUnresolvableError::class);
         $this->element()->buildJsValueGetter($coordinate);
     }
 
@@ -67,7 +67,7 @@ class ValueGetterCoordinateValidationTest extends TestCase
     {
         $element = $this->element();
         $validator = new ReflectionMethod($element, 'validateDataValueGetterCoordinate');
-        $this->expectException(FacadeOutputError::class);
+        $this->expectException(WidgetCoordinateUnresolvableError::class);
         $validator->invoke($element, WidgetLinkFactory::createCoordinateFromAnything($coordinate));
     }
 
@@ -79,6 +79,25 @@ class ValueGetterCoordinateValidationTest extends TestCase
     public static function unsupportedDataCoordinates() : array
     {
         return [['NAME$~unknown'], ['~start_date']];
+    }
+
+    /**
+     * Interface-based coordinates retain their identity and target widget when rejected.
+     *
+     * @return void
+     */
+    public function testRejectedCoordinateInterfaceRetainsDebugContext() : void
+    {
+        $element = $this->element();
+        $coordinate = $this->createStub(WidgetLinkCoordinateInterface::class);
+        $coordinate->method('getRowCoordinate')->willReturn('~loaded');
+        try {
+            $element->buildJsValueGetter($coordinate);
+            self::fail('A scalar getter must reject a row coordinate.');
+        } catch (WidgetCoordinateUnresolvableError $error) {
+            self::assertSame($element->getWidget(), $error->getWidget());
+            self::assertSame($coordinate, $error->getCoordinate());
+        }
     }
 
     /**

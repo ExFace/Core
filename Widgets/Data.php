@@ -1690,4 +1690,20 @@ class Data
         $this->configuratorSetupsEnabled = $trueOrFalse;
         return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractWidget::getLinkCoordinates()
+     */
+    public function getLinkCoordinates() : array
+    {
+        $coordinates = parent::getLinkCoordinates();
+        foreach ($this->getColumns() as $col) {
+            // Attribute alias of columns are valid coordinates
+            $coordinates[] = $col->getExpression()->__toString();
+            // Data column names can be used as coordinates too
+            $coordinates[] = $col->getDataColumnName();
+        }
+        return array_unique($coordinates);
+    }
 }

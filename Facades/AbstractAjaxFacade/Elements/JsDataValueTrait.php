@@ -2,7 +2,7 @@
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
-use exface\Core\Exceptions\Facades\FacadeOutputError;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 use exface\Core\Widgets\DataColumn;
 
 /**
@@ -22,10 +22,10 @@ trait JsDataValueTrait
             && ! $coord->isTargetingRowNumber()
             && $coord->isTargetingSelection() !== true
             && $coord->isTargetingLoadedRows() !== true) {
-            throw new FacadeOutputError('Unsupported row coordinate "' . $coord->getRowCoordinate() . '".');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Unsupported row coordinate "' . $coord->getRowCoordinate() . '".');
         }
         if ($coord->isTargetingCustomCoordinate()) {
-            throw new FacadeOutputError('Custom coordinate "' . $coord->getColumnCoordinate() . '" is not supported by this data value getter!');
+            throw new WidgetCoordinateUnresolvableError($this->getWidget(), $coord, 'Custom coordinate "' . $coord->getColumnCoordinate() . '" is not supported by this data value getter!');
         }
     }
 

@@ -8,7 +8,7 @@ use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\JsValueDecoratingInterface;
-use exface\Core\Exceptions\Facades\FacadeOutputError;
+use exface\Core\Exceptions\Widgets\WidgetCoordinateUnresolvableError;
 use exface\Core\Widgets\DataTable;
 use exface\Core\DataTypes\SortingDirectionsDataType;
 use exface\Core\Interfaces\Widgets\iTakeInput;
@@ -301,7 +301,7 @@ JS;
         $widget = $this->getWidget();
         $column_widget = $coord->findColumn($widget);
         if (! $column_widget) {
-            throw new FacadeOutputError('Column "' . $coord->getColumnCoordinate() . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
+            throw new WidgetCoordinateUnresolvableError($widget, $coord, 'Column "' . $coord->getColumnCoordinate() . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
         }
         $tableJs = $this->getId() . '_table';
         $row = $coord->getRowCoordinate();
