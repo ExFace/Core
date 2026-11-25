@@ -20,6 +20,7 @@ use exface\Core\Exceptions\Actions\ActionConfigurationError;
 use exface\Core\Factories\ExpressionFactory;
 use exface\Core\Interfaces\Actions\iCallWidgetFunction;
 use exface\Core\Interfaces\Actions\iCallOtherActions;
+use exface\Core\Interfaces\Widgets\iHaveColumns;
 use exface\Core\Facades\AbstractAjaxFacade\Interfaces\AjaxFacadeElementInterface;
 use exface\Core\Interfaces\Actions\iShowUrl;
 use exface\Core\Interfaces\Actions\iShowDialog;
@@ -700,6 +701,11 @@ JS;
         
         $refreshIds = '';
         $refreshNotIds = $widget->getRefreshInput() === false ? '"' . $widget->getId() . '"' : '';
+        // Widgets receiving transient data via SendToWidget must not be reloaded by the same action,
+        // otherwise the reload would overwrite the injected data
+        foreach ($this->getSendToWidgetTargetIds($action) as $targetId) {
+            $refreshNotIds .= ($refreshNotIds !== '' ? ', ' : '') . json_encode($targetId);
+        }
         foreach ($widget->getRefreshWidgetIds($widget->getRefreshInput() ?? false) as $refreshId) {
             $refreshIds .= '"' . $refreshId . '", ';
         }
@@ -734,6 +740,25 @@ JS;
                 
                 {$this->buildJsOnSuccessScript()}
 JS;
+    }
+    
+    /**
+     * Returns ids of widgets targeted by SendToWidget actions - the action itself or any step of a chain
+     * 
+     * @param ActionInterface $action
+     * @return string[]
+     */
+    protected function getSendToWidgetTargetIds(ActionInterface $action) : array
+    {
+        $ids = [];
+        if ($action instanceof SendToWidget) {
+            $ids[] = $action->getTargetWidgetId();
+        } elseif ($action instanceof iCallOtherActions) {
+            foreach ($action->getActions() as $step) {
+                $ids = array_merge($ids, $this->getSendToWidgetTargetIds($step));
+            }
+        }
+        return array_values(array_unique($ids));
     }
     
     /**
@@ -1169,7 +1194,17 @@ JS;
             $getterJs = "exfTools.data.aggregateColumnValues({$jsRequestData}.rows, {$colNameJs}, {$aggregatorJs})";
             $setterJs = $targetElement->buildJsValueSetter($getterJs);
         } else {
-            $setterJs = $targetElement->buildJsDataSetter($jsRequestData);
+            $dataJs = $jsRequestData;
+            if ($action->getExistingData() === SendToWidget::EXISTING_DATA_MERGE_BY_UID) {
+                $targetWidget = $targetElement->getWidget();
+                $uidCol = ($targetWidget instanceof iHaveColumns) ? $targetWidget->getUidColumn() : null;
+                if ($uidCol === null) {
+                    throw new ActionConfigurationError($action, 'Cannot use `existing_data` = "merge_by_uid" in action ' . $action->getAliasWithNamespace() . ': target widget "' . $targetWidget->getId() . '" has no UID column!');
+                }
+                // The data getter without an action returns all rows (not just the selected ones)
+                $dataJs = 'exfTools.data.mergeRowsByUid(' . $targetElement->buildJsDataGetter() . ', ' . $jsRequestData . ', ' . json_encode($uidCol->getDataColumnName()) . ')';
+            }
+            $setterJs = $targetElement->buildJsDataSetter($dataJs);
         }
         
         return <<<JS

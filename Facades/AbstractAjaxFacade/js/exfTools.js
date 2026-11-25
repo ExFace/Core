@@ -1211,6 +1211,42 @@
 			},
 
 			/**
+			 * Merges rows of a new data set into a copy of an existing data set by matching their UIDs
+			 * 
+			 * Only cells present in the new rows are written. New rows without a UID or without a matching 
+			 * existing row are ignored. Existing rows are never removed.
+			 * 
+			 * @param {{rows: Array.<Object>}} oExistingData
+			 * @param {{rows: Array.<Object>}} oNewData
+			 * @param {string} sUidColumnName
+			 * @returns {Object}
+			 */
+			mergeRowsByUid: function(oExistingData, oNewData, sUidColumnName) {
+				var aRows = ((oExistingData || {}).rows || []).map(function(oRow) {
+					return Object.assign({}, oRow);
+				});
+				var oIndex = {};
+				var fnIsEmpty = function(v) { return v === undefined || v === null || v === ''; };
+				aRows.forEach(function(oRow) {
+					if (! fnIsEmpty(oRow[sUidColumnName])) {
+                        oIndex[String(oRow[sUidColumnName])] = oRow;
+                    }
+                });
+				((oNewData || {}).rows || []).forEach(function(oNewRow) {
+					var sUid = oNewRow[sUidColumnName];
+					if (fnIsEmpty(sUid) || ! oIndex.hasOwnProperty(String(sUid))) {
+						return;
+					}
+					Object.keys(oNewRow).forEach(function(sKey) {
+						if (oNewRow[sKey] !== undefined) {
+							oIndex[String(sUid)][sKey] = oNewRow[sKey];
+						}
+					});
+				});
+				return Object.assign({}, oExistingData, {rows: aRows});
+			},
+
+			/**
 			 * Aggregates the values of a column across multiple rows into a single value
 			 * 
 			 * Without an aggregator, all values of the column are simply concatenated using the given
