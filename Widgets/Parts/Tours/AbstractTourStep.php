@@ -225,7 +225,7 @@ abstract class AbstractTourStep implements TourStepInterface
      * - `myTableId~column.Column1` - the entire column with the data column name `Column1`
      * - `myTableId~column.Column1$2` - the cell of `Column1` in the second row
      * - `myTableId~row$3` - the third row (UI5 only)
-     * - `myTableId~row_selector$3` - selection checkbox of the third row (UI5 only)
+     * - `myTableId~row_checkbox$3` - selection checkbox of the third row (UI5 only)
      * - `myTableId~header` - the column headers (UI5 only)
      * - `myTableId~table` - the table without toolbars
      * 

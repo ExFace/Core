@@ -9,6 +9,7 @@ use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\Factories\ResultFactory;
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\DataTypes\AggregatorFunctionsDataType;
+use exface\Core\Exceptions\Actions\ActionConfigurationError;
 
 /**
  * Sends the input data of the action or a single value from it to a linked widget.
@@ -36,7 +37,11 @@ class SendToWidget extends AbstractAction
         AggregatorFunctionsDataType::LIST_DISTINCT
     ];
 
+    const EXISTING_DATA_REPLACE = 'replace';
+    const EXISTING_DATA_MERGE_BY_UID = 'merge_by_uid';
+
     private $target_widget_id = null;
+    private $existing_data = self::EXISTING_DATA_REPLACE;
     private $send_value_pointer = null;
     private $send_value_parsed = null;
 
@@ -84,6 +89,44 @@ class SendToWidget extends AbstractAction
     {
         $this->target_widget_id = $value;
         return $this;
+    }
+
+    /**
+     * What to do with data already present in the target widget
+     * 
+     * - `replace` (default) - the target widget's data is replaced entirely by the data sent
+     * - `merge_by_uid` - rows of the data sent are matched to existing rows of the target by their UID. Only cells,
+     * that are present in the data sent, are overwritten. Rows without a UID or without a matching row in the target
+     * are ignored. All other rows and cells of the target remain untouched.
+     * 
+     * `merge_by_uid` is performed in the browser because only the front-end knows the current data of the target 
+     * widget. It requires a data widget with a UID column and has no effect in combination with `send_value`.
+     * 
+     * @uxon-property existing_data
+     * @uxon-type [replace,merge_by_uid]
+     * @uxon-default replace
+     * 
+     * @param string $value
+     * @throws ActionConfigurationError
+     * @return SendToWidget
+     */
+    public function setExistingData(string $value) : SendToWidget
+    {
+        $value = strtolower($value);
+        if (! in_array($value, [self::EXISTING_DATA_REPLACE, self::EXISTING_DATA_MERGE_BY_UID], true)) {
+            throw new ActionConfigurationError($this, 'Invalid value "' . $value . '" for `existing_data` in action ' . $this->getAliasWithNamespace() . ': use "replace" or "merge_by_uid"!');
+        }
+        $this->existing_data = $value;
+        return $this;
+    }
+
+    /**
+     * 
+     * @return string
+     */
+    public function getExistingData() : string
+    {
+        return $this->existing_data;
     }
 
     /**
