@@ -28,6 +28,13 @@ interface TourStepInterface extends WidgetPartInterface
     public function getFocusCssQuery() : ?string;
 
     /**
+     * Returns the focus area like `myTableId~column.Column1$2` or NULL if not set.
+     *
+     * @return string|null
+     */
+    public function getFocusArea() : ?string;
+
+    /**
      * Returns TRUE if the step has a subroute configured.
      *
      * @return bool

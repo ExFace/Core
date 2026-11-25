@@ -1186,49 +1186,40 @@ JS;
     {
         return "$('#{$this->getId()}')[0]";
     }
-    
-    /**
-     * Returns a JS expression for the DOM element to highlight for a column of this widget in a tour.
-     * 
-     * Elements without column support highlight the whole widget. Override in widgets with columns.
-     * 
-     * @param string $columnName
-     * @return string
-     */
-    public function buildJsDomElementGetterForColumn(string $columnName) : string
-    {
-        return $this->buildJsDomElementGetter();
-    }
-    
-    /**
-     * Returns a JS expression for the DOM element to highlight for a single cell of this widget in a tour.
-     * 
-     * The row number is 1-based and refers to the displayed data rows counted from the top (current
-     * page) - regardless of the scroll position. Implementations should scroll the row into view if
-     * needed. Elements without cell support highlight the column instead. Override in widgets
-     * with rows and columns.
-     * 
-     * @param string $columnName
-     * @param int $rowNumber
-     * @return string
-     */
-    public function buildJsDomElementGetterForCell(string $columnName, int $rowNumber) : string
-    {
-        return $this->buildJsDomElementGetterForColumn($columnName);
-    }
 
     /**
      * Returns the CSS selector for the given focusable UI area of this widget or for the widget itself if no area is provided
-     * 
-     * What areas a widget has depends on the widget structure (facade independent) and sometimes on specific facade 
+     *
+     * What areas a widget has depends on the widget structure (facade independent) and sometimes on specific facade
      * element implementation. Areas are visible to users, but typically are not used by the logic of the elements
-     * themselves.
-     * 
-     * @param string|null $area
+     * themselves. The selector may match multiple DOM elements - e.g. all cells of a column.
+     *
+     * Elements, that do not know the requested area, should return the selector of the whole widget.
+     *
+     * @param string|null $areaId area id relative to this widget (e.g. `column.MY_COL`) or NULL for the whole widget
      * @return string
+     * @see \exface\Core\Facades\AbstractAjaxFacade\AbstractAjaxFacade::getFocusAreaSelector() for examples
+     *
      */
-    public function buildCssFocusAreaSelector(string $area = null) : string
+    public function buildCssFocusAreaSelector(?string $areaId = null) : string
     {
         return '#' . $this->getId();
+    }
+    
+    /**
+     * Returns JS code to focus the given area of this widget (or the widget itself) and add a CSS class to it
+     * 
+     * Tour drivers call this method before they search the DOM elements of the area via 
+     * `buildCssFocusAreaSelector()`. Elements should override it if their areas are not always rendered - e.g.
+     * tables with virtual scrolling need to scroll to a row before its cells exist in the DOM.
+     * 
+     * @param string|null $areaId area id relative to this widget (e.g. `column.MY_COL`) or NULL for the whole widget
+     * @param string $cssClass CSS class to add to the focused DOM elements - pass an empty string for none
+     * @return string
+     */
+    public function buildJsFocus(?string $areaId, string $cssClass = 'focus') : string
+    {
+        // TODO scroll the element into view if it is not visible (e.g. in a scrolled container or tab)
+        return "$('" . $this->buildCssFocusAreaSelector($areaId) . "').focus()" . ($cssClass !== '' ? ".addClass('{$cssClass}')" : '') . ";";
     }
 }

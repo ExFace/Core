@@ -292,104 +292,49 @@ JS;
 
     
     /**
-     * Returns a JS expression for an invisible overlay above a whole column - header and rows.
-     * 
-     * JExcel has no DOM element per column, but tours highlight a single element. The overlay is placed
-     * inside the scrollable content area, so it is clipped and scrolled like the cells. If the column
-     * is not rendered, the whole widget is highlighted instead.
-     * 
      * {@inheritDoc}
-     * @see AbstractJqueryElement::buildJsDomElementGetterForColumn()
+     * 
+     * Supported areas:
+     * 
+     * - `column.<data_column_name>` - the header and all cells of a column
+     * - `column.<data_column_name>$<n>` - the cell of a column in the n-th row from the top of the data (1-based)
+     * - `table` - the entire sheet
+     * 
+     * Unknown areas and columns resolve to the whole widget.
+     * 
+     * @see AbstractJqueryElement::buildCssFocusAreaSelector()
      */
-    public function buildJsDomElementGetterForColumn(string $columnName) : string
+    public function buildCssFocusAreaSelector(?string $areaId = null) : string
     {
-        return <<<JS
-(function() {
-    var domSheet = {$this->buildJsJqueryElement()}[0];
-    var oWidget = domSheet ? domSheet.exfWidget : null;
-    var iCol = (oWidget && oWidget.bLoaded) ? oWidget.getColumnIndex({$this->escapeString($columnName)}) : -1;
-    var jqSheet = $(domSheet);
-    var domHead = jqSheet.find('thead > tr:first-child > td[data-x="' + iCol + '"]')[0];
-    var domContent = jqSheet.find('.jexcel_content')[0];
-    var domLastRow = jqSheet.find('tbody > tr:last-child')[0];
-    if (! domHead || ! domContent || ! domHead.getClientRects().length) {
-        return domSheet;
-    }
-    var domBox = jqSheet.find('.exf-tour-column-focus')[0];
-    if (! domBox) {
-        domBox = $('<div class="exf-tour-column-focus" style="position:absolute;pointer-events:none"></div>').appendTo(domContent)[0];
-    }
-    // The overlay needs a positioned parent. Remember the original inline value, so the tour driver
-    // can restore it when the tour ends
-    if ($(domContent).css('position') === 'static') {
-        domContent.setAttribute('data-exf-tour-position', domContent.style.position);
-        domContent.style.position = 'relative';
-    }
-    // Viewport coordinates -> coordinates inside the scrolled content. Stop at the last row and at the visible
-    // bottom of the window and of every scrollable parent (the sheet may be taller than the visible page).
-    var rContent = domContent.getBoundingClientRect();
-    var rHead = domHead.getBoundingClientRect();
-    var iBottom = Math.min(domLastRow ? domLastRow.getBoundingClientRect().bottom : 0, window.innerHeight);
-    $(domSheet).parents().each(function() {
-        if (/(auto|scroll|hidden)/.test($(this).css('overflow-y'))) {
-            iBottom = Math.min(iBottom, this.getBoundingClientRect().bottom);
+        $sheetSelector = '#' . $this->getId();
+        if ($areaId === null || $areaId === 'table') {
+            return $sheetSelector;
         }
-    });
-    $(domBox).css({
-        left: rHead.left - rContent.left - domContent.clientLeft + domContent.scrollLeft,
-        top: rHead.top - rContent.top - domContent.clientTop + domContent.scrollTop,
-        width: rHead.width,
-        height: Math.max(iBottom - rHead.top, rHead.height)
-    });
-    return domBox;
-})()
-JS;
-    }
-    
-    /**
-     * Returns a JS expression for the cell of the given column in the given 1-based data row.
-     * 
-     * The row number counts the displayed rows of the sheet from the top - regardless of the current
-     * scroll position. Rows hidden by jExcel (e.g. by search or pagination) are skipped. The cell is
-     * scrolled into view inside the sheet and its scrollable parents. Falls back to the whole column if
-     * there is no such row.
-     * 
-     * {@inheritDoc}
-     * @see AbstractJqueryElement::buildJsDomElementGetterForCell()
-     */
-    public function buildJsDomElementGetterForCell(string $columnName, int $rowNumber) : string
-    {
-        return <<<JS
-(function() {
-    var domSheet = {$this->buildJsJqueryElement()}[0];
-    var oWidget = domSheet ? domSheet.exfWidget : null;
-    var iCol = (oWidget && oWidget.bLoaded) ? oWidget.getColumnIndex({$this->escapeString($columnName)}) : -1;
-    var jqSheet = $(domSheet);
-    var domContent = jqSheet.find('.jexcel_content')[0];
-    var domHead = jqSheet.find('thead > tr:first-child > td[data-x="' + iCol + '"]')[0];
-    var domCell = null;
-    if (domContent && domHead && domHead.getClientRects().length) {
-        // Count displayed rows in DOM order (= display order after sorting), skipping hidden ones
-        var iRow = 0;
-        $(domContent).find('tbody > tr').each(function() {
-            if (! this.getClientRects().length) {
-                return;
+        if (! StringDataType::startsWith($areaId, 'column.')) {
+            return $sheetSelector;
+        }
+        $columnName = StringDataType::substringAfter($areaId, 'column.');
+        $rowNumber = null;
+        if (strpos($columnName, '$') !== false) {
+            $rowNumber = StringDataType::substringAfter($columnName, '$', false, false, true);
+            $columnName = StringDataType::substringBefore($columnName, '$', false, false, true);
+        }
+        // jExcel cells have the index of the column in `data-x`. jExcel columns are rendered for all
+        // widget columns in the same order (hidden columns included) - see buildJsJExcelColumns()
+        $colIdx = null;
+        foreach (array_values($this->getWidget()->getColumns()) as $idx => $col) {
+            if ($col->getDataColumnName() === $columnName) {
+                $colIdx = $idx;
+                break;
             }
-            iRow++;
-            if (iRow === {$rowNumber}) {
-                domCell = $(this).children('td[data-x="' + iCol + '"]')[0] || null;
-                return false;
-            }
-        });
-    }
-    if (! domCell || ! domCell.getClientRects().length) {
-        return {$this->buildJsDomElementGetterForColumn($columnName)};
-    }
-    // Center the cell to keep it clear of the sticky header
-    domCell.scrollIntoView({block: 'center', inline: 'nearest'});
-    return domCell;
-})()
-JS;
+        }
+        if ($colIdx === null) {
+            return $sheetSelector;
+        }
+        if ($rowNumber !== null && is_numeric($rowNumber) && intval($rowNumber) > 0) {
+            return "{$sheetSelector} tbody > tr:nth-child(" . intval($rowNumber) . ") > td[data-x=\"{$colIdx}\"]";
+        }
+        return "{$sheetSelector} thead > tr:first-child > td[data-x=\"{$colIdx}\"], {$sheetSelector} tbody > tr > td[data-x=\"{$colIdx}\"]";
     }
     
     /**

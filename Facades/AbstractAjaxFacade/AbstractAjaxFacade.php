@@ -8,13 +8,13 @@ use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\FacadeResolver;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
-use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
 use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -1221,11 +1221,15 @@ HTML;
     /**
      * Returns a CSS selector for a focusable area.
      * 
+     * The area consists of the widget id and the name of an area of that widget, separated by `~`. The widget
+     * id is resolved within the given screen (page or dialog) - see `FocusArea` for details. What areas
+     * are available, depends on the facade element of the widget - see `buildCssFocusAreaSelector()` of the
+     * element. If the element does not know the area, it returns the selector of the whole widget.
+     * 
+     * The resulting selector may match multiple DOM elements - e.g. all cells of a column.
+     * 
      * Examples
-     * - Widget links:
-     *  - myTableId!Column1
-     *  - myTableId!Column1$2
-     * - Areas:
+     *  - myTableId
      *  - myTableId~column.Column1
      *  - myTableId~header
      *  - myTableId~table
@@ -1239,6 +1243,8 @@ HTML;
      *  - ContextBar
      *  - ContextBar~user
      * 
+     * @see FocusArea
+     * 
      * @param string $area
      * @param UiScreenInterface $screen
      * @return string
@@ -1246,17 +1252,14 @@ HTML;
     public function getFocusAreaSelector(string $area, UiScreenInterface $screen) : string
     {
         // Parse area selector
-        $page = $screen instanceof UiPageInterface ? $screen : $screen->getPage();
-        if (stripos($area, '!') !== false) {
-            $link = WidgetLinkFactory::createFromPage($page, $area);
-            $widget = $link->getTargetWidget();
-        } else {
-            $widgetId = StringDataType::substringBefore($area, '~');
-            // TODO parse further
-        }
+        $area = new FocusArea($screen, $area);
         
         // Resolve area using the facade element
+        $widget = $area->getWidget();
         $facadeEl = $this->getElement($widget);
-        return $facadeEl->buildCssFocusAreaSelector($area);
+        if (! $facadeEl instanceof AbstractJqueryElement) {
+            return '#' . $facadeEl->getId();
+        }
+        return $facadeEl->buildCssFocusAreaSelector($area->getIdRelativeToWidget());
     }
 }
