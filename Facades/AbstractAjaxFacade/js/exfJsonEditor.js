@@ -761,18 +761,18 @@
                 // Fill path textarea
                 var elem = modal.modalElem();
                 var aPresetOptions = [];
-                var sGroupName = '';
                 var length = data.length;
                 var jqTileContainer = $(elem.querySelector('#uxonPresetCards'));
 
                 var fnListTiles = function(aPresetData, jqTileContainer, fnClick, sSearch) {
                     sSearch = sSearch === undefined ? '' : sSearch.toLowerCase();
+                    var sGroupName = '';
 
                     jqTileContainer.empty().prev('.spinner').show();
 
                     aPresetData.forEach(function(oRow){
                         if (! oRow['PROTOTYPE__LABEL']) {
-                           oRow['PROTOTYPE__LABEL'] = t("PRESET_GROUP_GENERAL");
+                           oRow['PROTOTYPE__LABEL'] = t("PRESETS.GROUP_GENERAL");
                         }
 
                         if (sSearch !== '') {

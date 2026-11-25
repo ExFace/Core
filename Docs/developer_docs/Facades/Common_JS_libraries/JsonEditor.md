@@ -128,6 +128,8 @@ intact to `onAjaxError` for native facade rendering rather than inserted by the
 shared adapter. jEasyUI delegates to `buildJsShowErrorAjax()` and raises the error
 dialog above the editor popup; UI5 uses its component's error-dialog renderer.
 Empty model/preset searches show an informational message, not an error.
+Presets without a prototype label appear in the translated General group and
+can be searched by either their name or that group label.
 
 While completing UXON, unresolved object, attribute, relation and prototype
 selectors are expected intermediate input. The server schema logs these at DEBUG

@@ -116,7 +116,7 @@ export async function runJsonEditorRegression() {
         aResults.push('live UXON context, autosuggest and explicit transport errors');
 
         oResponse = [{
-            NAME: 'Test preset', PROTOTYPE__LABEL: 'General',
+            NAME: 'Test preset',
             UXON: '{"widget_type":"InputJson"}', DESCRIPTION: 'Test preset', WRAP_FLAG: '0'
         }];
         oUxon.domHost.querySelector('.uxoneditor-preset-hint a').click();
@@ -124,10 +124,18 @@ export async function runJsonEditorRegression() {
         const domModal = document.querySelector('.uxoneditor-modal');
         check(domModal !== null, 'Preset popup did not open');
         check(!domModal.querySelector('[role="status"]'), 'Preset results must not show a no-results message');
+        check(domModal.querySelector('.uxoneditor-preset-group').textContent === oTerms['PRESETS.GROUP_GENERAL'], 'Ungrouped presets must use the translated General group');
+        jQuery(domModal.querySelector('#uxonPresetSearch')).val('test').trigger('input');
+        check(domModal.querySelectorAll('.uxoneditor-preset-card').length === 1, 'Ungrouped presets must remain searchable by name');
+        check(domModal.querySelector('.spinner').style.display === 'none', 'Searching ungrouped presets must finish loading');
+        check(domModal.querySelector('.uxoneditor-preset-group').textContent === oTerms['PRESETS.GROUP_GENERAL'], 'Filtering must retain the first group heading');
+        jQuery(domModal.querySelector('#uxonPresetSearch')).val(oTerms['PRESETS.GROUP_GENERAL'].toUpperCase()).trigger('input');
+        check(domModal.querySelectorAll('.uxoneditor-preset-card').length === 1, 'Ungrouped presets must be searchable by translated group');
         jQuery(domModal.querySelector('#uxonPresetSearch')).val('no-matching-preset').trigger('input');
         check(domModal.querySelector('[role="status"]').textContent === oTerms['SEARCH.NO_RESULTS'], 'Unmatched preset search must show an info message');
         jQuery(domModal.querySelector('#uxonPresetSearch')).val('').trigger('input');
         check(!domModal.querySelector('[role="status"]'), 'Restoring preset results must clear the info message');
+        check(domModal.querySelector('.spinner').style.display === 'none', 'Clearing preset search must finish loading');
         domModal.querySelector('.uxoneditor-preset-card').click();
         domModal.querySelector('.uxoneditor-preset-replace').click();
         check(oJsonEditor.get().widget_type === 'InputJson', 'Preset did not replace root value');
