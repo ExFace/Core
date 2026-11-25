@@ -146,7 +146,7 @@ class ImageMap extends AbstractBaseMap
             if ($this->isImageBoundToWidgetLink()) {
                 $link = $this->urlLink;
                 $linkedEl = $facadeElement->getFacade()->getElement($link->getTargetWidget());
-                $urlJs = $linkedEl->buildJsValueGetter($link->getTargetColumnId());
+                $urlJs = $linkedEl->buildJsValueGetter($link->getTargetCoordinate());
                 $urlJs = '(' . $urlJs . ' || "")';
                 $linkedEl->addOnChangeScript("setTimeout(function() { $('#{$facadeElement->getIdLeaflet()}').data('_exfLeaflet').fire('exfRefresh')}, 0);");
                 $updateMapJs .= <<<JS

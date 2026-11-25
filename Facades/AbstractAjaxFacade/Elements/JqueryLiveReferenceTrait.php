@@ -3,8 +3,6 @@ namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\Widgets\Value;
-use exface\Core\CommonLogic\DataSheets\DataColumn;
-use exface\Core\DataTypes\StringDataType;
 use Throwable;
 
 /**
@@ -48,15 +46,11 @@ trait JqueryLiveReferenceTrait {
         $output = '';
         if ($linked_element = $this->getLinkedFacadeElement()) {
             $link = $this->getWidget()->getCalculationWidgetLink();
-            $col = $link->getTargetColumnId();
-            if (! StringDataType::startsWith($col, '~')) {
-                $col = DataColumn::sanitizeColumnName($col);
-            }
             if ($link->isOnlyIfNotEmpty()) {
                 $output = <<<JS
 
 (function() {
-    var mVal = {$linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())};
+    var mVal = {$linked_element->buildJsValueGetter($link->getTargetCoordinate())};
     if (mVal !== undefined && mVal !== '' && mVal != null) {
         {$this->buildJsValueSetter('mVal')};
     }
@@ -66,7 +60,7 @@ JS;
                 
             } else {
                 $output = '
-					   ' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($col, $link->getTargetRowNumber())) . ';';
+					   ' . $this->buildJsValueSetter($linked_element->buildJsValueGetter($link->getTargetCoordinate())) . ';';
             }
         }
         return $output;
@@ -93,13 +87,8 @@ JS;
     {
         if ($linked_element = $this->getLinkedFacadeElement()) {
             $getAndSetValueJs = $this->buildJsLiveReference();
-            // If the link targets a specific row, activate it with every refresh,
-            // otherwise it targets the current value, so only activate it if the value changes
-            if (null !== $this->getWidget()->getCalculationWidgetLink()->getTargetRowNumber()) {
-                $linked_element->addOnRefreshScript($getAndSetValueJs);
-            } else {
-                $linked_element->addOnChangeScript($getAndSetValueJs);
-            }
+            $coordinate = $this->getWidget()->getCalculationWidgetLink()->getTargetCoordinate();
+            $linked_element->addOnChangeAtCoordinateScript($getAndSetValueJs, $coordinate);
         }
         return $this;
     }

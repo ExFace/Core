@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\CommonLogic\Constants\Icons;
 use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Interfaces\Actions\iReadData;
@@ -25,6 +28,8 @@ use exface\Core\Widgets\Parts\DataRowGrouper;
  *        
  */
 trait JqueryDataTablesTrait {
+    use JsDataValueTrait;
+
     
     use JqueryAlignmentTrait;
 
@@ -212,7 +217,7 @@ JS;
         }
     }
     
-    public function buildJsColumnDef(\exface\Core\Widgets\DataColumn $col)
+    public function buildJsColumnDef(DataColumn $col)
     {
         // Data type specific formatting
         $formatter_js = '';
@@ -276,39 +281,44 @@ JS;
 		return $output;
     }
     
-    public function buildJsValueGetter($dataColumnName = null, $rowNr = null)
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
+     */
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
+        $this->validateDataValueGetterCoordinate($coord);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
+    {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
         $widget = $this->getWidget();
-        $output = $this->getId() . "_table";
-        if (is_null($rowNr)) {
-            $output .= ".rows('.selected').data()";
-        } else {
-            // TODO
-        }
-        
-        $uid_column = $widget->getUidColumn();
-        if ($dataColumnName === null) {
-            $column_widget = $uid_column;
-        } else {
-            // FIXME #uid-column-missing remove this ugly if once UID column are added to tables by default again
-            if ($dataColumnName == $uid_column->getDataColumnName()) {
-                $column_widget = $uid_column;
-            } else {
-                $column_widget = $widget->getColumnByDataColumnName($dataColumnName);
-            }
-        }
-        
+        $column_widget = $coord->findColumn($widget);
         if (! $column_widget) {
-            throw new FacadeOutputError('Column "' . $dataColumnName . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
+            throw new FacadeOutputError('Column "' . $coord->getColumnCoordinate() . '" of ' . $widget->getWidgetType() . ' "' . $widget->getCaption() . '" required for in-page scripting is missing!');
         }
+        $tableJs = $this->getId() . '_table';
+        $row = $coord->getRowCoordinate();
         
-        $column_name = $column_widget->getDataColumnName();
-        if ($column_widget->isBoundToAttribute()) {
-            $delimiter = $column_widget->getAttribute()->getValueListDelimiter();
+        if ($coord->isTargetingRowNumber()) {
+            $rowsJs = "{$tableJs}.rows().data().toArray()";
+            $nameJs = json_encode($column_widget->getDataColumnName(), JSON_THROW_ON_ERROR);
+            if (! $coord->hasAggregator()) {
+                return "(function(rows){ return rows[{$row}] === undefined ? '' : (rows[{$row}][{$nameJs}] ?? ''); })({$rowsJs})";
+            }
+            $rowsJs = "(function(rows){ return rows[{$row}] === undefined ? [] : [rows[{$row}]]; })({$rowsJs})";
+        } elseif ($coord->isTargetingLoadedRows() === true) {
+            $rowsJs = "{$tableJs}.rows().data().toArray()";
         } else {
-            $delimiter = EXF_LIST_SEPARATOR;
+            $rowsJs = "{$tableJs}.rows('.selected').data().toArray()";
         }
-        return "{$output}.pluck('{$column_name}').join('{$delimiter}')";
+        return $this->buildJsAggregateColumnValues($rowsJs, $column_widget, $coord);
     }
     
     public function buildJsValueSetter($value, $dataColumnName = null, $rowNr = null)
@@ -331,7 +341,7 @@ JS;
      * @param \exface\Core\Widgets\DataColumn $col
      * @return string
      */
-    public function buildCssColumnClass(\exface\Core\Widgets\DataColumn $col)
+    public function buildCssColumnClass(DataColumn $col)
     {
         return 'text-' . $this->buildCssTextAlignValue($col->getAlign());
     }

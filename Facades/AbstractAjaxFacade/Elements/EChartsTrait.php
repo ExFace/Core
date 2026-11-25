@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\CommonLogic\WidgetLink;
 use exface\Core\DataTypes\BooleanDataType;
 use exface\Core\Exceptions\Facades\FacadeUnsupportedWidgetPropertyWarning;
@@ -119,6 +122,8 @@ use exface\Core\DataTypes\NumberDataType;
  */
 trait EChartsTrait
 {
+    use JsDataValueTrait;
+
     use JsValueScaleTrait;
     
     private $chartTypeButtonGroup = null;
@@ -841,16 +846,33 @@ JS;
     }
 
     /**
-     * build function to get value of a selected data row
+     * Supports unscoped legend coordinates in addition to standard data coordinates.
      *
-     * @param string $column
-     * @param int $row
-     * @throws FacadeOutputError
-     * @return string
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
      */
-    public function buildJsValueGetter($column = null, $row = null) : string
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
-        if($column === Chart::VALUE_LEGEND_ACTIVE || $column === Chart::VALUE_LEGEND_INACTIVE) {
+        if (in_array($coord->getColumnCoordinate(), [Chart::COORDINATE_LEGEND_ACTIVE, Chart::COORDINATE_LEGEND_INACTIVE], true)) {
+            if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
+                throw new FacadeOutputError('Row selectors are not supported for chart legend coordinates!');
+            }
+            return;
+        }
+        $this->validateDataValueGetterCoordinate($coord);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
+    {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
+        $column = $coord->getColumnCoordinate();
+        $row = $coord->getRowCoordinate();
+        if($column === Chart::COORDINATE_LEGEND_ACTIVE || $column === Chart::COORDINATE_LEGEND_INACTIVE) {
             $column = str_replace('~', '', $column);
 
             return <<<JS
@@ -860,18 +882,28 @@ JS;
             })(oEvent)
 JS;
 
-        } else if ($column != null) {
-            $key = $column;
         } else {
-            if ($this->getWidget()->getData()->hasUidColumn() === true) {
-                $column = $this->getWidget()->getData()->getUidColumn();
-                $key = $column->getDataColumnName();
-            } else {
-                throw new FacadeOutputError('Cannot create a value getter for a data widget without a UID column: either specify a column to get the value from or a UID column for the table.');
+            $dataColumn = $coord->findColumn($this->getWidget()->getData());
+            if ($dataColumn === null) {
+                throw new FacadeOutputError('Cannot get chart value: column "' . $column . '" not found!');
             }
+            $key = $dataColumn->getDataColumnName();
         }
-        if ($row != null) {
-            throw new FacadeOutputError('Unsupported function ');
+        if ($row !== null || $coord->hasAggregator()) {
+            $chartJs = $this->buildJsEChartsVar();
+            if ($coord->isTargetingRowNumber()) {
+                $nameJs = json_encode($key, JSON_THROW_ON_ERROR);
+                $allRowsJs = "({$chartJs}?._dataset || [])";
+                if (! $coord->hasAggregator()) {
+                    return "(function(rows){ return rows[{$row}] === undefined ? '' : (rows[{$row}][{$nameJs}] ?? ''); })({$allRowsJs})";
+                }
+                $rowsJs = "(function(rows){ return rows[{$row}] === undefined ? [] : [rows[{$row}]]; })({$allRowsJs})";
+            } elseif ($coord->isTargetingLoadedRows() === true) {
+                $rowsJs = "({$chartJs}?._dataset || [])";
+            } else {
+                $rowsJs = "({$chartJs}?._oldSelection ? [{$chartJs}._oldSelection] : [])";
+            }
+            return $this->buildJsAggregateColumnValues($rowsJs, $dataColumn, $coord);
         }
 
         return <<<JS
@@ -922,7 +954,7 @@ JS;
         // Search among incoming links for a unusual delimiter
         foreach ($links as $link) {
             $targetColName = $link->getTargetColumnId();
-            if ($targetColName !== Chart::VALUE_LEGEND_ACTIVE && $targetColName !== Chart::VALUE_LEGEND_INACTIVE) {
+            if ($targetColName !== Chart::COORDINATE_LEGEND_ACTIVE && $targetColName !== Chart::COORDINATE_LEGEND_INACTIVE) {
                 continue;
             }
 

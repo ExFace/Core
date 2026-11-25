@@ -1,11 +1,8 @@
 <?php
 namespace exface\Core\Widgets\Parts\Tours;
 
-use exface\Core\CommonLogic\Traits\ICanBeConvertedToUxonTrait;
 use exface\Core\CommonLogic\UxonObject;
-use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
-use exface\Core\Interfaces\Tours\TourSubrouteInterface;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Widgets\InputComboTable;
 
@@ -25,14 +22,13 @@ use exface\Core\Widgets\InputComboTable;
  * {
  *  "title": "",
  *  "body": "You can filter apps here",
- *  "subtour": {
- *      "type": "InputComboTableLookupTour",
+ *  "subroute": {
  *      "lookup_button": "You can view the complete list here",
  *      "lookup_header": "Use these filters to search for apps",
  *      "lookup_search_button": "Simply click Search",
  *      "lookup_table": "Select the apps you want from the list",
  *      "lookup_selection": "You can view the selected apps here and remove any you no longer want",
- *      "lookup_apply_button": "Finally, click here to apply the selected values",
+ *      "lookup_apply_button": "Finally, click here to apply the selected values"
  *  }
  * }
  * 
@@ -50,17 +46,19 @@ class InputComboTableSubroute extends AbstractSubroute
     /**
      * Creates a lookup subroute for an InputComboTable using the supplied step texts.
      *
+     * {@inheritDoc}
+     * @see AbstractSubroute::__construct()
+     *
      * @param WidgetInterface $widget
      * @param UxonObject $uxon
+     * @throws WidgetConfigurationError if the widget is not an InputComboTable
      */
     public function __construct(WidgetInterface $widget, UxonObject $uxon)
     {
-        if ($widget instanceof InputComboTable) {
-            $this->widget = $widget;
-            $this->importUxonObject($uxon);
-        } else {
+        if (! $widget instanceof InputComboTable) {
             throw new WidgetConfigurationError($widget, 'InputComboTableSubroute can only be used with InputComboTable widgets.');
         }
+        parent::__construct($widget, $uxon);
     }
 
     /**
@@ -246,6 +244,11 @@ class InputComboTableSubroute extends AbstractSubroute
         return $this;
     }
     
+    /**
+     * Returns a UXON template with all customizable substep texts.
+     *
+     * @return UxonObject
+     */
     public static function getUxonTemplate() : UxonObject
     {
         return UxonObject::fromArray([

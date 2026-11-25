@@ -3,9 +3,23 @@ namespace exface\Core\Interfaces\Tours;
 
 interface TourInterface
 {
+    /**
+     * Returns the id of the tour or NULL if it has none.
+     *
+     * @return string|null
+     */
+    public function getId() : ?string;
+    
     public function getTitle() : string;
     
     public function getDescription() : string;
+
+    /**
+     * Whether this tour is hidden from the menu for manual selection.
+     *
+     * @return bool
+     */
+    public function getHideInMenu() : bool;
 
     /**
      * @return TourStepInterface[]

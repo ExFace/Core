@@ -73,6 +73,20 @@ interface WidgetLinkInterface extends WorkbenchDependantInterface, iCanBeConvert
     public function getTargetColumnId() : ?string;
 
     /**
+     * Returns the address within the target widget, if specified after "!".
+     *
+     * @return WidgetLinkCoordinateInterface|null
+     */
+    public function getTargetCoordinate() : ?WidgetLinkCoordinateInterface;
+
+    /**
+     * Returns whether an address within the target widget was specified.
+     *
+     * @return bool
+     */
+    public function hasTargetCoordinate() : bool;
+
+    /**
      * 
      * @return int|NULL
      */

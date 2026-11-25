@@ -1,6 +1,9 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\CommonLogic\Model\MetaObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Widgets\InlineGroup;
@@ -115,12 +118,27 @@ trait JsRangeFilterTrait
     }
     
     /**
-     * 
-     * @throws FacadeLogicError
-     * @return string
+     * Rejects row scopes and aggregators for range-filter endpoints.
+     *
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::validateValueGetterCoordinate()
      */
-    public function buildJsValueGetter(string $column = null)
+    protected function validateValueGetterCoordinate(WidgetLinkCoordinateInterface $coord) : void
     {
+        if ($coord->getRowCoordinate() !== null || $coord->hasAggregator()) {
+            throw new FacadeRuntimeError('Row coordinates are not supported by RangeFilter!');
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see AbstractJqueryElement::buildJsValueGetter()
+     */
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
+    {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
+        $column = $coord->getColumnCoordinate();
         $valueGetters = [];
         $facade = $this->getFacade();
         

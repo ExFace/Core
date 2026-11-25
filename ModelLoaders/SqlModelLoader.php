@@ -8,6 +8,7 @@ use exface\Core\Events\Model\OnBeforeDataTypeLoadedEvent;
 use exface\Core\Events\Model\OnBeforeMetaObjectBehaviorLoadedEvent;
 use exface\Core\Events\Model\OnBeforeSnippetLoadedEvent;
 use exface\Core\Exceptions\DataSources\DataQueryFailedError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Factories\AttributeGroupFactory;
 use exface\Core\Factories\UxonSnippetFactory;
@@ -222,15 +223,20 @@ class SqlModelLoader implements ModelLoaderInterface
     {
         $exface = $object->getWorkbench();
         $load_behaviors = false;
-        $objectUid = HexadecimalNumberDataType::cast($object->getId());
-        if ($objectUid !== null) {
-            $objectUid = HexadecimalNumberDataType::cast($objectUid);
-            $q_where = 'o.oid = ' . $this->buildSqlEscapedUid($objectUid);
-        } else {
-            $namespace = MetamodelAliasDataType::cast($object->getNamespace(), true);
-            $alias = MetamodelAliasDataType::cast($object->getAlias());
-            $q_where = "a.app_alias = '{$namespace}' AND o.object_alias = '{$alias}'";
+        
+        try {
+            $objectUid = HexadecimalNumberDataType::cast($object->getId());
+            if ($objectUid !== null) {
+                $q_where = 'o.oid = ' . $this->buildSqlEscapedUid($objectUid);
+            } else {
+                $namespace = MetamodelAliasDataType::cast($object->getNamespace(), true);
+                $alias = MetamodelAliasDataType::cast($object->getAlias());
+                $q_where = "a.app_alias = '{$namespace}' AND o.object_alias = '{$alias}'";
+            }
+        } catch (DataTypeCastingError $e) {
+            throw new MetaObjectNotFoundError('Meta object "' . ($objectUid ?? $object->getAliasWithNamespace()) . '" not found. ' . $e->getMessage(), null, $e);
         }
+        
         $existsBehavior = $this->buildSqlExists('exf_object_behaviors ob', 'ob.object_oid = o.oid', 'has_behaviors');
         if ($this->compatibilityMode['no_attribute_groups'] !== true) {
             $existsAttributeGroup = ', ' . $this->buildSqlExists('exf_attribute_group oag', 'oag.object_oid = o.oid', 'has_attribute_groups');

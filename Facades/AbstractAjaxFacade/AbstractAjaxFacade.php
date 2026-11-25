@@ -9,10 +9,12 @@ use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
 use exface\Core\Facades\AbstractHttpFacade\FacadeResolver;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
+use exface\Core\Interfaces\Model\UiScreenInterface;
 use exface\Core\Widgets\AbstractWidget;
 use exface\Core\Interfaces\WidgetInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Model\UiPageInterface;
+use exface\Core\Widgets\Parts\FocusArea;
 use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\DataTypes\DataTypeInterface;
 use exface\Core\DataTypes\NumberDataType;
@@ -1214,5 +1216,50 @@ HTML;
         $uri = is_string($url) ? new Uri($url) : $url;
         $resolver = new FacadeResolver($this->getWorkbench(), $uri);
         return $resolver->getPage()->getWidgetRoot();
+    }
+    
+    /**
+     * Returns a CSS selector for a focusable area.
+     * 
+     * The area consists of the widget id and the name of an area of that widget, separated by `~`. The widget
+     * id is resolved within the given screen (page or dialog) - see `FocusArea` for details. What areas
+     * are available, depends on the facade element of the widget - see `buildCssFocusAreaSelector()` of the
+     * element. If the element does not know the area, it returns the selector of the whole widget.
+     * 
+     * The resulting selector may match multiple DOM elements - e.g. all cells of a column.
+     * 
+     * Examples
+     *  - myTableId
+     *  - myTableId~column.Column1
+     *  - myTableId~header
+     *  - myTableId~table
+     *  - myTableId~button
+     *  - myTableId~row$3
+     *  - myGanttId~table
+     *  - myGanttId~chart
+     *  - myGanttId~chart$3
+     *  - myChartId~axisX
+     *  - myInputComboTable~lookupButton
+     *  - ContextBar
+     *  - ContextBar~user
+     * 
+     * @see FocusArea
+     * 
+     * @param string $area
+     * @param UiScreenInterface $screen
+     * @return string
+     */
+    public function getFocusAreaSelector(string $area, UiScreenInterface $screen) : string
+    {
+        // Parse area selector
+        $area = new FocusArea($screen, $area);
+        
+        // Resolve area using the facade element
+        $widget = $area->getWidget();
+        $facadeEl = $this->getElement($widget);
+        if (! $facadeEl instanceof AbstractJqueryElement) {
+            return '#' . $facadeEl->getId();
+        }
+        return $facadeEl->buildCssFocusAreaSelector($area->getIdRelativeToWidget());
     }
 }

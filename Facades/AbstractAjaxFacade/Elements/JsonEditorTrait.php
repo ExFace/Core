@@ -1,6 +1,10 @@
 <?php
 namespace exface\Core\Facades\AbstractAjaxFacade\Elements;
 
+use exface\Core\Factories\WidgetLinkFactory;
+
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+
 use exface\Core\Facades\DocsFacade;
 use exface\Core\Factories\FacadeFactory;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -140,8 +144,10 @@ JS;
      * {@inheritDoc}
      * @see AbstractJqueryElement::buildJsValueGetter()
      */
-    public function buildJsValueGetter() : string
+    public function buildJsValueGetter(string|WidgetLinkCoordinateInterface|null $coord = null) : string
     {
+        $coord = WidgetLinkFactory::createCoordinateFromAnything($coord);
+        $this->validateValueGetterCoordinate($coord);
         return $this->buildJsEditorGetter() . '.getValue()';
     }
 
@@ -222,7 +228,7 @@ JS;
         if ($widget instanceof InputUxon && ($expr = $widget->getRootPrototype()) !== null) {
             if ($expr->isReference()) {
                 $link = $expr->getWidgetLink($widget);
-                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetCoordinate());
             }
             return $this->escapeString(trim($expr->toString(), "'\""), true, false);
         }
@@ -239,7 +245,7 @@ JS;
             $expr = $widget->getSchemaExpression();
             if ($expr->isReference()) {
                 $link = $expr->getWidgetLink($widget);
-                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetCoordinate());
             }
             return $this->escapeString(trim($expr->toString(), "'\""), true, false);
         }
@@ -255,7 +261,7 @@ JS;
         if ($widget instanceof InputUxon && ($expr = $widget->getRootObject()) !== null) {
             if ($expr->isReference()) {
                 $link = $expr->getWidgetLink($widget);
-                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetColumnId());
+                return $this->getFacade()->getElement($link->getTargetWidget())->buildJsValueGetter($link->getTargetCoordinate());
             }
             return $this->escapeString(trim($expr->toString(), "'\""), true, false);
         }

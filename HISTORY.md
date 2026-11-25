@@ -1,5 +1,11 @@
 # Release history
 
+## 1.44 - in development
+
+Big points
+
+- Markdown editing and display now use Markian Editor; the legacy Toast UI Editor has been replaced.
+
 ## 1.43 - in development
 
 Big points

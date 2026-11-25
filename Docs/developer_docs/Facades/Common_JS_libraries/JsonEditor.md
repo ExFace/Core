@@ -7,7 +7,7 @@ validation UI. The adapter adds platform-specific UXON tools and owns their
 lifecycle; facade elements supply configuration and connect the editor to their UI.
 
 For the facade-independent feature overview, see
-[InputJson and InputUxon for app designers](../../../understanding_the_metamodel/Global_UI_principles/Input_widgets/InputJSON_InputUXON.md).
+[InputJson and InputUxon for app designers](../../../Widgets/Input_widgets/InputJSON_InputUXON.md).
 This page describes the concrete implementation, not a requirement that every
 facade must use JSONEditor.
 

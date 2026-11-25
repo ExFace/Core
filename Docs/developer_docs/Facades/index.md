@@ -2,6 +2,7 @@
 
 <!-- BEGIN SubPageList:depth=3 -->
   - [Common Javascript libraries](Common_JS_libraries/index.md)
+    - [JSON and UXON editing with JSONEditor](Common_JS_libraries/JsonEditor.md)
     - JSpreadsheet
       - [Spreadsheet \(JExcel\) cell validation performance](Common_JS_libraries/jSpreadsheet/Spreadsheet_validation_performance.md)
       - [Spreadsheet \(JExcel\) — plan to fix slow keystrokes / editor open\-close at high row counts](Common_JS_libraries/jSpreadsheet/Spreadsheet_editor_virtualization_plan.md)

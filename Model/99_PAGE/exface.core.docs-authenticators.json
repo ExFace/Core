@@ -10,17 +10,17 @@
     "replaces_page_selector": null,
     "created_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
     "created_on": "2023-06-27 13:41:26",
-    "modified_by_user_selector": "0x11e8fe1c902c8ebea23ee4b318306b9a",
-    "modified_on": "2023-06-27 14:28:54",
+    "modified_by_user_selector": "0x31000000000000000000000000000000",
+    "modified_on": "2026-11-24 17:05:59",
     "contents": {
         "object_alias": "exface.Core.AUTHENTICATOR_CLASS",
         "widget_type": "SplitHorizontal",
         "panels": [
             {
-                "caption": "Authenticator classes",
                 "width": "50%",
                 "widgets": [
                     {
+                        "caption": "Authenticator classes",
                         "extend_widget": "[exface.core.docs-widgets]",
                         "object_alias": "exface.Core.AUTHENTICATOR_CLASS"
                     }

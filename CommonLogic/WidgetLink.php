@@ -5,6 +5,8 @@ use exface\Core\Exceptions\InvalidArgumentException;
 use exface\Core\Interfaces\Widgets\iShowData;
 use exface\Core\Interfaces\Widgets\iTriggerAction;
 use exface\Core\Interfaces\Widgets\WidgetLinkInterface;
+use exface\Core\Interfaces\Widgets\WidgetLinkCoordinateInterface;
+use exface\Core\Factories\WidgetLinkFactory;
 use exface\Core\Exceptions\Widgets\WidgetNotFoundError;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\UiPageInterface;
@@ -55,6 +57,8 @@ use Throwable;
  * - `~parent!mycol` - references the column `mycol` of the current widgets parent
  * - `~input!mycol` - references the column `mycol` of the input widget (if the current widget is a `Button`)
  * - `~data!mycol` - references the column `mycol` of the enclosing data widget (e.g. for a cell widget of that table)
+ * - `some_widget!mycol$~all:LIST` - lists values from all currently loaded rows
+ * - `some_widget!mycol$~selected:SUM` - sums values from selected rows
  * 
  * @author andrej.kabachnik
  *
@@ -69,8 +73,7 @@ class WidgetLink implements WidgetLinkInterface
     private $targetWidgetId = null;
     private $targetWidgetIdWithSpace = null;
     private $targetWidget = null;
-    private $targetColumnId = null;
-    private $targetRowNumber = null;
+    private ?WidgetLinkCoordinateInterface $targetCoordinate = null;
     private $ifNotEmpty = false;
 
     /**
@@ -252,6 +255,7 @@ class WidgetLink implements WidgetLinkInterface
     protected function parseLinkString(string $string) : WidgetLinkInterface
     {
         $string = trim($string);
+        $this->targetCoordinate = null;
         
         if (StringDataType::endsWith($string, '?')) {
             $this->setOnlyIfNotEmpty(true);
@@ -278,17 +282,7 @@ class WidgetLink implements WidgetLinkInterface
             $widget_id = substr($string, 0, $pos);
             $string = substr($string, ($pos + 1));
             
-            // Determine the column id
-            if ($pos = strpos($string, '$')) {
-                // If there is a "$", there is a row number following it
-                $column_id = substr($string, 0, $pos);
-                $string = substr($string, ($pos + 1));
-                $this->setRowNumber($string);
-            } else {
-                // Otherwise, everything that is left, is the column id
-                $column_id = $string;
-            }
-            $this->setColumnId($column_id);
+            $this->setCoordinate($string);
         } else {
             // Otherwise, everything that is left, is the widget id
             $widget_id = $string;
@@ -308,6 +302,17 @@ class WidgetLink implements WidgetLinkInterface
     {
         $this->setPageAlias($object->getProperty('page_alias'));
         $this->setWidgetId($object->getProperty('widget_id'));
+        if ($object->hasProperty('coordinate')) {
+            $this->setCoordinate($object->getProperty('coordinate'));
+        } elseif ($object->hasProperty('column_id') || $object->hasProperty('row_number')) {
+            $coordinate = $object->getProperty('column_id') ?? '';
+            if ($object->hasProperty('row_number')) {
+                $coordinate .= '$' . $object->getProperty('row_number');
+            }
+            $this->setCoordinate($coordinate);
+        } else {
+            $this->setCoordinate(null);
+        }
         if ($object->hasProperty('only_if_not_empty')) {
             $this->setOnlyIfNotEmpty($object->getProperty('only_if_not_empty'));
         }
@@ -364,6 +369,7 @@ class WidgetLink implements WidgetLinkInterface
         }
         $this->targetWidget = null;
         $this->targetWidgetId = null;
+        $targetWidget = null;
 
         // Handle magic refs
         switch ($value) {
@@ -568,11 +574,18 @@ class WidgetLink implements WidgetLinkInterface
         // if set by a user explicitly)
         $uxon->setProperty('widget_id', $this->targetWidget ? $this->targetWidget->getId() : $this->targetWidgetId);
         $uxon->setProperty('page_alias', $this->getTargetPage()->getAliasWithNamespace());
-        if ($this->targetColumnId !== null) {
-            $uxon->setProperty('column_id', $this->targetColumnId);
+        if ($this->getTargetColumnId() !== null) {
+            $uxon->setProperty('column_id', $this->getTargetColumnId());
         }
-        if ($this->targetRowNumber !== null) {
-            $uxon->setProperty('row_number', $this->targetRowNumber);
+        if ($this->targetCoordinate?->isTargetingRowNumber()) {
+            $uxon->setProperty('row_number', $this->targetCoordinate->getRowCoordinate());
+        }
+        if ($this->targetCoordinate !== null && ($this->targetCoordinate->hasAggregator()
+            || is_string($this->targetCoordinate->getRowCoordinate()))) {
+            $uxon->setProperty('coordinate', (string) $this->targetCoordinate);
+        }
+        if ($this->isOnlyIfNotEmpty()) {
+            $uxon->setProperty('only_if_not_empty', true);
         }
         return $uxon;
     }
@@ -594,7 +607,43 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetColumnId() : ?string
     {
-        return $this->targetColumnId;
+        return $this->targetCoordinate?->getColumnCoordinate();
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see WidgetLinkInterface::getTargetCoordinate()
+     */
+    public function getTargetCoordinate() : ?WidgetLinkCoordinateInterface
+    {
+        return $this->targetCoordinate;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @see WidgetLinkInterface::hasTargetCoordinate()
+     */
+    public function hasTargetCoordinate() : bool
+    {
+        return $this->targetCoordinate !== null;
+    }
+
+    /**
+     * Address a column, row or custom value inside the target widget.
+     *
+     * Examples: `NAME$2`, `NAME$~all:LIST`, `AMOUNT$~selected:SUM`, `~start_date`.
+     *
+     * @uxon-property coordinate
+     * @uxon-type string
+     *
+     * @param string|WidgetLinkCoordinateInterface|null $coordinate
+     * @return WidgetLinkInterface
+     */
+    protected function setCoordinate(string|WidgetLinkCoordinateInterface|null $coordinate) : WidgetLinkInterface
+    {
+        $this->targetCoordinate = $coordinate === null
+            ? null : WidgetLinkFactory::createCoordinateFromAnything($coordinate);
+        return $this;
     }
 
     /**
@@ -604,8 +653,9 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function setColumnId(string $value) : WidgetLinkInterface
     {
-        $this->targetColumnId = $value;
-        return $this;
+        return $this->setCoordinate($value
+            . ($this->targetCoordinate?->getRowCoordinate() === null ? '' : '$' . $this->targetCoordinate->getRowCoordinate())
+            . ($this->targetCoordinate?->hasAggregator() ? ':' . $this->targetCoordinate->getAggregator() : ''));
     }
 
     /**
@@ -615,10 +665,11 @@ class WidgetLink implements WidgetLinkInterface
      */
     public function getTargetRowNumber() : ?int
     {
-        if ($this->targetRowNumber !== null && $this->targetColumnId === null) {
+        if ($this->targetCoordinate?->isTargetingRowNumber() && $this->getTargetColumnId() === null) {
             throw new UxonParserError($this->exportUxonObject(), 'Cannot user row numbers in widget links without a column reference!');
         }
-        return $this->targetRowNumber;
+        return $this->targetCoordinate?->isTargetingRowNumber()
+            ? $this->targetCoordinate->getRowCoordinate() : null;
     }
 
     /**
@@ -628,8 +679,7 @@ class WidgetLink implements WidgetLinkInterface
      */
     protected function setRowNumber(int $value) : WidgetLinkInterface
     {
-        $this->targetRowNumber = $value;
-        return $this;
+        return $this->setCoordinate(($this->getTargetColumnId() ?? '') . '$' . $value);
     }
 
     /**

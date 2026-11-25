@@ -15,12 +15,12 @@ You can export an app into a folder on your file system and put it in a version 
 	- App Name: `Book Club Tutorial <kuerzel>`
 	- Default Language: `English`
 	
-Note the app's alias `tutorial.BookClub`. [Aliases](../../understanding_the_metamodel/Aliases_and_selectors.md) are technical names used to uniquely identify components of the metamodel. A lot of things have aliases: objects, actions, pages, etc. Those components, that belong to an app, use the app's alias as a namespace (prefix) in their alias: e.g. the meta object for the books in our library will have the alias `tutorial.BookClub.book` where the first part is the alias of the app. This "namespacing" allows multiple apps to use the same component alias - in our case there may be other app with objects aliased `book`, but they will have another prefix.
+Note the app's alias `tutorial.BookClub`. [Aliases](../../Metamodel/Aliases_and_selectors.md) are technical names used to uniquely identify components of the metamodel. A lot of things have aliases: objects, actions, pages, etc. Those components, that belong to an app, use the app's alias as a namespace (prefix) in their alias: e.g. the meta object for the books in our library will have the alias `tutorial.BookClub.book` where the first part is the alias of the app. This "namespacing" allows multiple apps to use the same component alias - in our case there may be other app with objects aliased `book`, but they will have another prefix.
 
 In general a "fully qualified" (unique) alias consists of the alias itself - the part after the last dot - and the namespace preceeding the last dot. Actually, the app's alias also has a namespace: `tutorial`. The namespace of an app's alias typically identifies its vendor. In the real world, you would have something like `mycompany.app` as aliases for your apps.
 
 The default language of the app is the language we are going to use for descriptions in the model. In our case it's english. For any other language we will need to [translate the model](X_Adding_translations.md) afterwards. If you use another language here, you won't need a translation for that, but are going to need a translation for english.
 
-Read more about apps [here](../../understanding_the_metamodel/App_metamodel.md).
+Read more about apps [here](../../Metamodel/App_metamodel.md).
 
 [<kbd> <br> BookClub tutorial <br> </kbd>](index.md) [<kbd> <br>< Previous <br> </kbd>](01_Preparation.md) [<kbd> <br>Next > <br> </kbd>](03_Connecting_to_an_sql_database.md)

@@ -230,9 +230,6 @@ class GanttXlsxBuilder
                 }
                 $start = $interval['start'];
                 $end = $interval['end'];
-                if ($end < $start) {
-                    [$start, $end] = [$end, $start];
-                }
                 $min = $min === null || $start < $min ? $start : $min;
                 $max = $max === null || $end > $max ? $end : $max;
             }
@@ -821,9 +818,6 @@ class GanttXlsxBuilder
             }
             $start = $interval['start'];
             $end = $interval['end'];
-            if ($end < $start) {
-                [$start, $end] = [$end, $start];
-            }
             $startKey = $this->dateToWeekKey($start);
             $endKey = $this->dateToWeekKey($end);
             if (! isset($timelineIndex[$startKey], $timelineIndex[$endKey])) {
@@ -844,6 +838,8 @@ class GanttXlsxBuilder
     /**
      * Resolves a task's interval and marks dates completed with the configured default duration.
      *
+     * Tasks without dates or with an end before their start are omitted from the export timeline.
+     *
      * @param array<string, mixed> $task
      * @return array{start:\DateTimeImmutable,end:\DateTimeImmutable,inferred:bool}|null
      */
@@ -862,6 +858,10 @@ class GanttXlsxBuilder
         } elseif ($end === null) {
             $end = $start->modify('+' . $this->defaultTaskDurationDays . ' days');
             $inferred = true;
+        }
+
+        if ($end < $start) {
+            return null;
         }
 
         return ['start' => $start, 'end' => $end, 'inferred' => $inferred];
@@ -1072,7 +1072,7 @@ class GanttXlsxBuilder
         $styleHash = md5(serialize($style));
         for ($column = $startColumn; $column <= $endColumn; $column++) {
             for ($row = $startRow; $row <= $endRow; $row++) {
-                $cell = $sheet->getCellByColumnAndRow($column, $row);
+                $cell = $sheet->getCell([$column, $row]);
                 $baseStyleIndex = $cell->getXfIndex();
                 $cacheKey = $baseStyleIndex . ':' . $styleHash;
                 if (! isset($this->styleIndexCache[$cacheKey])) {

@@ -8,7 +8,7 @@ There are different types of expressons, that can be used within various parts o
 | [Model aliases](Aliases.md)   | `exface.Core.DATA_TYPE`, `APP` | Reference model entities like objects and attributes. Almost everything in the meta model has an alias. |
 | Placeholders    | `[#title#]`, `[#~data:APP#]` | Allow to use variables inside textual templates |
 | [Formulas](Formula_syntax.md)         | `=Now()`, `=SUM(ATTRIBUTE1, ATTRIBUTE2)` | Used to calculate values similarly to Excel. See [syntax overview](Formula_syntax.md) for details.            |
-| Widget links    | `my_datatable_id`, `[my.app.page1]my_table_id` | Reference a widget by its id - even across pages |
+| [Widget links](Widget_links.md)    | `my_datatable_id`, `[my.app.page1]my_table_id` | Reference a widget by its id - even across pages |
 | Live references | `=my_datatable_id!ATTRIBUTE1` | Reference the current "live" value in a widget |
 
 ## Static and data-driven expressions

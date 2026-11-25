@@ -8,8 +8,16 @@ use exface\Core\Interfaces\Selectors\DataTypeSelectorInterface;
  * Enumeration of model component keys from the installed component registry.
  *
  * Use this type for component selectors, including types supplied by other apps.
- * Keys are used as both values and labels. The inherited `values` property can
- * restrict the enumeration for a particular use case.
+ * Registry keys are the allowed values, with component names as labels.
+ * The inherited `values` property can restrict the enumeration for a particular
+ * use case.
+ *
+ * ```json
+ * {
+ *     "alias": "\\exface\\Core\\DataTypes\\ModelComponentDataType"
+ * }
+ *
+ * ```
  * 
  * @author Andrej Kabachnik
  */
@@ -27,19 +35,15 @@ class ModelComponentDataType extends StringEnumDataType
      */
     public function __construct(DataTypeSelectorInterface $selector, $value = null, UxonObject $configuration = null)
     {
+        $this->setShowValues(false);
+        $this->setValues($selector->getWorkbench()->getComponentRegistry()->getComponentNames());
         parent::__construct($selector, $value, $configuration);
     }
     
-    public function getValues()
-    {
-        return $this->getWorkbench()->getComponentRegistry()->getComponentKeys();
-    }
-
-    public function getLabels()
-    {
-        return $this->getWorkbench()->getComponentRegistry()->getComponentNames();
-    }
-    
+    /**
+     * {@inheritDoc}
+     * @see \exface\Core\Interfaces\DataTypes\EnumDataTypeInterface::getValueHints()
+     */
     public function getValueHints(): array
     {
         $hints = [];

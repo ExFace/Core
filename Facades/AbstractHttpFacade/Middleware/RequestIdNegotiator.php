@@ -8,9 +8,12 @@ use Psr\Http\Server\RequestHandlerInterface;
 use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 
 /**
- * This PSR-15 middleware makes sure the request allways has a request id.
+ * This PSR-15 middleware makes sure the request always has a request id.
  * 
- * If there is no X-Request-ID header, one will be added with a random request id.
+ * If there is no X-Request-ID header, reuse the request scope ID so earlier log entries
+ * remain correlated. Without a request scope, generate a random request ID.
+ * When a scope is provided, copy the negotiated ID and optional X-Request-ID-Subrequest
+ * header into it before invoking the next handler.
  * 
  * @author Andrej Kabachnik
  *
@@ -18,12 +21,22 @@ use exface\Core\CommonLogic\Contexts\Scopes\RequestContextScope;
 class RequestIdNegotiator implements MiddlewareInterface
 {
     const X_REQUEST_ID = 'X-Request-ID';
+
+    const X_REQUEST_ID_SUBREQUEST = 'X-Request-ID-Subrequest';
     
     private $headerName = null;
     
-    public function __construct($headerName = self::X_REQUEST_ID)
+    private ?RequestContextScope $requestScope;
+
+    /**
+     *
+     * @param string $headerName
+     * @param RequestContextScope|null $requestScope
+     */
+    public function __construct($headerName = self::X_REQUEST_ID, ?RequestContextScope $requestScope = null)
     {
         $this->headerName = $headerName;
+        $this->requestScope = $requestScope;
     }
     
     /**
@@ -35,11 +48,21 @@ class RequestIdNegotiator implements MiddlewareInterface
     {
         $headerName = $this->headerName;
         if (! $request->hasHeader($headerName)) {
-            $requestId = $this::generateRequestId();
+            $requestId = $this->requestScope !== null
+                ? $this->requestScope->getRequestId()
+                : $this::generateRequestId();
             $request = $request->withHeader($this->headerName, $requestId);
         } else {
             $requestId = $request->getHeaderLine($headerName);
         }
+
+        if ($this->requestScope !== null) {
+            $this->requestScope->setRequestId($requestId);
+            if ($request->hasHeader(self::X_REQUEST_ID_SUBREQUEST)) {
+                $this->requestScope->setSubrequestId($request->getHeaderLine(self::X_REQUEST_ID_SUBREQUEST));
+            }
+        }
+
         $response = $handler->handle($request);
         if (! $response->hasHeader($this->headerName)) {
             $response = $response->withHeader($this->headerName, $requestId);
