@@ -27,19 +27,40 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
  * 
  * ## Disabling options
  * 
- * A `disabled_if` defined on the `button` of an option does not disable the hidden button, but the
- * option itself: it cannot be selected while the condition is true. If a disabled option is currently
+ * You can conditionally disable individual options, by defining a `disabled_if` on the `button` of 
+ * the corresponding option: it cannot be selected while the condition is true. If a disabled option is currently
  * selected, it remains selected and is shown as selected AND disabled. In a table, the condition is
  * evaluated for every row - references to columns of the same table use the values of that row.
+ * 
+ * ```
+ * 
+ *  "on_option_selected": {
+ *      "YourOptionKey": {
+ *          "button":{
+ *              "disabled_if": {
+*                   "operator":"AND",
+ *                  "conditions":[
+ *                      {"value_left": "=table!column", "comparator": ">=", "value_right": 10}
+ *                  ]
+ *              },
+ *              "action": {"alias": "..."}
+ *          },
+ *          //...
+ *      }
+ *  }
+ * 
+ * ```
  * 
  * **Limitations in tables:** only references to columns of the same table are evaluated per row (and
  * re-evaluated when these values change). References to widgets outside the table are evaluated when the
  * row is (re-)rendered, but changing such a widget does not update the options automatically. Row numbers
  * and aggregators (e.g. `=tabelle!COL:SUM`) in references are not evaluated per row either.
  * 
+ * ## Other notes
+ * 
  * The keys of `on_option_selected` must match the keys of `selectable_options` (or the
- * generic option keys `` for "none" and `NULL` for "empty"). Every button is forced to be
- * hidden.
+ * generic option keys `''` for "none" and `NULL` for "empty"). Any button attached to an option
+ * will be hidden by the system.
  * 
  * Each entry can also define a `lock` behavior controlling how often the button may be
  * triggered:
@@ -47,6 +68,8 @@ use exface\Core\Widgets\Parts\ConditionalProperty;
  * - `never` (default) - the button is triggered every time the option is pressed.
  * - `until_selection_change` - the button is triggered once and locked until a different
  * option is selected.
+ * 
+ * ## Example config
  * 
  * ```
  *  {
