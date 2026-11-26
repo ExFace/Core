@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 
 /**
  * Exception thrown if the requested app cannot be found (i.e.
@@ -12,7 +13,7 @@ use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class AppNotFoundError extends OutOfRangeException implements ErrorExceptionInterface
+class AppNotFoundError extends OutOfRangeException implements ErrorExceptionInterface, NotFoundExceptionInterface
 {
 }
 ?>

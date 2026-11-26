@@ -98,7 +98,9 @@ arrays; null/empty input is normalized to an empty object. Empty objects and
 arrays read back as an empty widget value. Invalid JSON text is preserved and
 opens in code mode instead of being discarded.
 
-Programmatic setters do not report user changes. User edits invoke `onChange`;
+Programmatic setters do not report user changes. Setting a value that only differs
+in formatting (e.g. pretty-printed JSON from the server) keeps the current tree
+instead of rebuilding it. User edits invoke `onChange`;
 Ace's synchronous replacement events are coalesced before propagation. Destroy
 the adapter before removing its host. Creating another adapter on the same host
 destroys the previous one.
@@ -109,6 +111,11 @@ Autosuggest, templates, presets, property details and model browsing use
 `exface.Core.UxonAutosuggest`; UXON validation uses `exface.Core.UxonValidate`.
 The shared adapter sends custom requests to `ajaxUrl` using fetch or jQuery AJAX,
 not the facade's general action-request pipeline.
+
+Server validation waits for a typing pause (about 700 ms after JSONEditor's own
+150 ms change debounce) and only sends the latest UXON. Each new validation or
+autosuggest request aborts the previous one; superseded results never update
+the editor and aborted requests are not reported as errors.
 
 Consequently, every server operation is gated by browser connectivity, the
 launcher's `isOnline()` state when present, and `serverAvailable()`. UI5 permits
@@ -122,12 +129,32 @@ editing, JSON syntax validation and local tools remain available. Browser
 online/offline events and editor interactions refresh availability; the UI5 host
 also observes the launcher's network model for forced-offline changes.
 
+Tree scroll positions and collapsed nodes are remembered per editor host ID and
+prefilled record identity (`scrollKey`) for the lifetime of the browser page.
+This memory survives dialog recreation and repeated loading of the shared library.
+Collapsed nodes are restored by JSON path before scroll restoration; paths no
+longer present in the data are ignored. Expansion changes, including Expand all
+and Collapse all, update this memory without changing the JSON value. Hidden
+tabs can call `restoreScroll()` when they become visible.
+
 Model-search failures appear inline, with server messages, hints and log IDs
 where available. New searches can retry. HTML error-widget responses are passed
 intact to `onAjaxError` for native facade rendering rather than inserted by the
 shared adapter. jEasyUI delegates to `buildJsShowErrorAjax()` and raises the error
 dialog above the editor popup; UI5 uses its component's error-dialog renderer.
 Empty model/preset searches show an informational message, not an error.
+Presets without a prototype label appear in the translated General group and
+can be searched by either their name or that group label.
+
+While completing UXON, unresolved object, attribute, relation and prototype
+selectors are expected intermediate input. The server schema logs these at DEBUG
+and returns no suggestions or uses the generic prototype. Errors reading stored
+definitions, including malformed UXON and data-source failures, are logged normally.
+For property-name and value completion, these failures appear as a single
+`// ERROR: ... See Log-ID ...` suggestion, even when it does not match the typed
+text. This is a diagnostic string, not a JSON comment; it should not be selected
+as configuration. Presets, property details, model browsing and transport failures
+keep their existing error handling.
 
 ## Facade integration
 
@@ -163,3 +190,9 @@ for the real-browser fixtures and commands. Core covers editor behavior,
 connectivity gates and error delegation; UI5Facade additionally covers model
 binding, rerendering and forced-offline lifecycle behavior. Focused PHPUnit
 generator tests live in each owning app's `Tests/PHPUnit` suite.
+In the shared editor fixture, run
+`await (await import('../JsonEditorAutosuggestError.mjs')).runJsonEditorAutosuggestErrorRegression()`
+to check that diagnostic completions remain visible without opening a popup.
+Run `await (await import('../JsonEditorScroll.mjs')).runJsonEditorScrollRegression()`
+to check scroll restoration after reopening an editor and reloading the library,
+including separate positions for different records.

@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Configuration;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
 use exface\Core\Interfaces\Exceptions\ConfigurationExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 use exface\Core\Interfaces\ConfigurationInterface;
 use exface\Core\Exceptions\OutOfRangeException;
 
@@ -16,7 +17,7 @@ use exface\Core\Exceptions\OutOfRangeException;
  * @author Andrej Kabachnik
  *        
  */
-class ConfigOptionNotFoundError extends OutOfRangeException implements ConfigurationExceptionInterface, ErrorExceptionInterface
+class ConfigOptionNotFoundError extends OutOfRangeException implements ConfigurationExceptionInterface, ErrorExceptionInterface, NotFoundExceptionInterface
 {
     
     use ConfigurationExceptionTrait;

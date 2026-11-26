@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Behaviors;
 
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Exceptions\Model\MetaObjectExceptionTrait;
 
@@ -13,7 +14,7 @@ use exface\Core\Exceptions\Model\MetaObjectExceptionTrait;
  * @author Andrej Kabachnik
  *        
  */
-class BehaviorNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface
+class BehaviorNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface, NotFoundExceptionInterface
 {
     
     use MetaObjectExceptionTrait;

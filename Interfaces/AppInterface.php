@@ -37,6 +37,7 @@ interface AppInterface extends WorkbenchDependantInterface, AliasInterface, Task
      * 
      * The selector can either be an instance of the SelectorInterface or a string, but in
      * the latter case a selector class must be passed as well.
+     * A lookup miss returns FALSE; unexpected resolution failures are reported as exceptions.
      * 
      * Callers can provide an array of constructor arguments. These should be used when
      * instantiating the class. If not provide, the app should take care of the entire

@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 
 /**
  * Exception thrown if a widget was unexpectedly not found in a page or a widget link is unresolvable.
@@ -9,7 +10,7 @@ use exface\Core\Exceptions\RuntimeException;
  * @author Andrej Kabachnik
  *        
  */
-class WidgetNotFoundError extends RuntimeException
+class WidgetNotFoundError extends RuntimeException implements NotFoundExceptionInterface
 {
 
     public function getDefaultAlias()

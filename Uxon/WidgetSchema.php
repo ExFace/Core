@@ -14,6 +14,9 @@ use exface\Core\DataTypes\UxonSchemaDataType;
 use exface\Core\Widgets\Container;
 use exface\Core\CommonLogic\QueryBuilder\RowDataArraySorter;
 use exface\Core\Exceptions\Model\MetaObjectNotFoundError;
+use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 use exface\Core\Widgets\Tab;
 
 /**
@@ -47,13 +50,18 @@ class WidgetSchema extends UxonSchema
         
         foreach ($uxon as $key => $value) {
             if (strcasecmp($key, 'widget_type') === 0) {
-                $selector = new WidgetSelector($this->getWorkbench(), $value);
-                if ($selector->isCoreWidget() === true) {
-                    // This is faster, than instantiating a page and a widget,
-                    // but it only works for core widgets!
-                    $w = $this->getPrototypeClassFromWidgetType($value);
-                } else {
-                    $w = get_class(WidgetFactory::create(UiPageFactory::createEmpty($this->getWorkbench()), $value));
+                try {
+                    $selector = new WidgetSelector($this->getWorkbench(), $value);
+                    if ($selector->isCoreWidget() === true) {
+                        // This is faster, than instantiating a page and a widget,
+                        // but it only works for core widgets!
+                        $w = $this->getPrototypeClassFromWidgetType($value);
+                    } else {
+                        $w = get_class(WidgetFactory::create(UiPageFactory::createEmpty($this->getWorkbench()), $value));
+                    }
+                } catch (AppComponentNotFoundError | AppNotFoundError | SelectorInvalidError $e) {
+                    $this->handleIncompleteInputError($e);
+                    break;
                 }
                 if ($this->validatePrototypeClass($w) === true) {
                     $name = $w;
@@ -124,7 +132,8 @@ class WidgetSchema extends UxonSchema
         $presets = parent::getPresets($uxon, $path, $rootPrototypeClass);
         try {
             $obj = $this->getMetaObject($uxon, $path);
-        } catch (MetaObjectNotFoundError $e) {
+        } catch (MetaObjectNotFoundError | SelectorInvalidError $e) {
+            $this->handleIncompleteInputError($e);
             return $presets;
         }
         if ($obj === null) {

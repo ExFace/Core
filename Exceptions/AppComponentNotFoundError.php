@@ -2,7 +2,8 @@
 namespace exface\Core\Exceptions;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface as PsrNotFoundExceptionInterface;
 
 /**
  * Exception thrown if an app component was not found.
@@ -13,7 +14,7 @@ use Psr\Container\NotFoundExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class AppComponentNotFoundError extends OutOfRangeException implements ErrorExceptionInterface, NotFoundExceptionInterface
+class AppComponentNotFoundError extends OutOfRangeException implements ErrorExceptionInterface, NotFoundExceptionInterface, PsrNotFoundExceptionInterface
 {
 }
 ?>

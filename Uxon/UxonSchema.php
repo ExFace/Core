@@ -7,11 +7,21 @@ use exface\Core\DataTypes\HtmlDataType;
 use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\DataTypes\PhpFilePathDataType;
 use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\Exceptions\Communication\CommunicationChannelNotFoundError;
+use exface\Core\Exceptions\Communication\CommunicationTemplateNotFoundError;
+use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
+use exface\Core\Exceptions\DataTypes\DataTypeNotFoundError;
+use exface\Core\Exceptions\Model\MetaAttributeGroupNotFoundError;
+use exface\Core\Exceptions\Model\MetaAttributeNotFoundError;
+use exface\Core\Exceptions\Model\MetaRelationNotFoundError;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
+use exface\Core\Exceptions\Uxon\UxonSnippetNotFoundError;
 use exface\Core\Exceptions\RuntimeException;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\DataSheets\DataSheetInterface;
 use exface\Core\Factories\DataSheetFactory;
-use exface\Core\Interfaces\Exceptions\ExceptionInterface;
 use exface\Core\Interfaces\Model\MetaAttributeGroupInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\WorkbenchInterface;
@@ -309,18 +319,9 @@ class UxonSchema implements UxonSchemaInterface
             return DataSheetFactory::createFromUxon($this->getWorkbench(), $cache);
         }
 
-        try {
-            $ds = $this->loadPropertiesSheet($prototypeClass);
-            $this->prototypePropCache[$prototypeClass] = $ds;
-            $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
-        } catch (\Throwable $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
-            $ds = DataSheetFactory::createFromObjectIdOrAlias($this->getWorkbench(), 'exface.Core.UXON_PROPERTY_ANNOTATION');
-            $logHint = $e instanceof ExceptionInterface ? ' See Log-ID ' . $e->getId() : ' See logs for details';
-            $ds->addRow([
-                'PROPERTY' => '// ERROR: cannot read prototype annotations!' . $logHint
-            ]);
-        }
+        $ds = $this->loadPropertiesSheet($prototypeClass);
+        $this->prototypePropCache[$prototypeClass] = $ds;
+        $this->setCache($prototypeClass, 'properties', $ds->exportUxonObject());
         
         return $ds;
     }
@@ -444,15 +445,45 @@ class UxonSchema implements UxonSchemaInterface
         
         try {
             $object = $schema->getMetaObject($uxon, $path, $rootObject);
-        } catch (MetaObjectNotFoundError $e) {
-            // TODO better error handling to tell apart invalid object alias and no object alias.
-            if ($rootObject !== null) {
-                $this->getWorkbench()->getLogger()->logException($e, LoggerInterface::DEBUG);
-            }
+        } catch (MetaObjectNotFoundError | SelectorInvalidError $e) {
+            $this->handleIncompleteInputError($e);
             $object = null;
         }
         
         return $schema->getValidValuesForType($firstType, $search, $object);
+    }
+
+    /**
+     * Logs an unresolved input at DEBUG, but preserves failures in stored definitions.
+     *
+     * Some factories wrap configuration or data-source failures in not-found errors.
+     * Those failures must still reach the editor instead of looking like no suggestions.
+     *
+     * @param Throwable $error
+     * @return void
+     */
+    protected function handleIncompleteInputError(Throwable $error) : void
+    {
+        for ($cause = $error->getPrevious(); $cause !== null; $cause = $cause->getPrevious()) {
+            if ($cause instanceof SelectorInvalidError
+                || $cause instanceof AppNotFoundError
+                || $cause instanceof AppComponentNotFoundError
+                || $cause instanceof MetaObjectNotFoundError
+                || $cause instanceof MetaAttributeNotFoundError
+                || $cause instanceof MetaRelationNotFoundError
+                || $cause instanceof MetaAttributeGroupNotFoundError
+                || $cause instanceof ActionNotFoundError
+                || $cause instanceof DataTypeNotFoundError
+                || $cause instanceof CommunicationChannelNotFoundError
+                || $cause instanceof CommunicationTemplateNotFoundError
+                || $cause instanceof UxonSnippetNotFoundError
+                || ($error instanceof MetaObjectNotFoundError && $cause instanceof DataTypeCastingError)
+            ) {
+                continue;
+            }
+            throw $error;
+        }
+        $this->getWorkbench()->getLogger()->logException($error, LoggerInterface::DEBUG);
     }
     
     /**
@@ -555,16 +586,22 @@ class UxonSchema implements UxonSchemaInterface
             case strcasecmp($type, 'metamodel:attribute') === 0 && $object !== null:
                 try {
                     $options = $this->getMetamodelAttributeAliases($object, $search);
-                } catch (MetaObjectNotFoundError $e) {
+                } catch (MetaObjectNotFoundError | MetaAttributeNotFoundError | MetaRelationNotFoundError | SelectorInvalidError $e) {
+                    $this->handleIncompleteInputError($e);
                 }
                 break;
             case strcasecmp($type, 'metamodel:attribute_group') === 0 && $object !== null:
-                $options = $this->getMetamodelAttributeGroupAliases($object, $search);
+                try {
+                    $options = $this->getMetamodelAttributeGroupAliases($object, $search);
+                } catch (MetaObjectNotFoundError | MetaAttributeNotFoundError | MetaAttributeGroupNotFoundError | MetaRelationNotFoundError | SelectorInvalidError $e) {
+                    $this->handleIncompleteInputError($e);
+                }
                 break;
             case strcasecmp($type, 'metamodel:relation') === 0 && $object !== null:
                 try {
                     $options = $this->getMetamodelRelationAliases($object, $search);
-                } catch (MetaObjectNotFoundError $e) {
+                } catch (MetaObjectNotFoundError | MetaAttributeNotFoundError | MetaRelationNotFoundError | SelectorInvalidError $e) {
+                    $this->handleIncompleteInputError($e);
                 }
                 break;
             case strcasecmp($type, 'metamodel:expression') === 0:
@@ -589,7 +626,8 @@ class UxonSchema implements UxonSchemaInterface
                     } else {
                         $options = [];
                     }
-                } catch (MetaObjectNotFoundError $e) {
+                } catch (MetaObjectNotFoundError | MetaAttributeNotFoundError | MetaRelationNotFoundError | SelectorInvalidError $e) {
+                    $this->handleIncompleteInputError($e);
                     $options = [];
                 }
                 break;
@@ -648,8 +686,8 @@ class UxonSchema implements UxonSchemaInterface
         if ($search !== null) {
             $parts = explode('.', $search);
             if (count($parts) > 1) {
-                $alias = $parts[2];
-                $namespace = $parts[0] . ($parts[1] !== null ? '.' . $parts[1] : '');
+                $alias = $parts[2] ?? '';
+                $namespace = $parts[0] . '.' . $parts[1];
                 $ds->getFilters()->addConditionFromString('APP__ALIAS', $namespace);
             } else {
                 $alias = $parts[0];
@@ -697,15 +735,11 @@ class UxonSchema implements UxonSchemaInterface
         }
         // Reverse relations and 1-to-1 relations coming from other objects are not attributes, 
         // so we need to add them here manually
-        try {
-            foreach ($object->getRelations() as $rel) {
-                $val = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
-                if (! in_array($val, $value_relations)) {
-                    $values[] = $val; 
-                }
+        foreach ($object->getRelations() as $rel) {
+            $val = ($relPath ? $relPath . RelationPath::RELATION_SEPARATOR : '') . $rel->getAliasWithModifier() . RelationPath::RELATION_SEPARATOR;
+            if (! in_array($val, $value_relations)) {
+                $values[] = $val;
             }
-        } catch (\Exception $e) {
-            $this->getWorkbench()->getLogger()->logException($e);
         }
         
         // Sort attributes and reverse relations alphabetically.
@@ -747,12 +781,8 @@ class UxonSchema implements UxonSchemaInterface
         }
 
         // Get the built-in groups
-        try {
-            $refl = new ReflectionClass(MetaAttributeGroupInterface::class);
-            $aliases = array_values($refl->getConstants());
-        } catch (Throwable $e) {
-            // TODO
-        } 
+        $refl = new ReflectionClass(MetaAttributeGroupInterface::class);
+        $aliases = array_values($refl->getConstants());
         // Get explicitly defined groups
         foreach ($object->getAttributeGroups() as $group) {
             $aliases[] = $group->getAliasWithNamespace();
@@ -818,11 +848,7 @@ class UxonSchema implements UxonSchemaInterface
             if (strcasecmp($package, 'exface/core') !== 0) {
                 if (! in_array($package, $appsAliases)) {
                     $alias = str_replace('/', AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER, $package);
-                    try {
-                        $appsAliases[$package] = $this->getWorkbench()->getApp($alias)->getAliasWithNamespace();
-                    } catch (AppNotFoundError $e) {
-                        continue;
-                    }
+                    $appsAliases[$package] = $this->getWorkbench()->getApp($alias)->getAliasWithNamespace();
                 }
                 $types[$i] = $appsAliases[$package] . AliasSelectorInterface::ALIAS_NAMESPACE_DELIMITER . $types[$i];
             }

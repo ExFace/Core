@@ -2,6 +2,7 @@
 namespace exface\Core\Widgets;
 
 use exface\Core\Behaviors\CommentBehavior;
+use exface\Core\DataTypes\MarkdownDataType;
 use exface\Core\Exceptions\Widgets\WidgetConfigurationError;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
@@ -91,7 +92,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
     private ?Uploader $uploader = null;
     private ?UxonObject $uploaderUxon = null;
     private bool $uploadEnabled = false;
-    private bool $enableMarkdown = false;
+    private ?bool $enableMarkdown = null;
     
     private ?MetaObjectInterface $checkedBehaviorForObject = null;
 
@@ -116,7 +117,7 @@ class CommentsFeed extends Data implements iCanEditData, iTakeInput, iFillEntire
      */
     public function getEnableMarkdown() : bool
     {
-        return $this->enableMarkdown;
+        return $this->enableMarkdown ?? ($this->getCommentContentColumn()->getDataType() instanceof MarkdownDataType);
     }
 
     /**

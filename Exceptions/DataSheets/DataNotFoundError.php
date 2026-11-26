@@ -1,13 +1,15 @@
 <?php
 namespace exface\Core\Exceptions\DataSheets;
 
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
+
 /**
  * Exception thrown if expected data is not found in the data source
  *
  * @author Andrej Kabachnik
  *        
  */
-class DataNotFoundError extends DataSheetRuntimeError
+class DataNotFoundError extends DataSheetRuntimeError implements NotFoundExceptionInterface
 {
     /**
      * 
