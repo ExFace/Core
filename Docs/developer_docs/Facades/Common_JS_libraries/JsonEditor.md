@@ -98,7 +98,9 @@ arrays; null/empty input is normalized to an empty object. Empty objects and
 arrays read back as an empty widget value. Invalid JSON text is preserved and
 opens in code mode instead of being discarded.
 
-Programmatic setters do not report user changes. User edits invoke `onChange`;
+Programmatic setters do not report user changes. Setting a value that only differs
+in formatting (e.g. pretty-printed JSON from the server) keeps the current tree
+instead of rebuilding it. User edits invoke `onChange`;
 Ace's synchronous replacement events are coalesced before propagation. Destroy
 the adapter before removing its host. Creating another adapter on the same host
 destroys the previous one.

@@ -74,6 +74,12 @@ export async function runJsonEditorRegression() {
         check(oPlain.oAdapter.getEditor().get().name === 'initial', 'Initial JSON was lost');
         oPlain.oAdapter.setValue({count: 0, enabled: false});
         check(oPlain.oAdapter.getEditor().get().enabled === false, 'Object values were not normalized');
+        const oRootBefore = oPlain.oAdapter.getEditor().node;
+        oPlain.oAdapter.setValue('{\n    "count": 0,\n    "enabled": false\n}');
+        check(oPlain.oAdapter.getEditor().node === oRootBefore, 'Reformatted but equal JSON must not rebuild the tree');
+        const oPretty = create(false, '{\n    "a": {"b": {"c": 1}}\n}');
+        check(oPretty.oAdapter.getEditor().node.findNodeByPath(['a', 'b']).expanded, 'Initial pretty-printed JSON must be fully expanded');
+        check(oPretty.aChanges.length === 0, 'Creating an editor must not report a user change');
         oPlain.oAdapter.setValue('[1,2]');
         check(oPlain.oAdapter.getEditor().get().length === 2, 'Arrays were not retained');
         oPlain.oAdapter.setValue('{"unfinished":');

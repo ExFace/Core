@@ -46,6 +46,7 @@ export async function runJsonEditorScrollRegression() {
         check(!oAdapter.getEditor().node.findNodeByPath(['rows', 0]).expanded, 'Collapsed array entries must survive reopening');
         check(!oAdapter.getEditor().node.findNodeByPath(['rows', 1]).expanded, 'Collapsed parent nodes must survive reopening');
         check(!oAdapter.getEditor().node.findNodeByPath(['rows', 1, 'details']).expanded, 'Hidden descendants must retain their collapsed state');
+        check(oAdapter.getEditor().node.findNodeByPath(['rows', 0, 'details']).expanded, 'Descendants of collapsed nodes must open expanded unless remembered');
         oAdapter.getEditor().node.findNodeByPath(['rows', 1]).dom.expand.click();
         check(!oAdapter.getEditor().node.findNodeByPath(['rows', 1, 'details']).expanded, 'Opening a parent must not expand its collapsed descendants');
         domScroller.scrollTop = iSaved;

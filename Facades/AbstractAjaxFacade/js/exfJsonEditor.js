@@ -25,6 +25,18 @@
         return /^\s*(\{\s*\}|\[\s*\])\s*$/.test(sValue) ? '' : sValue;
     }
 
+    /**
+     * Returns compact JSON for valid JSON text, so formatting differences do not count
+     * as changes. Invalid text is returned as-is.
+     */
+    function canonicalJson(sValue) {
+        try {
+            return JSON.stringify(JSON.parse(sValue));
+        } catch (oError) {
+            return sValue;
+        }
+    }
+
     function create(domEditor, oConfig, mValue) {
         var $ = oGlobal.jQuery;
         var JSONEditor = oConfig.JSONEditor || oGlobal.JSONEditor;
@@ -265,17 +277,56 @@
             oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey] = aPaths;
         }
 
-        function restoreCollapsedNodes() {
-            if (!oConfig.scrollKey || !oEditor.node || oEditor.getMode() === 'code') {
+        function getRememberedCollapsedPaths() {
+            return oConfig.scrollKey ? oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey] : undefined;
+        }
+
+        /**
+         * Expands the tree except for remembered collapsed nodes in a single pass.
+         *
+         * Expanding renders DOM rows for every visible node, which is by far the most
+         * expensive part of loading large UXON. Rows inside collapsed subtrees are not
+         * rendered, instead of expanding everything first and collapsing it again.
+         */
+        function expandTree() {
+            if (!oEditor.node || oEditor.getMode() === 'code') {
                 return;
             }
-            var aPaths = oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey];
-            if (aPaths === undefined) return;
-            oEditor.expandAll();
-            aPaths.forEach(function (aPath) {
-                var oNode = oEditor.node.findNodeByPath(aPath);
-                if (oNode && oNode.childs) oNode.collapse(false);
-            });
+            var aPaths = getRememberedCollapsedPaths();
+            if (!aPaths || aPaths.length === 0) {
+                oEditor.expandAll();
+                return;
+            }
+            var oCollapsed = new Set(aPaths.map(function (aPath) { return JSON.stringify(aPath); }));
+            // Nodes below a collapsed node are expanded too (without visible rows), so
+            // they open expanded later, unless they were remembered as collapsed themselves.
+            function walk(oNode) {
+                if (!oNode.childs) return;
+                if (oCollapsed.has(JSON.stringify(oNode.getPath()))) {
+                    oNode.collapse(false);
+                } else {
+                    oNode.expand(false);
+                }
+                oNode.childs.forEach(walk);
+            }
+            // Take the table offline like JSONEditor's expandAll() to avoid layout per row
+            var domTable = oEditor.table;
+            var domContent = domTable && domTable.parentNode;
+            if (domContent) domContent.removeChild(domTable);
+            try {
+                walk(oEditor.node);
+            } finally {
+                if (domContent) domContent.appendChild(domTable);
+            }
+        }
+
+        /**
+         * Reapplies remembered collapsed nodes after JSONEditor rebuilt the tree (e.g. mode change).
+         */
+        function restoreCollapsedNodes() {
+            if (getRememberedCollapsedPaths() !== undefined) {
+                expandTree();
+            }
         }
 
         function restoreScroll() {
@@ -1778,12 +1829,15 @@
             getValue: function () { return emptyValue(oEditor.getText()); },
             setValue: function (mNewValue) {
                 var sValue = normalizeValue(mNewValue);
-                if (oEditor.getText() === sValue) {
-                    sLastValue = oApi.getValue();
+                var sCurrent = oEditor.getText();
+                // Rebuilding a large tree is expensive - skip it if only the formatting differs.
+                if (sCurrent === sValue || canonicalJson(sCurrent) === canonicalJson(sValue)) {
+                    sLastValue = emptyValue(sCurrent);
                     updatePresetHint();
                     return oApi;
                 }
                 rememberCollapsedNodes();
+                var bWasSettingValue = bSettingValue;
                 bSettingValue = true;
                 try {
                     // Invalid JSON remains editable in code mode instead of being discarded.
@@ -1795,14 +1849,11 @@
                         }
                     }
                     oEditor.setText(sValue);
-                    if (oEditor.getMode() !== 'code') {
-                        oEditor.expandAll();
-                        restoreCollapsedNodes();
-                    }
+                    expandTree();
                     updatePresetHint();
                     sLastValue = oApi.getValue();
                 } finally {
-                    bSettingValue = false;
+                    bSettingValue = bWasSettingValue;
                 }
                 return oApi;
             },
@@ -1853,13 +1904,18 @@
             domEditor.exfJsonEditor.destroy();
         }
         var mInitialJson;
+        var sInitialValue = normalizeValue(mValue);
         try {
-            mInitialJson = JSON.parse(normalizeValue(mValue));
+            mInitialJson = JSON.parse(sInitialValue);
         } catch (oError) {
             oOptions.mode = 'code';
         }
         bSettingValue = true;
         oEditor = new JSONEditor(domEditor, oOptions, mInitialJson);
+        // Invalid JSON is not accepted by the constructor - load it as text in code mode.
+        if (mInitialJson === undefined) {
+            oEditor.setText(sInitialValue);
+        }
         domEditor.exfJsonEditor = oApi;
         oEditor._renderValidationErrors = fnRenderErrors;
         if (oConfig.uxon) {
@@ -1892,13 +1948,10 @@
                 }
             });
         }
-        oApi.setValue(mValue);
         sLastValue = oApi.getValue();
+        updatePresetHint();
         bSettingValue = false;
-        if (oEditor.getMode() !== 'code') {
-            oEditor.expandAll();
-            restoreCollapsedNodes();
-        }
+        expandTree();
         applyDisabled();
         addToolbar();
         oGlobal.addEventListener('online', refreshServerAvailability);
