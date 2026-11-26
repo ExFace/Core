@@ -10,6 +10,7 @@ use exface\Core\Exceptions\FormulaError;
 use exface\Core\Exceptions\Security\AccessPermissionDeniedError;
 use exface\Core\Factories\DataTypeFactory;
 use exface\Core\DataTypes\BooleanDataType;
+use exface\Core\Factories\DataSheetFactory;
 use exface\Core\Factories\TaskFactory;
 use exface\Core\Factories\UiPageFactory;
 use exface\Core\Interfaces\Log\LoggerInterface;
@@ -141,8 +142,22 @@ class IsButtonAuthorized extends Formula
         // $mapByRow to explicitly select one of them.
         $dataToCheck = $mapByRow ? $allData : ($mappedData ?? $allData);
         $rowToCheck = $dataToCheck->getRow($this->getCurrentRowNumber());
-        $fakeInputData = $dataToCheck->copy()->removeRows();
-        $fakeInputData->getSorters()->removeAll();
+
+        // Export the data to a Uxon object and remove sorters before creating the fake input data.
+        // Sorters are removed from the Uxon object to ensure they do not affect the creation of the fake input data.
+        // We remove them from the Uxon object before creating the fake input data as
+        // they could create errors for object with CustomAttribute behaviors with relations and sorters over those attributes.
+        // TODO Consider if there are other properties that should be unset from the Uxon object to avoid similar issues.
+        // maybe enhance the copy function with an option to unset specific properties from the Uxon object.
+        // Also find the actual problem why sorters over relations from CustomAttributes cause issues and address it accordingly.
+        $inputUxon = $dataToCheck->exportUxonObject();
+        $inputUxon->unsetProperty('sorters');
+        $fakeInputData = DataSheetFactory::createFromUxon(
+            $this->getWorkbench(),
+            $inputUxon
+        )->removeRows();
+        //$fakeInputData = $dataToCheck->copy()->removeRows();
+        //$fakeInputData->getSorters()->removeAll();
         $fakeInputData->addRow($rowToCheck, false, false);
 
         // TODO do we need to map data here? Wouldn't the action authorization point map it too???
