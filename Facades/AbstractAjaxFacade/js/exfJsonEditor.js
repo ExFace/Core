@@ -7,7 +7,9 @@
 (function (oGlobal) {
     "use strict";
 
-    var oScrollPositions = {};
+    // AJAX dialogs may evaluate this library again when reopening the editor.
+    var oScrollPositions = oGlobal._uxonEditorScrollPos = oGlobal._uxonEditorScrollPos || {};
+    var oCollapsedNodes = oGlobal._uxonEditorCollapsedNodes = oGlobal._uxonEditorCollapsedNodes || {};
 
     function normalizeValue(mValue) {
         if (mValue === undefined || mValue === null || mValue === '') {
@@ -164,6 +166,33 @@
             updatePresetHint();
         }
 
+        function rememberCollapsedNodes() {
+            if (!oConfig.scrollKey || bSettingValue || !oEditor || oEditor.getMode() === 'code' || !oEditor.node) {
+                return;
+            }
+            var aPaths = [];
+            function collect(oNode) {
+                if (!oNode.childs) return;
+                if (!oNode.expanded) aPaths.push(oNode.getPath());
+                oNode.childs.forEach(collect);
+            }
+            collect(oEditor.node);
+            oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey] = aPaths;
+        }
+
+        function restoreCollapsedNodes() {
+            if (!oConfig.scrollKey || !oEditor.node || oEditor.getMode() === 'code') {
+                return;
+            }
+            var aPaths = oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey];
+            if (aPaths === undefined) return;
+            oEditor.expandAll();
+            aPaths.forEach(function (aPath) {
+                var oNode = oEditor.node.findNodeByPath(aPath);
+                if (oNode && oNode.childs) oNode.collapse(false);
+            });
+        }
+
         function restoreScroll() {
             if (!oConfig.scrollKey) {
                 return;
@@ -171,7 +200,9 @@
             var sKey = domEditor.id + ':' + oConfig.scrollKey;
             var jqScroller = jqEditor.find('.jsoneditor-tree');
             jqScroller.off('scroll.exfJsonEditor').on('scroll.exfJsonEditor', function () {
-                oScrollPositions[sKey] = jqScroller.scrollTop();
+                if (!bDestroyed && jqScroller[0].isConnected) {
+                    oScrollPositions[sKey] = jqScroller.scrollTop();
+                }
             });
             if (oScrollPositions[sKey] !== undefined) {
                 later(function () { jqScroller.scrollTop(oScrollPositions[sKey]); }, 100);
@@ -1573,10 +1604,12 @@
                 later(function () {
                     applyDisabled();
                     addToolbar();
+                    restoreCollapsedNodes();
                     restoreScroll();
                 }, 0);
             },
             onExpand: function () {
+                rememberCollapsedNodes();
                 if (oEditor && oEditor.__cachedErrors) {
                     (oEditor.errorNodes || []).forEach(function (oNode) { oNode.setError(null); });
                     oEditor.errorNodes = toggleValidationErrors(oEditor.__cachedErrors);
@@ -1661,6 +1694,7 @@
                     updatePresetHint();
                     return oApi;
                 }
+                rememberCollapsedNodes();
                 bSettingValue = true;
                 try {
                     // Invalid JSON remains editable in code mode instead of being discarded.
@@ -1674,6 +1708,7 @@
                     oEditor.setText(sValue);
                     if (oEditor.getMode() !== 'code') {
                         oEditor.expandAll();
+                        restoreCollapsedNodes();
                     }
                     updatePresetHint();
                     sLastValue = oApi.getValue();
@@ -1698,6 +1733,7 @@
                 if (bDestroyed) {
                     return;
                 }
+                rememberCollapsedNodes();
                 bDestroyed = true;
                 oGlobal.removeEventListener('online', refreshServerAvailability);
                 oGlobal.removeEventListener('offline', refreshServerAvailability);
@@ -1768,6 +1804,7 @@
         bSettingValue = false;
         if (oEditor.getMode() !== 'code') {
             oEditor.expandAll();
+            restoreCollapsedNodes();
         }
         applyDisabled();
         addToolbar();

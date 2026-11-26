@@ -122,6 +122,14 @@ editing, JSON syntax validation and local tools remain available. Browser
 online/offline events and editor interactions refresh availability; the UI5 host
 also observes the launcher's network model for forced-offline changes.
 
+Tree scroll positions and collapsed nodes are remembered per editor host ID and
+prefilled record identity (`scrollKey`) for the lifetime of the browser page.
+This memory survives dialog recreation and repeated loading of the shared library.
+Collapsed nodes are restored by JSON path before scroll restoration; paths no
+longer present in the data are ignored. Expansion changes, including Expand all
+and Collapse all, update this memory without changing the JSON value. Hidden
+tabs can call `restoreScroll()` when they become visible.
+
 Model-search failures appear inline, with server messages, hints and log IDs
 where available. New searches can retry. HTML error-widget responses are passed
 intact to `onAjaxError` for native facade rendering rather than inserted by the
@@ -178,3 +186,6 @@ generator tests live in each owning app's `Tests/PHPUnit` suite.
 In the shared editor fixture, run
 `await (await import('../JsonEditorAutosuggestError.mjs')).runJsonEditorAutosuggestErrorRegression()`
 to check that diagnostic completions remain visible without opening a popup.
+Run `await (await import('../JsonEditorScroll.mjs')).runJsonEditorScrollRegression()`
+to check scroll restoration after reopening an editor and reloading the library,
+including separate positions for different records.
