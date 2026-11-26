@@ -235,6 +235,32 @@ class ColorIndicator extends Display implements iHaveColor, iHaveHintScale
     }
     
     /**
+     * Returns the fixed color of this indicator or NULL if the color is not static
+     * 
+     * The color is static if the `color` binding has a constant value - e.g. `"color": {"value": "red"}`.
+     * In contrast to `getColor()`, the value expression is evaluated here and
+     * resolved via `color_scale` if the widget has one.
+     * 
+     * @return string|NULL
+     */
+    public function getColorStatic() : ?string
+    {
+        $binding = $this->getColorBinding();
+        $expr = $binding->hasValue() ? $binding->getValueExpression() : null;
+        if ($expr === null || ! $expr->isStatic()) {
+            return null;
+        }
+        $color = $expr->evaluate();
+        if ($this->hasColorScale()) {
+            $color = $this->getColorForValue($color);
+        }
+        if ($color === null || $color === '') {
+            return null;
+        }
+        return (string) $color;
+    }
+    
+    /**
      *
      * {@inheritDoc}
      * @see \exface\Core\Widgets\Value::prepareDataSheetToRead()
