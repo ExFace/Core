@@ -191,6 +191,8 @@ abstract class Colors
      * will return black if the contrast is large enough.
      * - `1` means the return value is always `true` (is dark).
      *
+     * TODO: This function can be replaced with the ColorDataType.pickTextColorForBackgroundColor())
+     * 
      * Default value is `0.5`, i.e. equal weight for black and white.
      * @return boolean
      */

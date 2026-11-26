@@ -441,7 +441,7 @@ class WidgetPropertyBinding implements WidgetPropertyBindingInterface
     public function getValueExpression() : ?ExpressionInterface
     {
         if ($this->valueExpr === null && $this->valueExprString !== null) {
-            $this->valueExpr = ExpressionFactory::createFromString($this->getWorkbench(), $this->valueExprString, $this->getMetaObject());
+            $this->valueExpr = ExpressionFactory::createFromString($this->getWorkbench(), $this->valueExprString, $this->getMetaObject(), true);
         }
         return $this->valueExpr;
     }
