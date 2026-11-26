@@ -41,6 +41,7 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * Common methods for facade elements based on the jExcel library.
