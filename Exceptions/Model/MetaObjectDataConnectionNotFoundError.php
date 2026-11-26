@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\Model;
 
 use exface\Core\Exceptions\OutOfBoundsException;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 
 /**
  * Exception thrown if no valid data connection can be found for a meta object.
@@ -9,6 +10,6 @@ use exface\Core\Exceptions\OutOfBoundsException;
  * @author Andrej Kabachnik
  *        
  */
-class MetaObjectDataConnectionNotFoundError extends OutOfBoundsException
+class MetaObjectDataConnectionNotFoundError extends OutOfBoundsException implements NotFoundExceptionInterface
 {
 }

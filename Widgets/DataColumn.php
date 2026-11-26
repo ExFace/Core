@@ -1316,21 +1316,10 @@ class DataColumn extends AbstractWidget implements iShowDataColumn, iShowSingleA
         // If there is no caption and its calculated column, try to derive a caption from
         // the calculation expression.
         if ($caption === null && $this->isCalculated()) {
-            $expr = $this->getCalculationExpression();
-            
-            // If it's a data-based (non-static) formula, use the first attribute's name
-            // if available
-            if (! $expr->isStatic()) {
-                $firstAlias = $expr->getRequiredAttributes()[0];
-                if ($firstAlias && $this->getMetaObject()->hasAttribute($firstAlias)) {
-                    $attr = $this->getMetaObject()->getAttribute($firstAlias);
-                    $caption = $attr->getName();
-                }
-            }
-            
+            $expr = $this->getCalculationExpression();            
             // Otherwise just use the entire expression as caption
             if ($caption === null) {
-                $caption = $expr->toString();
+                $caption = $expr->__toString();
             }
         }
         return $caption;

@@ -41,6 +41,7 @@ use exface\Core\Interfaces\Widgets\iCanBeRequired;
 use exface\Core\Widgets\DataButton;
 use exface\Core\Widgets\DataTable;
 use exface\Core\CommonLogic\UxonObject;
+use exface\Core\DataTypes\SortingDirectionsDataType;
 
 /**
  * Common methods for facade elements based on the jExcel library.
@@ -1193,7 +1194,6 @@ JS;
         _autoColumnWidth: {$autoColumnWidth},
         _dropdownColWidthLocks: {},
         _valueGetterRow: null,
-        _jsColsCfgCache: null,
         _doNotValidate: {$this->escapeBool($this->getWidget()->getDoNotValidateDynamically())}, 
         getDoNotValidate: function(){
             return this._doNotValidate;
@@ -1251,11 +1251,7 @@ JS;
             return (this._cols[this.getColumnName(iColIdx)] || {});
         },
         getJExcelColumnConfig: function(iColIdx) {
-            // getConfig() is expensive; the returned columns config is stable, so cache it
-            if (this._jsColsCfgCache === null) {
-                this._jsColsCfgCache = this.getJExcel().getConfig().columns;
-            }
-            return (this._jsColsCfgCache[iColIdx] || {});
+            return (this.getJExcel().options.columns[iColIdx] || {});
         },
         lockDropdownColumnWidth: function(iColIdx, domCell) {
             // only needed in auto column width mode
@@ -1552,7 +1548,7 @@ JS;
 
             // if a dropdown source has filters, check if the set value is in the filtered source (jexcel by default just consideres the unfiltered source array)
             // if not, set to empty
-            for (i = 0; i < oJExcel.getConfig().columns.length; i++) {
+            for (i = 0; i < oJExcel.options.columns.length; i++) {
                 if (!this.getColumnModel(i).subsheet && oJExcel.getColumnOptions(i).type == 'autocomplete' && typeof(oJExcel.getColumnOptions(i).filter) == 'function' ) {
                     for (let rowIndex = 0; rowIndex < numRows; rowIndex++) {
                         
@@ -1822,7 +1818,7 @@ JS;
             var oJExcel = oWidget.getJExcel();
             var iColNo = 1;
             oWidget._disabled = bDisable;
-            oJExcel.getConfig().columns.forEach(function(oColCfg, iColIdx){
+            oJExcel.options.columns.forEach(function(oColCfg, iColIdx){
                 var fnDisabler;
                 var aCells = [];
                 if (oColCfg.type === 'hidden') {
@@ -1914,7 +1910,7 @@ JS;
                                 });
                                 //overwrite dropdown source array and resolve promise
                                 if (newData != null){
-                                    oJExcel.getConfig().columns[iColIdx].source =  newData; 
+                                    oJExcel.options.columns[iColIdx].source = newData;
                                 }
                                 resolve();
                             }
@@ -3195,7 +3191,6 @@ JS;
     // when re-setting data (e.g. zwischenspeichern), the element doesnt get destroyed, 
     // so we need to set the loading flag again
     jqCtrl[0].exfWidget.bLoaded = false;
-    jqCtrl[0].exfWidget._jsColsCfgCache = null;
 
     if (oData !== undefined && Array.isArray(oData.rows)) {
         aData = {$this->buildJsConvertDataToArray('oData.rows')}
@@ -3210,7 +3205,7 @@ JS;
     }
     // Make sure values missing in the static dropdown options are still displayed.
     // They are marked as `_exfKeep` and hidden from the dropdown list by the column filter.
-    jqCtrl[0].exfWidget.getJExcel().getConfig().columns.forEach(function(oColCfg, iColIdx) {
+    jqCtrl[0].exfWidget.getJExcel().options.columns.forEach(function(oColCfg, iColIdx) {
         if (! oColCfg.exfKeepUnknownValues || ! Array.isArray(oColCfg.source)) {
             return;
         }
@@ -3227,6 +3222,7 @@ JS;
         });
     });
     jqCtrl.jspreadsheet('setData', aData);
+    {$this->buildJsJExcelSortIndicators('jqCtrl[0].exfWidget.getJExcel()')};
     jqCtrl[0].exfWidget.refreshConditionalColumnVisibility(true);
     {$this->buildJsResetSelection('jqCtrl')};
 
@@ -3882,6 +3878,36 @@ JS;
     {
         $scripts = array_unique($this->onInitScripts);
         return implode("\n", $scripts);
+    }
+
+        /**
+     * Reflect server-side sorting without reordering rows or creating edit history.
+     */
+    protected function buildJsJExcelSortIndicators(string $jExcelJs) : string
+    {
+        $sorters = [];
+        foreach ($this->getWidget()->getSorters() as $sorter) {
+            $sorters[$sorter->getProperty('attribute_alias')] =
+                strtoupper($sorter->getProperty('direction') ?? '') === SortingDirectionsDataType::DESC
+                    ? 'arrow-up'
+                    : 'arrow-down';
+        }
+        $classes = [];
+        foreach ($this->getWidget()->getColumns() as $column) {
+            $classes[] = $sorters[$column->getAttributeAlias()] ?? null;
+        }
+        $classesJs = json_encode($classes);
+        return <<<JS
+    (function(oJExcel) {
+        var aSortClasses = {$classesJs};
+        oJExcel.headers.forEach(function(oHeader, iCol) {
+            oHeader.classList.remove('arrow-up', 'arrow-down');
+            if (aSortClasses[iCol] !== null && aSortClasses[iCol] !== undefined) {
+                oHeader.classList.add(aSortClasses[iCol]);
+            }
+        });
+    })({$jExcelJs});
+JS;
     }
 
 }

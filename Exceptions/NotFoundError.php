@@ -1,6 +1,7 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
 
 /**
@@ -12,7 +13,7 @@ use exface\Core\Interfaces\Log\LoggerInterface;
  * @author Andrej Kabachnik
  *        
  */
-abstract class NotFoundError extends OutOfBoundsException
+abstract class NotFoundError extends OutOfBoundsException implements NotFoundExceptionInterface
 {
     /**
      * 

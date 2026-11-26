@@ -74,6 +74,12 @@ export async function runJsonEditorRegression() {
         check(oPlain.oAdapter.getEditor().get().name === 'initial', 'Initial JSON was lost');
         oPlain.oAdapter.setValue({count: 0, enabled: false});
         check(oPlain.oAdapter.getEditor().get().enabled === false, 'Object values were not normalized');
+        const oRootBefore = oPlain.oAdapter.getEditor().node;
+        oPlain.oAdapter.setValue('{\n    "count": 0,\n    "enabled": false\n}');
+        check(oPlain.oAdapter.getEditor().node === oRootBefore, 'Reformatted but equal JSON must not rebuild the tree');
+        const oPretty = create(false, '{\n    "a": {"b": {"c": 1}}\n}');
+        check(oPretty.oAdapter.getEditor().node.findNodeByPath(['a', 'b']).expanded, 'Initial pretty-printed JSON must be fully expanded');
+        check(oPretty.aChanges.length === 0, 'Creating an editor must not report a user change');
         oPlain.oAdapter.setValue('[1,2]');
         check(oPlain.oAdapter.getEditor().get().length === 2, 'Arrays were not retained');
         oPlain.oAdapter.setValue('{"unfinished":');
@@ -95,6 +101,20 @@ export async function runJsonEditorRegression() {
         const oUxon = create(true, {});
         const oJsonEditor = oUxon.oAdapter.getEditor();
         check(oUxon.domHost.querySelector('.uxoneditor-preset-hint').style.display !== 'none', 'Empty UXON hint is hidden');
+        const fnHintVisible = () => oUxon.domHost.querySelector('.uxoneditor-preset-hint').style.display !== 'none';
+        const fnGetText = oJsonEditor.getText;
+        let iSerializations = 0;
+        oJsonEditor.getText = function () { iSerializations++; return fnGetText.apply(this, arguments); };
+        jQuery(oUxon.domHost).find('.jsoneditor').trigger('focusin').trigger('pointerdown');
+        oJsonEditor.getText = fnGetText;
+        check(iSerializations === 0, 'Focus and pointer checks must not serialize the tree');
+        oUxon.oAdapter.setValue({widget_type: 'Input'});
+        check(!fnHintVisible(), 'Preset hint must hide for non-empty UXON');
+        oUxon.oAdapter.setValue('"text"');
+        check(!fnHintVisible(), 'Preset hint must hide for primitive values');
+        oUxon.oAdapter.setValue([]);
+        check(fnHintVisible(), 'Preset hint must show for empty arrays');
+        oUxon.oAdapter.setValue({});
         const fnOptions = oJsonEditor.options.autocomplete.getOptions;
         const aValues = await fnOptions('foo', ['child'], 'value', oJsonEditor);
         check(aValues.join(',') === 'foo,x.foo,other', 'Suggestions were not ranked');
@@ -116,7 +136,7 @@ export async function runJsonEditorRegression() {
         aResults.push('live UXON context, autosuggest and explicit transport errors');
 
         oResponse = [{
-            NAME: 'Test preset', PROTOTYPE__LABEL: 'General',
+            NAME: 'Test preset',
             UXON: '{"widget_type":"InputJson"}', DESCRIPTION: 'Test preset', WRAP_FLAG: '0'
         }];
         oUxon.domHost.querySelector('.uxoneditor-preset-hint a').click();
@@ -124,10 +144,18 @@ export async function runJsonEditorRegression() {
         const domModal = document.querySelector('.uxoneditor-modal');
         check(domModal !== null, 'Preset popup did not open');
         check(!domModal.querySelector('[role="status"]'), 'Preset results must not show a no-results message');
+        check(domModal.querySelector('.uxoneditor-preset-group').textContent === oTerms['PRESETS.GROUP_GENERAL'], 'Ungrouped presets must use the translated General group');
+        jQuery(domModal.querySelector('#uxonPresetSearch')).val('test').trigger('input');
+        check(domModal.querySelectorAll('.uxoneditor-preset-card').length === 1, 'Ungrouped presets must remain searchable by name');
+        check(domModal.querySelector('.spinner').style.display === 'none', 'Searching ungrouped presets must finish loading');
+        check(domModal.querySelector('.uxoneditor-preset-group').textContent === oTerms['PRESETS.GROUP_GENERAL'], 'Filtering must retain the first group heading');
+        jQuery(domModal.querySelector('#uxonPresetSearch')).val(oTerms['PRESETS.GROUP_GENERAL'].toUpperCase()).trigger('input');
+        check(domModal.querySelectorAll('.uxoneditor-preset-card').length === 1, 'Ungrouped presets must be searchable by translated group');
         jQuery(domModal.querySelector('#uxonPresetSearch')).val('no-matching-preset').trigger('input');
         check(domModal.querySelector('[role="status"]').textContent === oTerms['SEARCH.NO_RESULTS'], 'Unmatched preset search must show an info message');
         jQuery(domModal.querySelector('#uxonPresetSearch')).val('').trigger('input');
         check(!domModal.querySelector('[role="status"]'), 'Restoring preset results must clear the info message');
+        check(domModal.querySelector('.spinner').style.display === 'none', 'Clearing preset search must finish loading');
         domModal.querySelector('.uxoneditor-preset-card').click();
         domModal.querySelector('.uxoneditor-preset-replace').click();
         check(oJsonEditor.get().widget_type === 'InputJson', 'Preset did not replace root value');
@@ -303,6 +331,45 @@ export async function runJsonEditorRegression() {
         check(oValidatedEditor.errorNodes.includes(oValidatedEditor.node), 'Collapsed validation breadcrumb was lost');
         aResults.push('async UXON validation and collapsed error breadcrumbs');
         oValidated.oAdapter.destroy();
+
+        const fnRegressionFetch = window.fetch;
+        const aLatestRequests = [];
+        window.fetch = (sUrl, oOptions) => new Promise((fnResolve, fnReject) => {
+            const oParams = Object.fromEntries(oOptions.body);
+            aLatestRequests.push({oParams, oSignal: oOptions.signal});
+            oOptions.signal.addEventListener('abort', () => fnReject(new DOMException('Aborted', 'AbortError')));
+            setTimeout(() => fnResolve(new Response(JSON.stringify(oParams.action === 'exface.Core.UxonValidate' ? [] : {values: ['latest']}), {
+                headers: {'Content-Type': 'application/json'}
+            })), 300);
+        });
+        try {
+            const oLatest = create(true, {a: 0}, {validate: true});
+            const oLatestEditor = oLatest.oAdapter.getEditor();
+            const fnValidations = () => aLatestRequests.filter(oItem => oItem.oParams.action === 'exface.Core.UxonValidate');
+            const aTyped = await Promise.all([1, 2, 3].map(iValue => oLatestEditor.options.onValidate({a: iValue})));
+            check(fnValidations().length === 1 && JSON.parse(fnValidations()[0].oParams.uxon).a === 3,
+                'Validation must wait for a typing pause and send only the latest UXON');
+            check(aTyped.every(aItem => Array.isArray(aItem) && aItem.length === 0), 'Superseded validations must resolve quietly');
+            const oRunning = oLatestEditor.options.onValidate({a: 4});
+            await new Promise(fnResolve => setTimeout(fnResolve, 800));
+            const oNext = oLatestEditor.options.onValidate({a: 5});
+            check(fnValidations().at(-1).oSignal.aborted, 'A newer validation must abort the running request');
+            check((await oRunning).length === 0 && (await oNext).length === 0, 'Aborted validation must not fail');
+            check(fnValidations().length === 3 && JSON.parse(fnValidations().at(-1).oParams.uxon).a === 5, 'Latest validation was not sent');
+
+            const fnLatestOptions = oLatestEditor.options.autocomplete.getOptions;
+            let bOldSettled = false;
+            fnLatestOptions('a', [], 'value', oLatestEditor).then(() => { bOldSettled = true; }, () => { bOldSettled = true; });
+            const aLatest = await fnLatestOptions('ab', [], 'value', oLatestEditor);
+            const aSuggests = aLatestRequests.filter(oItem => oItem.oParams.action === 'exface.Core.UxonAutosuggest');
+            check(aSuggests.length === 2 && aSuggests[0].oSignal.aborted, 'A newer autosuggest must abort the previous request');
+            check(aLatest[0] === 'latest' && !bOldSettled, 'Superseded suggestions must not replace the newer dropdown');
+            check(aErrors.length === 0, 'Aborted requests must not report errors');
+            oLatest.oAdapter.destroy();
+            aResults.push('validation waits for typing pauses; superseded validation and autosuggest requests are aborted');
+        } finally {
+            window.fetch = fnRegressionFetch;
+        }
 
         oUxon.oAdapter.setDisabled(true);
         check(oJsonEditor.getMode() === 'view', 'Tree mode did not become read-only view mode');

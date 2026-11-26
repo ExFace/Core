@@ -4,6 +4,7 @@ namespace exface\Core\Exceptions\Model;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 
 /**
  * Exception thrown if a requested relation cannot be found for the given meta object.
@@ -13,7 +14,7 @@ use exface\Core\Interfaces\Exceptions\MetaRelationResolverExceptionInterface;
  * @author Andrej Kabachnik
  *        
  */
-class MetaRelationNotFoundError extends UnexpectedValueException implements MetaRelationResolverExceptionInterface
+class MetaRelationNotFoundError extends UnexpectedValueException implements MetaRelationResolverExceptionInterface, NotFoundExceptionInterface
 {
     
     use MetaObjectExceptionTrait;

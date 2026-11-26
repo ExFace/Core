@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\Contexts;
 
 use exface\Core\Interfaces\Exceptions\ErrorExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 use exface\Core\Exceptions\OutOfRangeException;
 
 /**
@@ -11,7 +12,7 @@ use exface\Core\Exceptions\OutOfRangeException;
  * @author Andrej Kabachnik
  *        
  */
-class ContextScopeNotFoundError extends OutOfRangeException implements ErrorExceptionInterface
+class ContextScopeNotFoundError extends OutOfRangeException implements ErrorExceptionInterface, NotFoundExceptionInterface
 {
 
     public function getDefaultAlias()

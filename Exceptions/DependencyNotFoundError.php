@@ -1,6 +1,8 @@
 <?php
 namespace exface\Core\Exceptions;
 
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
+
 /**
  * Exception thrown if a dependency was not found.
  * This is especially usefull for JavaScript dependencies in facades.
@@ -8,6 +10,6 @@ namespace exface\Core\Exceptions;
  * @author Andrej Kabachnik
  *        
  */
-class DependencyNotFoundError extends LogicException
+class DependencyNotFoundError extends LogicException implements NotFoundExceptionInterface
 {
 }

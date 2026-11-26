@@ -1,9 +1,40 @@
 /* Browser test: load jQuery, jSuites, jspreadsheet and this file, then await
  * testDataSpreadSheetDropdown(traitSource). No application data or writes used.
  */
+function testDataSpreadSheetDropdownReload(source) {
+    var start = source.indexOf('    // Make sure values missing in the static dropdown options');
+    var end = source.indexOf("    jqCtrl.jspreadsheet('setData', aData);", start);
+    if (start < 0 || end < 0) throw new Error('Spreadsheet reload code not found');
+    var dropdown = {
+        exfKeepUnknownValues: true,
+        exfAllLabels: {9: 'Retired'},
+        source: [{id: '8', name: 'Active'}]
+    };
+    var table = {
+        options: {data: [], columns: [dropdown]},
+        getConfig: function() {
+            // jSpreadsheet CE v4 getStyle() assumes there is a first row.
+            void this.options.data[0].length;
+            return this.options;
+        }
+    };
+    var rows = [['8'], ['9'], ['9']];
+    var loadedRows;
+    var jqCtrl = [{exfWidget: {getJExcel: function() { return table; }}}];
+    jqCtrl.jspreadsheet = function(method, data) {
+        if (method === 'setData') loadedRows = data;
+    };
+    new Function('jqCtrl', 'aData', source.slice(start, end) + "jqCtrl.jspreadsheet('setData', aData);")(jqCtrl, rows);
+    if (loadedRows !== rows) throw new Error('Reload did not set the rows on the empty spreadsheet');
+    if (dropdown.source.length !== 2 || dropdown.source[1].name !== 'Retired' || dropdown.source[1]._exfKeep !== true) {
+        throw new Error('Reload did not preserve the missing dropdown value and label exactly once');
+    }
+    return 2;
+}
+
 async function testDataSpreadSheetDropdown(source, delimiter) {
     if (delimiter === undefined) {
-        var total = 0;
+        var total = testDataSpreadSheetDropdownReload(source);
         for (var separator of [';', ',', '|', '::']) {
             total += await testDataSpreadSheetDropdown(source, separator);
         }

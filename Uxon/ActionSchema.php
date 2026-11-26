@@ -6,9 +6,11 @@ use exface\Core\Factories\ActionFactory;
 use exface\Core\CommonLogic\UxonObject;
 use exface\Core\CommonLogic\AbstractAction;
 use exface\Core\DataTypes\UxonSchemaDataType;
-use exface\Core\Exceptions\RuntimeException;
+use exface\Core\Exceptions\Actions\ActionNotFoundError;
+use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Exceptions\AppNotFoundError;
+use exface\Core\Exceptions\Selectors\SelectorInvalidError;
 use exface\Core\Interfaces\Actions\ActionInterface;
-use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Model\UiPageInterface;
 use exface\Core\Interfaces\UxonSchemaInterface;
 
@@ -82,9 +84,8 @@ class ActionSchema extends UxonSchema
         try {
             $selector = SelectorFactory::createActionSelector($this->getWorkbench(), $selectorString);
             $action = ActionFactory::create($selector);
-        } catch (\Throwable $e) {
-            $ex = new RuntimeException('Error loading action autosuggest - falling back to "AbstractAction"!', null, $e);
-            $this->getWorkbench()->getLogger()->logException($ex, LoggerInterface::DEBUG);
+        } catch (ActionNotFoundError | AppComponentNotFoundError | AppNotFoundError | SelectorInvalidError $e) {
+            $this->handleIncompleteInputError($e);
             return $this->getDefaultPrototypeClass();
         }
         return get_class($action);

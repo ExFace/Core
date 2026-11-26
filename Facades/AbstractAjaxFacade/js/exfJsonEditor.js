@@ -7,7 +7,12 @@
 (function (oGlobal) {
     "use strict";
 
-    var oScrollPositions = {};
+    // Server validation waits for a typing pause on top of JSONEditor's own 150 ms debounce.
+    var VALIDATION_DELAY_MS = 700;
+
+    // AJAX dialogs may evaluate this library again when reopening the editor.
+    var oScrollPositions = oGlobal._uxonEditorScrollPos = oGlobal._uxonEditorScrollPos || {};
+    var oCollapsedNodes = oGlobal._uxonEditorCollapsedNodes = oGlobal._uxonEditorCollapsedNodes || {};
 
     function normalizeValue(mValue) {
         if (mValue === undefined || mValue === null || mValue === '') {
@@ -18,6 +23,18 @@
 
     function emptyValue(sValue) {
         return /^\s*(\{\s*\}|\[\s*\])\s*$/.test(sValue) ? '' : sValue;
+    }
+
+    /**
+     * Returns compact JSON for valid JSON text, so formatting differences do not count
+     * as changes. Invalid text is returned as-is.
+     */
+    function canonicalJson(sValue) {
+        try {
+            return JSON.stringify(JSON.parse(sValue));
+        } catch (oError) {
+            return sValue;
+        }
     }
 
     function create(domEditor, oConfig, mValue) {
@@ -37,7 +54,9 @@
         var jqEditor = $(domEditor);
         var jqHint;
         var jqUnavailable;
-        var oAbort = new AbortController();
+        // Only the latest validation and autosuggest request matter - older ones are aborted.
+        var oPendingValidation = null;
+        var oAutosuggestAbort = null;
 
         function t(sKey) {
             return oConfig.translations[sKey];
@@ -115,6 +134,75 @@
             return iTimer;
         }
 
+        function cancelLater(iTimer) {
+            clearTimeout(iTimer);
+            aTimers = aTimers.filter(function (iItem) { return iItem !== iTimer; });
+        }
+
+        /**
+         * Stops a scheduled or running server validation.
+         *
+         * Its promise is resolved empty: JSONEditor ignores results of superseded
+         * validations anyway, but must not be left waiting or receive an error.
+         */
+        function cancelValidation() {
+            var oPending = oPendingValidation;
+            if (!oPending) {
+                return;
+            }
+            oPendingValidation = null;
+            cancelLater(oPending.timer);
+            if (oPending.abort) {
+                oPending.abort.abort();
+            }
+            oPending.resolve([]);
+        }
+
+        /**
+         * Validates UXON on the server once the user stopped typing.
+         *
+         * Every call supersedes the previous one, so fast typing produces a single
+         * request instead of one per short pause.
+         */
+        function validateLater(oJson) {
+            cancelValidation();
+            return new Promise(function (fnResolve, fnReject) {
+                var oPending = {resolve: fnResolve, abort: null};
+                oPendingValidation = oPending;
+                oPending.timer = later(function () {
+                    if (!refreshServerAvailability()) {
+                        oPendingValidation = null;
+                        fnResolve([]);
+                        return;
+                    }
+                    oPending.abort = new AbortController();
+                    exf_performValidation('', JSON.stringify(oJson), oPending.abort.signal).then(function (aErrors) {
+                        if (oPendingValidation !== oPending) return;
+                        oPendingValidation = null;
+                        if (!refreshServerAvailability()) {
+                            fnResolve([]);
+                            return;
+                        }
+                        if (!Array.isArray(aErrors)) {
+                            throw new Error(t('ERROR.MALFORMED_RESPONSE'));
+                        }
+                        exf_toggleErrorWarning($, domEditor.id, aErrors[0]);
+                        fnResolve(aErrors);
+                    }).catch(function (oError) {
+                        // Superseded or destroyed - the promise was resolved by cancelValidation()
+                        if (oPending.abort.signal.aborted) return;
+                        oPendingValidation = null;
+                        if (!refreshServerAvailability()) {
+                            fnResolve([]);
+                            return;
+                        }
+                        reportError(oError);
+                        fnReject(oError);
+                    });
+                }, VALIDATION_DELAY_MS);
+            });
+        }
+
         function notifyChange() {
             if (!oEditor || bSettingValue || bDestroyed) {
                 return;
@@ -145,7 +233,18 @@
             if (!jqHint || !oEditor) {
                 return;
             }
-            jqHint.toggle(isServerAvailable() && !bDisabled && oEditor.getMode() === 'tree' && emptyValue(oEditor.getText()) === '');
+            jqHint.toggle(isServerAvailable() && !bDisabled && oEditor.getMode() === 'tree' && isTreeEmpty());
+        }
+
+        /**
+         * Checks for an empty root object/array without serializing the whole tree.
+         *
+         * Runs on every focus, pointer and server request, so it must stay cheap
+         * for large UXON. Primitive roots have no `childs` and are not empty.
+         */
+        function isTreeEmpty() {
+            var oRoot = oEditor.node;
+            return !!oRoot && Array.isArray(oRoot.childs) && oRoot.childs.length === 0;
         }
 
         function applyDisabled() {
@@ -164,6 +263,72 @@
             updatePresetHint();
         }
 
+        function rememberCollapsedNodes() {
+            if (!oConfig.scrollKey || bSettingValue || !oEditor || oEditor.getMode() === 'code' || !oEditor.node) {
+                return;
+            }
+            var aPaths = [];
+            function collect(oNode) {
+                if (!oNode.childs) return;
+                if (!oNode.expanded) aPaths.push(oNode.getPath());
+                oNode.childs.forEach(collect);
+            }
+            collect(oEditor.node);
+            oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey] = aPaths;
+        }
+
+        function getRememberedCollapsedPaths() {
+            return oConfig.scrollKey ? oCollapsedNodes[domEditor.id + ':' + oConfig.scrollKey] : undefined;
+        }
+
+        /**
+         * Expands the tree except for remembered collapsed nodes in a single pass.
+         *
+         * Expanding renders DOM rows for every visible node, which is by far the most
+         * expensive part of loading large UXON. Rows inside collapsed subtrees are not
+         * rendered, instead of expanding everything first and collapsing it again.
+         */
+        function expandTree() {
+            if (!oEditor.node || oEditor.getMode() === 'code') {
+                return;
+            }
+            var aPaths = getRememberedCollapsedPaths();
+            if (!aPaths || aPaths.length === 0) {
+                oEditor.expandAll();
+                return;
+            }
+            var oCollapsed = new Set(aPaths.map(function (aPath) { return JSON.stringify(aPath); }));
+            // Nodes below a collapsed node are expanded too (without visible rows), so
+            // they open expanded later, unless they were remembered as collapsed themselves.
+            function walk(oNode) {
+                if (!oNode.childs) return;
+                if (oCollapsed.has(JSON.stringify(oNode.getPath()))) {
+                    oNode.collapse(false);
+                } else {
+                    oNode.expand(false);
+                }
+                oNode.childs.forEach(walk);
+            }
+            // Take the table offline like JSONEditor's expandAll() to avoid layout per row
+            var domTable = oEditor.table;
+            var domContent = domTable && domTable.parentNode;
+            if (domContent) domContent.removeChild(domTable);
+            try {
+                walk(oEditor.node);
+            } finally {
+                if (domContent) domContent.appendChild(domTable);
+            }
+        }
+
+        /**
+         * Reapplies remembered collapsed nodes after JSONEditor rebuilt the tree (e.g. mode change).
+         */
+        function restoreCollapsedNodes() {
+            if (getRememberedCollapsedPaths() !== undefined) {
+                expandTree();
+            }
+        }
+
         function restoreScroll() {
             if (!oConfig.scrollKey) {
                 return;
@@ -171,7 +336,9 @@
             var sKey = domEditor.id + ':' + oConfig.scrollKey;
             var jqScroller = jqEditor.find('.jsoneditor-tree');
             jqScroller.off('scroll.exfJsonEditor').on('scroll.exfJsonEditor', function () {
-                oScrollPositions[sKey] = jqScroller.scrollTop();
+                if (!bDestroyed && jqScroller[0].isConnected) {
+                    oScrollPositions[sKey] = jqScroller.scrollTop();
+                }
             });
             if (oScrollPositions[sKey] !== undefined) {
                 later(function () { jqScroller.scrollTop(oScrollPositions[sKey]); }, 100);
@@ -208,7 +375,7 @@
             }
         }
 
-        function exf_fetchAutosuggest(text, path, input, uxon){
+        function exf_fetchAutosuggest(text, path, input, uxon, oSignal){
             var formData = new URLSearchParams({
         		action: 'exface.Core.UxonAutosuggest',
         		text: text,
@@ -224,7 +391,7 @@
                     method: "POST",
                     mode: "cors",
                     cache: "no-cache",
-                    signal: oAbort.signal,
+                    signal: oSignal,
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
                     },
@@ -234,7 +401,7 @@
           	.then(exf_validateResponse);
         }
 
-        function exf_performValidation(path, uxon){
+        function exf_performValidation(path, uxon, oSignal){
             var formData = new URLSearchParams({
         		action: 'exface.Core.UxonValidate',
         		path: JSON.stringify(path),
@@ -248,7 +415,7 @@
                     method: "POST",
                     mode: "cors",
                     cache: "no-cache",
-                    signal: oAbort.signal,
+                    signal: oSignal,
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
                     },
@@ -761,18 +928,18 @@
                 // Fill path textarea
                 var elem = modal.modalElem();
                 var aPresetOptions = [];
-                var sGroupName = '';
                 var length = data.length;
                 var jqTileContainer = $(elem.querySelector('#uxonPresetCards'));
 
                 var fnListTiles = function(aPresetData, jqTileContainer, fnClick, sSearch) {
                     sSearch = sSearch === undefined ? '' : sSearch.toLowerCase();
+                    var sGroupName = '';
 
                     jqTileContainer.empty().prev('.spinner').show();
 
                     aPresetData.forEach(function(oRow){
                         if (! oRow['PROTOTYPE__LABEL']) {
-                           oRow['PROTOTYPE__LABEL'] = t("PRESET_GROUP_GENERAL");
+                           oRow['PROTOTYPE__LABEL'] = t("PRESETS.GROUP_GENERAL");
                         }
 
                         if (sSearch !== '') {
@@ -1573,10 +1740,12 @@
                 later(function () {
                     applyDisabled();
                     addToolbar();
+                    restoreCollapsedNodes();
                     restoreScroll();
                 }, 0);
             },
             onExpand: function () {
+                rememberCollapsedNodes();
                 if (oEditor && oEditor.__cachedErrors) {
                     (oEditor.errorNodes || []).forEach(function (oNode) { oNode.setError(null); });
                     oEditor.errorNodes = toggleValidationErrors(oEditor.__cachedErrors);
@@ -1604,15 +1773,25 @@
                     applyTo: ['value'],
                     caseSensitive: false,
                     filter: function (sToken, sMatch) {
+                        if (sMatch.startsWith('// ERROR:')) return true;
                         sToken = sToken.replace(/^\s(?=\S)/, '').replace(/__\s+$/, '__');
                         return !sToken.trim() || sMatch.toLowerCase().indexOf(sToken.toLowerCase()) !== -1;
                     },
                     getOptions: function (sText, aPath, sInput, oJsonEditor) {
+                        if (oAutosuggestAbort) {
+                            oAutosuggestAbort.abort();
+                        }
                         if (!refreshServerAvailability()) {
+                            oAutosuggestAbort = null;
                             return Promise.resolve([]);
                         }
-                        return exf_fetchAutosuggest(sText, aPath, sInput, JSON.stringify(oJsonEditor.get()))
+                        var oRequestAbort = oAutosuggestAbort = new AbortController();
+                        return exf_fetchAutosuggest(sText, aPath, sInput, JSON.stringify(oJsonEditor.get()), oRequestAbort.signal)
                             .then(function (oResponse) {
+                                if (oRequestAbort.signal.aborted) {
+                                    // Superseded: never settle, so this cannot replace the newer dropdown
+                                    return new Promise(function () {});
+                                }
                                 if (!oResponse || !Array.isArray(oResponse.values)) {
                                     throw new Error(t('ERROR.MALFORMED_RESPONSE'));
                                 }
@@ -1620,9 +1799,16 @@
                                 oJsonEditor._autosuggestLastResult = oResponse;
                                 return exf_filterAutosuggest(oResponse.values, sText);
                             }).catch(function (oError) {
+                                if (oRequestAbort.signal.aborted) {
+                                    return new Promise(function () {});
+                                }
                                 if (!refreshServerAvailability()) return [];
                                 reportError(oError);
                                 throw oError;
+                            }).finally(function () {
+                                if (oAutosuggestAbort === oRequestAbort) {
+                                    oAutosuggestAbort = null;
+                                }
                             });
                     }
                 }
@@ -1631,22 +1817,10 @@
         if (oConfig.uxon && oConfig.validate !== false) {
             oOptions.onValidate = function (oJson) {
                 if (!refreshServerAvailability()) {
+                    cancelValidation();
                     return Promise.resolve([]);
                 }
-                return exf_performValidation('', JSON.stringify(oJson)).then(function (aErrors) {
-                    if (!refreshServerAvailability()) return [];
-                    if (!Array.isArray(aErrors)) {
-                        throw new Error(t('ERROR.MALFORMED_RESPONSE'));
-                    }
-                    if (!bDestroyed) {
-                        exf_toggleErrorWarning($, domEditor.id, aErrors[0]);
-                    }
-                    return aErrors;
-                }).catch(function (oError) {
-                    if (!refreshServerAvailability()) return [];
-                    reportError(oError);
-                    throw oError;
-                });
+                return validateLater(oJson);
             };
         }
 
@@ -1655,11 +1829,15 @@
             getValue: function () { return emptyValue(oEditor.getText()); },
             setValue: function (mNewValue) {
                 var sValue = normalizeValue(mNewValue);
-                if (oEditor.getText() === sValue) {
-                    sLastValue = oApi.getValue();
+                var sCurrent = oEditor.getText();
+                // Rebuilding a large tree is expensive - skip it if only the formatting differs.
+                if (sCurrent === sValue || canonicalJson(sCurrent) === canonicalJson(sValue)) {
+                    sLastValue = emptyValue(sCurrent);
                     updatePresetHint();
                     return oApi;
                 }
+                rememberCollapsedNodes();
+                var bWasSettingValue = bSettingValue;
                 bSettingValue = true;
                 try {
                     // Invalid JSON remains editable in code mode instead of being discarded.
@@ -1671,13 +1849,11 @@
                         }
                     }
                     oEditor.setText(sValue);
-                    if (oEditor.getMode() !== 'code') {
-                        oEditor.expandAll();
-                    }
+                    expandTree();
                     updatePresetHint();
                     sLastValue = oApi.getValue();
                 } finally {
-                    bSettingValue = false;
+                    bSettingValue = bWasSettingValue;
                 }
                 return oApi;
             },
@@ -1697,10 +1873,15 @@
                 if (bDestroyed) {
                     return;
                 }
+                rememberCollapsedNodes();
                 bDestroyed = true;
                 oGlobal.removeEventListener('online', refreshServerAvailability);
                 oGlobal.removeEventListener('offline', refreshServerAvailability);
-                oAbort.abort();
+                cancelValidation();
+                if (oAutosuggestAbort) {
+                    oAutosuggestAbort.abort();
+                    oAutosuggestAbort = null;
+                }
                 aTimers.forEach(clearTimeout);
                 aRequests.slice().forEach(function (oRequest) { oRequest.abort(); });
                 aModals.slice().forEach(function (oModal) { oModal.close(); });
@@ -1723,13 +1904,18 @@
             domEditor.exfJsonEditor.destroy();
         }
         var mInitialJson;
+        var sInitialValue = normalizeValue(mValue);
         try {
-            mInitialJson = JSON.parse(normalizeValue(mValue));
+            mInitialJson = JSON.parse(sInitialValue);
         } catch (oError) {
             oOptions.mode = 'code';
         }
         bSettingValue = true;
         oEditor = new JSONEditor(domEditor, oOptions, mInitialJson);
+        // Invalid JSON is not accepted by the constructor - load it as text in code mode.
+        if (mInitialJson === undefined) {
+            oEditor.setText(sInitialValue);
+        }
         domEditor.exfJsonEditor = oApi;
         oEditor._renderValidationErrors = fnRenderErrors;
         if (oConfig.uxon) {
@@ -1762,12 +1948,10 @@
                 }
             });
         }
-        oApi.setValue(mValue);
         sLastValue = oApi.getValue();
+        updatePresetHint();
         bSettingValue = false;
-        if (oEditor.getMode() !== 'code') {
-            oEditor.expandAll();
-        }
+        expandTree();
         applyDisabled();
         addToolbar();
         oGlobal.addEventListener('online', refreshServerAvailability);
