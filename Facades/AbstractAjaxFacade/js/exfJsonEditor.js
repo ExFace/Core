@@ -221,7 +221,18 @@
             if (!jqHint || !oEditor) {
                 return;
             }
-            jqHint.toggle(isServerAvailable() && !bDisabled && oEditor.getMode() === 'tree' && emptyValue(oEditor.getText()) === '');
+            jqHint.toggle(isServerAvailable() && !bDisabled && oEditor.getMode() === 'tree' && isTreeEmpty());
+        }
+
+        /**
+         * Checks for an empty root object/array without serializing the whole tree.
+         *
+         * Runs on every focus, pointer and server request, so it must stay cheap
+         * for large UXON. Primitive roots have no `childs` and are not empty.
+         */
+        function isTreeEmpty() {
+            var oRoot = oEditor.node;
+            return !!oRoot && Array.isArray(oRoot.childs) && oRoot.childs.length === 0;
         }
 
         function applyDisabled() {
