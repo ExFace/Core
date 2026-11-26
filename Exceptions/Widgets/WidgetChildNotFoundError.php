@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\Widgets;
 
 use exface\Core\Interfaces\Exceptions\WidgetExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 use exface\Core\Exceptions\OutOfBoundsException;
 
 /**
@@ -10,7 +11,7 @@ use exface\Core\Exceptions\OutOfBoundsException;
  * @author Andrej Kabachnik
  *        
  */
-class WidgetChildNotFoundError extends OutOfBoundsException implements WidgetExceptionInterface
+class WidgetChildNotFoundError extends OutOfBoundsException implements WidgetExceptionInterface, NotFoundExceptionInterface
 {
     use WidgetExceptionTrait;
 }

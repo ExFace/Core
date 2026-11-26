@@ -3,6 +3,7 @@ namespace exface\Core\Exceptions\Model;
 
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Interfaces\Exceptions\MetaObjectExceptionInterface;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 use exface\Core\Interfaces\Model\MetaObjectInterface;
 
 /**
@@ -11,7 +12,7 @@ use exface\Core\Interfaces\Model\MetaObjectInterface;
  * @author Andrej Kabachnik
  *        
  */
-class MetaAttributeGroupNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface
+class MetaAttributeGroupNotFoundError extends UnexpectedValueException implements MetaObjectExceptionInterface, NotFoundExceptionInterface
 {
     
     use MetaObjectExceptionTrait;

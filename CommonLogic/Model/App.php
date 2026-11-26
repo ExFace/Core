@@ -25,6 +25,8 @@ use exface\Core\Interfaces\Actions\ActionInterface;
 use exface\Core\Exceptions\UnexpectedValueException;
 use exface\Core\Factories\SelectorFactory;
 use exface\Core\Exceptions\AppComponentNotFoundError;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
+use exface\Core\Interfaces\Log\LoggerInterface;
 use exface\Core\Interfaces\Selectors\FacadeSelectorInterface;
 use exface\Core\Interfaces\Selectors\QueryBuilderSelectorInterface;
 use exface\Core\Interfaces\Selectors\BehaviorSelectorInterface;
@@ -751,7 +753,9 @@ class App implements AppInterface
                     return false;
                 }
             }
-        } catch(\Throwable $e) {
+        } catch (NotFoundExceptionInterface $e) {
+            return false;
+        } catch (\Throwable $e) {
             throw new LogicException('Cannot check if ' . $selector->getComponentType() . ' exists in app ' . $this->getAliasWithNamespace() . ': cannot load prototype class for selector "' . $selectorString . '" of class "' . $selectorClass . '"!', null, $e);
         }
         

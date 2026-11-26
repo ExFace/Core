@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\DataSources;
 
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 
 /**
  * Exception thrown if a data connection could not be found in the meta model.
@@ -9,7 +10,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * @author Andrej Kabachnik
  *        
  */
-class DataConnectionNotFoundError extends UnexpectedValueException
+class DataConnectionNotFoundError extends UnexpectedValueException implements NotFoundExceptionInterface
 {
 
     public function getDefaultAlias()

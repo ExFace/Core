@@ -2,6 +2,7 @@
 namespace exface\Core\Exceptions\Model;
 
 use exface\Core\Exceptions\UnexpectedValueException;
+use exface\Core\Interfaces\Exceptions\NotFoundExceptionInterface;
 
 /**
  * Exception thrown if a meta object cannot be found in the model.
@@ -9,7 +10,7 @@ use exface\Core\Exceptions\UnexpectedValueException;
  * @author Andrej Kabachnik
  *        
  */
-class MetaObjectNotFoundError extends UnexpectedValueException
+class MetaObjectNotFoundError extends UnexpectedValueException implements NotFoundExceptionInterface
 {
     /**
      * 
