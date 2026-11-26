@@ -312,6 +312,45 @@ export async function runJsonEditorRegression() {
         aResults.push('async UXON validation and collapsed error breadcrumbs');
         oValidated.oAdapter.destroy();
 
+        const fnRegressionFetch = window.fetch;
+        const aLatestRequests = [];
+        window.fetch = (sUrl, oOptions) => new Promise((fnResolve, fnReject) => {
+            const oParams = Object.fromEntries(oOptions.body);
+            aLatestRequests.push({oParams, oSignal: oOptions.signal});
+            oOptions.signal.addEventListener('abort', () => fnReject(new DOMException('Aborted', 'AbortError')));
+            setTimeout(() => fnResolve(new Response(JSON.stringify(oParams.action === 'exface.Core.UxonValidate' ? [] : {values: ['latest']}), {
+                headers: {'Content-Type': 'application/json'}
+            })), 300);
+        });
+        try {
+            const oLatest = create(true, {a: 0}, {validate: true});
+            const oLatestEditor = oLatest.oAdapter.getEditor();
+            const fnValidations = () => aLatestRequests.filter(oItem => oItem.oParams.action === 'exface.Core.UxonValidate');
+            const aTyped = await Promise.all([1, 2, 3].map(iValue => oLatestEditor.options.onValidate({a: iValue})));
+            check(fnValidations().length === 1 && JSON.parse(fnValidations()[0].oParams.uxon).a === 3,
+                'Validation must wait for a typing pause and send only the latest UXON');
+            check(aTyped.every(aItem => Array.isArray(aItem) && aItem.length === 0), 'Superseded validations must resolve quietly');
+            const oRunning = oLatestEditor.options.onValidate({a: 4});
+            await new Promise(fnResolve => setTimeout(fnResolve, 800));
+            const oNext = oLatestEditor.options.onValidate({a: 5});
+            check(fnValidations().at(-1).oSignal.aborted, 'A newer validation must abort the running request');
+            check((await oRunning).length === 0 && (await oNext).length === 0, 'Aborted validation must not fail');
+            check(fnValidations().length === 3 && JSON.parse(fnValidations().at(-1).oParams.uxon).a === 5, 'Latest validation was not sent');
+
+            const fnLatestOptions = oLatestEditor.options.autocomplete.getOptions;
+            let bOldSettled = false;
+            fnLatestOptions('a', [], 'value', oLatestEditor).then(() => { bOldSettled = true; }, () => { bOldSettled = true; });
+            const aLatest = await fnLatestOptions('ab', [], 'value', oLatestEditor);
+            const aSuggests = aLatestRequests.filter(oItem => oItem.oParams.action === 'exface.Core.UxonAutosuggest');
+            check(aSuggests.length === 2 && aSuggests[0].oSignal.aborted, 'A newer autosuggest must abort the previous request');
+            check(aLatest[0] === 'latest' && !bOldSettled, 'Superseded suggestions must not replace the newer dropdown');
+            check(aErrors.length === 0, 'Aborted requests must not report errors');
+            oLatest.oAdapter.destroy();
+            aResults.push('validation waits for typing pauses; superseded validation and autosuggest requests are aborted');
+        } finally {
+            window.fetch = fnRegressionFetch;
+        }
+
         oUxon.oAdapter.setDisabled(true);
         check(oJsonEditor.getMode() === 'view', 'Tree mode did not become read-only view mode');
         oUxon.oAdapter.setDisabled(false);

@@ -110,6 +110,11 @@ Autosuggest, templates, presets, property details and model browsing use
 The shared adapter sends custom requests to `ajaxUrl` using fetch or jQuery AJAX,
 not the facade's general action-request pipeline.
 
+Server validation waits for a typing pause (about 700 ms after JSONEditor's own
+150 ms change debounce) and only sends the latest UXON. Each new validation or
+autosuggest request aborts the previous one; superseded results never update
+the editor and aborted requests are not reported as errors.
+
 Consequently, every server operation is gated by browser connectivity, the
 launcher's `isOnline()` state when present, and `serverAvailable()`. UI5 permits
 these endpoints only when the configured online backend is

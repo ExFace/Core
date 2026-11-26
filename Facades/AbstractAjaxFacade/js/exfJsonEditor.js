@@ -7,6 +7,9 @@
 (function (oGlobal) {
     "use strict";
 
+    // Server validation waits for a typing pause on top of JSONEditor's own 150 ms debounce.
+    var VALIDATION_DELAY_MS = 700;
+
     // AJAX dialogs may evaluate this library again when reopening the editor.
     var oScrollPositions = oGlobal._uxonEditorScrollPos = oGlobal._uxonEditorScrollPos || {};
     var oCollapsedNodes = oGlobal._uxonEditorCollapsedNodes = oGlobal._uxonEditorCollapsedNodes || {};
@@ -39,7 +42,9 @@
         var jqEditor = $(domEditor);
         var jqHint;
         var jqUnavailable;
-        var oAbort = new AbortController();
+        // Only the latest validation and autosuggest request matter - older ones are aborted.
+        var oPendingValidation = null;
+        var oAutosuggestAbort = null;
 
         function t(sKey) {
             return oConfig.translations[sKey];
@@ -115,6 +120,75 @@
             }, iDelay);
             aTimers.push(iTimer);
             return iTimer;
+        }
+
+        function cancelLater(iTimer) {
+            clearTimeout(iTimer);
+            aTimers = aTimers.filter(function (iItem) { return iItem !== iTimer; });
+        }
+
+        /**
+         * Stops a scheduled or running server validation.
+         *
+         * Its promise is resolved empty: JSONEditor ignores results of superseded
+         * validations anyway, but must not be left waiting or receive an error.
+         */
+        function cancelValidation() {
+            var oPending = oPendingValidation;
+            if (!oPending) {
+                return;
+            }
+            oPendingValidation = null;
+            cancelLater(oPending.timer);
+            if (oPending.abort) {
+                oPending.abort.abort();
+            }
+            oPending.resolve([]);
+        }
+
+        /**
+         * Validates UXON on the server once the user stopped typing.
+         *
+         * Every call supersedes the previous one, so fast typing produces a single
+         * request instead of one per short pause.
+         */
+        function validateLater(oJson) {
+            cancelValidation();
+            return new Promise(function (fnResolve, fnReject) {
+                var oPending = {resolve: fnResolve, abort: null};
+                oPendingValidation = oPending;
+                oPending.timer = later(function () {
+                    if (!refreshServerAvailability()) {
+                        oPendingValidation = null;
+                        fnResolve([]);
+                        return;
+                    }
+                    oPending.abort = new AbortController();
+                    exf_performValidation('', JSON.stringify(oJson), oPending.abort.signal).then(function (aErrors) {
+                        if (oPendingValidation !== oPending) return;
+                        oPendingValidation = null;
+                        if (!refreshServerAvailability()) {
+                            fnResolve([]);
+                            return;
+                        }
+                        if (!Array.isArray(aErrors)) {
+                            throw new Error(t('ERROR.MALFORMED_RESPONSE'));
+                        }
+                        exf_toggleErrorWarning($, domEditor.id, aErrors[0]);
+                        fnResolve(aErrors);
+                    }).catch(function (oError) {
+                        // Superseded or destroyed - the promise was resolved by cancelValidation()
+                        if (oPending.abort.signal.aborted) return;
+                        oPendingValidation = null;
+                        if (!refreshServerAvailability()) {
+                            fnResolve([]);
+                            return;
+                        }
+                        reportError(oError);
+                        fnReject(oError);
+                    });
+                }, VALIDATION_DELAY_MS);
+            });
         }
 
         function notifyChange() {
@@ -239,7 +313,7 @@
             }
         }
 
-        function exf_fetchAutosuggest(text, path, input, uxon){
+        function exf_fetchAutosuggest(text, path, input, uxon, oSignal){
             var formData = new URLSearchParams({
         		action: 'exface.Core.UxonAutosuggest',
         		text: text,
@@ -255,7 +329,7 @@
                     method: "POST",
                     mode: "cors",
                     cache: "no-cache",
-                    signal: oAbort.signal,
+                    signal: oSignal,
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
                     },
@@ -265,7 +339,7 @@
           	.then(exf_validateResponse);
         }
 
-        function exf_performValidation(path, uxon){
+        function exf_performValidation(path, uxon, oSignal){
             var formData = new URLSearchParams({
         		action: 'exface.Core.UxonValidate',
         		path: JSON.stringify(path),
@@ -279,7 +353,7 @@
                     method: "POST",
                     mode: "cors",
                     cache: "no-cache",
-                    signal: oAbort.signal,
+                    signal: oSignal,
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
                     },
@@ -1642,11 +1716,20 @@
                         return !sToken.trim() || sMatch.toLowerCase().indexOf(sToken.toLowerCase()) !== -1;
                     },
                     getOptions: function (sText, aPath, sInput, oJsonEditor) {
+                        if (oAutosuggestAbort) {
+                            oAutosuggestAbort.abort();
+                        }
                         if (!refreshServerAvailability()) {
+                            oAutosuggestAbort = null;
                             return Promise.resolve([]);
                         }
-                        return exf_fetchAutosuggest(sText, aPath, sInput, JSON.stringify(oJsonEditor.get()))
+                        var oRequestAbort = oAutosuggestAbort = new AbortController();
+                        return exf_fetchAutosuggest(sText, aPath, sInput, JSON.stringify(oJsonEditor.get()), oRequestAbort.signal)
                             .then(function (oResponse) {
+                                if (oRequestAbort.signal.aborted) {
+                                    // Superseded: never settle, so this cannot replace the newer dropdown
+                                    return new Promise(function () {});
+                                }
                                 if (!oResponse || !Array.isArray(oResponse.values)) {
                                     throw new Error(t('ERROR.MALFORMED_RESPONSE'));
                                 }
@@ -1654,9 +1737,16 @@
                                 oJsonEditor._autosuggestLastResult = oResponse;
                                 return exf_filterAutosuggest(oResponse.values, sText);
                             }).catch(function (oError) {
+                                if (oRequestAbort.signal.aborted) {
+                                    return new Promise(function () {});
+                                }
                                 if (!refreshServerAvailability()) return [];
                                 reportError(oError);
                                 throw oError;
+                            }).finally(function () {
+                                if (oAutosuggestAbort === oRequestAbort) {
+                                    oAutosuggestAbort = null;
+                                }
                             });
                     }
                 }
@@ -1665,22 +1755,10 @@
         if (oConfig.uxon && oConfig.validate !== false) {
             oOptions.onValidate = function (oJson) {
                 if (!refreshServerAvailability()) {
+                    cancelValidation();
                     return Promise.resolve([]);
                 }
-                return exf_performValidation('', JSON.stringify(oJson)).then(function (aErrors) {
-                    if (!refreshServerAvailability()) return [];
-                    if (!Array.isArray(aErrors)) {
-                        throw new Error(t('ERROR.MALFORMED_RESPONSE'));
-                    }
-                    if (!bDestroyed) {
-                        exf_toggleErrorWarning($, domEditor.id, aErrors[0]);
-                    }
-                    return aErrors;
-                }).catch(function (oError) {
-                    if (!refreshServerAvailability()) return [];
-                    reportError(oError);
-                    throw oError;
-                });
+                return validateLater(oJson);
             };
         }
 
@@ -1737,7 +1815,11 @@
                 bDestroyed = true;
                 oGlobal.removeEventListener('online', refreshServerAvailability);
                 oGlobal.removeEventListener('offline', refreshServerAvailability);
-                oAbort.abort();
+                cancelValidation();
+                if (oAutosuggestAbort) {
+                    oAutosuggestAbort.abort();
+                    oAutosuggestAbort = null;
+                }
                 aTimers.forEach(clearTimeout);
                 aRequests.slice().forEach(function (oRequest) { oRequest.abort(); });
                 aModals.slice().forEach(function (oModal) { oModal.close(); });
