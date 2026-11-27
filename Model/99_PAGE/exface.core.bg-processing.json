@@ -88,6 +88,12 @@
                                             "aggregate_by_attribute_alias": [
                                                 "QUEUE"
                                             ],
+                                            "columns": [
+                                                {
+                                                    "attribute_alias": "QUEUE",
+                                                    "hidden": true
+                                                }
+                                            ],
                                             "paginate": false,
                                             "sorters": [
                                                 {
@@ -123,6 +129,12 @@
                                         "data": {
                                             "aggregate_by_attribute_alias": [
                                                 "OWNER"
+                                            ],
+                                            "columns": [
+                                                {
+                                                    "attribute_alias": "OWNER",
+                                                    "hidden": true
+                                                }
                                             ],
                                             "paginate": false,
                                             "sorters": [
