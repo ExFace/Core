@@ -7,6 +7,9 @@ use exface\Core\Interfaces\Widgets\CustomWidgetInterface;
 use exface\Core\Interfaces\Facades\FacadeInterface;
 use exface\Core\Facades\AbstractAjaxFacade\Elements\AbstractJqueryElement;
 use exface\Core\Interfaces\Actions\ActionInterface;
+use exface\Core\Interfaces\Widgets\iHaveToolbars;
+use exface\Core\Interfaces\Widgets\iHaveButtons;
+use exface\Core\Widgets\Traits\iHaveButtonsAndToolbarsTrait;
 
 /**
  * Allows to render a custom input widget using any JavaScript library provided in the widgets configuration.
@@ -14,6 +17,7 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  * This way you can add your own JS library to almost any facade by mere configuration: Include 
  * required JS and CSS files via `include_js` and `include_css` respecitvely and add `script_to_init` 
  * and eventually other `script_to_` properties to make the widget functional.
+ * Use `buttons` or `toolbars` to add native facade buttons alongside the custom input HTML.
  * 
  * All `script_` properties support placeholders. Most commonly:
  * 
@@ -72,8 +76,13 @@ use exface\Core\Interfaces\Actions\ActionInterface;
  * @author Andrej Kabachnik
  *
  */
-class InputCustom extends Input implements CustomWidgetInterface
+class InputCustom extends Input implements CustomWidgetInterface, iHaveToolbars, iHaveButtons
 {
+    use iHaveButtonsAndToolbarsTrait {
+        setToolbars as private setToolbarsFromTrait;
+        hasToolbars as private hasConfiguredToolbars;
+    }
+
     private $html = null;
     
     private $initScript = null;
@@ -88,6 +97,72 @@ class InputCustom extends Input implements CustomWidgetInterface
     private $enableScript = null;
     
     private $attachOnChangeScript = null;
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getChildren() : \Iterator
+    {
+        yield from parent::getChildren();
+        if ($this->hasToolbars()) {
+            yield from $this->getToolbars();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function hasToolbars() : bool
+    {
+        if ($this->buttonsPropertyValue !== null) {
+            if ($this->hasConfiguredToolbars()) {
+                reset($this->toolbars)->setButtons($this->buttonsPropertyValue);
+                $this->buttonsPropertyValue = null;
+            } else {
+                $this->initMainToolbar();
+            }
+        }
+        return $this->hasConfiguredToolbars();
+    }
+
+    /**
+     * Add native facade buttons to the main toolbar.
+     *
+     * @uxon-property buttons
+     * @uxon-type \exface\Core\Widgets\Button[]
+     * @uxon-template [{"action_alias": ""}]
+     */
+    public function setButtons($buttons)
+    {
+        // Do not call hasToolbars() during import: subclasses may generate default buttons lazily.
+        $this->buttonsPropertyValue = $buttons;
+        return $this;
+    }
+
+    /**
+     * Add toolbars with native buttons alongside the custom input.
+     *
+     * @uxon-property toolbars
+     * @uxon-type \exface\Core\Widgets\Toolbar[]
+     * @uxon-template [{"buttons": [{"action_alias": ""}]}]
+     */
+    public function setToolbars($widgets_or_uxon_objects)
+    {
+        foreach ($widgets_or_uxon_objects as $toolbar) {
+            if ($toolbar instanceof UxonObject && ! $toolbar->hasProperty('widget_type')) {
+                $toolbar->setProperty('widget_type', $this->getToolbarWidgetType());
+            }
+        }
+        return $this->setToolbarsFromTrait($widgets_or_uxon_objects);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getButtonWidgetType() : string
+    {
+        return 'Button';
+    }
     
     private $validatorScript = null;
 
