@@ -603,6 +603,8 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
     protected function getDefaultComparator(WidgetInterface $input) : ?ComparatorDataType
     {
         switch (true) {
+            case $input instanceof InputDateRange:
+                return ComparatorDataType::BETWEEN($this->getWorkbench());
             case $input->implementsInterface('iSupportMultiselect') && $input->getMultiSelect():
                 // If the input widget will produce multiple values, use the IN comparator
                 return ComparatorDataType::IN($this->getWorkbench());
@@ -720,6 +722,10 @@ class Filter extends AbstractWidget implements iFilterData, iTakeInput, iShowSin
      */
     public function setValue($value, bool $parseStringAsExpression = true)
     {
+        // Preserve false as an explicit filter value rather than an empty expression.
+        if (is_bool($value)) {
+            $value = (int) $value;
+        }
         if ($this->isInputWidgetInitialized() === true) {
             $this->getInputWidget()->setValue($value, $parseStringAsExpression);
         }

@@ -3,9 +3,11 @@ namespace exface\Core\Facades\AbstractAjaxFacade;
 
 use exface\Core\CommonLogic\Tasks\HttpTask;
 use exface\Core\DataTypes\ListDataType;
+use exface\Core\DataTypes\RangeDataType;
 use exface\Core\Exceptions\Facades\WidgetFacadeRenderingError;
 use exface\Core\Exceptions\Widgets\WidgetLogicError;
 use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsListFormatter;
+use exface\Core\Facades\AbstractAjaxFacade\Formatters\JsRangeFormatter;
 use exface\Core\Facades\AbstractHttpFacade\FacadeResolver;
 use exface\Core\Facades\AbstractHttpFacade\Middleware\TaskReader;
 use exface\Core\Interfaces\Facades\HttpFacadeInterface;
@@ -406,6 +408,9 @@ HTML;
     public function getDataTypeFormatter(DataTypeInterface $dataType)
     {
         switch (true) {
+            case $dataType instanceof RangeDataType:
+                $endpointType = $dataType->getEndpointDataType();
+                return new JsRangeFormatter($dataType, $endpointType === null ? new JsTransparentFormatter($dataType) : $this->getDataTypeFormatter($endpointType));
             case $dataType instanceof ListDataType: return new JsListFormatter($dataType, $this->getDataTypeFormatter($dataType->getValuesDataType()));
             case $dataType instanceof EnumDataTypeInterface: return new JsEnumFormatter($dataType);
             case $dataType instanceof NumberDataType: return new JsNumberFormatter($dataType);

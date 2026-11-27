@@ -229,7 +229,121 @@
 		 * 
 		 * 
 		 */
+		range: {
+			/** Return both trimmed bounds, or null if either is missing. */
+			split(value, allowSingle = false) {
+				if (typeof value !== "string") {
+					return null;
+				}
+				const bounds = value.split("..").map(bound => bound.trim());
+				if (allowSingle && bounds.length === 1 && bounds[0]) {
+					return [bounds[0], bounds[0]];
+				}
+				return bounds.length === 2 && bounds.every(Boolean) ? bounds : null;
+			}
+		},
+
 		date: {
+			/** Accept only complete canonical, localized, shorthand or relative bounds. */
+			parseRangeBound(value, format) {
+				if (typeof value !== "string" || !(value = value.trim())) {
+					return null;
+				}
+				const clock = _matchTime(value);
+				if (clock && (+clock[1] > 23 || +clock[2] > 59 || +clock[3] > 59)) {
+					return null;
+				}
+				const canonical = /^(\d{4}-\d{2}-\d{2})(?:[ T](\d{2}:\d{2})(:\d{2})?)?$/.exec(value);
+				if (canonical) {
+					const [, day, time, seconds] = canonical;
+					const normalized = time ? `${day} ${time}${seconds ?? ":00"}` : day;
+					const pattern = time ? "YYYY-MM-DD HH:mm:ss" : "YYYY-MM-DD";
+					const parsed = moment(normalized, pattern, "en", true);
+					return parsed.isValid() && parsed.format(pattern) === normalized ? parsed.toDate() : null;
+				}
+				if (format) {
+					const parsed = moment(value, _ICUFormatToMoment(format), true);
+					if (parsed.isValid()) {
+						return parsed.toDate();
+					}
+				}
+				// The general date parser also accepts partial matches; limit it to complete shorthand here.
+				const shorthand = /^(?:\d{4}[./-]\d{1,2}[./-]\d{1,2}|\d{1,2}[./-]\d{1,2}(?:[./-](?:\d{2}|\d{4}))?)(?:[ T]\d{2}:\d{2}(?::\d{2})?)?$|^(?:\d{4}|\d{6}|\d{8})$/;
+				if (!shorthand.test(value) && !_matchDateRelative(value) && !_matchTimeRelative(value)) {
+					return null;
+				}
+				const parsed = this.parse(value.replace(/T(?=\d{2}:)/, " "));
+				return parsed && Number.isFinite(parsed.getTime()) ? parsed : null;
+			},
+
+			/** Canonical range values use ASCII digits regardless of the display locale. */
+			formatRangeBound(date, format) {
+				return date === null ? null : moment(date).locale("en").formatICU(format);
+			},
+
+			/** Parse a picker value into ordered dates, retaining saved timestamp precision. */
+			parseRange(value, format, {dateTime = false, allowSingle = false} = {}) {
+				const bounds = exfTools.range.split(value, allowSingle);
+				if (!bounds) {
+					return null;
+				}
+				const endpoints = bounds.map(bound => ({
+					date: this.parseRangeBound(bound, format),
+					hasTime: dateTime && _matchTime(bound) !== null
+				}));
+				if (endpoints.some(endpoint => !endpoint.date)) {
+					return null;
+				}
+				const hasTime = endpoints.some(endpoint => endpoint.hasTime);
+				if (hasTime) {
+					// Order by day first so a date-only endpoint gets the correct inclusive edge.
+					endpoints.sort((a, b) => moment(a.date).startOf("day") - moment(b.date).startOf("day"));
+				}
+				const dates = endpoints.map(({date, hasTime: exact}, index) => hasTime && !exact
+					? (index === 0 ? moment(date).startOf("day") : moment(date).endOf("day")).toDate()
+					: date);
+				return {dates: this.orderRangeDates(dates), hasTime};
+			},
+
+			/** Serialize picker dates; day selections include the entire final day for BETWEEN. */
+			serializeRange(dates, dateTime, exactTime = false) {
+				if (dateTime && exactTime) {
+					return dates.map(date => this.formatRangeBound(date, "yyyy-MM-dd HH:mm:ss")).join("..");
+				}
+				const [from, to] = dates.map(date => this.formatRangeBound(date, "yyyy-MM-dd"));
+				return dateTime ? `${from} 00:00:00..${to} 23:59:59` : `${from}..${to}`;
+			},
+
+			/**
+			 * Resolve a configured preset against today's local date. Facades call this
+			 * again on selection so a menu opened before midnight doesn't use stale dates.
+			 * Returns an ordered pair of dates, or null for invalid custom bounds.
+			 */
+			resolveRangePreset(preset, format, weekStartsMonday) {
+				if (preset.range === "custom") {
+					return this.orderRangeDates([preset.from, preset.to].map(value => this.parseRangeBound(value, format)));
+				}
+				const [period, position] = preset.range.split("_");
+				const today = moment().startOf("day");
+				const start = today.clone().add({previous: -1, current: 0, next: 1}[position], period);
+				if (period === "week" && !weekStartsMonday) {
+					start.day(0);
+				} else {
+					start.startOf(period === "week" ? "isoWeek" : period);
+				}
+				// Current periods end today; previous and next include the entire period.
+				const end = position === "current" ? today : start.clone().add(1, period).subtract(1, "day");
+				return [start.toDate(), end.toDate()];
+			},
+
+			/** Normalize reverse selections without changing the original array. */
+			orderRangeDates(dates) {
+				if (dates.length !== 2 || dates.some(date => !date || !Number.isFinite(date.getTime()))) {
+					return null;
+				}
+				return dates[0].getTime() <= dates[1].getTime() ? dates : [dates[1], dates[0]];
+			},
+			
 			/**
 			 * Returns the precision explicitly present in a date-time filter value.
 			 *

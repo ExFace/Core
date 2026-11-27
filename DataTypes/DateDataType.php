@@ -432,6 +432,18 @@ class DateDataType extends AbstractDataType implements ComparableDataTypeInterfa
     {
         return $this->format !== null;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function exportUxonObject()
+    {
+        $uxon = parent::exportUxonObject();
+        if ($this->hasCustomFormat()) {
+            $uxon->setProperty('format', $this->format);
+        }
+        return $uxon;
+    }
     
     /**
      * 
