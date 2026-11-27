@@ -160,6 +160,7 @@ Notes:
     transactions to keep DML behavior consistent.
   - Do not set character set and collation in migrations explicitly unless 
     absolutely neccessar! Rely on the DB defaults.
+  - Make all migrations compatible with MySQL 8+ and MariaDB 10.3+ 
 
 ### PostgreSQL
 
