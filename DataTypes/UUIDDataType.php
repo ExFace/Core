@@ -71,7 +71,7 @@ class UUIDDataType extends HexadecimalNumberDataType
     public static function generateSqlOptimizedUuid()
     {
         $uuid = self::generateUuidV1('');
-        $sqlUuid = '0x' . substr($uuid, 14, 4) . substr($uuid, 19, 4) . substr($uuid, 0, 8) . substr($uuid, 19, 4) . substr($uuid, 24);
+        $sqlUuid = HexadecimalNumberDataType::HEX_PREFIX . substr($uuid, 14, 4) . substr($uuid, 19, 4) . substr($uuid, 0, 8) . substr($uuid, 19, 4) . substr($uuid, 24);
         return $sqlUuid;
     }
 
@@ -88,7 +88,7 @@ class UUIDDataType extends HexadecimalNumberDataType
      *
      * @return string
      */
-    public static function generateUuidV1(string $prefix = '0x', $node = null, ?int $clockSeq = null) : string
+    public static function generateUuidV1(string $prefix = HexadecimalNumberDataType::HEX_PREFIX, $node = null, ?int $clockSeq = null) : string
     {
         return $prefix . Uuid::uuid1($node, $clockSeq)->toString();
     }
@@ -113,7 +113,7 @@ class UUIDDataType extends HexadecimalNumberDataType
      *
      * @return string
      */
-    public static function generateUuidV2(int $localDomain, string $prefix = '0x', ?int $localIdentifier = null, ?string $node = null, ?int $clockSeq = null) : string
+    public static function generateUuidV2(int $localDomain, string $prefix = HexadecimalNumberDataType::HEX_PREFIX, ?int $localIdentifier = null, ?string $node = null, ?int $clockSeq = null) : string
     {
         $localIdentifier = $localIdentifier !== null ? new Ramsey\Uuid\Type\Integer($localIdentifier) : null;
         $node = $node !== null ? new Hexadecimal($localIdentifier) : null;
@@ -129,7 +129,7 @@ class UUIDDataType extends HexadecimalNumberDataType
      * 
      * @return string
      */
-    public static function generateUuidV3(string $ns, string $name, string $prefix = '0x') : string
+    public static function generateUuidV3(string $ns, string $name, string $prefix = HexadecimalNumberDataType::HEX_PREFIX) : string
     {
         return $prefix . Uuid::uuid3($ns, $name)->toString();
     }
@@ -141,8 +141,21 @@ class UUIDDataType extends HexadecimalNumberDataType
      * 
      * @return string
      */
-    public static function generateUuidV4(string $prefix = '0x') : string
+    public static function generateUuidV4(string $prefix = HexadecimalNumberDataType::HEX_PREFIX) : string
     {
         return $prefix . Uuid::uuid4()->toString();
+    }
+
+    /**
+     * Returns TRUE if the given string is a 16-byte hexadecimal representation of a UID (e.g. a SQL optimized UUID with 0x prefix)
+     *
+     * @param string $string
+     * @param string $prefix
+     * @return bool
+     */
+    public static function isHexUID(string $string, string $prefix = HexadecimalNumberDataType::HEX_PREFIX) : bool
+    {
+        $prefixLen = strlen($prefix);
+        return HexadecimalNumberDataType::isHexNumber($string, $prefix) && strlen($string) === (32 + $prefixLen);
     }
 }

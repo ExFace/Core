@@ -2,6 +2,7 @@
 namespace exface\Core\Formulas;
 
 
+use exface\Core\DataTypes\HexadecimalNumberDataType;
 use exface\Core\DataTypes\UUIDDataType;
 
 /**
@@ -33,10 +34,10 @@ class UniqueId extends \exface\Core\CommonLogic\Model\Formula
                 $uid = UUIDDataType::generateUuidV2($params[0] ?? 0);
                 break;
             case 'v3':
-                $uid = UUIDDataType::generateUuidV3($params[0], $params[1], $params[2] ?? '0x');
+                $uid = UUIDDataType::generateUuidV3($params[0], $params[1], $params[2] ?? HexadecimalNumberDataType::HEX_PREFIX);
                 break;
             case 'v4':
-                $uid = UUIDDataType::generateUuidV4($params[0] ?? '0x');
+                $uid = UUIDDataType::generateUuidV4($params[0] ?? HexadecimalNumberDataType::HEX_PREFIX);
                 break;
             default: 
                 $uid = UUIDDataType::generateSqlOptimizedUuid();

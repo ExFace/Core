@@ -4,6 +4,7 @@ namespace exface\Core\DataTypes;
 use exface\Core\Exceptions\DataTypes\DataTypeCastingError;
 use exface\Core\Interfaces\Exceptions\DataTypeExceptionInterface;
 use exface\Core\Interfaces\Log\LoggerInterface;
+use function Symfony\Component\String\s;
 
 /**
  * Data type for Hexadecimal numbers.
@@ -44,14 +45,16 @@ class HexadecimalNumberDataType extends NumberDataType
     }
 
     /**
-     * Returns TRUE if the given string is a valid HEX number - i.e. starts with `0x` and continues with digits and letters 
-     * 
+     * Returns TRUE if the given string is a valid HEX number - i.e. starts with `0x` and continues with hex digits
+     *
      * @param string $string
+     * @param string $prefix
      * @return bool
      */
-    public static function isHexNumber(string $string) : bool
+    public static function isHexNumber(string $string, string $prefix = self::HEX_PREFIX) : bool
     {
-        return stripos($string, self::HEX_PREFIX) === 0 && ctype_xdigit(substr($string, 2));
+        $prefixLen = strlen($prefix);
+        return substr($string, 0, $prefixLen) === $prefix && ctype_xdigit(substr($string, $prefixLen));
     }
     
     /**

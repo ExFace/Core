@@ -7,6 +7,7 @@ use exface\Core\CommonLogic\UxonObject;
 use exface\Core\DataTypes\MetaAttributeOriginDataType;
 use exface\Core\DataTypes\PhpClassDataType;
 use exface\Core\DataTypes\RelationCardinalityDataType;
+use exface\Core\DataTypes\UUIDDataType;
 use exface\Core\Factories\MetaObjectFactory;
 use exface\Core\Interfaces\Model\BehaviorInterface;
 use exface\Core\Interfaces\Model\MetaAttributeInterface;
@@ -166,7 +167,7 @@ class CustomAttribute extends Attribute
         $relatedKeyAttrSelector = $uxon->getProperty('related_object_key_attribute_alias');
         $relatedKeyAttrId = null;
         if ($relatedKeyAttrSelector !== null) {
-            if (mb_substr($relatedKeyAttrSelector, 0, 2) === '0x') {
+            if (UUIDDataType::isHexUID($relatedKeyAttrSelector)) {
                 $relatedKeyAttrId = $relatedKeyAttrSelector;
             } else {
                 $relatedKeyAttrId = $rightObj->getAttribute($relatedKeyAttrSelector)->getId();

@@ -1,7 +1,7 @@
 <?php
 namespace exface\Core\CommonLogic\Selectors\Traits;
 
-use exface\Core\DataTypes\HexadecimalNumberDataType;
+use exface\Core\DataTypes\UUIDDataType;
 
 /**
  * Trait with shared logic for the FileSelectorInterface
@@ -20,8 +20,8 @@ trait UidSelectorTrait
      */
     public function isUid()
     {
-        if (is_null($this->isUid)) {
-            $this->isUid = (stripos($this->toString(), HexadecimalNumberDataType::HEX_PREFIX) === 0 && strlen($this->toString()) == 34 ? true : false);
+        if ($this->isUid === null) {
+            $this->isUid = UUIDDataType::isHexUID($this->toString());
         }
         return $this->isUid;
     }
