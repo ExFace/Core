@@ -10,6 +10,9 @@
       if (!color) return null;
       const el = document.createElement('span');
       el.style.color = color;
+      // If the browser does not understand the color (e.g. color = "FALSE_TEXT_STRING"), style.color stays empty.
+      // Stop here, otherwise getComputedStyle() would return the inherited text color of the page.
+      if (!el.style.color) return null;
       // the element must be in the DOM for getComputedStyle to be reliable
       document.body.appendChild(el);
       const cs = getComputedStyle(el).color; // "rgb(r, g, b)" or "rgba(r, g, b, a)"
